@@ -15,6 +15,7 @@
     "serve": "parcel serve --no-hmr --out-file cx-basic-code-intel.js src/extension.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
     "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
+    "upload": "gsutil cp -r dist/* gs://sourcegraph-cx-dev/ && gsutil acl ch -u AllUsers:R gs://sourcegraph-cx-dev/cx-basic-code-intel.map && gsutil acl ch -u AllUsers:R gs://sourcegraph-cx-dev/cx-basic-code-intel.js",
     "watch:typecheck": "tsc -p tsconfig.json -w",
     "watch:build": "tsc -p tsconfig.dist.json -w",
     "watch:test": "npm run test -- -w"

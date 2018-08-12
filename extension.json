@@ -13,13 +13,13 @@
         "sourcegraphEndpoint": {
           "description": "The Sourcegraph API endpoint to use to make code intelligence queries",
           "type": "object",
+          "required": ["token"],
           "additionalProperties": false,
           "properties": {
             "token": {
               "description": "The API token for the Sourcegraph instance.",
               "type": "string"
-            },
-            "required": ["token"]
+            }
           }
         }
       }
