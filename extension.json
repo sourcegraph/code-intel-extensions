@@ -8,7 +8,7 @@
   "activationEvents": ["*"],
   "contributes": {
     "configuration": {
-      "title": "Basic code intelligence settings",
+      "title": "Basic code intelligence settings"
     }
   }
 }
