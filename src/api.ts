@@ -80,7 +80,6 @@ export async function fetchSearchResults(searchQuery: string): Promise<Result[]>
         body: `{"query": ${JSON.stringify(graphqlQuery)}, "variables": ${JSON.stringify(graphqlVars)}}`,
     })
     const respObj = await resp.json()
-    console.log('respObj', respObj)
     const results = []
     for (const result of respObj.data.search.results.results) {
         for (const sym of result.symbols) {

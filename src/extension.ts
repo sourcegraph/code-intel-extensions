@@ -7,9 +7,70 @@ import { fetchSearchResults, Result } from './api'
 
 declare var self: Worker
 
+/**
+ * fileContents caches file contents from textDocument/didOpen notifications
+ */
 const fileContents = new Map<string, string>()
+
+/**
+ * identCharPattern is used to match identifier tokens
+ */
 const identCharPattern = /[A-Za-z0-9_]/
 
+/**
+ * fileExtSets describe file extension sets that may contain references to one another.
+ * The elements of this array *must* be disjoint sets. Don't refer to this variable directly.
+ * Instead, call fileExtTerm.
+ */
+const fileExtsSets = [
+    ['h', 'c', 'hpp', 'cpp', 'm', 'cc'],
+    ['java'],
+    ['go'],
+    ['js'],
+    ['ts'],
+    ['rb', 'erb'],
+    ['py'],
+    ['php'],
+    ['css'],
+    ['cs'],
+    ['sh'],
+    ['scala'],
+    ['erl'],
+    ['r'],
+    ['swift'],
+    ['coffee'],
+    ['pl'],
+]
+const fileExtToTerm = new Map<string, string>()
+function initFileExtToTerm() {
+    for (const s of fileExtsSets) {
+        const extRegExp = `file:\.(${s.join('|')})$`
+        for (const e of s) {
+            fileExtToTerm.set(e, extRegExp)
+        }
+    }
+}
+initFileExtToTerm()
+
+/**
+ * fileExtTerm returns the search term to use to filter to specific file extensions
+ */
+function fileExtTerm(sourceFile: string): string {
+    const i = sourceFile.lastIndexOf('.')
+    if (i === -1) {
+        return ''
+    }
+    const ext = sourceFile.substring(i + 1).toLowerCase()
+    const match = fileExtToTerm.get(ext)
+    if (match) {
+        return match
+    }
+    return ''
+}
+
+/**
+ * resultToLocation maps a search result to a LSP Location instance.
+ */
 function resultToLocation(res: Result): Location {
     return {
         uri: `git://${res.repo}?HEAD#${res.file}`,
@@ -35,6 +96,7 @@ function register(connection: Connection): void {
     connection.onNotification(
         'textDocument/didOpen',
         (params: DidOpenTextDocumentParams): void => {
+            fileContents.clear()
             fileContents.set(params.textDocument.uri, params.textDocument.text)
         }
     )
@@ -67,8 +129,8 @@ function register(connection: Connection): void {
             }
             const token = line.substring(start, end)
 
-            const symbolResults = fetchSearchResults(`type:symbol case:yes ${token}`)
-            const textResults = fetchSearchResults(`type:file case:yes ${token}`)
+            const symbolResults = fetchSearchResults(`type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} ${token}`)
+            const textResults = fetchSearchResults(`type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${token}`)
             let results = await symbolResults
             if (results.length === 0) {
                 results = await textResults
@@ -104,9 +166,8 @@ function register(connection: Connection): void {
                 return null
             }
             const token = line.substring(start, end)
-            console.log('token', token)
 
-            const results = await fetchSearchResults(`type:file ${token}`)
+            const results = await fetchSearchResults(`type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${token}`)
             return results.map(resultToLocation)
         }
     )
