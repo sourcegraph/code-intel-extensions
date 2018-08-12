@@ -1,0 +1,61 @@
+{
+  "name": "cx-basic-code-intel",
+  "version": "0.0.0-development",
+  "description": "A CXP extension that provides basic jump-to-def and find-refs functionality using the Sourcegraph search API",
+  "license": "MIT",
+  "main": "lib/extension.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "prettier": "prettier '**/*.{js?(on),ts}' --write --list-different",
+    "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "parcel build --no-minify --detailed-report --out-file cx-basic-code-intel.js src/extension.ts",
+    "serve": "parcel serve --no-hmr --out-file cx-basic-code-intel.js src/extension.ts",
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
+    "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
+    "watch:typecheck": "tsc -p tsconfig.json -w",
+    "watch:build": "tsc -p tsconfig.dist.json -w",
+    "watch:test": "npm run test -- -w"
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "**/*.test.ts",
+      "**/*.js"
+    ],
+    "cache": true,
+    "reporter": [
+      "text",
+      "lcovonly"
+    ]
+  },
+  "browserslist": [
+    "last 1 Chrome versions",
+    "last 1 Firefox versions",
+    "last 1 Edge versions",
+    "last 1 Safari versions"
+  ],
+  "devDependencies": {
+    "@types/mocha": "^5.2.3",
+    "@types/node": "^10.5.8",
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
+    "parcel-bundler": "^1.9.7",
+    "prettier": "^1.14.2",
+    "source-map-support": "^0.5.8",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-language-service": "^0.9.9",
+    "typescript": "^2.9.2"
+  },
+  "dependencies": {
+    "cxp": "^6.4.0",
+    "vscode-languageserver-types": "^3.10.0"
+  },
+  "sideEffects": false
+}
