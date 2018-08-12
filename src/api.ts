@@ -1,9 +1,6 @@
-// TODO: copy https://sourcegraph.sgdev.org/github.com/sourcegraph/cx-codecov/-/blob/src/api.ts
-
-export interface SourcegraphConfig {
-    baseURL: string
-}
-
+/**
+ * Result represents a search result returned from the Sourcegraph API.
+ */
 export interface Result {
     repo: string
     file: string
@@ -17,8 +14,9 @@ export interface Result {
     }
 }
 
-const sourcegraphOrigin = self.location.origin
-
+/**
+ * fetchSearchResults returns the list of results fetched from the Sourcegraph search API.
+ */
 export async function fetchSearchResults(token: string, searchQuery: string): Promise<Result[]> {
     const headers = new Headers()
     headers.append('Authorization', `token 6829f551c841f63f68be1b94405b3ca438fba994`)
@@ -75,6 +73,7 @@ export async function fetchSearchResults(token: string, searchQuery: string): Pr
       }`
     const graphqlVars = { query: searchQuery }
 
+    const sourcegraphOrigin = self.location.origin
     const resp = await fetch(sourcegraphOrigin + '/.api/graphql?Search', {
         method: 'POST',
         mode: 'cors',

@@ -87,6 +87,10 @@ function resultToLocation(res: Result): Location {
     }
 }
 
+/**
+ * getAuthToken extracts the Sourcegraph auth token from the merged settings received in
+ * initialize params. Throws an error if the token is not present.
+ */
 function getAuthToken(params: InitializeParams): string {
     try {
         const extCfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
