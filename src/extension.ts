@@ -1,5 +1,5 @@
 import { createWebWorkerMessageTransports, Worker } from  'cxp/module/jsonrpc2/transports/webWorker'
-import { InitializeResult, TextDocumentPositionParams, ReferenceParams } from 'cxp/module/protocol'
+import { InitializeResult, TextDocumentPositionParams, ReferenceParams,_InitializeParams, InitializeParams } from 'cxp/module/protocol'
 import { DidOpenTextDocumentParams } from 'cxp/module/protocol/textDocument'
 import { Connection, createConnection } from 'cxp/module/server/server'
 import { Location } from 'vscode-languageserver-types'
@@ -16,6 +16,12 @@ const fileContents = new Map<string, string>()
  * identCharPattern is used to match identifier tokens
  */
 const identCharPattern = /[A-Za-z0-9_]/
+
+/**
+ * authToken is the access token used to authenticate to the Sourcegraph API. This will be set in the
+ * initialize handler.
+ */
+let authToken = ''
 
 /**
  * fileExtSets describe file extension sets that may contain references to one another.
@@ -81,16 +87,32 @@ function resultToLocation(res: Result): Location {
     }
 }
 
+function getAuthToken(params: InitializeParams): string {
+    try {
+        const extCfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
+        if (!extCfg.sourcegraphEndpoint) {
+            throw new Error()
+        }
+        return extCfg.sourcegraphEndpoint
+    } catch (e) {
+        const err = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
+        console.error(err)
+        throw new Error(err)
+    }
+}
+
 function register(connection: Connection): void {
     connection.onInitialize(
-        params =>
-            ({
+        params => {
+            authToken = getAuthToken(params)
+            return {
                 capabilities: {
                     definitionProvider: true,
                     referencesProvider: true,
                     textDocumentSync: { openClose: true },
                 },
-            } as InitializeResult)
+            } as InitializeResult
+        }
     )
 
     connection.onNotification(
@@ -127,10 +149,10 @@ function register(connection: Connection): void {
             if (start >= end) {
                 return null
             }
-            const token = line.substring(start, end)
+            const searchToken = line.substring(start, end)
 
-            const symbolResults = fetchSearchResults(`type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} ${token}`)
-            const textResults = fetchSearchResults(`type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${token}`)
+            const symbolResults = fetchSearchResults(authToken, `type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
+            const textResults = fetchSearchResults(authToken, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
             let results = await symbolResults
             if (results.length === 0) {
                 results = await textResults
@@ -165,9 +187,9 @@ function register(connection: Connection): void {
             if (start >= end) {
                 return null
             }
-            const token = line.substring(start, end)
+            const searchToken = line.substring(start, end)
 
-            const results = await fetchSearchResults(`type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${token}`)
+            const results = await fetchSearchResults(authToken, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
             return results.map(resultToLocation)
         }
     )

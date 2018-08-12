@@ -17,9 +17,11 @@ export interface Result {
     }
 }
 
-export async function fetchSearchResults(searchQuery: string): Promise<Result[]> {
+const sourcegraphOrigin = self.location.origin
+
+export async function fetchSearchResults(token: string, searchQuery: string): Promise<Result[]> {
     const headers = new Headers()
-    headers.append('Authorization', 'token 6829f551c841f63f68be1b94405b3ca438fba994') // TODO: remove hardcoded token, set from config field
+    headers.append('Authorization', `token 6829f551c841f63f68be1b94405b3ca438fba994`)
     const graphqlQuery = `query Search($query: String!) {
         search(query: $query) {
           results {
@@ -73,7 +75,7 @@ export async function fetchSearchResults(searchQuery: string): Promise<Result[]>
       }`
     const graphqlVars = { query: searchQuery }
 
-    const resp = await fetch('http://localhost:3080/.api/graphql?Search', { // TODO: hardcoded
+    const resp = await fetch(sourcegraphOrigin + '/.api/graphql?Search', {
         method: 'POST',
         mode: 'cors',
         headers,
