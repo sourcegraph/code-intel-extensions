@@ -19,7 +19,7 @@ export interface Result {
 
 export async function fetchSearchResults(searchQuery: string): Promise<Result[]> {
     const headers = new Headers()
-    headers.append('Authorization', 'token 6829f551c841f63f68be1b94405b3ca438fba994')
+    headers.append('Authorization', 'token 6829f551c841f63f68be1b94405b3ca438fba994') // TODO: remove hardcoded token, set from config field
     const graphqlQuery = `query Search($query: String!) {
         search(query: $query) {
           results {
@@ -45,6 +45,21 @@ export async function fetchSearchResults(searchQuery: string): Promise<Result[]>
                   containerName
                   url
                   kind
+                  location {
+                    resource {
+                      path
+                    }
+                    range {
+                      start {
+                        line
+                        character
+                      }
+                      end {
+                        line
+                        character
+                      }
+                    }
+                  }
                 }
                 lineMatches {
                   preview
@@ -56,20 +71,32 @@ export async function fetchSearchResults(searchQuery: string): Promise<Result[]>
           }
         }
       }`
-    const graphqlVars = { query: `type:file ${searchQuery}` }
+    const graphqlVars = { query: searchQuery }
 
-    const resp = await fetch('http://localhost:3080/.api/graphql?Search', {
+    const resp = await fetch('http://localhost:3080/.api/graphql?Search', { // TODO: hardcoded
         method: 'POST',
         mode: 'cors',
         headers,
         body: `{"query": ${JSON.stringify(graphqlQuery)}, "variables": ${JSON.stringify(graphqlVars)}}`,
-        // body: '{"query": "query { currentUser { username } }"}',
     })
     const respObj = await resp.json()
-    // console.log('# resp', respObj)
-    // console.log('# respObj', respObj.data.search.results.results)
+    console.log('respObj', respObj)
     const results = []
     for (const result of respObj.data.search.results.results) {
+        for (const sym of result.symbols) {
+            results.push({
+                repo: result.repository.name,
+                file: sym.location.resource.path,
+                start: {
+                    line: sym.location.range.start.line,
+                    character: sym.location.range.start.character,
+                },
+                end: {
+                    line: sym.location.range.end.line,
+                    character: sym.location.range.end.character,
+                },
+            })
+        }
         for (const lineMatch of result.lineMatches) {
             for (const offsetAndLength of lineMatch.offsetAndLengths) {
                 results.push({

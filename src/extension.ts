@@ -35,7 +35,6 @@ function register(connection: Connection): void {
     connection.onNotification(
         'textDocument/didOpen',
         (params: DidOpenTextDocumentParams): void => {
-            console.log('params', params)
             fileContents.set(params.textDocument.uri, params.textDocument.text)
         }
     )
@@ -68,7 +67,12 @@ function register(connection: Connection): void {
             }
             const token = line.substring(start, end)
 
-            const results = await fetchSearchResults(`type:file ${token}`)
+            const symbolResults = fetchSearchResults(`type:symbol case:yes ${token}`)
+            const textResults = fetchSearchResults(`type:file case:yes ${token}`)
+            let results = await symbolResults
+            if (results.length === 0) {
+                results = await textResults
+            }
             return results.map(resultToLocation)
         }
     )
