@@ -21,7 +21,7 @@ const identCharPattern = /[A-Za-z0-9_]/
  * authToken is the access token used to authenticate to the Sourcegraph API. This will be set in the
  * initialize handler.
  */
-let authToken = ''
+let authToken: string = ''
 
 /**
  * fileExtSets describe file extension sets that may contain references to one another.
@@ -94,10 +94,10 @@ function resultToLocation(res: Result): Location {
 function getAuthToken(params: InitializeParams): string {
     try {
         const extCfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
-        if (!extCfg.sourcegraphEndpoint) {
+        if (!extCfg.sourcegraphEndpoint.token || typeof(extCfg.sourcegraphEndpoint.token) != 'string') {
             throw new Error()
         }
-        return extCfg.sourcegraphEndpoint
+        return extCfg.sourcegraphEndpoint.token
     } catch (e) {
         const err = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
         console.error(err)

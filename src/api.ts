@@ -19,7 +19,7 @@ export interface Result {
  */
 export async function fetchSearchResults(token: string, searchQuery: string): Promise<Result[]> {
     const headers = new Headers()
-    headers.append('Authorization', `token 6829f551c841f63f68be1b94405b3ca438fba994`)
+    headers.append('Authorization', `token ${token}`)
     const graphqlQuery = `query Search($query: String!) {
         search(query: $query) {
           results {
