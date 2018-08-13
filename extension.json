@@ -19,6 +19,10 @@
             "token": {
               "description": "The API token for the Sourcegraph instance.",
               "type": "string"
+            },
+            "symbols": {
+              "description": "Prefer to use symbol search for go-to-definition. This is generally slower, but more accurate for definitions.",
+              "type": "boolean"
             }
           }
         }

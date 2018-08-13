@@ -21,7 +21,7 @@ const identCharPattern = /[A-Za-z0-9_]/
  * authToken is the access token used to authenticate to the Sourcegraph API. This will be set in the
  * initialize handler.
  */
-let authToken: string = ''
+let configuration: Config;
 
 /**
  * fileExtSets describe file extension sets that may contain references to one another.
@@ -88,27 +88,53 @@ function resultToLocation(res: Result): Location {
 }
 
 /**
+ * Configuration for this extension.
+ */
+interface Config {
+    token: string
+    symbols: boolean
+}
+
+/**
  * getAuthToken extracts the Sourcegraph auth token from the merged settings received in
  * initialize params. Throws an error if the token is not present.
  */
-function getAuthToken(params: InitializeParams): string {
+function getConfig(params: InitializeParams): Config {
+    const authTokErr = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
+    let extCfg;
     try {
-        const extCfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
+        extCfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
+    } catch(e) {
+        throw new Error(authTokErr)
+    }
+
+    let token: string
+    try {
         if (!extCfg.sourcegraphEndpoint.token || typeof(extCfg.sourcegraphEndpoint.token) != 'string') {
             throw new Error()
         }
-        return extCfg.sourcegraphEndpoint.token
+        token =  extCfg.sourcegraphEndpoint.token
     } catch (e) {
-        const err = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
-        console.error(err)
-        throw new Error(err)
+        throw new Error(authTokErr)
+    }
+
+    let symbols: boolean
+    try {
+        symbols = extCfg.sourcegraphEndpoint.symbols
+    } catch(e) {
+        symbols = false
+    }
+
+    return {
+        token: token,
+        symbols: symbols,
     }
 }
 
 function register(connection: Connection): void {
     connection.onInitialize(
         params => {
-            authToken = getAuthToken(params)
+            configuration = getConfig(params)
             return {
                 capabilities: {
                     definitionProvider: true,
@@ -155,13 +181,17 @@ function register(connection: Connection): void {
             }
             const searchToken = line.substring(start, end)
 
-            const symbolResults = fetchSearchResults(authToken, `type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
-            const textResults = fetchSearchResults(authToken, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
-            let results = await symbolResults
-            if (results.length === 0) {
-                results = await textResults
+            if (configuration.symbols) {
+                const symbolResults = fetchSearchResults(configuration.token, `type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
+                const textResults = fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
+                let results = await symbolResults
+                if (results.length === 0) {
+                    results = await textResults
+                }
+                return results.map(resultToLocation)
+            } else {
+                return (await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)).map(resultToLocation)
             }
-            return results.map(resultToLocation)
         }
     )
 
@@ -193,7 +223,7 @@ function register(connection: Connection): void {
             }
             const searchToken = line.substring(start, end)
 
-            const results = await fetchSearchResults(authToken, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
+            const results = await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
             return results.map(resultToLocation)
         }
     )
