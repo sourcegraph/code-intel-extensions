@@ -182,15 +182,15 @@ function register(connection: Connection): void {
             const searchToken = line.substring(start, end)
 
             if (configuration.symbols) {
-                const symbolResults = fetchSearchResults(configuration.token, `type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
-                const textResults = fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
+                const symbolResults = fetchSearchResults(configuration.token, `type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)
+                const textResults = fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)
                 let results = await symbolResults
                 if (results.length === 0) {
                     results = await textResults
                 }
                 return results.map(resultToLocation)
             } else {
-                return (await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)).map(resultToLocation)
+                return (await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)).map(resultToLocation)
             }
         }
     )
@@ -223,7 +223,7 @@ function register(connection: Connection): void {
             }
             const searchToken = line.substring(start, end)
 
-            const results = await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} ${searchToken}`)
+            const results = await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)
             return results.map(resultToLocation)
         }
     )
