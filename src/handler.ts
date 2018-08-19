@@ -1,4 +1,8 @@
-import { TextDocumentPositionParams, ReferenceParams, InitializeParams } from 'cxp/module/protocol'
+import {
+    TextDocumentPositionParams,
+    ReferenceParams,
+    InitializeParams,
+} from 'cxp/module/protocol'
 import { DidOpenTextDocumentParams } from 'cxp/module/protocol/textDocument'
 import { API, Result } from './api'
 import { Location } from 'vscode-languageserver-types'
@@ -62,7 +66,13 @@ function fileExtTerm(sourceFile: string): string {
 /**
  * makeQuery returns the search query to use for a given set of options.
  */
-function makeQuery(searchToken: string, symbols: boolean, currentFileUri: string, local: boolean, nonLocal: boolean): string {
+function makeQuery(
+    searchToken: string,
+    symbols: boolean,
+    currentFileUri: string,
+    local: boolean,
+    nonLocal: boolean
+): string {
     const terms = [`\\b${searchToken}\\b`, 'case:yes']
     terms.push(fileExtTerm(currentFileUri))
     if (symbols) {
@@ -70,7 +80,7 @@ function makeQuery(searchToken: string, symbols: boolean, currentFileUri: string
     } else {
         terms.push('type:file')
     }
-    const {repo, version} = parseUri(currentFileUri)
+    const { repo, version } = parseUri(currentFileUri)
     if (local) {
         terms.push(`repo:^${repo}$@${version}`)
     }
@@ -80,7 +90,9 @@ function makeQuery(searchToken: string, symbols: boolean, currentFileUri: string
     return terms.join(' ')
 }
 
-function parseUri(uri: string): { repo: string, version: string, path: string } {
+function parseUri(
+    uri: string
+): { repo: string; version: string; path: string } {
     if (!uri.startsWith('git://')) {
         throw new Error('unexpected uri format: ' + uri)
     }
@@ -127,9 +139,9 @@ export interface Config {
     sourcegraphToken: string
     definition: {
         symbols: 'no' | 'local' | 'yes'
-    },
+    }
     debug: {
-        traceSearch: boolean,
+        traceSearch: boolean
     }
 }
 
@@ -138,11 +150,13 @@ export interface Config {
  * initialize params. Throws an error if the token is not present.
  */
 function getConfig(params: InitializeParams): Config {
-    const authTokErr = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
+    const authTokErr =
+        'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
     let cfg: Config
     try {
-        cfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
-    } catch(e) {
+        cfg =
+            params.initializationOptions.settings.merged['cx-basic-code-intel']
+    } catch (e) {
         throw new Error(authTokErr)
     }
 
@@ -177,7 +191,10 @@ export class Handler {
 
     constructor(params: InitializeParams) {
         this.config = getConfig(params)
-        this.api = new API(this.config.sourcegraphToken, this.config.debug.traceSearch)
+        this.api = new API(
+            this.config.sourcegraphToken,
+            this.config.debug.traceSearch
+        )
         this.fileContents = new Map<string, string>()
     }
 
@@ -186,7 +203,9 @@ export class Handler {
         this.fileContents.set(params.textDocument.uri, params.textDocument.text)
     }
 
-    async definition(params: TextDocumentPositionParams): Promise<Location | Location[] | null> {
+    async definition(
+        params: TextDocumentPositionParams
+    ): Promise<Location | Location[] | null> {
         const contents = this.fileContents.get(params.textDocument.uri)
         if (!contents) {
             throw new Error('did not fetch file contents')
@@ -214,15 +233,39 @@ export class Handler {
 
         const symbolsOp = this.config.definition.symbols
         if (symbolsOp === 'yes' || symbolsOp === 'local') {
-            const symbolResults = this.api.search(makeQuery(searchToken, true, params.textDocument.uri, symbolsOp === 'local', false))
-            const textResults = this.api.search(makeQuery(searchToken, false, params.textDocument.uri, false, false))
+            const symbolResults = this.api.search(
+                makeQuery(
+                    searchToken,
+                    true,
+                    params.textDocument.uri,
+                    symbolsOp === 'local',
+                    false
+                )
+            )
+            const textResults = this.api.search(
+                makeQuery(
+                    searchToken,
+                    false,
+                    params.textDocument.uri,
+                    false,
+                    false
+                )
+            )
             let results = await symbolResults
             if (results.length === 0) {
                 results = await textResults
             }
             return results.map(resultToLocation)
         } else {
-            return (await this.api.search(makeQuery(searchToken, false, params.textDocument.uri, false, false))).map(resultToLocation)
+            return (await this.api.search(
+                makeQuery(
+                    searchToken,
+                    false,
+                    params.textDocument.uri,
+                    false,
+                    false
+                )
+            )).map(resultToLocation)
         }
     }
 
@@ -252,10 +295,17 @@ export class Handler {
         }
         const searchToken = line.substring(start, end)
 
-        const localResultsPromise = this.api.search(makeQuery(searchToken, false, params.textDocument.uri, true, false))
-        const nonLocalResultsPromise = this.api.search(makeQuery(searchToken, false, params.textDocument.uri, false, true))
+        const localResultsPromise = this.api.search(
+            makeQuery(searchToken, false, params.textDocument.uri, true, false)
+        )
+        const nonLocalResultsPromise = this.api.search(
+            makeQuery(searchToken, false, params.textDocument.uri, false, true)
+        )
 
         const results: Result[] = []
-        return results.concat(await localResultsPromise).concat(await nonLocalResultsPromise).map(resultToLocation)
+        return results
+            .concat(await localResultsPromise)
+            .concat(await nonLocalResultsPromise)
+            .map(resultToLocation)
     }
 }

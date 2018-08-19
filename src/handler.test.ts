@@ -10,57 +10,71 @@ interface ConfigTest {
 
 describe('config tests', () => {
     it('makes correct config', () => {
-        const tests: ConfigTest[] = [{
-            input: {
-                sourcegraphToken: 'TOKEN',
-                definition: {
-                    symbols: 'local',
+        const tests: ConfigTest[] = [
+            {
+                input: {
+                    sourcegraphToken: 'TOKEN',
+                    definition: {
+                        symbols: 'local',
+                    },
+                    debug: {
+                        traceSearch: true,
+                    },
                 },
-                debug: {
-                    traceSearch: true,
+                expConfig: {
+                    sourcegraphToken: 'TOKEN',
+                    definition: {
+                        symbols: 'local',
+                    },
+                    debug: {
+                        traceSearch: true,
+                    },
                 },
             },
-            expConfig: {
-                sourcegraphToken: 'TOKEN',
-                definition: {
-                    symbols: 'local',
+            {
+                input: {
+                    sourcegraphToken: 'TOKEN',
                 },
-                debug: {
-                    traceSearch: true,
+                expConfig: {
+                    sourcegraphToken: 'TOKEN',
+                    definition: {
+                        symbols: 'no',
+                    },
+                    debug: {
+                        traceSearch: false,
+                    },
                 },
-            }
-        }, {
-            input: {
-                sourcegraphToken: 'TOKEN',
             },
-            expConfig: {
-                sourcegraphToken: 'TOKEN',
-                definition: {
-                    symbols: 'no',
-                },
-                debug: {
-                    traceSearch: false,
-                },
-            }            
-        }]
+        ]
 
         for (const test of tests) {
             const h = new Handler({
                 root: null,
                 capabilities: {},
                 workspaceFolders: [],
-                initializationOptions: { settings: { merged: {
-                    'cx-basic-code-intel': test.input
-                }}},
+                initializationOptions: {
+                    settings: {
+                        merged: {
+                            'cx-basic-code-intel': test.input,
+                        },
+                    },
+                },
             })
             assert.deepStrictEqual(test.expConfig, h.config)
         }
     })
-    it('requires auth token in config', () => { 
-        const initOps = {settings: {merged: { 'cx-basic-code-intel': null }}}
+    it('requires auth token in config', () => {
+        const initOps = {
+            settings: { merged: { 'cx-basic-code-intel': null } },
+        }
         let gotErr = false
         try {
-            new Handler({ root: null, capabilities: {}, workspaceFolders: [], initializationOptions: initOps })
+            new Handler({
+                root: null,
+                capabilities: {},
+                workspaceFolders: [],
+                initializationOptions: initOps,
+            })
         } catch (err) {
             gotErr = true
         }
@@ -79,56 +93,77 @@ interface SearchTest {
 
 describe('search requests', () => {
     it('makes correct search requests for goto definition', async () => {
-        const tests: SearchTest[] = [{
-            symbols: 'no',
-            fileContents: new Map<string, string>([
-                ['git://github.com/foo/bar?rev#file.c', `token`]
-            ]),
-            reqPositions: [
-                { textDocument: { uri: 'git://github.com/foo/bar?rev#file.c' }, position: { line: 0, character: 0 }},
-            ],
-            expSearchQueries: [
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file",
-            ],
-        }, {
-            symbols: 'yes',
-            fileContents: new Map<string, string>([
-                ['git://github.com/foo/bar?rev#file.c', `token`]
-            ]),
-            reqPositions: [
-                { textDocument: { uri: 'git://github.com/foo/bar?rev#file.c' }, position: { line: 0, character: 0 }},
-            ],
-            expSearchQueries: [
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:symbol",
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file",
-            ],
-        }, {
-            symbols: 'local',
-            fileContents: new Map<string, string>([
-                ['git://github.com/foo/bar?rev#file.c', `token`]
-            ]),
-            reqPositions: [
-                { textDocument: { uri: 'git://github.com/foo/bar?rev#file.c' }, position: { line: 0, character: 0 }},
-            ],
-            expSearchQueries: [
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:symbol repo:^github.com/foo/bar$@rev",
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file",
-            ],
-        }]
+        const tests: SearchTest[] = [
+            {
+                symbols: 'no',
+                fileContents: new Map<string, string>([
+                    ['git://github.com/foo/bar?rev#file.c', `token`],
+                ]),
+                reqPositions: [
+                    {
+                        textDocument: {
+                            uri: 'git://github.com/foo/bar?rev#file.c',
+                        },
+                        position: { line: 0, character: 0 },
+                    },
+                ],
+                expSearchQueries: [
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file',
+                ],
+            },
+            {
+                symbols: 'yes',
+                fileContents: new Map<string, string>([
+                    ['git://github.com/foo/bar?rev#file.c', `token`],
+                ]),
+                reqPositions: [
+                    {
+                        textDocument: {
+                            uri: 'git://github.com/foo/bar?rev#file.c',
+                        },
+                        position: { line: 0, character: 0 },
+                    },
+                ],
+                expSearchQueries: [
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:symbol',
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file',
+                ],
+            },
+            {
+                symbols: 'local',
+                fileContents: new Map<string, string>([
+                    ['git://github.com/foo/bar?rev#file.c', `token`],
+                ]),
+                reqPositions: [
+                    {
+                        textDocument: {
+                            uri: 'git://github.com/foo/bar?rev#file.c',
+                        },
+                        position: { line: 0, character: 0 },
+                    },
+                ],
+                expSearchQueries: [
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:symbol repo:^github.com/foo/bar$@rev',
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file',
+                ],
+            },
+        ]
 
         for (const test of tests) {
-            const h = new Handler({ 
-                root: null, capabilities: {}, workspaceFolders: [],
+            const h = new Handler({
+                root: null,
+                capabilities: {},
+                workspaceFolders: [],
                 initializationOptions: {
                     settings: {
-                         merged: { 
+                        merged: {
                             'cx-basic-code-intel': {
                                 sourcegraphToken: 'TOKEN',
                                 definition: { symbols: test.symbols },
-                            }
-                        }
-                    }
-                }
+                            },
+                        },
+                    },
+                },
             })
             h.fileContents = test.fileContents
             const searchQueries: string[] = []
@@ -144,32 +179,41 @@ describe('search requests', () => {
     })
 
     it('makes correct search requests for references', async () => {
-        const tests: SearchTest[] = [{
-            fileContents: new Map<string, string>([
-                ['git://github.com/foo/bar?rev#file.c', `token`]
-            ]),
-            reqPositions: [
-                { textDocument: { uri: 'git://github.com/foo/bar?rev#file.c' }, position: { line: 0, character: 0 }},
-            ],
-            expSearchQueries: [
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file repo:^github.com/foo/bar$@rev",
-                "\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file -repo:^github.com/foo/bar$",
-            ],
-        }]
+        const tests: SearchTest[] = [
+            {
+                fileContents: new Map<string, string>([
+                    ['git://github.com/foo/bar?rev#file.c', `token`],
+                ]),
+                reqPositions: [
+                    {
+                        textDocument: {
+                            uri: 'git://github.com/foo/bar?rev#file.c',
+                        },
+                        position: { line: 0, character: 0 },
+                    },
+                ],
+                expSearchQueries: [
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file repo:^github.com/foo/bar$@rev',
+                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file -repo:^github.com/foo/bar$',
+                ],
+            },
+        ]
 
         for (const test of tests) {
-            const h = new Handler({ 
-                root: null, capabilities: {}, workspaceFolders: [],
+            const h = new Handler({
+                root: null,
+                capabilities: {},
+                workspaceFolders: [],
                 initializationOptions: {
                     settings: {
-                         merged: { 
+                        merged: {
                             'cx-basic-code-intel': {
                                 sourcegraphToken: 'TOKEN',
                                 definition: { symbols: test.symbols },
-                            }
-                        }
-                    }
-                }
+                            },
+                        },
+                    },
+                },
             })
             h.fileContents = test.fileContents
             const searchQueries: string[] = []

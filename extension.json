@@ -34,7 +34,7 @@
           "properties": {
             "traceSearch": {
               "type": "boolean",
-              "description": "Trace Sourcegraph search API requests in the console.",
+              "description": "Trace Sourcegraph search API requests in the console."
             }
           }
         }

@@ -23,7 +23,9 @@ export class API {
      */
     async search(searchQuery: string): Promise<Result[]> {
         if (this.trace) {
-            console.log('%c' + 'Search', 'font-weight:bold;', { 'query': searchQuery })
+            console.log('%c' + 'Search', 'font-weight:bold;', {
+                query: searchQuery,
+            })
         }
 
         const headers = new Headers()
@@ -86,9 +88,11 @@ export class API {
             method: 'POST',
             mode: 'cors',
             headers,
-            body: `{"query": ${JSON.stringify(graphqlQuery)}, "variables": ${JSON.stringify(graphqlVars)}}`,
+            body: `{"query": ${JSON.stringify(
+                graphqlQuery
+            )}, "variables": ${JSON.stringify(graphqlVars)}}`,
         })
-        let respObj;
+        let respObj
         try {
             respObj = await resp.json()
         } catch (e) {
