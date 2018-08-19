@@ -1,17 +1,9 @@
 import { createWebWorkerMessageTransports, Worker } from  'cxp/module/jsonrpc2/transports/webWorker'
-import { InitializeResult, TextDocumentPositionParams, ReferenceParams,_InitializeParams, InitializeParams } from 'cxp/module/protocol'
+import { InitializeResult, TextDocumentPositionParams, ReferenceParams, InitializeParams } from 'cxp/module/protocol'
 import { DidOpenTextDocumentParams } from 'cxp/module/protocol/textDocument'
 import { Connection, createConnection } from 'cxp/module/server/server'
 import { Location } from 'vscode-languageserver-types'
-import { fetchSearchResults, Result } from './api'
-import * as conf from './conf'
-
-declare var self: Worker
-
-/**
- * fileContents caches file contents from textDocument/didOpen notifications
- */
-const fileContents = new Map<string, string>()
+import { API, fetchSearchResults, Result } from './api'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -69,11 +61,10 @@ function fileExtTerm(sourceFile: string): string {
     return ''
 }
 
-
 /**
  * makeQuery returns the search query to use for a given set of options.
  */
-export function makeQuery(searchToken: string, symbols: boolean, currentFileUri: string, local: boolean, nonLocal: boolean): string {
+function makeQuery(searchToken: string, symbols: boolean, currentFileUri: string, local: boolean, nonLocal: boolean): string {
     const terms = [`\\b${searchToken}\\b`, 'case:yes']
     terms.push(fileExtTerm(currentFileUri))
     if (symbols) {
@@ -118,12 +109,29 @@ function resultToLocation(res: Result): Location {
 }
 
 /**
+ * Configuration for this extension.
+ */
+export interface Config {
+    /**
+     * sourcegraphToken is the access token used to authenticate to the Sourcegraph API. This will be set in the
+     * initialize handler.
+     */
+    sourcegraphToken: string
+    definition: {
+        symbols: 'no' | 'local' | 'yes'
+    },
+    debug: {
+        traceSearch: boolean,
+    }
+}
+
+/**
  * getAuthToken extracts the Sourcegraph auth token from the merged settings received in
  * initialize params. Throws an error if the token is not present.
  */
-function getConfig(params: InitializeParams): conf.Config {
+function getConfig(params: InitializeParams): Config {
     const authTokErr = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
-    let cfg: conf.Config
+    let cfg: Config
     try {
         cfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
     } catch(e) {
@@ -143,10 +151,112 @@ function getConfig(params: InitializeParams): conf.Config {
     return cfg
 }
 
+class Handler {
+    /**
+     * config holds configuration for the CXP server.
+     */
+    config: Config
+
+    /**
+     * api holds a reference to a Sourcegraph API client.
+     */
+    api: API
+
+    /**
+     * fileContents caches file contents from textDocument/didOpen notifications.
+     */
+    fileContents: Map<string, string>
+
+    constructor(params: InitializeParams) {
+        this.config = getConfig(params)
+        this.api = new API(this.config.sourcegraphToken, this.config.debug.traceSearch)
+        this.fileContents = new Map<string, string>()
+    }
+
+    didOpen(params: DidOpenTextDocumentParams): void {
+        this.fileContents.clear()
+        this.fileContents.set(params.textDocument.uri, params.textDocument.text)
+    }
+
+    async definition(params: TextDocumentPositionParams): Promise<Location | Location[] | null> {
+        const contents = this.fileContents.get(params.textDocument.uri)
+        if (!contents) {
+            throw new Error('did not fetch file contents')
+        }
+        const lines = contents.split('\n')
+        const line = lines[params.position.line]
+        let end = line.length
+        for (let c = params.position.character; c < line.length; c++) {
+            if (!identCharPattern.test(line[c])) {
+                end = c
+                break
+            }
+        }
+        let start = 0
+        for (let c = params.position.character; c >= 0; c--) {
+            if (!identCharPattern.test(line[c])) {
+                start = c + 1
+                break
+            }
+        }
+        if (start >= end) {
+            return null
+        }
+        const searchToken = line.substring(start, end)
+
+        const symbolsOp = this.config.definition.symbols
+        if (symbolsOp === 'yes' || symbolsOp === 'local') {
+            const symbolResults = this.api.search(makeQuery(searchToken, true, params.textDocument.uri, symbolsOp === 'local', false))
+            const textResults = this.api.search(makeQuery(searchToken, false, params.textDocument.uri, false, false))
+            let results = await symbolResults
+            if (results.length === 0) {
+                results = await textResults
+            }
+            return results.map(resultToLocation)
+        } else {
+            return (await this.api.search(makeQuery(searchToken, false, params.textDocument.uri, false, false))).map(resultToLocation)
+        }
+    }
+
+    async references(params: ReferenceParams): Promise<Location[] | null> {
+        const contents = this.fileContents.get(params.textDocument.uri)
+        if (!contents) {
+            throw new Error('did not fetch file contents')
+        }
+        const lines = contents.split('\n')
+        const line = lines[params.position.line]
+        let end = line.length
+        for (let c = params.position.character; c < line.length; c++) {
+            if (!identCharPattern.test(line[c])) {
+                end = c
+                break
+            }
+        }
+        let start = 0
+        for (let c = params.position.character; c >= 0; c--) {
+            if (!identCharPattern.test(line[c])) {
+                start = c + 1
+                break
+            }
+        }
+        if (start >= end) {
+            return null
+        }
+        const searchToken = line.substring(start, end)
+
+        const localResultsPromise = this.api.search(makeQuery(searchToken, false, params.textDocument.uri, true, false))
+        const nonLocalResultsPromise = this.api.search(makeQuery(searchToken, false, params.textDocument.uri, false, true))
+
+        const results: Result[] = []
+        return results.concat(await localResultsPromise).concat(await nonLocalResultsPromise).map(resultToLocation)
+    }
+}
+
 function register(connection: Connection): void {
+    let h: Handler
     connection.onInitialize(
         params => {
-            conf.updateConfig(getConfig(params))
+            h = new Handler(params)
             return {
                 capabilities: {
                     definitionProvider: true,
@@ -156,95 +266,12 @@ function register(connection: Connection): void {
             } as InitializeResult
         }
     )
-
-    connection.onNotification(
-        'textDocument/didOpen',
-        (params: DidOpenTextDocumentParams): void => {
-            fileContents.clear()
-            fileContents.set(params.textDocument.uri, params.textDocument.text)
-        }
-    )
-
-    connection.onRequest(
-        'textDocument/definition',
-        async (params: TextDocumentPositionParams): Promise<Location | Location[] | null> => {
-            const contents = fileContents.get(params.textDocument.uri)
-            if (!contents) {
-                throw new Error('did not fetch file contents')
-            }
-            const lines = contents.split('\n')
-            const line = lines[params.position.line]
-            let end = line.length
-            for (let c = params.position.character; c < line.length; c++) {
-                if (!identCharPattern.test(line[c])) {
-                    end = c
-                    break
-                }
-            }
-            let start = 0
-            for (let c = params.position.character; c >= 0; c--) {
-                if (!identCharPattern.test(line[c])) {
-                    start = c + 1
-                    break
-                }
-            }
-            if (start >= end) {
-                return null
-            }
-            const searchToken = line.substring(start, end)
-
-            const symbolsOp = conf.config.definition.symbols
-            if (symbolsOp === 'yes' || symbolsOp === 'local') {
-                const symbolResults = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, true, params.textDocument.uri, symbolsOp === 'local', false))
-                const textResults = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, false, false))
-                let results = await symbolResults
-                if (results.length === 0) {
-                    results = await textResults
-                }
-                return results.map(resultToLocation)
-            } else {
-                return (await fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, false, false))).map(resultToLocation)
-            }
-        }
-    )
-
-    connection.onRequest(
-        'textDocument/references',
-        async (params: ReferenceParams): Promise<Location[] | null> => {
-            const contents = fileContents.get(params.textDocument.uri)
-            if (!contents) {
-                throw new Error('did not fetch file contents')
-            }
-            const lines = contents.split('\n')
-            const line = lines[params.position.line]
-            let end = line.length
-            for (let c = params.position.character; c < line.length; c++) {
-                if (!identCharPattern.test(line[c])) {
-                    end = c
-                    break
-                }
-            }
-            let start = 0
-            for (let c = params.position.character; c >= 0; c--) {
-                if (!identCharPattern.test(line[c])) {
-                    start = c + 1
-                    break
-                }
-            }
-            if (start >= end) {
-                return null
-            }
-            const searchToken = line.substring(start, end)
-
-            const localResultsPromise = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, true, false))
-            const nonLocalResultsPromise = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, false, true))
-
-            const results: Result[] = []
-            return results.concat(await localResultsPromise).concat(await nonLocalResultsPromise).map(resultToLocation)
-        }
-    )
+    connection.onNotification('textDocument/didOpen', params => h ? h.didOpen(params) : undefined)
+    connection.onRequest('textDocument/definition', params => h ? h.definition(params) : null)
+    connection.onRequest('textDocument/references', params => h ? h.references(params) : null)
 }
 
+declare var self: Worker
 const connection = createConnection(createWebWorkerMessageTransports(self))
 register(connection)
 connection.listen()
