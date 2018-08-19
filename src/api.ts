@@ -16,13 +16,13 @@ export interface Result {
 }
 
 export class API {
-    constructor(private token: string, private trace: boolean) {}
+    constructor(private token: string, private traceSearch: boolean) {}
 
     /**
      * search returns the list of results fetched from the Sourcegraph search API.
      */
     async search(searchQuery: string): Promise<Result[]> {
-        if (this.trace) {
+        if (this.traceSearch) {
             console.log('%c' + 'Search', 'font-weight:bold;', {
                 query: searchQuery,
             })
