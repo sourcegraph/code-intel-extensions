@@ -4,6 +4,7 @@ import { DidOpenTextDocumentParams } from 'cxp/module/protocol/textDocument'
 import { Connection, createConnection } from 'cxp/module/server/server'
 import { Location } from 'vscode-languageserver-types'
 import { fetchSearchResults, Result } from './api'
+import * as conf from './conf'
 
 declare var self: Worker
 
@@ -16,12 +17,6 @@ const fileContents = new Map<string, string>()
  * identCharPattern is used to match identifier tokens
  */
 const identCharPattern = /[A-Za-z0-9_]/
-
-/**
- * authToken is the access token used to authenticate to the Sourcegraph API. This will be set in the
- * initialize handler.
- */
-let configuration: Config;
 
 /**
  * fileExtSets describe file extension sets that may contain references to one another.
@@ -74,12 +69,47 @@ function fileExtTerm(sourceFile: string): string {
     return ''
 }
 
+
+/**
+ * makeQuery returns the search query to use for a given set of options.
+ */
+export function makeQuery(searchToken: string, symbols: boolean, currentFileUri: string, local: boolean, nonLocal: boolean): string {
+    const terms = [`\\b${searchToken}\\b`, 'case:yes']
+    terms.push(fileExtTerm(currentFileUri))
+    if (symbols) {
+        terms.push('type:symbol')
+    } else {
+        terms.push('type:file')
+    }
+    const {repo, version} = parseUri(currentFileUri)
+    if (local) {
+        terms.push(`repo:^${repo}$@${version}`)
+    }
+    if (nonLocal) {
+        terms.push(`-repo:^${repo}$`)
+    }
+    return terms.join(' ')
+}
+
+function parseUri(uri: string): { repo: string, version: string, path: string } {
+    const url = new URL(uri)
+    if (url.protocol !== 'git:' || !url.pathname.startsWith('//')) {
+        throw new Error('unexpected uri format: ' + uri)
+    }
+    return {
+        repo: url.pathname.substring(2),
+        version: url.search.substring(1),
+        path: url.hash.substring(1),
+    }
+}
+
 /**
  * resultToLocation maps a search result to a LSP Location instance.
  */
 function resultToLocation(res: Result): Location {
+    const rev = res.rev ? res.rev : 'HEAD'
     return {
-        uri: `git://${res.repo}?HEAD#${res.file}`,
+        uri: `git://${res.repo}?${rev}#${res.file}`,
         range: {
             start: res.start,
             end: res.end,
@@ -88,53 +118,35 @@ function resultToLocation(res: Result): Location {
 }
 
 /**
- * Configuration for this extension.
- */
-interface Config {
-    token: string
-    symbols: boolean
-}
-
-/**
  * getAuthToken extracts the Sourcegraph auth token from the merged settings received in
  * initialize params. Throws an error if the token is not present.
  */
-function getConfig(params: InitializeParams): Config {
+function getConfig(params: InitializeParams): conf.Config {
     const authTokErr = 'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
-    let extCfg;
+    let cfg: conf.Config
     try {
-        extCfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
+        cfg = params.initializationOptions.settings.merged['cx-basic-code-intel']
     } catch(e) {
         throw new Error(authTokErr)
     }
 
-    let token: string
-    try {
-        if (!extCfg.sourcegraphEndpoint.token || typeof(extCfg.sourcegraphEndpoint.token) != 'string') {
-            throw new Error()
-        }
-        token =  extCfg.sourcegraphEndpoint.token
-    } catch (e) {
+    // Defaults
+    if (!cfg.sourcegraphToken) {
         throw new Error(authTokErr)
     }
-
-    let symbols: boolean
-    try {
-        symbols = extCfg.sourcegraphEndpoint.symbols
-    } catch(e) {
-        symbols = false
+    if (!cfg.definition || !cfg.definition.symbols) {
+        cfg.definition = { symbols: 'no' }
     }
-
-    return {
-        token: token,
-        symbols: symbols,
+    if (!cfg.debug) {
+        cfg.debug = { traceSearch: false }
     }
+    return cfg
 }
 
 function register(connection: Connection): void {
     connection.onInitialize(
         params => {
-            configuration = getConfig(params)
+            conf.updateConfig(getConfig(params))
             return {
                 capabilities: {
                     definitionProvider: true,
@@ -181,16 +193,17 @@ function register(connection: Connection): void {
             }
             const searchToken = line.substring(start, end)
 
-            if (configuration.symbols) {
-                const symbolResults = fetchSearchResults(configuration.token, `type:symbol case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)
-                const textResults = fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)
+            const symbolsOp = conf.config.definition.symbols
+            if (symbolsOp === 'yes' || symbolsOp === 'local') {
+                const symbolResults = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, true, params.textDocument.uri, symbolsOp === 'local', false))
+                const textResults = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, false, false))
                 let results = await symbolResults
                 if (results.length === 0) {
                     results = await textResults
                 }
                 return results.map(resultToLocation)
             } else {
-                return (await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)).map(resultToLocation)
+                return (await fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, false, false))).map(resultToLocation)
             }
         }
     )
@@ -223,8 +236,11 @@ function register(connection: Connection): void {
             }
             const searchToken = line.substring(start, end)
 
-            const results = await fetchSearchResults(configuration.token, `type:file case:yes ${fileExtTerm(params.textDocument.uri)} \\b${searchToken}\\b`)
-            return results.map(resultToLocation)
+            const localResultsPromise = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, true, false))
+            const nonLocalResultsPromise = fetchSearchResults(conf.config.sourcegraphToken, makeQuery(searchToken, false, params.textDocument.uri, false, true))
+
+            const results: Result[] = []
+            return results.concat(await localResultsPromise).concat(await nonLocalResultsPromise).map(resultToLocation)
         }
     )
 }

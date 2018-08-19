@@ -1,8 +1,11 @@
+import * as conf from './conf'
+
 /**
  * Result represents a search result returned from the Sourcegraph API.
  */
 export interface Result {
     repo: string
+    rev: string
     file: string
     start: {
         line: number
@@ -18,6 +21,10 @@ export interface Result {
  * fetchSearchResults returns the list of results fetched from the Sourcegraph search API.
  */
 export async function fetchSearchResults(token: string, searchQuery: string): Promise<Result[]> {
+    if (conf.config.debug.traceSearch) {
+        console.log('%c' + 'Search', 'font-weight:bold;', { 'query': searchQuery })
+    }
+
     const headers = new Headers()
     headers.append('Authorization', `token ${token}`)
     const graphqlQuery = `query Search($query: String!) {
@@ -92,6 +99,7 @@ export async function fetchSearchResults(token: string, searchQuery: string): Pr
         for (const sym of result.symbols) {
             results.push({
                 repo: result.repository.name,
+                rev: result.file.commit.oid,
                 file: sym.location.resource.path,
                 start: {
                     line: sym.location.range.start.line,
@@ -107,6 +115,7 @@ export async function fetchSearchResults(token: string, searchQuery: string): Pr
             for (const offsetAndLength of lineMatch.offsetAndLengths) {
                 results.push({
                     repo: result.repository.name,
+                    rev: result.file.commit.oid,
                     file: result.file.path,
                     start: {
                         line: lineMatch.lineNumber,

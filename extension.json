@@ -9,20 +9,32 @@
   "contributes": {
     "configuration": {
       "title": "Basic code intelligence settings",
+      "required": ["sourcegraphToken"],
       "properties": {
-        "sourcegraphEndpoint": {
-          "description": "The Sourcegraph API endpoint to use to make code intelligence queries",
+        "sourcegraphToken": {
+          "description": "The API token for the Sourcegraph instance.",
+          "type": "string"
+        },
+        "definition": {
           "type": "object",
-          "required": ["token"],
+          "description": "Options for goto definition.",
           "additionalProperties": false,
           "properties": {
-            "token": {
-              "description": "The API token for the Sourcegraph instance.",
-              "type": "string"
-            },
             "symbols": {
-              "description": "Prefer to use symbol search for go-to-definition. This is generally slower, but more accurate for definitions.",
-              "type": "boolean"
+              "type": "string",
+              "description": "Whether to use symbol search to complete goto definition requests. 'Local' means issue a symbol search locally and if none are found, fall back to text search globally.",
+              "enum": ["no", "local", "yes"]
+            }
+          }
+        },
+        "debug": {
+          "type": "object",
+          "description": "Debug options.",
+          "additionalProperties": false,
+          "properties": {
+            "traceSearch": {
+              "type": "boolean",
+              "description": "Trace Sourcegraph search API requests in the console.",
             }
           }
         }
