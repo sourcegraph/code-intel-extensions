@@ -155,7 +155,7 @@ function getConfig(params: InitializeParams): Config {
     let cfg: Config
     try {
         cfg =
-            params.initializationOptions.settings.merged['cx-basic-code-intel']
+            (params as any).configurationCascade.merged['cx-basic-code-intel']
     } catch (e) {
         throw new Error(authTokErr)
     }
