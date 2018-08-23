@@ -192,8 +192,8 @@ export class Handler {
     constructor(params: InitializeParams) {
         this.config = getConfig(params)
         this.api = new API(
+            this.config.debug.traceSearch,
             this.config.sourcegraphToken,
-            this.config.debug.traceSearch
         )
         this.fileContents = new Map<string, string>()
     }
