@@ -151,7 +151,7 @@ export interface Config {
  */
 function getConfig(params: InitializeParams): Config {
     const authTokErr =
-        'could not read Sourcegraph auth token from initialize params. Did you add an auth token in user settings?'
+        'Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "cx-basic-code-intel": { "sourcegraphToken": "${AUTH_TOKEN}" } }'
     let cfg: Config
     try {
         cfg =

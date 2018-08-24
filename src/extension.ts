@@ -2,14 +2,31 @@ import {
     createWebWorkerMessageTransports,
     Worker,
 } from 'cxp/module/jsonrpc2/transports/webWorker'
-import { InitializeResult } from 'cxp/module/protocol'
+import { MessageType, InitializeResult, ShowMessageNotification, ShowMessageParams } from 'cxp/module/protocol'
 import { Connection, createConnection } from 'cxp/module/server/server'
 import { Handler } from './handler'
 
 function register(connection: Connection): void {
-    let h: Handler
+    // Either h or initError must be defined after initialization
+    let h: Handler, initErr: Error
+
+    const showErr = (connection: Connection): Promise<null> => {
+        if (!initErr) {
+            throw new Error('Initialization failed, but initErr is undefined')
+        }
+        connection.sendNotification(ShowMessageNotification.type, {
+            type: MessageType.Error,
+            message: initErr.toString(),
+        } as ShowMessageParams)
+        return Promise.resolve(null)
+    }
+
     connection.onInitialize(params => {
-        h = new Handler(params)
+        try {
+            h = new Handler(params)
+        } catch (e) {
+            initErr = e
+        }
         return {
             capabilities: {
                 definitionProvider: true,
@@ -20,7 +37,7 @@ function register(connection: Connection): void {
     })
     connection.onNotification(
         'textDocument/didOpen',
-        params => (h ? h.didOpen(params) : undefined)
+        params => (h ? h.didOpen(params) : showErr(connection))
     )
     connection.onRequest(
         'textDocument/definition',
