@@ -1,6 +1,55 @@
 {
   "name": "cx-basic-code-intel",
+  "publisher": "beyang",
   "version": "0.0.0-development",
+
+  "title": "Basic code intelligence",
+  "description": "Provides basic code intelligence for all languages using the Sourcegraph search API",
+  "url": "https://storage.googleapis.com/sourcegraph-cx-dev/cx-basic-code-intel.js",
+  "activationEvents": ["*"],
+  "contributes": {
+    "configuration": {
+      "title": "Basic code intelligence settings",
+      "required": ["sourcegraphToken"],
+      "properties": {
+        "cx-basic-code-intel": {
+          "type": "object",
+          "description": "Options for basic code intelligence extension",
+          "additionalProperties": false,
+          "properties": {
+            "sourcegraphToken": {
+              "description": "The API token for the Sourcegraph instance.",
+              "type": "string"
+            },
+            "definition": {
+              "type": "object",
+              "description": "Options for goto definition.",
+              "additionalProperties": false,
+              "properties": {
+                "symbols": {
+                  "type": "string",
+                  "description": "Whether to use symbol search to complete goto definition requests. 'Local' means issue a symbol search locally and if none are found, fall back to text search globally.",
+                  "enum": ["no", "local", "yes"]
+                }
+              }
+            },
+            "debug": {
+              "type": "object",
+              "description": "Debug options.",
+              "additionalProperties": false,
+              "properties": {
+                "traceSearch": {
+                  "type": "boolean",
+                  "description": "Trace Sourcegraph search API requests in the console."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
   "description": "A CXP extension that provides basic jump-to-def and find-refs functionality using the Sourcegraph search API",
   "license": "MIT",
   "main": "lib/extension.js",
