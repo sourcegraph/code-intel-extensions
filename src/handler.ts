@@ -152,7 +152,7 @@ export interface Config {
 function getConfig(params: InitializeParams): Config {
     const p = params as any
     if (!p.configurationCascade || !p.configurationCascade.merged || !p.configurationCascade.merged['basicCodeIntel.sourcegraphToken']) {
-        throw new Error('Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "cx-basic-code-intel": { "sourcegraphToken": "${AUTH_TOKEN}" } }')
+        throw new Error('Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "basicCodeIntel.sourcegraphToken": "${AUTH_TOKEN}" }')
     }
     const c = p.configurationCascade.merged
     return {
