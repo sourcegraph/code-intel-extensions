@@ -13,13 +13,9 @@ describe('config tests', () => {
         const tests: ConfigTest[] = [
             {
                 input: {
-                    sourcegraphToken: 'TOKEN',
-                    definition: {
-                        symbols: 'local',
-                    },
-                    debug: {
-                        traceSearch: true,
-                    },
+                    'basicCodeIntel.sourcegraphToken': 'TOKEN',
+                    'basicCodeIntel.definition.symbols': 'local',
+                    'basicCodeIntel.debug.traceSearch': true,
                 },
                 expConfig: {
                     sourcegraphToken: 'TOKEN',
@@ -33,7 +29,7 @@ describe('config tests', () => {
             },
             {
                 input: {
-                    sourcegraphToken: 'TOKEN',
+                    'basicCodeIntel.sourcegraphToken': 'TOKEN',
                 },
                 expConfig: {
                     sourcegraphToken: 'TOKEN',
@@ -52,28 +48,20 @@ describe('config tests', () => {
                 root: null,
                 capabilities: {},
                 workspaceFolders: [],
-                initializationOptions: {
-                    settings: {
-                        merged: {
-                            'cx-basic-code-intel': test.input,
-                        },
-                    },
+                configurationCascade: {
+                    merged: { ...test.input },
                 },
             })
             assert.deepStrictEqual(test.expConfig, h.config)
         }
     })
     it('requires auth token in config', () => {
-        const initOps = {
-            settings: { merged: { 'cx-basic-code-intel': null } },
-        }
         let gotErr = false
         try {
             new Handler({
                 root: null,
                 capabilities: {},
                 workspaceFolders: [],
-                initializationOptions: initOps,
             })
         } catch (err) {
             gotErr = true
@@ -154,14 +142,10 @@ describe('search requests', () => {
                 root: null,
                 capabilities: {},
                 workspaceFolders: [],
-                initializationOptions: {
-                    settings: {
-                        merged: {
-                            'cx-basic-code-intel': {
-                                sourcegraphToken: 'TOKEN',
-                                definition: { symbols: test.symbols },
-                            },
-                        },
+                configurationCascade: {
+                    merged: {
+                        'basicCodeIntel.sourcegraphToken': 'TOKEN',
+                        'basicCodeIntel.definition.symbols': test.symbols,
                     },
                 },
             })
@@ -204,14 +188,10 @@ describe('search requests', () => {
                 root: null,
                 capabilities: {},
                 workspaceFolders: [],
-                initializationOptions: {
-                    settings: {
-                        merged: {
-                            'cx-basic-code-intel': {
-                                sourcegraphToken: 'TOKEN',
-                                definition: { symbols: test.symbols },
-                            },
-                        },
+                configurationCascade: {
+                    merged: {
+                        'basicCodeIntel.sourcegraphToken': 'TOKEN',
+                        'basicCodeIntel.definition.symbols': test.symbols,
                     },
                 },
             })

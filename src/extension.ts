@@ -2,7 +2,12 @@ import {
     createWebWorkerMessageTransports,
     Worker,
 } from 'cxp/module/jsonrpc2/transports/webWorker'
-import { MessageType, InitializeResult, ShowMessageNotification, ShowMessageParams } from 'cxp/module/protocol'
+import {
+    MessageType,
+    InitializeResult,
+    ShowMessageNotification,
+    ShowMessageParams,
+} from 'cxp/module/protocol'
 import { Connection, createConnection } from 'cxp/module/server/server'
 import { Handler } from './handler'
 

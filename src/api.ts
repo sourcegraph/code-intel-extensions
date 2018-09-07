@@ -19,23 +19,31 @@ export class API {
     private browserIncludesCookie: Promise<boolean>
 
     constructor(private traceSearch: boolean, private token: string) {
-        this.browserIncludesCookie = this.search("test", true).then((res) => {
-            if (traceSearch) {
-                console.log('Detected browser includes session cookie')
+        this.browserIncludesCookie = this.search('test', true).then(
+            res => {
+                if (traceSearch) {
+                    console.log('Detected browser includes session cookie')
+                }
+                return true
+            },
+            reason => {
+                if (traceSearch) {
+                    console.log(
+                        'Detected browser does not include session cookie'
+                    )
+                }
+                return false
             }
-            return true
-        }, (reason) => {
-            if (traceSearch) {
-                console.log('Detected browser does not include session cookie')
-            }
-            return false
-        })
+        )
     }
 
     /**
      * search returns the list of results fetched from the Sourcegraph search API.
      */
-    async search(searchQuery: string, noAuthToken?: boolean): Promise<Result[]> {
+    async search(
+        searchQuery: string,
+        noAuthToken?: boolean
+    ): Promise<Result[]> {
         if (this.traceSearch) {
             console.log('%c' + 'Search', 'font-weight:bold;', {
                 query: searchQuery,
@@ -43,7 +51,8 @@ export class API {
         }
 
         const headers = new Headers()
-        const includeAuthTok = !noAuthToken && !await this.browserIncludesCookie
+        const includeAuthTok =
+            !noAuthToken && !(await this.browserIncludesCookie)
         if (includeAuthTok && this.token.length > 0) {
             headers.append('Authorization', `token ${this.token}`)
         }
@@ -110,7 +119,9 @@ export class API {
             )}, "variables": ${JSON.stringify(graphqlVars)}}`,
         })
         if (!resp.ok) {
-            throw new Error('Response error:' + resp.status + ' ' + resp.statusText);
+            throw new Error(
+                'Response error:' + resp.status + ' ' + resp.statusText
+            )
         }
         const respObj = await resp.json()
 
@@ -146,7 +157,8 @@ export class API {
                             },
                             end: {
                                 line: lineMatch.lineNumber,
-                                character: offsetAndLength[0] + offsetAndLength[1],
+                                character:
+                                    offsetAndLength[0] + offsetAndLength[1],
                             },
                         })
                     }

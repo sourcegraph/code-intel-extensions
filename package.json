@@ -5,11 +5,15 @@
   "title": "Basic code intelligence",
   "description": "Provides basic code intelligence for all languages using the Sourcegraph search API",
   "url": "https://storage.googleapis.com/sourcegraph-cx-dev/cx-basic-code-intel.js",
-  "activationEvents": ["*"],
+  "activationEvents": [
+    "*"
+  ],
   "contributes": {
     "configuration": {
       "title": "Basic code intelligence settings",
-      "required": ["basicCodeIntel.sourcegraphToken"],
+      "required": [
+        "basicCodeIntel.sourcegraphToken"
+      ],
       "properties": {
         "basicCodeIntel.sourcegraphToken": {
           "description": "The API token for the Sourcegraph instance.",
@@ -18,7 +22,11 @@
         "basicCodeIntel.definition.symbols": {
           "type": "string",
           "description": "Whether to use symbol search to complete goto definition requests. 'Local' means issue a symbol search locally and if none are found, fall back to text search globally.",
-          "enum": ["no", "local", "yes"]
+          "enum": [
+            "no",
+            "local",
+            "yes"
+          ]
         },
         "basicCodeIntel.debug.traceSearch": {
           "type": "boolean",

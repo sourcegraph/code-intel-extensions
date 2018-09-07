@@ -149,16 +149,23 @@ export interface Config {
  * getAuthToken extracts the Sourcegraph auth token from the merged settings received in
  * initialize params. Throws an error if the token is not present.
  */
-function getConfig(params: InitializeParams): Config {
-    const p = params as any
-    if (!p.configurationCascade || !p.configurationCascade.merged || !p.configurationCascade.merged['basicCodeIntel.sourcegraphToken']) {
-        throw new Error('Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "basicCodeIntel.sourcegraphToken": "${AUTH_TOKEN}" }')
+function getConfig(
+    p: InitializeParams & { configurationCascade?: any }
+): Config {
+    if (
+        !p.configurationCascade ||
+        !p.configurationCascade.merged ||
+        !p.configurationCascade.merged['basicCodeIntel.sourcegraphToken']
+    ) {
+        throw new Error(
+            'Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "basicCodeIntel.sourcegraphToken": "${AUTH_TOKEN}" }'
+        )
     }
     const c = p.configurationCascade.merged
     return {
         sourcegraphToken: c['basicCodeIntel.sourcegraphToken'],
         definition: {
-            symbols: c[''] || 'no',
+            symbols: c['basicCodeIntel.definition.symbols'] || 'no',
         },
         debug: {
             traceSearch: c['basicCodeIntel.debug.traceSearch'] || false,
@@ -182,11 +189,11 @@ export class Handler {
      */
     fileContents: Map<string, string>
 
-    constructor(params: InitializeParams) {
+    constructor(params: InitializeParams & { configurationCascade?: any }) {
         this.config = getConfig(params)
         this.api = new API(
             this.config.debug.traceSearch,
-            this.config.sourcegraphToken,
+            this.config.sourcegraphToken
         )
         this.fileContents = new Map<string, string>()
     }
