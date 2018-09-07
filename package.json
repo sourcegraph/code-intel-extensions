@@ -4,7 +4,7 @@
   "version": "0.0.0-development",
   "title": "Basic code intelligence",
   "description": "Provides basic code intelligence for all languages using the Sourcegraph search API",
-  "url": "https://storage.googleapis.com/sourcegraph-cx-dev/cx-basic-code-intel.js",
+  "url": "https://storage.googleapis.com/sourcegraph-cx-dev/sourcegraph-basic-code-intel.js",
   "activationEvents": [
     "*"
   ],
@@ -44,8 +44,8 @@
     "prettier": "prettier '**/*.{js?(on),ts}' --write --list-different",
     "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "parcel build --no-minify --detailed-report --out-file cx-basic-code-intel.js src/extension.ts",
-    "serve": "parcel serve --no-hmr --out-file cx-basic-code-intel.js src/extension.ts",
+    "build": "parcel build --no-minify --detailed-report --out-file sourcegraph-basic-code-intel.js src/extension.ts",
+    "serve": "parcel serve --no-hmr --out-file sourcegraph-basic-code-intel.js src/extension.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
     "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
     "upload": "gsutil -h 'Cache-Control:private' cp -a public-read -r dist/* gs://sourcegraph-cx-dev/",
