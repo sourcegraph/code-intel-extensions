@@ -150,27 +150,20 @@ export interface Config {
  * initialize params. Throws an error if the token is not present.
  */
 function getConfig(params: InitializeParams): Config {
-    const authTokErr =
-        'Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "cx-basic-code-intel": { "sourcegraphToken": "${AUTH_TOKEN}" } }'
-    let cfg: Config
-    try {
-        cfg =
-            (params as any).configurationCascade.merged['cx-basic-code-intel']
-    } catch (e) {
-        throw new Error(authTokErr)
+    const p = params as any
+    if (!p.configurationCascade || !p.configurationCascade.merged || !p.configurationCascade.merged['basicCodeIntel.sourcegraphToken']) {
+        throw new Error('Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "cx-basic-code-intel": { "sourcegraphToken": "${AUTH_TOKEN}" } }')
     }
-
-    // Defaults
-    if (!cfg.sourcegraphToken) {
-        throw new Error(authTokErr)
+    const c = p.configurationCascade.merged
+    return {
+        sourcegraphToken: c['basicCodeIntel.sourcegraphToken'],
+        definition: {
+            symbols: c[''] || 'no',
+        },
+        debug: {
+            traceSearch: c['basicCodeIntel.debug.traceSearch'] || false,
+        },
     }
-    if (!cfg.definition || !cfg.definition.symbols) {
-        cfg.definition = { symbols: 'no' }
-    }
-    if (!cfg.debug) {
-        cfg.debug = { traceSearch: false }
-    }
-    return cfg
 }
 
 export class Handler {
