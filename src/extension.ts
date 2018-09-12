@@ -1,60 +1,45 @@
-import {
-    createWebWorkerMessageTransports,
-    Worker,
-} from 'cxp/module/jsonrpc2/transports/webWorker'
-import {
-    MessageType,
-    InitializeResult,
-    ShowMessageNotification,
-    ShowMessageParams,
-} from 'cxp/module/protocol'
-import { Connection, createConnection } from 'cxp/module/server/server'
-import { Handler } from './handler'
+import * as sourcegraph from 'sourcegraph'
+import { Handler, Config } from './handler'
 
-function register(connection: Connection): void {
-    // Either h or initError must be defined after initialization
-    let h: Handler, initErr: Error
+export async function activate(): Promise<void> {
+    const h = new Handler()
 
-    const showErr = (connection: Connection): Promise<null> => {
-        if (!initErr) {
-            throw new Error('Initialization failed, but initErr is undefined')
-        }
-        connection.sendNotification(ShowMessageNotification.type, {
-            type: MessageType.Error,
-            message: initErr.toString(),
-        } as ShowMessageParams)
-        return Promise.resolve(null)
-    }
+    sourcegraph.commands.registerCommand('basicCodeIntel.toggle', () => {
+        // Toggle between 2 states:
+        //
+        // Enabled: basicCodeIntel.enabled = true and extensions.langserver/* = false
+        //
+        // Disabled: basicCodeIntel.enabled = false and extensions.langserver/* = true
+        //
+        // These 2 states are not inverses of each other. Enabling and disabling basic code
+        // intel might enable or disable langserver extensions in a way that the user does not
+        // expect or desire.
+        const config = sourcegraph.configuration.get<
+            Config & { extensions: { [id: string]: boolean } }
+        >()
 
-    connection.onInitialize(params => {
-        try {
-            h = new Handler(params)
-        } catch (e) {
-            initErr = e
-        }
-        return {
-            capabilities: {
-                definitionProvider: true,
-                referencesProvider: true,
-                textDocumentSync: { openClose: true },
-            },
-        } as InitializeResult
+        const newEnabled = !config.get('basicCodeIntel.enabled')
+        config
+            .update('basicCodeIntel.enabled', newEnabled)
+            .then(async () => {
+                const extensions = { ...(config.get('extensions') || {}) }
+                for (const extensionID of Object.keys(extensions)) {
+                    if (
+                        extensionID.startsWith('langserver/') ||
+                        extensionID.includes('/langserver')
+                    ) {
+                        extensions[extensionID] = !newEnabled
+                    }
+                }
+                await config.update('extensions', extensions)
+            })
+            .catch(err => console.error(err))
     })
-    connection.onNotification(
-        'textDocument/didOpen',
-        params => (h ? h.didOpen(params) : showErr(connection))
-    )
-    connection.onRequest(
-        'textDocument/definition',
-        params => (h ? h.definition(params) : null)
-    )
-    connection.onRequest(
-        'textDocument/references',
-        params => (h ? h.references(params) : null)
-    )
-}
 
-declare var self: Worker
-const connection = createConnection(createWebWorkerMessageTransports(self))
-register(connection)
-connection.listen()
+    sourcegraph.languages.registerDefinitionProvider(['*'], {
+        provideDefinition: (doc, pos) => h.definition(doc, pos),
+    })
+    sourcegraph.languages.registerReferenceProvider(['*'], {
+        provideReferences: (doc, pos) => h.references(doc, pos),
+    })
+}

@@ -1,3 +1,6 @@
+import * as sourcegraph from 'sourcegraph'
+import { Config } from './handler'
+
 /**
  * Result represents a search result returned from the Sourcegraph API.
  */
@@ -16,24 +19,11 @@ export interface Result {
 }
 
 export class API {
-    private browserIncludesCookie: Promise<boolean>
-
-    constructor(private traceSearch: boolean, private token: string) {
-        this.browserIncludesCookie = this.search('test', true).then(
-            res => {
-                if (traceSearch) {
-                    console.log('Detected browser includes session cookie')
-                }
-                return true
-            },
-            reason => {
-                if (traceSearch) {
-                    console.log(
-                        'Detected browser does not include session cookie'
-                    )
-                }
-                return false
-            }
+    private get traceSearch(): boolean {
+        return Boolean(
+            sourcegraph.configuration
+                .get<Config>()
+                .get('basicCodeIntel.debug.traceSearch')
         )
     }
 
@@ -50,12 +40,6 @@ export class API {
             })
         }
 
-        const headers = new Headers()
-        const includeAuthTok =
-            !noAuthToken && !(await this.browserIncludesCookie)
-        if (includeAuthTok && this.token.length > 0) {
-            headers.append('Authorization', `token ${this.token}`)
-        }
         const graphqlQuery = `query Search($query: String!) {
             search(query: $query) {
               results {
@@ -113,7 +97,7 @@ export class API {
         const resp = await fetch(sourcegraphOrigin + '/.api/graphql?Search', {
             method: 'POST',
             mode: 'cors',
-            headers,
+            credentials: 'include',
             body: `{"query": ${JSON.stringify(
                 graphqlQuery
             )}, "variables": ${JSON.stringify(graphqlVars)}}`,

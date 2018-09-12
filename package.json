@@ -4,20 +4,43 @@
   "version": "0.0.0-development",
   "title": "Basic code intelligence",
   "description": "Provides basic code intelligence for all languages using the Sourcegraph search API",
-  "url": "https://storage.googleapis.com/sourcegraph-cx-dev/sourcegraph-basic-code-intel.js",
   "activationEvents": [
     "*"
   ],
+  "__exportsActivate": true,
   "contributes": {
+    "actions": [
+      {
+        "id": "basicCodeIntel.toggle",
+        "command": "basicCodeIntel.toggle",
+        "title": "${config.basicCodeIntel.enabled && \"Switch to full code intelligence\" || \"Switch to basic code intelligence\"}",
+        "actionItem": {
+          "label": "${config.basicCodeIntel.enabled && \"Fuzzy\" || \"Precise\"}",
+          "description": "${config.basicCodeIntel.enabled && \"Click to switch to precise: Use language servers for definitions and references\" || \"Click to switch to fuzzy: Use text search and ctags for definitions and references\"}"
+        }
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "action": "basicCodeIntel.toggle",
+          "when": "resource"
+        }
+      ],
+      "commandPalette": [
+        {
+          "action": "basicCodeIntel.toggle",
+          "when": "resource"
+        }
+      ]
+    },
     "configuration": {
       "title": "Basic code intelligence settings",
-      "required": [
-        "basicCodeIntel.sourcegraphToken"
-      ],
       "properties": {
-        "basicCodeIntel.sourcegraphToken": {
-          "description": "The API token for the Sourcegraph instance.",
-          "type": "string"
+        "basicCodeIntel.enabled": {
+          "description": "Use fuzzy text searches and ctags to provide code intelligence (definitions and references).",
+          "type": "boolean",
+          "default": false
         },
         "basicCodeIntel.definition.symbols": {
           "type": "string",
@@ -36,20 +59,18 @@
     }
   },
   "license": "MIT",
-  "main": "lib/extension.js",
+  "main": "dist/extension.js",
   "files": [
-    "lib"
+    "dist"
   ],
   "scripts": {
     "prettier": "prettier '**/*.{js?(on),ts}' --write --list-different",
     "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "parcel build --no-minify --detailed-report --out-file sourcegraph-basic-code-intel.js src/extension.ts",
-    "serve": "parcel serve --no-hmr --out-file sourcegraph-basic-code-intel.js src/extension.ts",
+    "build": "parcel build --no-minify --detailed-report --out-file extension.js src/extension.ts",
+    "serve": "parcel serve --no-hmr --out-file extension.js src/extension.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
     "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
-    "upload": "npm run build && gsutil -h 'Cache-Control:private' cp -a public-read -r dist/* gs://sourcegraph-cx-dev/",
-    "clean": "rm dist/*",
     "watch:typecheck": "tsc -p tsconfig.json -w",
     "watch:build": "tsc -p tsconfig.dist.json -w",
     "watch:test": "npm run test -- -w"
@@ -90,6 +111,7 @@
   },
   "dependencies": {
     "cxp": "^6.4.0",
+    "sourcegraph": "^16.0.1",
     "vscode-languageserver-types": "^3.12.0"
   },
   "sideEffects": false
