@@ -1,11 +1,5 @@
-import {
-    TextDocumentPositionParams,
-    ReferenceParams,
-    InitializeParams,
-} from 'cxp/module/protocol'
-import { DidOpenTextDocumentParams } from 'cxp/module/protocol/textDocument'
+import * as sourcegraph from 'sourcegraph'
 import { API, Result } from './api'
-import { Location } from 'vscode-languageserver-types'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -117,110 +111,65 @@ function parseUri(
 /**
  * resultToLocation maps a search result to a LSP Location instance.
  */
-function resultToLocation(res: Result): Location {
+function resultToLocation(res: Result): sourcegraph.Location {
     const rev = res.rev ? res.rev : 'HEAD'
     return {
-        uri: `git://${res.repo}?${rev}#${res.file}`,
-        range: {
-            start: res.start,
-            end: res.end,
-        },
+        uri: new sourcegraph.URI(`git://${res.repo}?${rev}#${res.file}`),
+        range: new sourcegraph.Range(
+            res.start.line,
+            res.start.character,
+            res.end.line,
+            res.end.character
+        ),
     }
 }
 
 /**
- * Configuration for this extension.
+ * @see package.json contributes.configuration section for the configuration schema.
  */
 export interface Config {
-    /**
-     * sourcegraphToken is the access token used to authenticate to the Sourcegraph API. This will be set in the
-     * initialize handler.
-     */
-    sourcegraphToken: string
-    definition: {
-        symbols: 'no' | 'local' | 'yes'
-    }
-    debug: {
-        traceSearch: boolean
-    }
-}
-
-/**
- * getAuthToken extracts the Sourcegraph auth token from the merged settings received in
- * initialize params. Throws an error if the token is not present.
- */
-function getConfig(
-    p: InitializeParams & { configurationCascade?: any }
-): Config {
-    if (
-        !p.configurationCascade ||
-        !p.configurationCascade.merged ||
-        !p.configurationCascade.merged['basicCodeIntel.sourcegraphToken']
-    ) {
-        throw new Error(
-            'Basic code intelligence extension could not read Sourcegraph auth token from initialize params. Create an auth token and add it to user or site settings: { "basicCodeIntel.sourcegraphToken": "${AUTH_TOKEN}" }'
-        )
-    }
-    const c = p.configurationCascade.merged
-    return {
-        sourcegraphToken: c['basicCodeIntel.sourcegraphToken'],
-        definition: {
-            symbols: c['basicCodeIntel.definition.symbols'] || 'no',
-        },
-        debug: {
-            traceSearch: c['basicCodeIntel.debug.traceSearch'] || false,
-        },
-    }
+    ['basicCodeIntel.enabled']?: boolean
+    ['basicCodeIntel.sourcegraphToken']?: string
+    ['basicCodeIntel.definition.symbols']?: 'local' | 'always'
+    ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
 export class Handler {
     /**
-     * config holds configuration for the CXP server.
-     */
-    config: Config
-
-    /**
      * api holds a reference to a Sourcegraph API client.
      */
-    api: API
+    public api = new API()
 
-    /**
-     * fileContents caches file contents from textDocument/didOpen notifications.
-     */
-    fileContents: Map<string, string>
-
-    constructor(params: InitializeParams & { configurationCascade?: any }) {
-        this.config = getConfig(params)
-        this.api = new API(
-            this.config.debug.traceSearch,
-            this.config.sourcegraphToken
+    private get enabled(): boolean {
+        return Boolean(
+            sourcegraph.configuration
+                .get<Config>()
+                .get('basicCodeIntel.enabled')
         )
-        this.fileContents = new Map<string, string>()
-    }
-
-    didOpen(params: DidOpenTextDocumentParams): void {
-        this.fileContents.clear()
-        this.fileContents.set(params.textDocument.uri, params.textDocument.text)
     }
 
     async definition(
-        params: TextDocumentPositionParams
-    ): Promise<Location | Location[] | null> {
-        const contents = this.fileContents.get(params.textDocument.uri)
-        if (!contents) {
-            throw new Error('did not fetch file contents')
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position,
+        symbols = sourcegraph.configuration
+            .get<Config>()
+            .get('basicCodeIntel.definition.symbols')
+    ): Promise<sourcegraph.Location | sourcegraph.Location[] | null> {
+        if (!this.enabled) {
+            return null
         }
-        const lines = contents.split('\n')
-        const line = lines[params.position.line]
+
+        const lines = doc.text.split('\n')
+        const line = lines[pos.line]
         let end = line.length
-        for (let c = params.position.character; c < line.length; c++) {
+        for (let c = pos.character; c < line.length; c++) {
             if (!identCharPattern.test(line[c])) {
                 end = c
                 break
             }
         }
         let start = 0
-        for (let c = params.position.character; c >= 0; c--) {
+        for (let c = pos.character; c >= 0; c--) {
             if (!identCharPattern.test(line[c])) {
                 start = c + 1
                 break
@@ -231,25 +180,18 @@ export class Handler {
         }
         const searchToken = line.substring(start, end)
 
-        const symbolsOp = this.config.definition.symbols
-        if (symbolsOp === 'yes' || symbolsOp === 'local') {
+        if (symbols === 'always' || symbols === 'local') {
             const symbolResults = this.api.search(
                 makeQuery(
                     searchToken,
                     true,
-                    params.textDocument.uri,
-                    symbolsOp === 'local',
+                    doc.uri,
+                    symbols === 'local',
                     false
                 )
             )
             const textResults = this.api.search(
-                makeQuery(
-                    searchToken,
-                    false,
-                    params.textDocument.uri,
-                    false,
-                    false
-                )
+                makeQuery(searchToken, false, doc.uri, false, false)
             )
             let results = await symbolResults
             if (results.length === 0) {
@@ -258,33 +200,30 @@ export class Handler {
             return results.map(resultToLocation)
         } else {
             return (await this.api.search(
-                makeQuery(
-                    searchToken,
-                    false,
-                    params.textDocument.uri,
-                    false,
-                    false
-                )
+                makeQuery(searchToken, false, doc.uri, false, false)
             )).map(resultToLocation)
         }
     }
 
-    async references(params: ReferenceParams): Promise<Location[] | null> {
-        const contents = this.fileContents.get(params.textDocument.uri)
-        if (!contents) {
-            throw new Error('did not fetch file contents')
+    async references(
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<sourcegraph.Location[] | null> {
+        if (!this.enabled) {
+            return null
         }
-        const lines = contents.split('\n')
-        const line = lines[params.position.line]
+
+        const lines = doc.text.split('\n')
+        const line = lines[pos.line]
         let end = line.length
-        for (let c = params.position.character; c < line.length; c++) {
+        for (let c = pos.character; c < line.length; c++) {
             if (!identCharPattern.test(line[c])) {
                 end = c
                 break
             }
         }
         let start = 0
-        for (let c = params.position.character; c >= 0; c--) {
+        for (let c = pos.character; c >= 0; c--) {
             if (!identCharPattern.test(line[c])) {
                 start = c + 1
                 break
@@ -296,10 +235,10 @@ export class Handler {
         const searchToken = line.substring(start, end)
 
         const localResultsPromise = this.api.search(
-            makeQuery(searchToken, false, params.textDocument.uri, true, false)
+            makeQuery(searchToken, false, doc.uri, true, false)
         )
         const nonLocalResultsPromise = this.api.search(
-            makeQuery(searchToken, false, params.textDocument.uri, false, true)
+            makeQuery(searchToken, false, doc.uri, false, true)
         )
 
         const results: Result[] = []
