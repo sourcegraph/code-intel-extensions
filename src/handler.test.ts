@@ -12,6 +12,8 @@ interface SearchTest {
     expSearchQueries: string[]
 }
 
+// NOTE: These tests are not currently runnable. See https://github.com/sourcegraph/sourcegraph-basic-code-intel/issues/4.
+
 describe('search requests', () => {
     it('makes correct search requests for goto definition', async () => {
         const tests: SearchTest[] = [
@@ -62,7 +64,7 @@ describe('search requests', () => {
                     languageId: 'l',
                     text: test.doc.text,
                 },
-                new Position(0, 0),
+                { line: 0, character: 0 } as Position,
                 test.symbols
             )
             assert.deepStrictEqual(test.expSearchQueries, searchQueries)
@@ -96,7 +98,7 @@ describe('search requests', () => {
                     languageId: 'l',
                     text: test.doc.text,
                 },
-                new Position(0, 0)
+                { line: 0, character: 0 } as Position
             )
             assert.deepStrictEqual(test.expSearchQueries, searchQueries)
         }
