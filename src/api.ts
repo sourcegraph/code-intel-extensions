@@ -30,10 +30,7 @@ export class API {
     /**
      * search returns the list of results fetched from the Sourcegraph search API.
      */
-    async search(
-        searchQuery: string,
-        noAuthToken?: boolean
-    ): Promise<Result[]> {
+    async search(searchQuery: string): Promise<Result[]> {
         if (this.traceSearch) {
             console.log('%c' + 'Search', 'font-weight:bold;', {
                 query: searchQuery,
@@ -93,22 +90,11 @@ export class API {
           }`
         const graphqlVars = { query: searchQuery }
 
-        const sourcegraphOrigin = self.location.origin
-        const resp = await fetch(sourcegraphOrigin + '/.api/graphql?Search', {
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'include',
-            body: `{"query": ${JSON.stringify(
-                graphqlQuery
-            )}, "variables": ${JSON.stringify(graphqlVars)}}`,
-        })
-        if (!resp.ok) {
-            throw new Error(
-                'Response error:' + resp.status + ' ' + resp.statusText
-            )
-        }
-        const respObj = await resp.json()
-
+        const respObj = await sourcegraph.commands.executeCommand<any>(
+            'queryGraphQL',
+            graphqlQuery,
+            graphqlVars
+        )
         const results = []
         for (const result of respObj.data.search.results.results) {
             if (result.symbols) {
