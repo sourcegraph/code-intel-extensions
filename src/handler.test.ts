@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { Handler, Config } from './handler'
-import { TextDocumentPositionParams } from 'cxp/module/protocol'
+import { TextDocumentPositionParams } from 'sourcegraph/module/protocol'
 import { Result } from './api'
 
 interface ConfigTest {
@@ -45,9 +45,7 @@ describe('config tests', () => {
 
         for (const test of tests) {
             const h = new Handler({
-                root: null,
                 capabilities: {},
-                workspaceFolders: [],
                 configurationCascade: {
                     merged: { ...test.input },
                 },
@@ -59,9 +57,8 @@ describe('config tests', () => {
         let gotErr = false
         try {
             new Handler({
-                root: null,
                 capabilities: {},
-                workspaceFolders: [],
+                configurationCascade: { merged: {} },
             })
         } catch (err) {
             gotErr = true
@@ -139,9 +136,7 @@ describe('search requests', () => {
 
         for (const test of tests) {
             const h = new Handler({
-                root: null,
                 capabilities: {},
-                workspaceFolders: [],
                 configurationCascade: {
                     merged: {
                         'basicCodeIntel.sourcegraphToken': 'TOKEN',
@@ -185,9 +180,7 @@ describe('search requests', () => {
 
         for (const test of tests) {
             const h = new Handler({
-                root: null,
                 capabilities: {},
-                workspaceFolders: [],
                 configurationCascade: {
                     merged: {
                         'basicCodeIntel.sourcegraphToken': 'TOKEN',

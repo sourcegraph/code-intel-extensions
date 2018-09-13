@@ -1,21 +1,23 @@
+import { createWebWorkerMessageTransports } from 'sourcegraph/module/jsonrpc2/transports/webWorker'
 import {
-    createWebWorkerMessageTransports,
-    Worker,
-} from 'cxp/module/jsonrpc2/transports/webWorker'
-import {
+    SourcegraphExtensionAPI,
+    activateExtension,
     MessageType,
-    InitializeResult,
     ShowMessageNotification,
     ShowMessageParams,
-} from 'cxp/module/protocol'
-import { Connection, createConnection } from 'cxp/module/server/server'
+    RegistrationParams,
+    RegistrationRequest,
+} from 'sourcegraph'
 import { Handler } from './handler'
+import { MessageConnection } from 'sourcegraph/module/jsonrpc2/connection'
 
-function register(connection: Connection): void {
+function run(sourcegraph: SourcegraphExtensionAPI<any>): void {
+    const connection = sourcegraph.rawConnection
+
     // Either h or initError must be defined after initialization
     let h: Handler, initErr: Error
 
-    const showErr = (connection: Connection): Promise<null> => {
+    const showErr = (connection: MessageConnection): Promise<null> => {
         if (!initErr) {
             throw new Error('Initialization failed, but initErr is undefined')
         }
@@ -26,20 +28,27 @@ function register(connection: Connection): void {
         return Promise.resolve(null)
     }
 
-    connection.onInitialize(params => {
-        try {
-            h = new Handler(params)
-        } catch (e) {
-            initErr = e
-        }
-        return {
-            capabilities: {
-                definitionProvider: true,
-                referencesProvider: true,
-                textDocumentSync: { openClose: true },
+    try {
+        h = new Handler(sourcegraph.initializeParams)
+    } catch (e) {
+        initErr = e
+    }
+
+    connection.sendRequest(RegistrationRequest.type, {
+        registrations: [
+            {
+                id: 'def',
+                method: 'textDocument/definition',
+                registerOptions: { documentSelector: ['*'] },
             },
-        } as InitializeResult
-    })
+            {
+                id: 'ref',
+                method: 'textDocument/references',
+                registerOptions: { documentSelector: ['*'] },
+            },
+        ],
+    } as RegistrationParams)
+
     connection.onNotification(
         'textDocument/didOpen',
         params => (h ? h.didOpen(params) : showErr(connection))
@@ -54,7 +63,8 @@ function register(connection: Connection): void {
     )
 }
 
-declare var self: Worker
-const connection = createConnection(createWebWorkerMessageTransports(self))
-register(connection)
-connection.listen()
+// This runs in a Web Worker and communicates using postMessage with the page.
+activateExtension<any>(
+    createWebWorkerMessageTransports(self as DedicatedWorkerGlobalScope),
+    run
+)

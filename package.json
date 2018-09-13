@@ -89,7 +89,7 @@
     "typescript": "^2.9.2"
   },
   "dependencies": {
-    "cxp": "^6.4.0",
+    "sourcegraph": "^14.1.1",
     "vscode-languageserver-types": "^3.12.0"
   },
   "sideEffects": false

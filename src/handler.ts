@@ -2,8 +2,8 @@ import {
     TextDocumentPositionParams,
     ReferenceParams,
     InitializeParams,
-} from 'cxp/module/protocol'
-import { DidOpenTextDocumentParams } from 'cxp/module/protocol/textDocument'
+} from 'sourcegraph/module/protocol'
+import { DidOpenTextDocumentParams } from 'sourcegraph/module/protocol/textDocument'
 import { API, Result } from './api'
 import { Location } from 'vscode-languageserver-types'
 
