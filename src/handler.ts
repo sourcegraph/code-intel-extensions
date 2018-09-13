@@ -129,7 +129,6 @@ function resultToLocation(res: Result): sourcegraph.Location {
  */
 export interface Config {
     ['basicCodeIntel.enabled']?: boolean
-    ['basicCodeIntel.sourcegraphToken']?: string
     ['basicCodeIntel.definition.symbols']?: 'local' | 'always'
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
