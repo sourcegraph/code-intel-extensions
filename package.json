@@ -1,6 +1,6 @@
 {
-  "name": "sourcegraph-basic-code-intel",
-  "publisher": "beyang",
+  "name": "basic-code-intel",
+  "publisher": "sourcegraph",
   "version": "0.0.0-development",
   "title": "Basic code intelligence",
   "description": "Provides basic code intelligence for all languages using the Sourcegraph search API",
