@@ -11,7 +11,37 @@
     "actions": [
       {
         "id": "basicCodeIntel.toggle",
-        "command": "basicCodeIntel.toggle",
+        "command": "updateConfiguration",
+        "commandArguments": [
+          [
+            "basicCodeIntel.enabled"
+          ],
+          "${!config.basicCodeIntel.enabled}",
+          null,
+          "json"
+        ],
+        "title": "${config.basicCodeIntel.enabled && \"Disable\" || \"Enable\"} fuzzy def/ref matching",
+        "category": "Basic code intel",
+        "actionItem": {
+          "label": "${config.basicCodeIntel.enabled && \"Hide\" || \"Show\"} fuzzy matches",
+          "description": "${config.basicCodeIntel.enabled && \"Hide\" || \"Show\"} matches found using imprecise text search"
+        }
+      },
+      {
+        "id": "basicCodeIntel.toggleSymbols",
+        "command": "updateConfiguration",
+        "commandArguments": [
+          [
+            "basicCodeIntel.definition.symbols"
+          ],
+          "${((config.basicCodeIntel.definition.symbols == \"local\") || (config.basicCodeIntel.definition.symbols == \"always\")) && \"never\" || \"local\"}"
+        ],
+        "title": "${((config.basicCodeIntel.definition.symbols == \"local\") || (config.basicCodeIntel.definition.symbols == \"always\")) && \"Disable\" || \"Enable\"} hints from ctags",
+        "category": "Basic code intel"
+      },
+      {
+        "id": "basicCodeIntel.old.togglePreciseFuzzy",
+        "command": "basicCodeIntel.old.togglePreciseFuzzy",
         "title": "${config.basicCodeIntel.enabled && \"Switch to full code intelligence\" || \"Switch to basic code intelligence\"}",
         "actionItem": {
           "label": "${config.basicCodeIntel.enabled && \"Fuzzy\" || \"Precise\"}",
@@ -22,14 +52,28 @@
     "menus": {
       "editor/title": [
         {
-          "action": "basicCodeIntel.toggle",
-          "when": "resource"
+          "action": "basicCodeIntel.old.togglePreciseFuzzy",
+          "when": "resource && ((clientApplication.extensionAPIVersion.major || 0) < 3)"
         }
       ],
       "commandPalette": [
         {
           "action": "basicCodeIntel.toggle",
           "when": "resource"
+        },
+        {
+          "action": "basicCodeIntel.toggleSymbols",
+          "when": "resource"
+        },
+        {
+          "action": "basicCodeIntel.old.togglePreciseFuzzy",
+          "when": "resource && ((clientApplication.extensionAPIVersion.major || 0) < 3)"
+        }
+      ],
+      "panel/toolbar": [
+        {
+          "action": "basicCodeIntel.toggle",
+          "when": "((panel.activeView.id == 'def') || (panel.activeView.id == 'references')) && clientApplication.extensionAPIVersion.major >= 3"
         }
       ]
     },
@@ -45,9 +89,9 @@
           "type": "string",
           "description": "Whether to use symbol search to complete goto definition requests. 'Local' means issue a symbol search locally and if none are found, fall back to text search globally.",
           "enum": [
-            "no",
+            "never",
             "local",
-            "yes"
+            "always"
           ]
         },
         "basicCodeIntel.debug.traceSearch": {
@@ -104,12 +148,14 @@
     "parcel-bundler": "^1.10.0",
     "prettier": "^1.14.2",
     "source-map-support": "^0.5.9",
-    "sourcegraph": "^19.2.0",
+    "sourcegraph": "^19.3.0",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
     "tslint-language-service": "^0.9.9",
     "typescript": "^3.2.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "rxjs": "^6.3.3"
+  },
   "sideEffects": false
 }

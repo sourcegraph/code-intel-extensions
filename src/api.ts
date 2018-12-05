@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import { Config } from './handler'
+import { Settings } from './handler'
 
 /**
  * Result represents a search result returned from the Sourcegraph API.
@@ -22,7 +22,7 @@ export class API {
     private get traceSearch(): boolean {
         return Boolean(
             sourcegraph.configuration
-                .get<Config>()
+                .get<Settings>()
                 .get('basicCodeIntel.debug.traceSearch')
         )
     }
