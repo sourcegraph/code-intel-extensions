@@ -42,6 +42,13 @@ function initFileExtToTerm() {
 initFileExtToTerm()
 
 /**
+ * Selects documents that the extension works on.
+ */
+export const DOCUMENT_SELECTOR: sourcegraph.DocumentSelector = fileExtsSets
+    .reduce((all, exts) => all.concat(exts), [])
+    .map(ext => ({ pattern: `*.${ext}` }))
+
+/**
  * fileExtTerm returns the search term to use to filter to specific file extensions
  */
 function fileExtTerm(sourceFile: string): string {
@@ -127,9 +134,9 @@ function resultToLocation(res: Result): sourcegraph.Location {
 /**
  * @see package.json contributes.configuration section for the configuration schema.
  */
-export interface Config {
+export interface Settings {
     ['basicCodeIntel.enabled']?: boolean
-    ['basicCodeIntel.definition.symbols']?: 'local' | 'always'
+    ['basicCodeIntel.definition.symbols']?: 'never' | 'local' | 'always'
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
@@ -139,23 +146,16 @@ export class Handler {
      */
     public api = new API()
 
-    private get enabled(): boolean {
-        return Boolean(
-            sourcegraph.configuration
-                .get<Config>()
-                .get('basicCodeIntel.enabled')
-        )
-    }
-
     async definition(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position,
         symbols = sourcegraph.configuration
-            .get<Config>()
+            .get<Settings>()
             .get('basicCodeIntel.definition.symbols')
-    ): Promise<sourcegraph.Location | sourcegraph.Location[] | null> {
-        if (!this.enabled) {
-            return null
+    ): Promise<sourcegraph.Location[] | null> {
+        // Default to using local symbols lookup.
+        if (!symbols) {
+            symbols = 'local'
         }
 
         const lines = doc.text.split('\n')
@@ -208,10 +208,6 @@ export class Handler {
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> {
-        if (!this.enabled) {
-            return null
-        }
-
         const lines = doc.text.split('\n')
         const line = lines[pos.line]
         let end = line.length

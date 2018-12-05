@@ -5082,6 +5082,13 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
     hash-base "^3.0.0"
     inherits "^2.0.1"
 
+rxjs@^6.3.3:
+  version "6.3.3"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.3.3.tgz#3c6a7fa420e844a81390fb1158a9ec614f4bad55"
+  integrity sha512-JTWmoY9tWCs7zvIk/CvRjhjGaOd+OVBM987mxFo+OW66cGpdKjZcpmc74ES1sB//7Kl/PAe8+wEakuhG4pcgOw==
+  dependencies:
+    tslib "^1.9.0"
+
 safe-buffer@^5.0.1, safe-buffer@^5.1.0, safe-buffer@^5.1.1, safe-buffer@^5.1.2, safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.2.tgz#991ec69d296e0313747d59bdfd2b745c35f8828d"
@@ -5306,10 +5313,10 @@ source-map@^0.5.0, source-map@^0.5.3, source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-sourcegraph@^19.2.0:
-  version "19.2.0"
-  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-19.2.0.tgz#bcb6bc14ec756981e36f616cff55d8e34169b9c8"
-  integrity sha512-mGoCuJngYCT2DOiHLY9/JQrg2Me73dpgtLUlCYOTZjhYg8g0B4XRmde1RLIX+Geb5WM1/0d5IlyV1gVfCe5aYw==
+sourcegraph@^19.3.0:
+  version "19.3.0"
+  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-19.3.0.tgz#5133f7107880821a54ca0339ecfc49ab02a237ab"
+  integrity sha512-E93URCdzQXmF6goxDg6Uml55wJZwW843oPr59lapYilaYkMiTHBZup7IAZdWuCvvXe9CN1D7q9pm66aVY5QfLA==
 
 spawn-wrap@^1.4.2:
   version "1.4.2"
@@ -5697,7 +5704,7 @@ ts-node@^7.0.1:
     source-map-support "^0.5.6"
     yn "^2.0.0"
 
-tslib@^1.8.0, tslib@^1.8.1:
+tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0:
   version "1.9.3"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.9.3.tgz#d7e4dd79245d85428c4d7e4822a79917954ca286"
   integrity sha512-4krF8scpejhaOgqzBEcGM7yDIEfi0/8+8zDRZhNZZ2kjmHJ4hv3zCbQWxoJGz1iw5U0Jl0nma13xzHXcncMavQ==
