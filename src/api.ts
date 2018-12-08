@@ -16,6 +16,7 @@ export interface Result {
         line: number
         character: number
     }
+    preview?: string // only for text search results
 }
 
 export class API {
@@ -130,11 +131,67 @@ export class API {
                                 character:
                                     offsetAndLength[0] + offsetAndLength[1],
                             },
+                            preview: lineMatch.preview,
                         })
                     }
                 }
             }
         }
         return results
+    }
+
+    /**
+     * Get the text content of a file.
+     */
+    async getFileContent(loc: sourcegraph.Location): Promise<string | null> {
+        const graphqlQuery = `query GetContextLines($repo: String!, $rev: String!, $path: String!) {
+          repository(name: $repo) {
+              commit(rev: $rev) {
+                file(path: $path) {
+                  content
+                }
+              }
+            }
+          }`
+
+        const { repo, rev, path } = parseUri(loc.uri.toString())
+        const respObj = await sourcegraph.commands.executeCommand<any>(
+            'queryGraphQL',
+            graphqlQuery,
+            { repo, rev, path }
+        )
+        if (
+            !respObj ||
+            !respObj.data ||
+            !respObj.data.repository ||
+            !respObj.data.repository.commit
+        ) {
+            return null
+        }
+        return respObj.data.repository.commit.file.content
+    }
+}
+
+export function parseUri(
+    uri: string
+): { repo: string; rev: string; path: string } {
+    if (!uri.startsWith('git://')) {
+        throw new Error('unexpected uri format: ' + uri)
+    }
+    const repoRevPath = uri.substr('git://'.length)
+    const i = repoRevPath.indexOf('?')
+    if (i < 0) {
+        throw new Error('unexpected uri format: ' + uri)
+    }
+    const revPath = repoRevPath.substr(i + 1)
+    const j = revPath.indexOf('#')
+    if (j < 0) {
+        throw new Error('unexpected uri format: ' + uri)
+    }
+    const path = revPath.substr(j + 1)
+    return {
+        repo: repoRevPath.substring(0, i),
+        rev: revPath.substring(0, j),
+        path: path,
     }
 }

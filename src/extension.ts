@@ -50,6 +50,24 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
 
     ctx.subscriptions.add(
         reregisterWhenEnablementChanges(() =>
+            sourcegraph.languages.registerHoverProvider(DOCUMENT_SELECTOR, {
+                provideHover: (doc, pos) => {
+                    if (
+                        !sourcegraph.configuration.get<Settings>().value[
+                            'basicCodeIntel.hover'
+                        ]
+                    ) {
+                        return null
+                    }
+                    return enabledOrNull(() =>
+                        observableOrPromiseCompat(h.hover(doc, pos))
+                    )
+                },
+            })
+        )
+    )
+    ctx.subscriptions.add(
+        reregisterWhenEnablementChanges(() =>
             sourcegraph.languages.registerDefinitionProvider(
                 DOCUMENT_SELECTOR,
                 {

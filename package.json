@@ -28,6 +28,20 @@
         }
       },
       {
+        "id": "basicCodeIntel.toggleHover",
+        "command": "updateConfiguration",
+        "commandArguments": [
+          [
+            "basicCodeIntel.hover"
+          ],
+          "${!config.basicCodeIntel.hover}",
+          null,
+          "json"
+        ],
+        "title": "${config.basicCodeIntel.hover && \"Disable\" || \"Enable\"} fuzzy hovers",
+        "category": "Basic code intel"
+      },
+      {
         "id": "basicCodeIntel.toggleSymbols",
         "command": "updateConfiguration",
         "commandArguments": [
@@ -59,6 +73,10 @@
       "commandPalette": [
         {
           "action": "basicCodeIntel.toggle",
+          "when": "resource"
+        },
+        {
+          "action": "basicCodeIntel.toggleHover",
           "when": "resource"
         },
         {

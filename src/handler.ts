@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import { API, Result } from './api'
+import { API, Result, parseUri } from './api'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -81,38 +81,14 @@ function makeQuery(
     } else {
         terms.push('type:file')
     }
-    const { repo, version } = parseUri(currentFileUri)
+    const { repo, rev } = parseUri(currentFileUri)
     if (local) {
-        terms.push(`repo:^${repo}$@${version}`)
+        terms.push(`repo:^${repo}$@${rev}`)
     }
     if (nonLocal) {
         terms.push(`-repo:^${repo}$`)
     }
     return terms.join(' ')
-}
-
-function parseUri(
-    uri: string
-): { repo: string; version: string; path: string } {
-    if (!uri.startsWith('git://')) {
-        throw new Error('unexpected uri format: ' + uri)
-    }
-    const repoRevPath = uri.substr('git://'.length)
-    const i = repoRevPath.indexOf('?')
-    if (i < 0) {
-        throw new Error('unexpected uri format: ' + uri)
-    }
-    const revPath = repoRevPath.substr(i + 1)
-    const j = revPath.indexOf('#')
-    if (j < 0) {
-        throw new Error('unexpected uri format: ' + uri)
-    }
-    const path = revPath.substr(j + 1)
-    return {
-        repo: repoRevPath.substring(0, i),
-        version: revPath.substring(0, j),
-        path: path,
-    }
 }
 
 /**
@@ -137,8 +113,11 @@ function resultToLocation(res: Result): sourcegraph.Location {
 export interface Settings {
     ['basicCodeIntel.enabled']?: boolean
     ['basicCodeIntel.definition.symbols']?: 'never' | 'local' | 'always'
+    ['basicCodeIntel.hover']?: boolean
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
+
+const COMMENT_PATTERN = /^\s*(\/\/\/?|#|;|"""|\*( |$)|\/\*\*|\*\/$)\s*/
 
 export class Handler {
     /**
@@ -146,12 +125,90 @@ export class Handler {
      */
     public api = new API()
 
-    async definition(
+    /**
+     * Return the first definition location's line.
+     */
+    async hover(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position,
         symbols = sourcegraph.configuration
             .get<Settings>()
             .get('basicCodeIntel.definition.symbols')
+    ): Promise<sourcegraph.Hover | null> {
+        // Default to usage of symbols (at least 'local'). If 'always' is set, respect that (but don't default to
+        // that since it is slower when there are many repositories).
+        if (!symbols) {
+            symbols = 'local'
+        }
+
+        const definitions = await this.definition(doc, pos, symbols, false)
+        if (!definitions || definitions.length === 0) {
+            return null
+        }
+
+        const def = definitions[0]
+        if (!def.range) {
+            return null
+        }
+
+        const content = await this.api.getFileContent(def)
+        if (!content) {
+            return null
+        }
+        const lines = content.split('\n')
+
+        // Get the definition's line.
+        let line = lines[def.range.start.line]
+        if (!line) {
+            return null
+        }
+        // Clean up the line.
+        line = line.trim()
+        line = line.replace(/[:;=,{(<]+$/, '')
+        // Render the line as syntax-highlighted Markdown.
+        if (line.includes('```')) {
+            // Don't render the line if it would "break out" of the Markdown code block we will wrap it in.
+            return null
+        }
+        const codeLineMarkdown = '```' + doc.languageId + '\n' + line + '\n```'
+
+        // Get lines before/after the definition's line that contain comments.
+        const commentsStep = doc.languageId === 'python' ? 1 : -1 // only Python comments come after the definition (docstrings)
+        const MAX_COMMENT_LINES = 13
+        let commentLines: string[] = []
+        for (let i = 0; i < MAX_COMMENT_LINES; i++) {
+            const l = def.range.start.line + commentsStep * (i + 1)
+            let line = lines[l]
+            if (!line) {
+                break
+            }
+            const isComment = COMMENT_PATTERN.test(line)
+            if (isComment) {
+                // Clean up line.
+                line = line.replace(COMMENT_PATTERN, '').trim()
+                line = line.replace(/("""|\*\/)$/, '') // clean up block comment terminators and Python docstring terminators
+                commentLines[commentsStep > 0 ? 'push' : 'unshift'](line)
+            }
+        }
+        const commentsMarkdown = commentLines.join('\n').trim()
+
+        return {
+            contents: {
+                kind: sourcegraph.MarkupKind.Markdown,
+                value: [commentsMarkdown, codeLineMarkdown]
+                    .filter(v => !!v)
+                    .join('\n\n---\n\n'),
+            },
+        }
+    }
+
+    async definition(
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position,
+        symbols = sourcegraph.configuration
+            .get<Settings>()
+            .get('basicCodeIntel.definition.symbols'),
+        textSearchFallbackForSymbols = true
     ): Promise<sourcegraph.Location[] | null> {
         // Default to using local symbols lookup.
         if (!symbols) {
@@ -189,14 +246,55 @@ export class Handler {
                     false
                 )
             )
-            const textResults = this.api.search(
-                makeQuery(searchToken, false, doc.uri, false, false)
-            )
             let results = await symbolResults
-            if (results.length === 0) {
-                results = await textResults
+            if (results.length === 0 && textSearchFallbackForSymbols) {
+                results = await this.api.search(
+                    makeQuery(searchToken, false, doc.uri, false, false)
+                )
+
+                // Filter out things that are unlikely to be definitions: matches on comment lines, matches that
+                // merely are references.
+                results = results.filter(result => {
+                    if (!result.preview) {
+                        return false
+                    }
+                    const p = result.preview.trim()
+                    return (
+                        p &&
+                        !COMMENT_PATTERN.test(p) &&
+                        !p.includes(`new ${searchToken}`) &&
+                        !p.includes(`= ${searchToken}`) &&
+                        !p.includes(`${searchToken},`) &&
+                        !p.includes(`.${searchToken}`) &&
+                        !/^\s*(if|while|for|case)\b/.test(p) &&
+                        (!p.startsWith(searchToken) || p.includes('=')) &&
+                        p.indexOf(searchToken) < 8
+                    )
+                })
             }
-            return results.map(resultToLocation)
+
+            let locations = results.map(resultToLocation)
+
+            // Filter out locations that are on the same line as the request (ignoring the revision). These might
+            // be definitions, but they are not very helpful (since the user is already there), and they are likely
+            // to be incorrect.
+            const isNotSameLineAsRequestLocation = (
+                loc: sourcegraph.Location
+            ): boolean => {
+                const locURI = parseUri(loc.uri.toString())
+                const docURI = parseUri(doc.uri.toString())
+                return (
+                    locURI.repo !== docURI.repo ||
+                    locURI.path !== docURI.path ||
+                    (!!loc.range && loc.range.start.line !== pos.line)
+                )
+            }
+            const FILTER_OUT_SAME_LINES = false // temporarily disabled - it actually seems useful
+            if (FILTER_OUT_SAME_LINES) {
+                locations = locations.filter(isNotSameLineAsRequestLocation)
+            }
+
+            return locations
         } else {
             return (await this.api.search(
                 makeQuery(searchToken, false, doc.uri, false, false)
