@@ -1,5 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import { Settings } from './handler'
+import { memoizeAsync } from './memoizeAsync'
 
 /**
  * Result represents a search result returned from the Sourcegraph API.
@@ -91,11 +92,10 @@ export class API {
           }`
         const graphqlVars = { query: searchQuery }
 
-        const respObj = await sourcegraph.commands.executeCommand<any>(
-            'queryGraphQL',
-            graphqlQuery,
-            graphqlVars
-        )
+        const respObj = await queryGraphQL({
+            query: graphqlQuery,
+            vars: graphqlVars,
+        })
         const results = []
         for (const result of respObj.data.search.results.results) {
             if (result.symbols) {
@@ -155,11 +155,10 @@ export class API {
           }`
 
         const { repo, rev, path } = parseUri(loc.uri.toString())
-        const respObj = await sourcegraph.commands.executeCommand<any>(
-            'queryGraphQL',
-            graphqlQuery,
-            { repo, rev, path }
-        )
+        const respObj = await queryGraphQL({
+            query: graphqlQuery,
+            vars: { repo, rev, path },
+        })
         if (
             !respObj ||
             !respObj.data ||
@@ -195,3 +194,21 @@ export function parseUri(
         path: path,
     }
 }
+
+// TODO(sqs): this will never release the memory of the cached responses; use an LRU cache or similar.
+const queryGraphQL = memoizeAsync(
+    async ({
+        query,
+        vars,
+    }: {
+        query: string
+        vars: { [name: string]: any }
+    }): Promise<any> => {
+        return sourcegraph.commands.executeCommand<any>(
+            'queryGraphQL',
+            query,
+            vars
+        )
+    },
+    arg => JSON.stringify(arg)
+)

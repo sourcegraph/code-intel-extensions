@@ -200,7 +200,6 @@ export class Handler {
             .get<Settings>()
             .get('basicCodeIntel.definition.crossRepository')
     ): Promise<sourcegraph.Location[] | null> {
-
         const lines = doc.text.split('\n')
         const line = lines[pos.line]
         let end = line.length
