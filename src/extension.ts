@@ -125,8 +125,8 @@ function reregisterWhenEnablementChanges(
                 (a, b) =>
                     Boolean(a['basicCodeIntel.enabled']) ===
                         Boolean(b['basicCodeIntel.enabled']) &&
-                    a['basicCodeIntel.definition.symbols'] ===
-                        b['basicCodeIntel.definition.symbols']
+                    a['basicCodeIntel.definition.crossRepository'] ===
+                        b['basicCodeIntel.definition.crossRepository']
             ),
             map(() => {
                 if (registration) {

@@ -112,7 +112,7 @@ function resultToLocation(res: Result): sourcegraph.Location {
  */
 export interface Settings {
     ['basicCodeIntel.enabled']?: boolean
-    ['basicCodeIntel.definition.symbols']?: 'never' | 'local' | 'always'
+    ['basicCodeIntel.definition.crossRepository']?: boolean
     ['basicCodeIntel.hover']?: boolean
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
@@ -130,18 +130,9 @@ export class Handler {
      */
     async hover(
         doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position,
-        symbols = sourcegraph.configuration
-            .get<Settings>()
-            .get('basicCodeIntel.definition.symbols')
+        pos: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> {
-        // Default to usage of symbols (at least 'local'). If 'always' is set, respect that (but don't default to
-        // that since it is slower when there are many repositories).
-        if (!symbols) {
-            symbols = 'local'
-        }
-
-        const definitions = await this.definition(doc, pos, symbols, false)
+        const definitions = await this.definition(doc, pos)
         if (!definitions || definitions.length === 0) {
             return null
         }
@@ -205,15 +196,10 @@ export class Handler {
     async definition(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position,
-        symbols = sourcegraph.configuration
+        crossRepo = sourcegraph.configuration
             .get<Settings>()
-            .get('basicCodeIntel.definition.symbols'),
-        textSearchFallbackForSymbols = true
+            .get('basicCodeIntel.definition.crossRepository')
     ): Promise<sourcegraph.Location[] | null> {
-        // Default to using local symbols lookup.
-        if (!symbols) {
-            symbols = 'local'
-        }
 
         const lines = doc.text.split('\n')
         const line = lines[pos.line]
@@ -236,70 +222,10 @@ export class Handler {
         }
         const searchToken = line.substring(start, end)
 
-        if (symbols === 'always' || symbols === 'local') {
-            const symbolResults = this.api.search(
-                makeQuery(
-                    searchToken,
-                    true,
-                    doc.uri,
-                    symbols === 'local',
-                    false
-                )
-            )
-            let results = await symbolResults
-            if (results.length === 0 && textSearchFallbackForSymbols) {
-                results = await this.api.search(
-                    makeQuery(searchToken, false, doc.uri, false, false)
-                )
-
-                // Filter out things that are unlikely to be definitions: matches on comment lines, matches that
-                // merely are references.
-                results = results.filter(result => {
-                    if (!result.preview) {
-                        return false
-                    }
-                    const p = result.preview.trim()
-                    return (
-                        p &&
-                        !COMMENT_PATTERN.test(p) &&
-                        !p.includes(`new ${searchToken}`) &&
-                        !p.includes(`= ${searchToken}`) &&
-                        !p.includes(`${searchToken},`) &&
-                        !p.includes(`.${searchToken}`) &&
-                        !/^\s*(if|while|for|case)\b/.test(p) &&
-                        (!p.startsWith(searchToken) || p.includes('=')) &&
-                        p.indexOf(searchToken) < 8
-                    )
-                })
-            }
-
-            let locations = results.map(resultToLocation)
-
-            // Filter out locations that are on the same line as the request (ignoring the revision). These might
-            // be definitions, but they are not very helpful (since the user is already there), and they are likely
-            // to be incorrect.
-            const isNotSameLineAsRequestLocation = (
-                loc: sourcegraph.Location
-            ): boolean => {
-                const locURI = parseUri(loc.uri.toString())
-                const docURI = parseUri(doc.uri.toString())
-                return (
-                    locURI.repo !== docURI.repo ||
-                    locURI.path !== docURI.path ||
-                    (!!loc.range && loc.range.start.line !== pos.line)
-                )
-            }
-            const FILTER_OUT_SAME_LINES = false // temporarily disabled - it actually seems useful
-            if (FILTER_OUT_SAME_LINES) {
-                locations = locations.filter(isNotSameLineAsRequestLocation)
-            }
-
-            return locations
-        } else {
-            return (await this.api.search(
-                makeQuery(searchToken, false, doc.uri, false, false)
-            )).map(resultToLocation)
-        }
+        const symbolResults = this.api.search(
+            makeQuery(searchToken, true, doc.uri, !crossRepo, false)
+        )
+        return (await symbolResults).map(resultToLocation)
     }
 
     async references(
