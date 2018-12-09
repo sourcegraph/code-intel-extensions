@@ -4,7 +4,7 @@ import { Result } from './api'
 import { Position } from 'sourcegraph'
 
 interface SearchTest {
-    symbols?: 'local' | 'always'
+    crossRepo?: boolean
     doc: {
         uri: string
         text: string
@@ -18,7 +18,7 @@ describe('search requests', () => {
     it('makes correct search requests for goto definition', async () => {
         const tests: SearchTest[] = [
             {
-                symbols: undefined,
+                crossRepo: undefined,
                 doc: {
                     uri: 'git://github.com/foo/bar?rev#file.c',
                     text: 'token',
@@ -28,7 +28,7 @@ describe('search requests', () => {
                 ],
             },
             {
-                symbols: 'always',
+                crossRepo: true,
                 doc: {
                     uri: 'git://github.com/foo/bar?rev#file.c',
                     text: 'token',
@@ -39,7 +39,7 @@ describe('search requests', () => {
                 ],
             },
             {
-                symbols: 'local',
+                crossRepo: false,
                 doc: {
                     uri: 'git://github.com/foo/bar?rev#file.c',
                     text: 'token',
@@ -65,7 +65,7 @@ describe('search requests', () => {
                     text: test.doc.text,
                 },
                 { line: 0, character: 0 } as Position,
-                test.symbols
+                test.crossRepo
             )
             assert.deepStrictEqual(test.expSearchQueries, searchQueries)
         }
