@@ -49,7 +49,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     )
 
     ctx.subscriptions.add(
-        reregisterWhenEnablementChanges(() =>
+        reregisterWhenEnablementChanges('basicCodeIntel.hover', () =>
             sourcegraph.languages.registerHoverProvider(DOCUMENT_SELECTOR, {
                 provideHover: (doc, pos) => {
                     if (
@@ -59,15 +59,13 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                     ) {
                         return null
                     }
-                    return enabledOrNull(() =>
-                        observableOrPromiseCompat(h.hover(doc, pos))
-                    )
+                    return observableOrPromiseCompat(h.hover(doc, pos))
                 },
             })
         )
     )
     ctx.subscriptions.add(
-        reregisterWhenEnablementChanges(() =>
+        reregisterWhenEnablementChanges('basicCodeIntel.enabled', () =>
             sourcegraph.languages.registerDefinitionProvider(
                 DOCUMENT_SELECTOR,
                 {
@@ -80,7 +78,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         )
     )
     ctx.subscriptions.add(
-        reregisterWhenEnablementChanges(() =>
+        reregisterWhenEnablementChanges('basicCodeIntel.enabled', () =>
             sourcegraph.languages.registerReferenceProvider(DOCUMENT_SELECTOR, {
                 provideReferences: (doc, pos) =>
                     enabledOrNull(() =>
@@ -116,6 +114,7 @@ function enabledOrNull<T>(provider: () => T): T | null {
  * If we used an observable instead, it would always show the loading indicator.
  */
 function reregisterWhenEnablementChanges(
+    enabledKey: keyof Settings,
     register: () => sourcegraph.Unsubscribable
 ): sourcegraph.Unsubscribable {
     let registration: sourcegraph.Unsubscribable | undefined
@@ -126,13 +125,19 @@ function reregisterWhenEnablementChanges(
                     Boolean(a['basicCodeIntel.enabled']) ===
                         Boolean(b['basicCodeIntel.enabled']) &&
                     a['basicCodeIntel.definition.crossRepository'] ===
-                        b['basicCodeIntel.definition.crossRepository']
+                        b['basicCodeIntel.definition.crossRepository'] &&
+                    Boolean(a[enabledKey]) === Boolean(b[enabledKey])
             ),
-            map(() => {
+            map(settings => {
                 if (registration) {
+                    // Always unregister so that the results from the previously registered provider are flushed.
+                    // (The provider may return different results based on the new settings.)
                     registration.unsubscribe()
+                    registration = undefined
                 }
-                registration = register()
+                if (settings[enabledKey]) {
+                    registration = register()
+                }
             }),
             finalize(() => {
                 if (registration) {
