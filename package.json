@@ -52,7 +52,9 @@
           [
             "basicCodeIntel.definition.crossRepository"
           ],
-          "${!config.basicCodeIntel.definition.crossRepository}"
+          "${!config.basicCodeIntel.definition.crossRepository}",
+          null,
+          "json"
         ],
         "title": "${config.basicCodeIntel.definition.crossRepository && \"Disable\" || \"Enable\"} cross-repository definitions",
         "category": "Basic code intel"
