@@ -78,7 +78,13 @@ function makeQuery(
     nonLocal: boolean
 ): string {
     const terms = [`\\b${searchToken}\\b`, 'case:yes']
-    terms.push(fileExtTerm(currentFileUri))
+    if (
+        !currentFileUri.endsWith('.thrift') &&
+        !currentFileUri.endsWith('.proto') &&
+        !currentFileUri.endsWith('.graphql')
+    ) {
+        terms.push(fileExtTerm(currentFileUri))
+    }
     if (symbols) {
         terms.push('type:symbol')
     } else {
