@@ -29,6 +29,9 @@ const fileExtsSets = [
     ['swift'],
     ['coffee'],
     ['pl'],
+    ['thrift'],
+    ['proto'],
+    ['graphql'],
 ]
 const fileExtToTerm = new Map<string, string>()
 function initFileExtToTerm() {
