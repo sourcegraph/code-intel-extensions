@@ -5313,10 +5313,10 @@ source-map@^0.5.0, source-map@^0.5.3, source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-sourcegraph@^19.3.0:
-  version "19.3.0"
-  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-19.3.0.tgz#5133f7107880821a54ca0339ecfc49ab02a237ab"
-  integrity sha512-E93URCdzQXmF6goxDg6Uml55wJZwW843oPr59lapYilaYkMiTHBZup7IAZdWuCvvXe9CN1D7q9pm66aVY5QfLA==
+sourcegraph@^20.1.0:
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-20.1.0.tgz#9ba6c0e57107b1fe66c4299db32c7780094398cc"
+  integrity sha512-zbpDsFtExHQ04eJvQ2IIoi1rWrJU7Uhw4wXoy7V9Xpj/qMgbNnV4dev1kDg24y6F9vXM+jSONRrVcg/EO/UMag==
 
 spawn-wrap@^1.4.2:
   version "1.4.2"
