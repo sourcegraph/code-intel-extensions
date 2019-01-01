@@ -8,6 +8,9 @@
     "type": "git",
     "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
   },
+  "categories": [
+    "Programming languages"
+  ],
   "activationEvents": [
     "*"
   ],
