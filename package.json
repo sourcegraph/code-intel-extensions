@@ -11,6 +11,10 @@
   "categories": [
     "Programming languages"
   ],
+  "tags": [
+    "fuzzy",
+    "cross-language"
+  ],
   "activationEvents": [
     "*"
   ],
