@@ -67,6 +67,13 @@
         "category": "Basic code intel"
       },
       {
+        "id": "basicCodeIntel.fuzzyLocationIndicator",
+        "actionItem": {
+          "label": "Fuzzy",
+          "description": "Matched using text search heuristics"
+        }
+      },
+      {
         "id": "basicCodeIntel.old.togglePreciseFuzzy",
         "command": "basicCodeIntel.old.togglePreciseFuzzy",
         "title": "${config.basicCodeIntel.enabled && \"Switch to full code intelligence\" || \"Switch to basic code intelligence\"}",
@@ -105,6 +112,12 @@
         {
           "action": "basicCodeIntel.toggle",
           "when": "((panel.activeView.id == 'def') || (panel.activeView.id == 'references')) && clientApplication.extensionAPIVersion.major >= 3"
+        }
+      ],
+      "location/title": [
+        {
+          "action": "basicCodeIntel.fuzzyLocationIndicator",
+          "when": "basicCodeIntel.fuzzy"
         }
       ]
     },

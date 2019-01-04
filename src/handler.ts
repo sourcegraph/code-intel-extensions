@@ -113,6 +113,7 @@ function resultToLocation(res: Result): sourcegraph.Location {
             res.end.line,
             res.end.character
         ),
+        context: { 'basicCodeIntel.fuzzy': true },
     }
 }
 
