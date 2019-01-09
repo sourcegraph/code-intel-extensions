@@ -137,7 +137,8 @@
     "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
     "typecheck": "tsc -p tsconfig.json",
     "build": "parcel build --no-minify --detailed-report --out-file extension.js src/extension.ts",
-    "serve": "parcel serve --no-hmr --out-file extension.js src/extension.ts",
+    "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
+    "serve": "npm run symlink-package && parcel serve --no-hmr --out-file extension.js src/extension.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
     "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
     "watch:typecheck": "tsc -p tsconfig.json -w",
@@ -169,6 +170,8 @@
   "devDependencies": {
     "@types/mocha": "^5.2.3",
     "@types/node": "^10.9.4",
+    "lnfs-cli": "^2.1.0",
+    "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",
     "nyc": "^12.0.2",
     "parcel-bundler": "^1.10.0",
