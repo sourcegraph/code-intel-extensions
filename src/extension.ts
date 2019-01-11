@@ -49,14 +49,16 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     )
 
     ctx.subscriptions.add(
-        reregisterWhenEnablementChanges('basicCodeIntel.hover', () =>
+        reregisterWhenEnablementChanges('basicCodeIntel.hover', true, () =>
             sourcegraph.languages.registerHoverProvider(DOCUMENT_SELECTOR, {
                 provideHover: (doc, pos) => {
-                    if (
-                        !sourcegraph.configuration.get<Settings>().value[
-                            'basicCodeIntel.hover'
-                        ]
-                    ) {
+                    let value = sourcegraph.configuration.get<Settings>().value[
+                        'basicCodeIntel.hover'
+                    ]
+                    if (value === undefined) {
+                        value = true
+                    }
+                    if (!value) {
                         return null
                     }
                     return observableOrPromiseCompat(h.hover(doc, pos))
@@ -65,7 +67,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         )
     )
     ctx.subscriptions.add(
-        reregisterWhenEnablementChanges('basicCodeIntel.enabled', () =>
+        reregisterWhenEnablementChanges('basicCodeIntel.enabled', true, () =>
             sourcegraph.languages.registerDefinitionProvider(
                 DOCUMENT_SELECTOR,
                 {
@@ -78,7 +80,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         )
     )
     ctx.subscriptions.add(
-        reregisterWhenEnablementChanges('basicCodeIntel.enabled', () =>
+        reregisterWhenEnablementChanges('basicCodeIntel.enabled', true, () =>
             sourcegraph.languages.registerReferenceProvider(DOCUMENT_SELECTOR, {
                 provideReferences: (doc, pos) =>
                     enabledOrNull(() =>
@@ -97,11 +99,13 @@ const settingsSubscribable = new Observable<Settings>(sub => {
 })
 
 function enabledOrNull<T>(provider: () => T): T | null {
-    if (
-        !sourcegraph.configuration.get<Settings>().value[
-            'basicCodeIntel.enabled'
-        ]
-    ) {
+    let value = sourcegraph.configuration.get<Settings>().value[
+        'basicCodeIntel.enabled'
+    ]
+    if (value === undefined) {
+        value = true // default true
+    }
+    if (!value) {
         return null
     }
     return provider()
@@ -115,6 +119,7 @@ function enabledOrNull<T>(provider: () => T): T | null {
  */
 function reregisterWhenEnablementChanges(
     enabledKey: keyof Settings,
+    defaultValue: boolean,
     register: () => sourcegraph.Unsubscribable
 ): sourcegraph.Unsubscribable {
     let registration: sourcegraph.Unsubscribable | undefined
@@ -135,7 +140,11 @@ function reregisterWhenEnablementChanges(
                     registration.unsubscribe()
                     registration = undefined
                 }
-                if (settings[enabledKey]) {
+                let value = settings[enabledKey]
+                if (value === undefined) {
+                    value = defaultValue
+                }
+                if (value) {
                     registration = register()
                 }
             }),

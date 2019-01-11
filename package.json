@@ -114,7 +114,12 @@
         "basicCodeIntel.enabled": {
           "description": "Use fuzzy text searches and ctags to provide code intelligence (definitions and references).",
           "type": "boolean",
-          "default": false
+          "default": true
+        },
+        "basicCodeIntel.hover": {
+          "description": "Show hover definitions and documentation based on fuzzy text searches and ctags.",
+          "type": "boolean",
+          "default": true
         },
         "basicCodeIntel.definition.crossRepository": {
           "type": "boolean",
