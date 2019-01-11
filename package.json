@@ -27,15 +27,15 @@
           [
             "basicCodeIntel.enabled"
           ],
-          "${!config.basicCodeIntel.enabled}",
+          "${!(config.basicCodeIntel.enabled !== (0==1))}",
           null,
           "json"
         ],
-        "title": "${config.basicCodeIntel.enabled && \"Disable\" || \"Enable\"} fuzzy def/ref matching",
+        "title": "${(config.basicCodeIntel.enabled !== (0==1)) && \"Disable\" || \"Enable\"} fuzzy def/ref matching",
         "category": "Basic code intel",
         "actionItem": {
-          "label": "${config.basicCodeIntel.enabled && \"Hide\" || \"Show\"} fuzzy matches",
-          "description": "${config.basicCodeIntel.enabled && \"Hide\" || \"Show\"} matches found using imprecise text search"
+          "label": "${(config.basicCodeIntel.enabled !== (0==1)) && \"Hide\" || \"Show\"} fuzzy matches",
+          "description": "${(config.basicCodeIntel.enabled !== (0==1)) && \"Hide\" || \"Show\"} matches found using imprecise text search"
         }
       },
       {
@@ -45,11 +45,11 @@
           [
             "basicCodeIntel.hover"
           ],
-          "${!config.basicCodeIntel.hover}",
+          "${!(config.basicCodeIntel.hover !== (0==1))}",
           null,
           "json"
         ],
-        "title": "${config.basicCodeIntel.hover && \"Disable\" || \"Enable\"} fuzzy hovers",
+        "title": "${(config.basicCodeIntel.hover !== (0==1)) && \"Disable\" || \"Enable\"} fuzzy hovers",
         "category": "Basic code intel"
       },
       {
@@ -69,10 +69,10 @@
       {
         "id": "basicCodeIntel.old.togglePreciseFuzzy",
         "command": "basicCodeIntel.old.togglePreciseFuzzy",
-        "title": "${config.basicCodeIntel.enabled && \"Switch to full code intelligence\" || \"Switch to basic code intelligence\"}",
+        "title": "${(config.basicCodeIntel.enabled !== (0==1)) && \"Switch to full code intelligence\" || \"Switch to basic code intelligence\"}",
         "actionItem": {
-          "label": "${config.basicCodeIntel.enabled && \"Fuzzy\" || \"Precise\"}",
-          "description": "${config.basicCodeIntel.enabled && \"Click to switch to precise: Use language servers for definitions and references\" || \"Click to switch to fuzzy: Use text search and ctags for definitions and references\"}"
+          "label": "${(config.basicCodeIntel.enabled !== (0==1)) && \"Fuzzy\" || \"Precise\"}",
+          "description": "${(config.basicCodeIntel.enabled !== (0==1)) && \"Click to switch to precise: Use language servers for definitions and references\" || \"Click to switch to fuzzy: Use text search and ctags for definitions and references\"}"
         }
       }
     ],
@@ -114,7 +114,12 @@
         "basicCodeIntel.enabled": {
           "description": "Use fuzzy text searches and ctags to provide code intelligence (definitions and references).",
           "type": "boolean",
-          "default": false
+          "default": true
+        },
+        "basicCodeIntel.hover": {
+          "description": "Show hover definitions and documentation based on fuzzy text searches and ctags.",
+          "type": "boolean",
+          "default": true
         },
         "basicCodeIntel.definition.crossRepository": {
           "type": "boolean",
