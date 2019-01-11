@@ -32,6 +32,18 @@ const fileExtsSets = [
     ['thrift'],
     ['proto'],
     ['graphql'],
+    ['pas'],
+    ['rs'],
+    ['sql'],
+    ['groovy'],
+    ['dart'],
+    ['kt', 'ktm', 'kts'],
+    ['f', 'for', 'f90', 'f95', 'f03'],
+    ['hs'],
+    ['lua'],
+    ['lisp'],
+    ['jl'],
+    ['clj']
 ]
 const fileExtToTerm = new Map<string, string>()
 function initFileExtToTerm() {
