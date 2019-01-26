@@ -92,7 +92,13 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
 }
 
 const settingsSubscribable = new Observable<Settings>(sub => {
-    sub.next(sourcegraph.configuration.get().value)
+    // BACKCOMPAT: Support 2.13 (which does not support getting the configuration synchronously in the activate
+    // call).
+    try {
+        sub.next(sourcegraph.configuration.get().value)
+    } catch (err) {
+        setTimeout(() => sub.next(sourcegraph.configuration.get().value), 100)
+    }
     return sourcegraph.configuration.subscribe(() =>
         sub.next(sourcegraph.configuration.get().value)
     )
