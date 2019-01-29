@@ -1,22 +1,21 @@
 {
-  "name": "basic-code-intel",
+  "name": "$LANGNAME",
   "publisher": "sourcegraph",
   "version": "0.0.0-development",
-  "title": "Basic code intelligence",
-  "description": "Provides basic code intelligence for all languages using the Sourcegraph search API",
+  "title": "$LANG code intelligence",
+  "description": "Provides basic code intelligence for $LANG using the Sourcegraph search API",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
+    "url": "https://github.com/sourcegraph/sourcegraph-$LANGNAME"
   },
   "categories": [
     "Programming languages"
   ],
   "tags": [
-    "fuzzy",
-    "cross-language"
+    "fuzzy"
   ],
   "activationEvents": [
-    "*"
+    "onLanguage:$LANGID"
   ],
   "contributes": {
     "actions": [

@@ -7,51 +7,17 @@ import { API, Result, parseUri } from './api'
 const identCharPattern = /[A-Za-z0-9_]/
 
 /**
- * fileExtSets describe file extension sets that may contain references to one another.
- * The elements of this array *must* be disjoint sets. Don't refer to this variable directly.
- * Instead, call fileExtTerm.
+ * fileExtSets describe file extension sets that may contain references to one
+ * another. The contents of this variable are filled in during autogeneration
+ * (see generate/). Don't refer to this variable directly. Instead, call
+ * fileExtTerm.
  */
-const fileExtsSets = [
-    ['h', 'c', 'hpp', 'cpp', 'm', 'cc'],
-    ['java'],
-    ['go'],
-    ['js'],
-    ['ts'],
-    ['rb', 'erb'],
-    ['py'],
-    ['php'],
-    ['css'],
-    ['cs'],
-    ['sh'],
-    ['scala'],
-    ['erl'],
-    ['r'],
-    ['swift'],
-    ['coffee'],
-    ['pl'],
-    ['thrift'],
-    ['proto'],
-    ['graphql'],
-    ['pas'],
-    ['rs'],
-    ['sql'],
-    ['groovy'],
-    ['dart'],
-    ['kt', 'ktm', 'kts'],
-    ['f', 'for', 'f90', 'f95', 'f03'],
-    ['hs'],
-    ['lua'],
-    ['lisp'],
-    ['jl'],
-    ['clj']
-]
+const fileExts: string[] = [] // AUTOGENERATE::EXTS
 const fileExtToTerm = new Map<string, string>()
 function initFileExtToTerm() {
-    for (const s of fileExtsSets) {
-        const extRegExp = `file:\.(${s.join('|')})$`
-        for (const e of s) {
-            fileExtToTerm.set(e, extRegExp)
-        }
+    const extRegExp = `file:\.(${fileExts.join('|')})$`
+    for (const e of fileExts) {
+        fileExtToTerm.set(e, extRegExp)
     }
 }
 initFileExtToTerm()
@@ -59,8 +25,7 @@ initFileExtToTerm()
 /**
  * Selects documents that the extension works on.
  */
-export const DOCUMENT_SELECTOR: sourcegraph.DocumentSelector = fileExtsSets
-    .reduce((all, exts) => all.concat(exts), [])
+export const DOCUMENT_SELECTOR: sourcegraph.DocumentSelector = fileExts
     .map(ext => ({ pattern: `*.${ext}` }))
 
 /**
