@@ -21,3 +21,10 @@ That generator will:
 - Instantiate the template in a temporary directory by filling in the variables (e.g. `$LANG` -> `Java`)
 - Update the first commit in each language extension's repository, preserving subsequent commits (requires push access to https://github.com/sourcegraph/sourcegraph-java et al.)
 - Publish the extension to the registry (expects `$HOME/src-config.prod.json` to exist with a token for the `sourcegraph` user
+
+## Adding a new language extension
+
+0. Create a new repository https://github.com/sourcegraph/sourcegraph-LANG
+0. Push a single empty commit to it with any message
+0. Add an entry to `languages` in [`generator/src/main.ts`](generator/src/main.ts)
+0. Run `bash generate.sh`
