@@ -1,3 +1,3 @@
-import { activateOnFileExts } from '../../package/lib/extension'
+import { activateOnFileExts } from '../../package/lib'
 
 export const activate = activateOnFileExts([]) // AUTOGENERATE::EXTENSIONS
