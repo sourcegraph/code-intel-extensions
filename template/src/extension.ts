@@ -1,3 +1,3 @@
-import { activateOnFileExts } from '../../package/lib'
+import { activateOnFileExts } from '@sourcegraph/basic-code-intel'
 
 export const activate = activateOnFileExts([]) // AUTOGENERATE::EXTENSIONS
