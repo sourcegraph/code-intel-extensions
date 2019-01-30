@@ -7,74 +7,26 @@ import { API, Result, parseUri } from './api'
 const identCharPattern = /[A-Za-z0-9_]/
 
 /**
- * fileExtSets describe file extension sets that may contain references to one another.
- * The elements of this array *must* be disjoint sets. Don't refer to this variable directly.
- * Instead, call fileExtTerm.
- */
-const fileExtsSets = [
-    ['h', 'c', 'hpp', 'cpp', 'm', 'cc'],
-    ['java'],
-    ['go'],
-    ['js'],
-    ['ts'],
-    ['rb', 'erb'],
-    ['py'],
-    ['php'],
-    ['css'],
-    ['cs'],
-    ['sh'],
-    ['scala'],
-    ['erl'],
-    ['r'],
-    ['swift'],
-    ['coffee'],
-    ['pl'],
-    ['thrift'],
-    ['proto'],
-    ['graphql'],
-    ['pas'],
-    ['rs'],
-    ['sql'],
-    ['groovy'],
-    ['dart'],
-    ['kt', 'ktm', 'kts'],
-    ['f', 'for', 'f90', 'f95', 'f03'],
-    ['hs'],
-    ['lua'],
-    ['lisp'],
-    ['jl'],
-    ['clj']
-]
-const fileExtToTerm = new Map<string, string>()
-function initFileExtToTerm() {
-    for (const s of fileExtsSets) {
-        const extRegExp = `file:\.(${s.join('|')})$`
-        for (const e of s) {
-            fileExtToTerm.set(e, extRegExp)
-        }
-    }
-}
-initFileExtToTerm()
-
-/**
  * Selects documents that the extension works on.
  */
-export const DOCUMENT_SELECTOR: sourcegraph.DocumentSelector = fileExtsSets
-    .reduce((all, exts) => all.concat(exts), [])
-    .map(ext => ({ pattern: `*.${ext}` }))
+export function documentSelector(
+    fileExts: string[]
+): sourcegraph.DocumentSelector {
+    return fileExts.map(ext => ({ pattern: `*.${ext}` }))
+}
 
 /**
  * fileExtTerm returns the search term to use to filter to specific file extensions
  */
-function fileExtTerm(sourceFile: string): string {
+function fileExtTerm(sourceFile: string, fileExts: string[]): string {
     const i = sourceFile.lastIndexOf('.')
     if (i === -1) {
         return ''
     }
     const ext = sourceFile.substring(i + 1).toLowerCase()
-    const match = fileExtToTerm.get(ext)
+    const match = fileExts.includes(ext)
     if (match) {
-        return match
+        return `file:\.(${fileExts.join('|')})$`
     }
     return ''
 }
@@ -87,7 +39,8 @@ function makeQuery(
     symbols: boolean,
     currentFileUri: string,
     local: boolean,
-    nonLocal: boolean
+    nonLocal: boolean,
+    fileExts: string[]
 ): string {
     const terms = [`\\b${searchToken}\\b`, 'case:yes']
     if (
@@ -95,7 +48,7 @@ function makeQuery(
         !currentFileUri.endsWith('.proto') &&
         !currentFileUri.endsWith('.graphql')
     ) {
-        terms.push(fileExtTerm(currentFileUri))
+        terms.push(fileExtTerm(currentFileUri, fileExts))
     }
     if (symbols) {
         terms.push('type:symbol')
@@ -132,9 +85,7 @@ function resultToLocation(res: Result): sourcegraph.Location {
  * @see package.json contributes.configuration section for the configuration schema.
  */
 export interface Settings {
-    ['basicCodeIntel.enabled']?: boolean // default true
     ['basicCodeIntel.definition.crossRepository']?: boolean
-    ['basicCodeIntel.hover']?: boolean // default true
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
@@ -145,6 +96,12 @@ export class Handler {
      * api holds a reference to a Sourcegraph API client.
      */
     public api = new API()
+
+    /**
+     * Constructs a new Handler that provides code intelligence on files with the given
+     * file extensions.
+     */
+    constructor(private fileExts: string[]) {}
 
     /**
      * Return the first definition location's line.
@@ -244,7 +201,14 @@ export class Handler {
         const searchToken = line.substring(start, end)
 
         const symbolResults = this.api.search(
-            makeQuery(searchToken, true, doc.uri, !crossRepo, false)
+            makeQuery(
+                searchToken,
+                true,
+                doc.uri,
+                !crossRepo,
+                false,
+                this.fileExts
+            )
         )
         return (await symbolResults).map(resultToLocation)
     }
@@ -275,10 +239,10 @@ export class Handler {
         const searchToken = line.substring(start, end)
 
         const localResultsPromise = this.api.search(
-            makeQuery(searchToken, false, doc.uri, true, false)
+            makeQuery(searchToken, false, doc.uri, true, false, this.fileExts)
         )
         const nonLocalResultsPromise = this.api.search(
-            makeQuery(searchToken, false, doc.uri, false, true)
+            makeQuery(searchToken, false, doc.uri, false, true, this.fileExts)
         )
 
         const results: Result[] = []
