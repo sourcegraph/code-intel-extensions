@@ -85,9 +85,7 @@ function resultToLocation(res: Result): sourcegraph.Location {
  * @see package.json contributes.configuration section for the configuration schema.
  */
 export interface Settings {
-    ['basicCodeIntel.enabled']?: boolean // default true
     ['basicCodeIntel.definition.crossRepository']?: boolean
-    ['basicCodeIntel.hover']?: boolean // default true
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
