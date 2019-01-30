@@ -1,5 +1,5 @@
 {
-  "name": "basic-code-intel",
+  "name": "@sourcegraph/basic-code-intel",
   "version": "0.0.0-development",
   "description": "Common library for providing basic code intelligence in Sourcegraph extensions",
   "repository": {
