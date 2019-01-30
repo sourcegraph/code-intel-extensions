@@ -26,7 +26,7 @@ Sourcegraphers only: see [generator/README.md](./generator/README.md) to update 
 
 1. Create a new extension https://docs.sourcegraph.com/extensions/authoring/creating
 1. Take a look at the [Java](https://github.com/sourcegraph/sourcegraph-java/blob/master/src/extension.ts) extension to see how to use the `@sourcegraph/basic-code-intel` package
-1. Change the file extensions, test, and publish
+1. Change the file extensions, test, and [publish](https://docs.sourcegraph.com/extensions/authoring/publishing)
 
 ## Adding a new sourcegraph/sourcegraph-$LANG extension (Sourcegraphers only)
 
