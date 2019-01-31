@@ -131,8 +131,8 @@ function main(): void {
         shell.exec(`git rebase --onto temp $(git rev-list --max-parents=0 origin/master) origin/master`)
         shell.exec(`git branch -f temp HEAD`)
         shell.exec(`git checkout temp`)
-        // shell.exec(`git push --force origin temp:master`)
-        // shell.exec('src -config=$HOME/src-config.prod.json extension publish')
+        shell.exec(`git push --force origin temp:master`)
+        shell.exec('src -config=$HOME/src-config.prod.json extension publish')
     })
 
     shell.cd('..')
