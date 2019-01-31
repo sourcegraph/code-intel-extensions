@@ -51,5 +51,3 @@ Because this extension uses text-based heuristics, its definition and reference 
 - "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
 
 These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
-
-Want precise definitions and references? See [all Sourcegraph programming language extensions](https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22) to see if there is a Sourcegraph extension targeting your language (typically using a language server that actually builds/compiles the code).
