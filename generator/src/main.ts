@@ -81,11 +81,13 @@ function jsStringify(values: string[]): string {
 }
 
 function main(): void {
-    const args = yargs.option('language', {
-        choices: ['all', ..._.keys(languages)],
-        demandOption: true,
+    const args = yargs.option('languages', {
+        describe: _.keys(languages).join(','),
+        type: 'string',
     }).argv
-    const languageFilter = args.language === 'all' ? () => true : (_: any, key: string) => key === args.language
+    const languageFilter = !args.languages
+        ? () => true
+        : (_: any, key: string) => args.languages.split(',').includes(key)
 
     shell.set('-e')
 
