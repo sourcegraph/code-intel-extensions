@@ -1,15 +1,18 @@
 import * as shell from 'shelljs'
 import * as _ from 'lodash'
 import * as yargs from 'yargs'
+import { HandlerArgs } from '../../package/lib/handler'
+
+type LanguageSpec = HandlerArgs & { stylized: string }
 
 // The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
-const languages: { [name: string]: { extensions: string[]; stylized: string } } = {
-    java: { extensions: ['java'], stylized: 'Java' },
-    cpp: { extensions: ['c', 'cc', 'cpp', 'c++', 'h++', 'hh', 'h'], stylized: 'C++' },
+const languages: { [name: string]: LanguageSpec } = {
+    java: { fileExts: ['java'], stylized: 'Java' },
+    cpp: { fileExts: ['c', 'cc', 'cpp', 'c++', 'h++', 'hh', 'h'], stylized: 'C++' },
     ruby: {
-        extensions: [
+        fileExts: [
             'rb',
             'builder',
             'eye',
@@ -34,35 +37,35 @@ const languages: { [name: string]: { extensions: string[]; stylized: string } } 
         stylized: 'Ruby',
     },
     php: {
-        extensions: ['php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'phps'],
+        fileExts: ['php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'phps'],
         stylized: 'PHP',
     },
-    csharp: { extensions: ['cs', 'csx'], stylized: 'C#' },
-    shell: { extensions: ['sh', 'bash', 'zsh'], stylized: 'Shell' },
-    scala: { extensions: ['sbt', 'sc', 'scala'], stylized: 'Scala' },
-    swift: { extensions: ['swift'], stylized: 'Swift' },
-    rust: { extensions: ['rs', 'rs.in'], stylized: 'Rust' },
-    kotlin: { extensions: ['kt', 'ktm', 'kts'], stylized: 'Kotlin' },
-    elixir: { extensions: ['ex', 'exs'], stylized: 'Elixir' },
+    csharp: { fileExts: ['cs', 'csx'], stylized: 'C#' },
+    shell: { fileExts: ['sh', 'bash', 'zsh'], stylized: 'Shell' },
+    scala: { fileExts: ['sbt', 'sc', 'scala'], stylized: 'Scala' },
+    swift: { fileExts: ['swift'], stylized: 'Swift' },
+    rust: { fileExts: ['rs', 'rs.in'], stylized: 'Rust' },
+    kotlin: { fileExts: ['kt', 'ktm', 'kts'], stylized: 'Kotlin' },
+    elixir: { fileExts: ['ex', 'exs'], stylized: 'Elixir' },
     perl: {
-        extensions: ['pl', 'al', 'cgi', 'fcgi', 'perl', 'ph', 'plx', 'pm', 'pod', 'psgi', 't'],
+        fileExts: ['pl', 'al', 'cgi', 'fcgi', 'perl', 'ph', 'plx', 'pm', 'pod', 'psgi', 't'],
         stylized: 'Perl',
     },
-    lua: { extensions: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'], stylized: 'Lua' },
-    clojure: { extensions: ['clj', 'cljs', 'cljx'], stylized: 'Clojure' },
-    haskell: { extensions: ['hs', 'hsc'], stylized: 'Haskell' },
-    powershell: { extensions: ['ps1', 'psd1', 'psm1'], stylized: 'PowerShell' },
+    lua: { fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'], stylized: 'Lua' },
+    clojure: { fileExts: ['clj', 'cljs', 'cljx'], stylized: 'Clojure' },
+    haskell: { fileExts: ['hs', 'hsc'], stylized: 'Haskell' },
+    powershell: { fileExts: ['ps1', 'psd1', 'psm1'], stylized: 'PowerShell' },
     lisp: {
-        extensions: ['lisp', 'asd', 'cl', 'lsp', 'l', 'ny', 'podsl', 'sexp', 'el'],
+        fileExts: ['lisp', 'asd', 'cl', 'lsp', 'l', 'ny', 'podsl', 'sexp', 'el'],
         stylized: 'Lisp',
     },
-    erlang: { extensions: ['erl'], stylized: 'Erlang' },
-    dart: { extensions: ['dart'], stylized: 'Dart' },
+    erlang: { fileExts: ['erl'], stylized: 'Erlang' },
+    dart: { fileExts: ['dart'], stylized: 'Dart' },
     ocaml: {
-        extensions: ['ml', 'eliom', 'eliomi', 'ml4', 'mli', 'mll', 'mly', 're'],
+        fileExts: ['ml', 'eliom', 'eliomi', 'ml4', 'mli', 'mll', 'mly', 're'],
         stylized: 'OCaml',
     },
-    r: { extensions: ['r', 'rd', 'rsx'], stylized: 'R' },
+    r: { fileExts: ['r', 'rd', 'rsx'], stylized: 'R' },
 }
 
 function langID(name: string): string {
@@ -81,10 +84,12 @@ function jsStringify(values: string[]): string {
 }
 
 function main(): void {
-    const args = yargs.option('languages', {
-        describe: _.keys(languages).join(','),
-        type: 'string',
-    }).argv
+    const args = yargs
+        .option('languages', {
+            describe: _.keys(languages).join(','),
+            type: 'string',
+        })
+        .option('push', { type: 'boolean' }).argv
     const languageFilter = !args.languages
         ? () => true
         : (_: any, key: string) => args.languages.split(',').includes(key)
@@ -97,46 +102,56 @@ function main(): void {
     shell.cp('-R', 'template/node_modules', 'temp/node_modules')
     shell.cd('temp')
 
-    _.forEach(_.pickBy(languages, languageFilter), ({ extensions, stylized }, name) => {
-        console.log('Updating', name)
+    _.forEach(
+        _.pickBy(languages, languageFilter),
+        ({ fileExts, stylized, definitionPatterns = [] }: LanguageSpec, name) => {
+            console.log('Updating', name)
 
-        // Delete everything but node_modules
-        shell.exec(`find . -mindepth 1 -maxdepth 1 ! -name 'node_modules' -exec rm -rf '{}' ';'`)
-        // Copy from template/ everything but node_modules
-        shell.exec(`find ../template -mindepth 1 -maxdepth 1 ! -name 'node_modules' -exec cp -R '{}' . ';'`)
+            // Delete everything but node_modules
+            shell.exec(`find . -mindepth 1 -maxdepth 1 ! -name 'node_modules' -exec rm -rf '{}' ';'`)
+            // Copy from template/ everything but node_modules
+            shell.exec(`find ../template -mindepth 1 -maxdepth 1 ! -name 'node_modules' -exec cp -R '{}' . ';'`)
 
-        // The following git gymnastics update the first autogenerated commit in
-        // the corresponding repository while preserving all commits after it.
+            // The following git gymnastics update the first autogenerated commit in
+            // the corresponding repository while preserving all commits after it.
 
-        shell.exec(`git init`)
-        shell.exec(`git remote add origin git@github.com:sourcegraph/sourcegraph-${name}.git`)
-        shell.exec(`git fetch origin`)
+            shell.exec(`git init`)
+            shell.exec(`git remote add origin git@github.com:sourcegraph/sourcegraph-${name}.git`)
+            shell.exec(`git fetch origin`)
 
-        shell.exec(`git checkout --orphan temp`)
+            shell.exec(`git checkout --orphan temp`)
 
-        shell.sed('-i', /\$LANGNAME\b/, name, 'package.json')
-        shell.sed('-i', /\$LANGID\b/, langID(name), 'package.json')
-        shell.sed('-i', /\$LANG\b/, stylized, 'package.json')
-        shell.sed('-i', /\$LANGNAME\b/, name, 'README.md')
-        shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
-        shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
-        shell.sed(
-            '-i',
-            /activateOnFileExts\(\[\]\) \/\/ AUTOGENERATE::EXTENSIONS/,
-            `activateOnFileExts(${jsStringify(extensions)})`,
-            'src/extension.ts'
-        )
+            shell.sed('-i', /\$LANGNAME\b/, name, 'package.json')
+            shell.sed('-i', /\$LANGID\b/, langID(name), 'package.json')
+            shell.sed('-i', /\$LANG\b/, stylized, 'package.json')
+            shell.sed('-i', /"name": ".*"/, `"name": "${name}"`, 'package.json')
+            shell.sed('-i', /"onLanguage:.*"/, `"onLanguage:${langID(name)}"`, 'package.json')
+            shell.sed('-i', /\$LANGNAME\b/, name, 'README.md')
+            shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
+            shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
+            shell.sed('-i', /fileExts: \[\]/, `fileExts: ${jsStringify(fileExts)}`, 'src/extension.ts')
+            shell.sed(
+                '-i',
+                /definitionPatterns: \[\]/,
+                `definitionPatterns: ${jsStringify(definitionPatterns)}`,
+                'src/extension.ts'
+            )
 
-        shell.exec(
-            'git add .editorconfig .gitignore .prettierignore .prettierrc LICENSE package.json README.md package.json src tsconfig.json yarn.lock'
-        )
-        shell.exec(`git commit -m "Autogenerate the ${name} language extension"`)
-        shell.exec(`git rebase --onto temp $(git rev-list --max-parents=0 origin/master) origin/master`)
-        shell.exec(`git branch -f temp HEAD`)
-        shell.exec(`git checkout temp`)
-        shell.exec(`git push --force origin temp:master`)
-        shell.exec('src -config=$HOME/src-config.prod.json extension publish')
-    })
+            shell.exec(
+                'git add .editorconfig .gitignore .prettierignore .prettierrc LICENSE package.json README.md package.json src tsconfig.json yarn.lock'
+            )
+            shell.exec(`git commit -m "Autogenerate the ${name} language extension"`)
+            shell.exec(`git rebase --onto temp $(git rev-list --max-parents=0 origin/master) origin/master`)
+            shell.exec(`git branch -f temp HEAD`)
+            shell.exec(`git checkout temp`)
+            if (args.push) {
+                shell.exec(`git push --force origin temp:master`)
+                shell.exec('src -config=$HOME/src-config.prod.json extension publish')
+            } else {
+                console.log('Not pushing', name)
+            }
+        }
+    )
 
     shell.cd('..')
 }

@@ -1,5 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import { API, Result, parseUri } from './api'
+import * as sprintf from 'sprintf-js'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -31,18 +32,26 @@ function fileExtTerm(sourceFile: string, fileExts: string[]): string {
     return ''
 }
 
+type Scope = 'file' | 'repo' | 'all repos'
+
 /**
  * makeQuery returns the search query to use for a given set of options.
  */
-function makeQuery(
-    searchToken: string,
-    symbols: boolean,
-    currentFileUri: string,
-    local: boolean,
-    nonLocal: boolean,
+function makeQuery({
+    searchToken,
+    searchType,
+    currentFileUri,
+    scope,
+    fileExts,
+}: {
+    searchToken: string
+    searchType: 'symbol' | 'file'
+    currentFileUri: string
+    scope: Scope
     fileExts: string[]
-): string {
-    const terms = [`\\b${searchToken}\\b`, 'case:yes']
+}): string {
+    const terms = [searchToken, 'case:yes']
+
     if (
         !currentFileUri.endsWith('.thrift') &&
         !currentFileUri.endsWith('.proto') &&
@@ -50,17 +59,31 @@ function makeQuery(
     ) {
         terms.push(fileExtTerm(currentFileUri, fileExts))
     }
-    if (symbols) {
-        terms.push('type:symbol')
-    } else {
-        terms.push('type:file')
+
+    switch (searchType) {
+        case 'symbol':
+            terms.push('type:symbol')
+            break
+        case 'file':
+            terms.push('type:file')
+            break
+        default:
+            console.error('bad searchType', searchType)
     }
-    const { repo, rev } = parseUri(currentFileUri)
-    if (local) {
-        terms.push(`repo:^${repo}$@${rev}`)
-    }
-    if (nonLocal) {
-        terms.push(`-repo:^${repo}$`)
+
+    const { repo, rev, path } = parseUri(currentFileUri)
+    switch (scope) {
+        case 'file':
+            terms.push(`repo:^${repo}$@${rev}`)
+            terms.push(`file:^${path}$`)
+            break
+        case 'repo':
+            terms.push(`repo:^${repo}$@${rev}`)
+            break
+        case 'all repos':
+            break
+        default:
+            console.error('bad scope', scope)
     }
     return terms.join(' ')
 }
@@ -91,17 +114,32 @@ export interface Settings {
 
 const COMMENT_PATTERN = /^\s*(\/\/\/?|#|;|"""|\*( |$)|\/\*\*|\*\/$)\s*/
 
+export interface HandlerArgs {
+    fileExts?: string[]
+    /** %s format strings that return regexes (e.g. `const %s =`). */
+    definitionPatterns?: string[]
+}
+
 export class Handler {
     /**
      * api holds a reference to a Sourcegraph API client.
      */
     public api = new API()
+    public fileExts: string[] = []
+    public definitionPatterns: string[] = []
 
     /**
      * Constructs a new Handler that provides code intelligence on files with the given
      * file extensions.
      */
-    constructor(private fileExts: string[]) {}
+    constructor({
+        fileExts = [],
+        /** %s format strings that return regexes (e.g. `const %s =`). */
+        definitionPatterns = [],
+    }: HandlerArgs) {
+        this.fileExts = fileExts
+        this.definitionPatterns = definitionPatterns
+    }
 
     /**
      * Return the first definition location's line.
@@ -200,17 +238,49 @@ export class Handler {
         }
         const searchToken = line.substring(start, end)
 
-        const symbolResults = this.api.search(
-            makeQuery(
-                searchToken,
-                true,
-                doc.uri,
-                !crossRepo,
-                false,
-                this.fileExts
+        const patternQuery = (
+            scope: Scope,
+            patterns: string[]
+        ): string | undefined => {
+            return patterns.length === 0
+                ? undefined
+                : makeQuery({
+                      searchToken: patterns
+                          .map(pattern =>
+                              sprintf.sprintf(`${pattern}`, searchToken)
+                          )
+                          .join('|'),
+                      searchType: 'file',
+                      currentFileUri: doc.uri,
+                      scope,
+                      fileExts: this.fileExts,
+                  })
+        }
+
+        const queries = [
+            patternQuery('file', this.definitionPatterns),
+            makeQuery({
+                searchToken: `\\b${searchToken}\\b`,
+                searchType: 'symbol',
+                currentFileUri: doc.uri,
+                scope: 'repo',
+                fileExts: this.fileExts,
+            }),
+            patternQuery('repo', this.definitionPatterns),
+            patternQuery('all repos', this.definitionPatterns),
+        ].filter((priority): priority is string => Boolean(priority))
+
+        for (const query of queries) {
+            const symbolResults = (await this.api.search(query)).map(
+                resultToLocation
             )
-        )
-        return (await symbolResults).map(resultToLocation)
+
+            if (symbolResults.length > 0) {
+                return symbolResults
+            }
+        }
+
+        return []
     }
 
     async references(
@@ -238,17 +308,14 @@ export class Handler {
         }
         const searchToken = line.substring(start, end)
 
-        const localResultsPromise = this.api.search(
-            makeQuery(searchToken, false, doc.uri, true, false, this.fileExts)
-        )
-        const nonLocalResultsPromise = this.api.search(
-            makeQuery(searchToken, false, doc.uri, false, true, this.fileExts)
-        )
-
-        const results: Result[] = []
-        return results
-            .concat(await localResultsPromise)
-            .concat(await nonLocalResultsPromise)
-            .map(resultToLocation)
+        return (await this.api.search(
+            makeQuery({
+                searchToken,
+                searchType: 'file',
+                currentFileUri: doc.uri,
+                scope: 'repo',
+                fileExts: this.fileExts,
+            })
+        )).map(resultToLocation)
     }
 }

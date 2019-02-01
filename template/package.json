@@ -1,5 +1,5 @@
 {
-  "name": "$LANGNAME",
+  "name": "java",
   "publisher": "sourcegraph",
   "version": "0.0.0-development",
   "title": "$LANG code intelligence",
@@ -15,7 +15,7 @@
     "fuzzy"
   ],
   "activationEvents": [
-    "onLanguage:$LANGID"
+    "onLanguage:java"
   ],
   "contributes": {
     "actions": [

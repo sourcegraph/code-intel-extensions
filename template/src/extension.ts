@@ -1,3 +1,6 @@
-import { activateOnFileExts } from '../../package/lib'
+import { activateBasicCodeIntel } from '../../package/lib'
 
-export const activate = activateOnFileExts([]) // AUTOGENERATE::EXTENSIONS
+export const activate = activateBasicCodeIntel({
+    fileExts: [],
+    definitionPatterns: [],
+})
