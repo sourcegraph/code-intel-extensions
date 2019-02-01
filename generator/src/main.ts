@@ -119,6 +119,7 @@ function main(): void {
         shell.sed('-i', /\$LANG\b/, stylized, 'package.json')
         shell.sed('-i', /\$LANGNAME\b/, name, 'README.md')
         shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
+        shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
         shell.sed(
             '-i',
             /activateOnFileExts\(\[\]\) \/\/ AUTOGENERATE::EXTENSIONS/,
