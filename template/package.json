@@ -2,11 +2,11 @@
   "name": "java",
   "publisher": "sourcegraph",
   "version": "0.0.0-development",
-  "title": "$LANG code intelligence",
-  "description": "Provides basic code intelligence for $LANG using the Sourcegraph search API",
+  "title": "Java code intelligence",
+  "description": "Provides basic code intelligence for Java using the Sourcegraph search API",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-$LANGNAME"
+    "url": "https://github.com/sourcegraph/sourcegraph-java"
   },
   "categories": [
     "Programming languages"

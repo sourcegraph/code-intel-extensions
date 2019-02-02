@@ -130,6 +130,19 @@ function main(): void {
             shell.sed('-i', /\$LANG\b/, stylized, 'package.json')
             shell.sed('-i', /"name": ".*"/, `"name": "${name}"`, 'package.json')
             shell.sed('-i', /"onLanguage:.*"/, `"onLanguage:${langID(name)}"`, 'package.json')
+            shell.sed('-i', /"title": ".*"/, `"title": "${stylized} code intelligence"`, 'package.json')
+            shell.sed(
+                '-i',
+                /"description": ".*"/,
+                `"description": "Provides basic code intelligence for ${stylized} using the Sourcegraph search API"`,
+                'package.json'
+            )
+            shell.sed(
+                '-i',
+                /"url": ".*"/,
+                `"url": "https://github.com/sourcegraph/sourcegraph-${name}"`,
+                'package.json'
+            )
             shell.sed('-i', /\$LANGNAME\b/, name, 'README.md')
             shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
             shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
