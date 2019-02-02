@@ -167,7 +167,9 @@ function main(): void {
             shell.sed('-i', /\$LANGNAME\b/, name, 'README.md')
             shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
             shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
+            shell.exec('grep "fileExts: \\[\\]" src/extension.ts')
             shell.sed('-i', /fileExts: \[\]/, `fileExts: ${jsStringify(fileExts)}`, 'src/extension.ts')
+            shell.exec('grep "definitionPatterns: \\[\\]" src/extension.ts')
             shell.sed(
                 '-i',
                 /definitionPatterns: \[\]/,
