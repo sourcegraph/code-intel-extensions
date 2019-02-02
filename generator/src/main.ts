@@ -47,7 +47,11 @@ const languages: { [name: string]: LanguageSpec } = {
         stylized: 'Scala',
         definitionPatterns: ['\\b(def|val|var|class|object|trait)\\s%s\\b'],
     },
-    swift: { fileExts: ['swift'], stylized: 'Swift' },
+    swift: {
+        fileExts: ['swift'],
+        stylized: 'Swift',
+        definitionPatterns: ['\\b(func|class|var|let|for|struct|enum|protocol)\\s%s\\b', '\\bfunc\\s.*\\s%s:'],
+    },
     rust: { fileExts: ['rs', 'rs.in'], stylized: 'Rust' },
     kotlin: { fileExts: ['kt', 'ktm', 'kts'], stylized: 'Kotlin' },
     elixir: { fileExts: ['ex', 'exs'], stylized: 'Elixir' },
