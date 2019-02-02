@@ -53,7 +53,11 @@ const languages: { [name: string]: LanguageSpec } = {
     },
     lua: { fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'], stylized: 'Lua' },
     clojure: { fileExts: ['clj', 'cljs', 'cljx'], stylized: 'Clojure' },
-    haskell: { fileExts: ['hs', 'hsc'], stylized: 'Haskell' },
+    haskell: {
+        fileExts: ['hs', 'hsc'],
+        stylized: 'Haskell',
+        definitionPatterns: ['\\b%s\\s::', '^data\\s%s\\b', '^newtype\\s%s\\b', '^type\\s%s\\b', '^class.*\\b%s\\b'],
+    },
     powershell: { fileExts: ['ps1', 'psd1', 'psm1'], stylized: 'PowerShell' },
     lisp: {
         fileExts: ['lisp', 'asd', 'cl', 'lsp', 'l', 'ny', 'podsl', 'sexp', 'el'],
