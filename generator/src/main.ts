@@ -58,7 +58,7 @@ const languages: { [name: string]: LanguageSpec } = {
         stylized: 'Kotlin',
         definitionPatterns: ['\\b(fun|val|var|class|interface)\\s%s\\b', '\\bfun\\s.*\\s%s:', '\\bfor\\s\\(%s\\sin'],
     },
-    elixir: { fileExts: ['ex', 'exs'], stylized: 'Elixir' },
+    elixir: { fileExts: ['ex', 'exs'], stylized: 'Elixir', definitionPatterns: ['\\b(def|defp|defmodule)\\s%s\\b'] },
     perl: {
         fileExts: ['pl', 'al', 'cgi', 'fcgi', 'perl', 'ph', 'plx', 'pm', 'pod', 'psgi', 't'],
         stylized: 'Perl',
