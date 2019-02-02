@@ -53,7 +53,11 @@ const languages: { [name: string]: LanguageSpec } = {
         definitionPatterns: ['\\b(func|class|var|let|for|struct|enum|protocol)\\s%s\\b', '\\bfunc\\s.*\\s%s:'],
     },
     rust: { fileExts: ['rs', 'rs.in'], stylized: 'Rust' },
-    kotlin: { fileExts: ['kt', 'ktm', 'kts'], stylized: 'Kotlin' },
+    kotlin: {
+        fileExts: ['kt', 'ktm', 'kts'],
+        stylized: 'Kotlin',
+        definitionPatterns: ['\\b(fun|val|var|class|interface)\\s%s\\b', '\\bfun\\s.*\\s%s:', '\\bfor\\s\\(%s\\sin'],
+    },
     elixir: { fileExts: ['ex', 'exs'], stylized: 'Elixir' },
     perl: {
         fileExts: ['pl', 'al', 'cgi', 'fcgi', 'perl', 'ph', 'plx', 'pm', 'pod', 'psgi', 't'],
