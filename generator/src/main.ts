@@ -42,7 +42,11 @@ const languages: { [name: string]: LanguageSpec } = {
     },
     csharp: { fileExts: ['cs', 'csx'], stylized: 'C#' },
     shell: { fileExts: ['sh', 'bash', 'zsh'], stylized: 'Shell' },
-    scala: { fileExts: ['sbt', 'sc', 'scala'], stylized: 'Scala' },
+    scala: {
+        fileExts: ['sbt', 'sc', 'scala'],
+        stylized: 'Scala',
+        definitionPatterns: ['\\b(def|val|var|class|object|trait)\\s%s\\b'],
+    },
     swift: { fileExts: ['swift'], stylized: 'Swift' },
     rust: { fileExts: ['rs', 'rs.in'], stylized: 'Rust' },
     kotlin: { fileExts: ['kt', 'ktm', 'kts'], stylized: 'Kotlin' },
