@@ -100,6 +100,15 @@ function main(): void {
 
     shell.set('-e')
 
+    const depVersion = JSON.parse(shell.cat('template/package.json')).dependencies['@sourcegraph/basic-code-intel']
+    const packageVersion = JSON.parse(shell.cat('package/package.json')).version
+    if (depVersion !== packageVersion) {
+        console.error(
+            `You have to update template/package.json's dependency version ${depVersion} so that it matches package/package.json's version ${packageVersion}.`
+        )
+        process.exit(1)
+    }
+
     shell.rm('-rf', 'temp')
     shell.mkdir('temp')
     console.log('Copying template/node_modules to temp/node_modules (takes ~15s) once up front')
