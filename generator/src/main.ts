@@ -10,7 +10,7 @@ type LanguageSpec = HandlerArgs & { stylized: string }
 // The extensions come from shared/src/languages.ts
 const languages: { [name: string]: LanguageSpec } = {
     java: { fileExts: ['java'], stylized: 'Java' },
-    cpp: { fileExts: ['c', 'cc', 'cpp', 'c++', 'h++', 'hh', 'h'], stylized: 'C++' },
+    cpp: { fileExts: ['c', 'cc', 'cpp', 'hh', 'h'], stylized: 'C++' },
     ruby: {
         fileExts: [
             'rb',
