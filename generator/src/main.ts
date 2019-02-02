@@ -92,7 +92,7 @@ function langID(name: string): string {
 }
 
 function quote(value: string): string {
-    return `'${value}'`
+    return `'${value.replace(/\\/g, '\\\\')}'`
 }
 
 function jsStringify(values: string[]): string {
