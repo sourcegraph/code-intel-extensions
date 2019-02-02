@@ -1,12 +1,12 @@
 {
-  "name": "java",
+  "name": "basic-code-intel-template",
   "publisher": "sourcegraph",
   "version": "0.0.0-development",
-  "title": "Java code intelligence",
+  "title": "Basic code intelligence",
   "description": "Provides basic code intelligence for Java using the Sourcegraph search API",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-java"
+    "url": "https://github.com/sourcegraph/sourcegraph-somelang"
   },
   "categories": [
     "Programming languages"
@@ -15,7 +15,7 @@
     "fuzzy"
   ],
   "activationEvents": [
-    "onLanguage:java"
+    "onLanguage:cpp"
   ],
   "contributes": {
     "actions": [
