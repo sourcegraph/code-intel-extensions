@@ -32,7 +32,11 @@ function fileExtTerm(sourceFile: string, fileExts: string[]): string {
     return ''
 }
 
-type Scope = 'file' | 'repo' | 'all repos'
+type Scope =
+    | 'current file'
+    | 'current repository'
+    | 'all repositories'
+    | 'other repositories'
 
 /**
  * makeQuery returns the search query to use for a given set of options.
@@ -73,14 +77,17 @@ function makeQuery({
 
     const { repo, rev, path } = parseUri(currentFileUri)
     switch (scope) {
-        case 'file':
+        case 'current file':
             terms.push(`repo:^${repo}$@${rev}`)
             terms.push(`file:^${path}$`)
             break
-        case 'repo':
+        case 'current repository':
             terms.push(`repo:^${repo}$@${rev}`)
             break
-        case 'all repos':
+        case 'all repositories':
+            break
+        case 'other repositories':
+            terms.push(`-repo:^${repo}$`)
             break
         default:
             console.error('bad scope', scope)
@@ -258,16 +265,16 @@ export class Handler {
         }
 
         const queries = [
-            patternQuery('file', this.definitionPatterns),
+            patternQuery('current file', this.definitionPatterns),
             makeQuery({
                 searchToken: `\\b${searchToken}\\b`,
                 searchType: 'symbol',
                 currentFileUri: doc.uri,
-                scope: 'repo',
+                scope: 'current repository',
                 fileExts: this.fileExts,
             }),
-            patternQuery('repo', this.definitionPatterns),
-            patternQuery('all repos', this.definitionPatterns),
+            patternQuery('current repository', this.definitionPatterns),
+            patternQuery('all repositories', this.definitionPatterns),
         ].filter((priority): priority is string => Boolean(priority))
 
         for (const query of queries) {
@@ -308,14 +315,22 @@ export class Handler {
         }
         const searchToken = line.substring(start, end)
 
-        return (await this.api.search(
-            makeQuery({
-                searchToken,
-                searchType: 'file',
-                currentFileUri: doc.uri,
-                scope: 'repo',
-                fileExts: this.fileExts,
-            })
-        )).map(resultToLocation)
+        const referencesFrom = async (
+            scope: Scope
+        ): Promise<sourcegraph.Location[]> =>
+            (await this.api.search(
+                makeQuery({
+                    searchToken,
+                    searchType: 'file',
+                    currentFileUri: doc.uri,
+                    scope,
+                    fileExts: this.fileExts,
+                })
+            )).map(resultToLocation)
+
+        return [
+            ...(await referencesFrom('current repository')),
+            ...(await referencesFrom('other repositories')),
+        ]
     }
 }
