@@ -2058,6 +2058,11 @@ source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.1:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
 
+sourcegraph@^20.1.0:
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-20.1.0.tgz#9ba6c0e57107b1fe66c4299db32c7780094398cc"
+  integrity sha512-zbpDsFtExHQ04eJvQ2IIoi1rWrJU7Uhw4wXoy7V9Xpj/qMgbNnV4dev1kDg24y6F9vXM+jSONRrVcg/EO/UMag==
+
 spawn-wrap@^1.4.2:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/spawn-wrap/-/spawn-wrap-1.4.2.tgz#cff58e73a8224617b6561abdc32586ea0c82248c"

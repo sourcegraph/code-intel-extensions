@@ -62,7 +62,8 @@
     "typescript": "^3.2.1"
   },
   "dependencies": {
-    "rxjs": "^6.3.3"
+    "rxjs": "^6.3.3",
+    "sourcegraph": "^20.1.0"
   },
   "sideEffects": false
 }
