@@ -169,21 +169,23 @@ function main(): void {
             shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
 
             shell.set('+e')
-            if (shell.exec('grep "fileExts: \\[\\]" src/extension.ts').code !== 0) {
-                console.log('Dirty `fileExts: []` in src/extensions.ts')
+            if (shell.exec('grep "fileExts: \\[.*\\]" src/extension.ts').code !== 0) {
+                console.log('Could not replace `fileExts: [...]` in src/extensions.ts')
+                process.exit(1)
             }
             shell.set('-e')
-            shell.sed('-i', /fileExts: \[\]/, `fileExts: ${jsStringify(fileExts)}`, 'src/extension.ts')
+            shell.sed('-i', /fileExts: \[.*\]/, `fileExts: ${jsStringify(fileExts)}`, 'src/extension.ts')
 
             shell.set('+e')
-            if (shell.exec('grep "definitionPatterns: \\[\\]" src/extension.ts').code !== 0) {
-                console.log('Dirty `definitionPatterns: []` in src/extensions.ts')
+            if (shell.exec('grep "definitionPatterns: \\[.*\\]" src/extension.ts').code !== 0) {
+                console.log('Could not replace `definitionPatterns: [...]` in src/extensions.ts')
+                process.exit(1)
             }
             shell.set('-e')
 
             shell.sed(
                 '-i',
-                /definitionPatterns: \[\]/,
+                /definitionPatterns: \[.*\]/,
                 `definitionPatterns: ${jsStringify(definitionPatterns)}`,
                 'src/extension.ts'
             )
@@ -195,6 +197,7 @@ function main(): void {
             shell.exec(`git rebase --onto temp $(git rev-list --max-parents=0 origin/master) origin/master`)
             shell.exec(`git branch -f temp HEAD`)
             shell.exec(`git checkout temp`)
+            shell.exec(`yarn --non-interactive`)
             if (args.push) {
                 shell.exec(`git push --force origin temp:master`)
                 shell.exec('src -config=$HOME/src-config.prod.json extension publish')
