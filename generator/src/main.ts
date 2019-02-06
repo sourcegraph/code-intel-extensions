@@ -167,9 +167,20 @@ function main(): void {
             shell.sed('-i', /\$LANGNAME\b/, name, 'README.md')
             shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
             shell.sed('-i', /\.\.\/\.\.\/package\/lib/, '@sourcegraph/basic-code-intel', 'src/extension.ts')
-            shell.exec('grep "fileExts: \\[\\]" src/extension.ts')
+
+            shell.set('+e')
+            if (shell.exec('grep "fileExts: \\[\\]" src/extension.ts').code !== 0) {
+                console.log('Dirty `fileExts: []` in src/extensions.ts')
+            }
+            shell.set('-e')
             shell.sed('-i', /fileExts: \[\]/, `fileExts: ${jsStringify(fileExts)}`, 'src/extension.ts')
-            shell.exec('grep "definitionPatterns: \\[\\]" src/extension.ts')
+
+            shell.set('+e')
+            if (shell.exec('grep "definitionPatterns: \\[\\]" src/extension.ts').code !== 0) {
+                console.log('Dirty `definitionPatterns: []` in src/extensions.ts')
+            }
+            shell.set('-e')
+
             shell.sed(
                 '-i',
                 /definitionPatterns: \[\]/,
