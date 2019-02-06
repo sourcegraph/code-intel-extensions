@@ -268,7 +268,6 @@ export class Handler {
             text: doc.text,
             position: pos,
         })
-        console.log(tokenResult)
         if (!tokenResult) {
             return null
         }
