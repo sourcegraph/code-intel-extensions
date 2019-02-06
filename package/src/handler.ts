@@ -219,10 +219,7 @@ export class Handler {
 
     async definition(
         doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position,
-        crossRepo = sourcegraph.configuration
-            .get<Settings>()
-            .get('basicCodeIntel.definition.crossRepository')
+        pos: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> {
         const lines = doc.text.split('\n')
         const line = lines[pos.line]
