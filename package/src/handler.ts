@@ -325,26 +325,14 @@ export class Handler {
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> {
-        const lines = doc.text.split('\n')
-        const line = lines[pos.line]
-        let end = line.length
-        for (let c = pos.character; c < line.length; c++) {
-            if (!identCharPattern.test(line[c])) {
-                end = c
-                break
-            }
-        }
-        let start = 0
-        for (let c = pos.character; c >= 0; c--) {
-            if (!identCharPattern.test(line[c])) {
-                start = c + 1
-                break
-            }
-        }
-        if (start >= end) {
+        const tokenResult = findSearchToken({
+            text: doc.text,
+            position: pos,
+        })
+        if (!tokenResult) {
             return null
         }
-        const searchToken = line.substring(start, end)
+        const searchToken = tokenResult.searchToken
 
         const referencesFrom = async (
             scope: Scope
