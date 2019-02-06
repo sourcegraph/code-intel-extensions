@@ -111,6 +111,50 @@ function resultToLocation(res: Result): sourcegraph.Location {
     }
 }
 
+function findSearchToken({
+    text,
+    position,
+}: {
+    text: string
+    position: sourcegraph.Position
+}): { searchToken: string; isComment: boolean } | undefined {
+    const lines = text.split('\n')
+    const line = lines[position.line]
+    let end = line.length
+    for (let c = position.character; c < line.length; c++) {
+        if (!identCharPattern.test(line[c])) {
+            end = c
+            break
+        }
+    }
+    let start = 0
+    for (let c = position.character; c >= 0; c--) {
+        if (!identCharPattern.test(line[c])) {
+            start = c + 1
+            break
+        }
+    }
+    if (start >= end) {
+        return undefined
+    }
+    const searchToken = line.substring(start, end)
+    return {
+        searchToken,
+        isComment: !(
+            new RegExp(`('|"|\`)${searchToken}('|"|\`)`).test(line) ||
+            new RegExp(`${searchToken}\\(`).test(line) ||
+            new RegExp(`\\.${searchToken}`).test(line)
+        ),
+    }
+}
+
+/**
+ * Returns whether or not a line is a comment.
+ */
+function isComment(line: string): boolean {
+    return COMMENT_PATTERN.test(line)
+}
+
 /**
  * @see package.json contributes.configuration section for the configuration schema.
  */
@@ -196,8 +240,7 @@ export class Handler {
             if (!line) {
                 break
             }
-            const isComment = COMMENT_PATTERN.test(line)
-            if (isComment) {
+            if (isComment(line)) {
                 // Clean up line.
                 line = line.replace(COMMENT_PATTERN, '').trim()
                 line = line.replace(/("""|\*\/)$/, '') // clean up block comment terminators and Python docstring terminators
@@ -221,26 +264,18 @@ export class Handler {
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> {
-        const lines = doc.text.split('\n')
-        const line = lines[pos.line]
-        let end = line.length
-        for (let c = pos.character; c < line.length; c++) {
-            if (!identCharPattern.test(line[c])) {
-                end = c
-                break
-            }
-        }
-        let start = 0
-        for (let c = pos.character; c >= 0; c--) {
-            if (!identCharPattern.test(line[c])) {
-                start = c + 1
-                break
-            }
-        }
-        if (start >= end) {
+        const tokenResult = findSearchToken({
+            text: doc.text,
+            position: pos,
+        })
+        console.log(tokenResult)
+        if (!tokenResult) {
             return null
         }
-        const searchToken = line.substring(start, end)
+        if (tokenResult.isComment) {
+            return null
+        }
+        const searchToken = tokenResult.searchToken
 
         const patternQuery = (
             scope: Scope,
