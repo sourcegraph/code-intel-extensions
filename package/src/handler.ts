@@ -140,11 +140,11 @@ function findSearchToken({
     const searchToken = line.substring(start, end)
     return {
         searchToken,
-        isComment: !(
-            new RegExp(`('|"|\`)${searchToken}('|"|\`)`).test(line) ||
-            new RegExp(`${searchToken}\\(`).test(line) ||
-            new RegExp(`\\.${searchToken}`).test(line)
-        ),
+        isComment:
+            isComment(line) &&
+            !new RegExp(`('|"|\`)${searchToken}('|"|\`)`).test(line) &&
+            !new RegExp(`${searchToken}\\(`).test(line) &&
+            !new RegExp(`\\.${searchToken}`).test(line),
     }
 }
 
