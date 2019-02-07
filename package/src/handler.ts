@@ -163,7 +163,7 @@ export interface Settings {
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
-const COMMENT_PATTERN = /^\s*(\/\/\/?|#|;|"""|\*( |$)|\/\*\*|\*\/$)\s*/
+const COMMENT_PATTERN = /^\s*(\/\/\/?|#|;|"""|\*( |$)|\/\*\*?|\*\/$)\s*/
 
 export interface HandlerArgs {
     fileExts?: string[]
