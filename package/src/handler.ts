@@ -6,7 +6,7 @@ import { takeWhile, dropWhile } from 'lodash'
 /**
  * identCharPattern is used to match identifier tokens
  */
-const identCharPattern = /[A-Za-z0-9_-]/
+const identCharPattern = /[A-Za-z0-9_\-']/
 
 /**
  * Selects documents that the extension works on.
