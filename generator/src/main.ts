@@ -21,6 +21,8 @@ function jsStringify(values: string[]): string {
     return `[${values.map(quote).join(', ')}]`
 }
 
+const doNotGenerate = ['python', 'typescript', 'go']
+
 function main(): void {
     const args = yargs
         .option('languages', {
@@ -50,6 +52,10 @@ function main(): void {
     shell.cd('temp')
 
     _.forEach(_.pickBy(spec.languages, languageFilter), ({ handlerArgs, stylized }: spec.LanguageSpec, name) => {
+        if (doNotGenerate.includes(name)) {
+            console.log('Skipping', name)
+            return
+        }
         console.log('Updating', name)
 
         // Delete everything but node_modules
