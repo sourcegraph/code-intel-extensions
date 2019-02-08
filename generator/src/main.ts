@@ -85,7 +85,7 @@ function main(): void {
 
         fs.writeFileSync(
             'src/extension.ts',
-            `import { activateBasicCodeIntel } from '../../package/lib'
+            `import { activateBasicCodeIntel } from '@sourcegraph/basic-code-intel'
 
 export const activate = activateBasicCodeIntel(${tosource(handlerArgs)})
 `
