@@ -3,7 +3,7 @@ import { HandlerArgs, CommentStyle } from './package/lib/handler'
 export type LanguageSpec = { handlerArgs: HandlerArgs; stylized: string }
 
 const cStyle: CommentStyle = {
-    lineRegex: /\/\/\s*(.*)/,
+    lineRegex: /\/\/\s?(.*)/,
     block: {
         startRegex: /\/\*\*?/,
         contentRegex: /^\s*\*?\s*(.*)/,
@@ -12,12 +12,12 @@ const cStyle: CommentStyle = {
 }
 
 const shellStyle: CommentStyle = {
-    lineRegex: /#\s*(.*)/,
+    lineRegex: /#\s?(.*)/,
 }
 
 const pythonStyle: CommentStyle = {
     docPlacement: 'below the definition',
-    lineRegex: /#\s*(.*)/,
+    lineRegex: /#\s?(.*)/,
     block: {
         startRegex: /"""/,
         contentRegex: /^\s*(.*)/,
@@ -38,6 +38,45 @@ const lispStyle: CommentStyle = {
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
 export const languages: { [name: string]: LanguageSpec } = {
+    typescript: {
+        handlerArgs: {
+            fileExts: ['ts', 'tsx', 'js', 'jsx'],
+            definitionPatterns: [
+                'var\\s\\b%s\\b',
+                'let\\s\\b%s\\b',
+                'const\\s\\b%s\\b',
+                'function\\s\\b%s\\b',
+                'interface\\s\\b%s\\b',
+                'type\\s\\b%s\\b',
+                '\\b%s\\b:',
+            ],
+            commentStyle: {
+                lineRegex: /\/\/\s*(.*)/,
+                block: {
+                    startRegex: /\/\*\*?/,
+                    contentRegex: /^\s*\*?\s*(.*)/,
+                    endRegex: /\*\//,
+                },
+            },
+        },
+        stylized: 'TypeScript',
+    },
+    python: {
+        handlerArgs: {
+            fileExts: ['py'],
+            definitionPatterns: ['\\b%s\\b='],
+            commentStyle: {
+                docPlacement: 'below the definition',
+                lineRegex: /#\s*(.*)/,
+                block: {
+                    startRegex: /"""/,
+                    contentRegex: /^\s*(.*)/,
+                    endRegex: /"""/,
+                },
+            },
+        },
+        stylized: 'Python',
+    },
     java: {
         handlerArgs: {
             fileExts: ['java'],
@@ -45,6 +84,19 @@ export const languages: { [name: string]: LanguageSpec } = {
             commentStyle: cStyle,
         },
         stylized: 'Java',
+    },
+    go: {
+        handlerArgs: {
+            fileExts: ['go'],
+            definitionPatterns: [
+                '\\b%s(,\\s\\w+)*\\s\\:=',
+                '(var|const)\\s%s\\s',
+            ],
+            commentStyle: {
+                lineRegex: /\/\/\s*(.*)/,
+            },
+        },
+        stylized: 'Go',
     },
     cpp: {
         handlerArgs: {
@@ -100,7 +152,7 @@ export const languages: { [name: string]: LanguageSpec } = {
     csharp: {
         handlerArgs: {
             fileExts: ['cs', 'csx'],
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s*(.*)/ },
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?(.*)/ },
         },
         stylized: 'C#',
     },
@@ -133,7 +185,7 @@ export const languages: { [name: string]: LanguageSpec } = {
     rust: {
         handlerArgs: {
             fileExts: ['rs', 'rs.in'],
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s*(.*)/ },
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?(.*)/ },
         },
         stylized: 'Rust',
     },
@@ -176,7 +228,7 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'psgi',
                 't',
             ],
-            commentStyle: { lineRegex: /#\s*(.*)/ },
+            commentStyle: { lineRegex: /#\s?(.*)/ },
         },
         stylized: 'Perl',
     },
@@ -261,7 +313,7 @@ export const languages: { [name: string]: LanguageSpec } = {
             fileExts: ['erl'],
             docstringIgnore: /-spec/,
             commentStyle: {
-                lineRegex: /%%\s*(.*)/,
+                lineRegex: /%%\s?(.*)/,
             },
         },
         stylized: 'Erlang',
@@ -270,7 +322,7 @@ export const languages: { [name: string]: LanguageSpec } = {
         handlerArgs: {
             fileExts: ['dart'],
             definitionPatterns: ['^(abstract\\s)?class\\s%s\\b'],
-            commentStyle: { lineRegex: /\/\/\/\s*(.*)/ },
+            commentStyle: { lineRegex: /\/\/\/\s?(.*)/ },
         },
         stylized: 'Dart',
     },
@@ -299,7 +351,7 @@ export const languages: { [name: string]: LanguageSpec } = {
     r: {
         handlerArgs: {
             fileExts: ['r', 'R', 'rd', 'rsx'],
-            commentStyle: { lineRegex: /#'?\s*(.*)/ },
+            commentStyle: { lineRegex: /#'?\s?(.*)/ },
         },
         stylized: 'R',
     },
