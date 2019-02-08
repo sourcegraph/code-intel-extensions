@@ -170,10 +170,11 @@ interface BlockCommentStyle {
      */
     startRegex: RegExp
     /**
-     * Matches the content of a block comment after the start and end have
-     * been stripped. C++ example: `/^\s*\*?\s*(.*)/`
+     * Matches the noise at the beginning of each line in a block comment after
+     * the start, end, and leading indentation have been stripped. C++ example:
+     * `/(\s\*\s?)?/`
      */
-    contentRegex: RegExp
+    lineNoiseRegex?: RegExp
     /**
      * Matches the end of a block comment. C++ example: `/\*\//`
      */
@@ -291,7 +292,7 @@ export class Handler {
         }
 
         function findDocstringInBlockComment({
-            block: { startRegex, contentRegex, endRegex },
+            block: { startRegex, lineNoiseRegex, endRegex },
             lines,
         }: {
             block: BlockCommentStyle
@@ -309,8 +310,12 @@ export class Handler {
             return takeWhileInclusive(lines, line => !endRegex.test(line))
                 .map(line => line.replace(endRegex, ''))
                 .map(line => {
-                    const match = line.match(contentRegex)
-                    return (match && match[1]) || ''
+                    if (lineNoiseRegex) {
+                        const match = line.match(lineNoiseRegex)
+                        return (match && match[1]) || ''
+                    } else {
+                        return line
+                    }
                 })
         }
 
