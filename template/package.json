@@ -65,7 +65,7 @@
     "prettier": "prettier '**/*.{js?(on),ts}' --write --list-different",
     "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "parcel build --no-minify --detailed-report --out-file extension.js src/extension.ts",
+    "build": "parcel build --detailed-report --out-file extension.js src/extension.ts",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "npm run symlink-package && parcel serve --no-hmr --out-file extension.js src/extension.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
