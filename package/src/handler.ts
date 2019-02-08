@@ -166,16 +166,16 @@ export interface Settings {
 
 interface BlockCommentStyle {
     /**
-     * Matches the start of a block comment. Python example: `/"""/`
+     * Matches the start of a block comment. C++ example: `/\/\*\*?/`
      */
     startRegex: RegExp
     /**
      * Matches the content of a block comment after the start and end have
-     * been stripped. Python example: `/^\s*(.*)/`
+     * been stripped. C++ example: `/^\s*\*?\s*(.*)/`
      */
     contentRegex: RegExp
     /**
-     * Matches the end of a block comment. Python example: `/"""/`
+     * Matches the end of a block comment. C++ example: `/\*\//`
      */
     endRegex: RegExp
 }
@@ -187,10 +187,11 @@ type CommentStyle = {
      * `'below the definition'`.
      */
     docPlacement?: 'above the definition' | 'below the definition'
+
     /**
      * Captures the content of a line comment. Also prevents jump-to-definition
      * (except when the token appears to refer to code). Python example:
-     * `/^\s*#(.*)/`
+     * `/#\s?(.*)/`
      */
     lineRegex?: RegExp
     block?: BlockCommentStyle
@@ -211,6 +212,11 @@ export interface HandlerArgs {
      * TODO: replace whitespace on the fly so this warning isn't necessary.
      */
     definitionPatterns?: string[]
+    /**
+     * Regex that matches lines between a definition and the docstring that
+     * should be ignored. Java example: `/^\s*@/` for annotations.
+     */
+    docstringIgnore?: RegExp
     commentStyle?: CommentStyle
 }
 
@@ -222,6 +228,7 @@ export class Handler {
     public fileExts: string[] = []
     public definitionPatterns: string[] = []
     public commentStyle: CommentStyle | undefined
+    public docstringIgnore: RegExp | undefined
 
     /**
      * Constructs a new Handler that provides code intelligence on files with the given
@@ -231,10 +238,12 @@ export class Handler {
         fileExts = [],
         definitionPatterns = [],
         commentStyle,
+        docstringIgnore,
     }: HandlerArgs) {
         this.fileExts = fileExts
         this.definitionPatterns = definitionPatterns
         this.commentStyle = commentStyle
+        this.docstringIgnore = docstringIgnore
     }
 
     /**
@@ -256,6 +265,8 @@ export class Handler {
         fileText: string
     }): string | undefined {
         const commentStyle = this.commentStyle
+        const docstringIgnore = this.docstringIgnore
+
         if (!commentStyle) {
             return undefined
         }
@@ -268,7 +279,12 @@ export class Handler {
             lines: string[]
         }): string[] | undefined {
             const docLines = _.chain(lines)
-                .takeWhile(line => lineRegex.test(line))
+                .dropWhile(line =>
+                    docstringIgnore ? docstringIgnore.test(line) : false
+                )
+                .takeWhile(line =>
+                    new RegExp(/^\s*/.source + lineRegex.source).test(line)
+                )
                 .map(line => {
                     const match = line.match(lineRegex)
                     return (match && match[1]) || ''
@@ -284,27 +300,48 @@ export class Handler {
             block: BlockCommentStyle
             lines: string[]
         }): string[] | undefined {
-            const firstLine = lines[0]
-            if (!firstLine) {
+            // ⚠️ Local mutation
+            lines = lines.slice()
+            lines = _.dropWhile(lines, line =>
+                docstringIgnore ? docstringIgnore.test(line) : false
+            )
+            if (!lines[0] || !startRegex.test(lines[0])) {
                 return undefined
             }
-            if (!startRegex.test(firstLine)) {
-                return undefined
-            }
-            const linesWithoutStartCommentMarker = lines.slice()
-            linesWithoutStartCommentMarker[0] = linesWithoutStartCommentMarker[0].replace(
-                startRegex,
-                ''
-            )
-            return takeWhileInclusive(
-                linesWithoutStartCommentMarker,
-                line => !endRegex.test(line)
-            )
+            lines[0] = lines[0].replace(startRegex, '')
+            return takeWhileInclusive(lines, line => !endRegex.test(line))
                 .map(line => line.replace(endRegex, ''))
                 .map(line => {
                     const match = line.match(contentRegex)
                     return (match && match[1]) || ''
                 })
+        }
+
+        function inlineComment(line: string): string[] | undefined {
+            const lineMatch =
+                (commentStyle &&
+                    commentStyle.lineRegex &&
+                    line.match(commentStyle.lineRegex)) ||
+                undefined
+            const blockMatch =
+                (commentStyle &&
+                    commentStyle.block &&
+                    line.match(
+                        // This nasty regex matches an inline block comment by
+                        // using a trick from
+                        // https://stackoverflow.com/a/3850095/2061958
+                        new RegExp(
+                            commentStyle.block.startRegex.source +
+                                '((?:(?!' +
+                                commentStyle.block.endRegex.source +
+                                ').)*)' +
+                                commentStyle.block.endRegex.source
+                        )
+                    )) ||
+                undefined
+            return (
+                (lineMatch && [lineMatch[1]]) || (blockMatch && [blockMatch[1]])
+            )
         }
 
         const mungeLines: (lines: string[]) => string[] =
@@ -328,6 +365,7 @@ export class Handler {
         const allLines = fileText.split('\n')
 
         const docLines =
+            inlineComment(allLines[definitionLine]) ||
             (commentStyle.lineRegex &&
                 findDocstringInLineComments({
                     lineRegex: commentStyle.lineRegex,
