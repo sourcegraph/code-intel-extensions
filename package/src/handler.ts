@@ -6,7 +6,7 @@ import * as _ from 'lodash'
 /**
  * identCharPattern is used to match identifier tokens
  */
-const identCharPattern = /[A-Za-z0-9_]/
+const identCharPattern = /[A-Za-z0-9_-]/
 
 /**
  * Selects documents that the extension works on.
@@ -180,7 +180,7 @@ interface BlockCommentStyle {
     endRegex: RegExp
 }
 
-type CommentStyle = {
+export type CommentStyle = {
     /**
      * Specifies where documentation is placed relative to the definition.
      * Defaults to `'above the definition'`. In Python, documentation is placed

@@ -3,12 +3,34 @@ import { HandlerArgs, CommentStyle } from './package/lib/handler'
 export type LanguageSpec = { handlerArgs: HandlerArgs; stylized: string }
 
 const cStyle: CommentStyle = {
-    docPlacement: 'above the definition',
     lineRegex: /\/\/\s*(.*)/,
     block: {
         startRegex: /\/\*\*?/,
         contentRegex: /^\s*\*?\s*(.*)/,
         endRegex: /\*\//,
+    },
+}
+
+const shellStyle: CommentStyle = {
+    lineRegex: /#\s*(.*)/,
+}
+
+const pythonStyle: CommentStyle = {
+    docPlacement: 'below the definition',
+    lineRegex: /#\s*(.*)/,
+    block: {
+        startRegex: /"""/,
+        contentRegex: /^\s*(.*)/,
+        endRegex: /"""/,
+    },
+}
+
+const lispStyle: CommentStyle = {
+    docPlacement: 'below the definition',
+    block: {
+        startRegex: /"/,
+        contentRegex: /^\s*(.*)/,
+        endRegex: /"/,
     },
 }
 
@@ -55,7 +77,7 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'thor',
                 'watchr',
             ],
-            commentStyle: { lineRegex: /#\s*(.*)/ },
+            commentStyle: shellStyle,
         },
         stylized: 'Ruby',
     },
@@ -71,18 +93,29 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'php7',
                 'phps',
             ],
+            commentStyle: cStyle,
         },
         stylized: 'PHP',
     },
-    csharp: { handlerArgs: { fileExts: ['cs', 'csx'] }, stylized: 'C#' },
+    csharp: {
+        handlerArgs: {
+            fileExts: ['cs', 'csx'],
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s*(.*)/ },
+        },
+        stylized: 'C#',
+    },
     shell: {
-        handlerArgs: { fileExts: ['sh', 'bash', 'zsh'] },
+        handlerArgs: {
+            fileExts: ['sh', 'bash', 'zsh'],
+            commentStyle: shellStyle,
+        },
         stylized: 'Shell',
     },
     scala: {
         handlerArgs: {
             fileExts: ['sbt', 'sc', 'scala'],
             definitionPatterns: ['\\b(def|val|var|class|object|trait)\\s%s\\b'],
+            commentStyle: cStyle,
         },
         stylized: 'Scala',
     },
@@ -93,10 +126,17 @@ export const languages: { [name: string]: LanguageSpec } = {
                 '\\b(func|class|var|let|for|struct|enum|protocol)\\s%s\\b',
                 '\\bfunc\\s.*\\s%s:',
             ],
+            commentStyle: cStyle,
         },
         stylized: 'Swift',
     },
-    rust: { handlerArgs: { fileExts: ['rs', 'rs.in'] }, stylized: 'Rust' },
+    rust: {
+        handlerArgs: {
+            fileExts: ['rs', 'rs.in'],
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s*(.*)/ },
+        },
+        stylized: 'Rust',
+    },
     kotlin: {
         handlerArgs: {
             fileExts: ['kt', 'ktm', 'kts'],
@@ -105,13 +145,19 @@ export const languages: { [name: string]: LanguageSpec } = {
                 '\\bfun\\s.*\\s%s:',
                 '\\bfor\\s\\(%s\\sin',
             ],
+            commentStyle: cStyle,
         },
         stylized: 'Kotlin',
     },
     elixir: {
         handlerArgs: {
             fileExts: ['ex', 'exs'],
+            docstringIgnore: /^\s*@/,
             definitionPatterns: ['\\b(def|defp|defmodule)\\s%s\\b'],
+            commentStyle: {
+                ...pythonStyle,
+                docPlacement: 'above the definition',
+            },
         },
         stylized: 'Elixir',
     },
@@ -130,17 +176,29 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'psgi',
                 't',
             ],
+            commentStyle: { lineRegex: /#\s*(.*)/ },
         },
         stylized: 'Perl',
     },
     lua: {
         handlerArgs: {
             fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
+            commentStyle: {
+                lineRegex: /---?\s+(.*)/,
+                block: {
+                    startRegex: /--\[\[/,
+                    contentRegex: /^\s*(.*)/,
+                    endRegex: /\]\]/,
+                },
+            },
         },
         stylized: 'Lua',
     },
     clojure: {
-        handlerArgs: { fileExts: ['clj', 'cljs', 'cljx'] },
+        handlerArgs: {
+            fileExts: ['clj', 'cljs', 'cljx'],
+            commentStyle: lispStyle,
+        },
         stylized: 'Clojure',
     },
     haskell: {
@@ -153,11 +211,32 @@ export const languages: { [name: string]: LanguageSpec } = {
                 '^type\\s%s\\b',
                 '^class.*\\b%s\\b',
             ],
+            docstringIgnore: /INLINE|^#/,
+            commentStyle: {
+                lineRegex: /--[\s|]*(.*)/,
+                block: {
+                    startRegex: /{-/,
+                    contentRegex: /^\s*(.*)/,
+                    endRegex: /-}/,
+                },
+            },
         },
         stylized: 'Haskell',
     },
     powershell: {
-        handlerArgs: { fileExts: ['ps1', 'psd1', 'psm1'] },
+        handlerArgs: {
+            fileExts: ['ps1', 'psd1', 'psm1'],
+            definitionPatterns: ['^function\\s%s\\b'],
+            docstringIgnore: /\{/,
+            commentStyle: {
+                docPlacement: 'below the definition',
+                block: {
+                    startRegex: /<#/,
+                    contentRegex: /^\s*(.*)/,
+                    endRegex: /#>/,
+                },
+            },
+        },
         stylized: 'PowerShell',
     },
     lisp: {
@@ -173,11 +252,28 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'sexp',
                 'el',
             ],
+            commentStyle: lispStyle,
         },
         stylized: 'Lisp',
     },
-    erlang: { handlerArgs: { fileExts: ['erl'] }, stylized: 'Erlang' },
-    dart: { handlerArgs: { fileExts: ['dart'] }, stylized: 'Dart' },
+    erlang: {
+        handlerArgs: {
+            fileExts: ['erl'],
+            docstringIgnore: /-spec/,
+            commentStyle: {
+                lineRegex: /%%\s*(.*)/,
+            },
+        },
+        stylized: 'Erlang',
+    },
+    dart: {
+        handlerArgs: {
+            fileExts: ['dart'],
+            definitionPatterns: ['^(abstract\\s)?class\\s%s\\b'],
+            commentStyle: { lineRegex: /\/\/\/\s*(.*)/ },
+        },
+        stylized: 'Dart',
+    },
     ocaml: {
         handlerArgs: {
             fileExts: [
@@ -190,8 +286,21 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'mly',
                 're',
             ],
+            commentStyle: {
+                block: {
+                    startRegex: /\(\*\*?/,
+                    contentRegex: /^\s*\*?\s*(.*)/,
+                    endRegex: /\*\)/,
+                },
+            },
         },
         stylized: 'OCaml',
     },
-    r: { handlerArgs: { fileExts: ['r', 'rd', 'rsx'] }, stylized: 'R' },
+    r: {
+        handlerArgs: {
+            fileExts: ['r', 'R', 'rd', 'rsx'],
+            commentStyle: { lineRegex: /#'?\s*(.*)/ },
+        },
+        stylized: 'R',
+    },
 }
