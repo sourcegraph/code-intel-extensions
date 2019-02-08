@@ -52,7 +52,7 @@ describe('search requests', () => {
         ]
 
         for (const test of tests) {
-            const h = new Handler()
+            const h = new Handler({})
             const searchQueries: string[] = []
             h.api.search = (searchQuery: string): Promise<Result[]> => {
                 searchQueries.push(searchQuery)
@@ -64,8 +64,7 @@ describe('search requests', () => {
                     languageId: 'l',
                     text: test.doc.text,
                 },
-                { line: 0, character: 0 } as Position,
-                test.crossRepo
+                { line: 0, character: 0 } as Position
             )
             assert.deepStrictEqual(test.expSearchQueries, searchQueries)
         }
@@ -86,7 +85,7 @@ describe('search requests', () => {
         ]
 
         for (const test of tests) {
-            const h = new Handler()
+            const h = new Handler({})
             const searchQueries: string[] = []
             h.api.search = (searchQuery: string): Promise<Result[]> => {
                 searchQueries.push(searchQuery)
