@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { API, Result, parseUri } from './api'
 import * as sprintf from 'sprintf-js'
-import * as _ from 'lodash'
+import { takeWhile, dropWhile } from 'lodash'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -278,18 +278,15 @@ export class Handler {
             lineRegex: RegExp
             lines: string[]
         }): string[] | undefined {
-            const docLines = _.chain(lines)
-                .dropWhile(line =>
+            const docLines = takeWhile(
+                dropWhile(lines, line =>
                     docstringIgnore ? docstringIgnore.test(line) : false
-                )
-                .takeWhile(line =>
-                    new RegExp(/^\s*/.source + lineRegex.source).test(line)
-                )
-                .map(line => {
-                    const match = line.match(lineRegex)
-                    return (match && match[1]) || ''
-                })
-                .value()
+                ),
+                line => new RegExp(/^\s*/.source + lineRegex.source).test(line)
+            ).map(line => {
+                const match = line.match(lineRegex)
+                return (match && match[1]) || ''
+            })
             return docLines.length > 0 ? docLines : undefined
         }
 
@@ -302,7 +299,7 @@ export class Handler {
         }): string[] | undefined {
             // ⚠️ Local mutation
             lines = lines.slice()
-            lines = _.dropWhile(lines, line =>
+            lines = dropWhile(lines, line =>
                 docstringIgnore ? docstringIgnore.test(line) : false
             )
             if (!lines[0] || !startRegex.test(lines[0])) {
