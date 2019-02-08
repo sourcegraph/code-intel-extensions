@@ -47,6 +47,7 @@
     "last 1 Safari versions"
   ],
   "devDependencies": {
+    "@types/lodash": "^4.14.120",
     "@types/mocha": "^5.2.3",
     "@types/node": "^10.9.4",
     "@types/sprintf-js": "^1.1.1",
@@ -62,6 +63,7 @@
     "typescript": "^3.2.1"
   },
   "dependencies": {
+    "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
     "sourcegraph": "^20.1.0"
   },

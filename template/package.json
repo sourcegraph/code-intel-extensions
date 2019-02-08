@@ -15,7 +15,7 @@
     "fuzzy"
   ],
   "activationEvents": [
-    "onLanguage:java"
+    "onLanguage:python"
   ],
   "contributes": {
     "actions": [

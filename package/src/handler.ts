@@ -1,6 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { API, Result, parseUri } from './api'
 import * as sprintf from 'sprintf-js'
+import * as _ from 'lodash'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -114,9 +115,11 @@ function resultToLocation(res: Result): sourcegraph.Location {
 function findSearchToken({
     text,
     position,
+    isComment,
 }: {
     text: string
     position: sourcegraph.Position
+    isComment: (line: string) => boolean
 }): { searchToken: string; isComment: boolean } | undefined {
     const lines = text.split('\n')
     const line = lines[position.line]
@@ -148,11 +151,9 @@ function findSearchToken({
     }
 }
 
-/**
- * Returns whether or not a line is a comment.
- */
-function isComment(line: string): boolean {
-    return COMMENT_PATTERN.test(line)
+function takeWhileInclusive<T>(array: T[], predicate: (t: T) => boolean): T[] {
+    const index = array.findIndex(value => !predicate(value))
+    return index === -1 ? array : array.slice(0, index + 1)
 }
 
 /**
@@ -163,12 +164,54 @@ export interface Settings {
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
-const COMMENT_PATTERN = /^\s*(\/\/\/?|#|;|"""|\*( |$)|\/\*\*?|\*\/$)\s*/
+interface BlockCommentStyle {
+    /**
+     * Matches the start of a block comment. Python example: `/"""/`
+     */
+    startRegex: RegExp
+    /**
+     * Matches the content of a block comment after the start and end have
+     * been stripped. Python example: `/^\s*(.*)/`
+     */
+    contentRegex: RegExp
+    /**
+     * Matches the end of a block comment. Python example: `/"""/`
+     */
+    endRegex: RegExp
+}
+
+type CommentStyle = {
+    /**
+     * Specifies where documentation is placed relative to the definition.
+     * Defaults to `'above the definition'`. In Python, documentation is placed
+     * `'below the definition'`.
+     */
+    docPlacement?: 'above the definition' | 'below the definition'
+    /**
+     * Captures the content of a line comment. Also prevents jump-to-definition
+     * (except when the token appears to refer to code). Python example:
+     * `/^\s*#(.*)/`
+     */
+    lineRegex?: RegExp
+    block?: BlockCommentStyle
+}
 
 export interface HandlerArgs {
+    /**
+     * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`).
+     */
     fileExts?: string[]
-    /** %s format strings that return regexes (e.g. `const %s =`). */
+    /**
+     * Format strings which, when passed a token, return regexes that match
+     * lines where that token is defined (e.g. `const %s =`). Sourcegraph's
+     * search interprets literal whitespace ` ` in the query as a wildcard `.*`,
+     * so to get around that you need to use `\s` in your regexes instead (e.g
+     * `const\s%s\s=`).
+     *
+     * TODO: replace whitespace on the fly so this warning isn't necessary.
+     */
     definitionPatterns?: string[]
+    commentStyle?: CommentStyle
 }
 
 export class Handler {
@@ -178,6 +221,7 @@ export class Handler {
     public api = new API()
     public fileExts: string[] = []
     public definitionPatterns: string[] = []
+    public commentStyle: CommentStyle | undefined
 
     /**
      * Constructs a new Handler that provides code intelligence on files with the given
@@ -185,11 +229,117 @@ export class Handler {
      */
     constructor({
         fileExts = [],
-        /** %s format strings that return regexes (e.g. `const %s =`). */
         definitionPatterns = [],
+        commentStyle,
     }: HandlerArgs) {
         this.fileExts = fileExts
         this.definitionPatterns = definitionPatterns
+        this.commentStyle = commentStyle
+    }
+
+    /**
+     * Returns whether or not a line is a comment.
+     */
+    isComment(line: string): boolean {
+        return Boolean(
+            this.commentStyle &&
+                this.commentStyle.lineRegex &&
+                this.commentStyle.lineRegex.test(line)
+        )
+    }
+
+    findDocstring({
+        definitionLine,
+        fileText,
+    }: {
+        definitionLine: number
+        fileText: string
+    }): string | undefined {
+        const commentStyle = this.commentStyle
+        if (!commentStyle) {
+            return undefined
+        }
+
+        function findDocstringInLineComments({
+            lineRegex,
+            lines,
+        }: {
+            lineRegex: RegExp
+            lines: string[]
+        }): string[] | undefined {
+            const docLines = _.chain(lines)
+                .takeWhile(line => lineRegex.test(line))
+                .map(line => {
+                    const match = line.match(lineRegex)
+                    return (match && match[1]) || ''
+                })
+                .value()
+            return docLines.length > 0 ? docLines : undefined
+        }
+
+        function findDocstringInBlockComment({
+            block: { startRegex, contentRegex, endRegex },
+            lines,
+        }: {
+            block: BlockCommentStyle
+            lines: string[]
+        }): string[] | undefined {
+            const firstLine = lines[0]
+            if (!firstLine) {
+                return undefined
+            }
+            if (!startRegex.test(firstLine)) {
+                return undefined
+            }
+            const linesWithoutStartCommentMarker = lines.slice()
+            linesWithoutStartCommentMarker[0] = linesWithoutStartCommentMarker[0].replace(
+                startRegex,
+                ''
+            )
+            return takeWhileInclusive(
+                linesWithoutStartCommentMarker,
+                line => !endRegex.test(line)
+            )
+                .map(line => line.replace(endRegex, ''))
+                .map(line => {
+                    const match = line.match(contentRegex)
+                    return (match && match[1]) || ''
+                })
+        }
+
+        const mungeLines: (lines: string[]) => string[] =
+            commentStyle.docPlacement === 'below the definition'
+                ? lines => lines.slice(definitionLine + 1)
+                : lines => lines.slice(0, definitionLine).reverse()
+        const unmungeLines: (lines: string[]) => string[] =
+            commentStyle.docPlacement === 'below the definition'
+                ? lines => lines
+                : lines => lines.reverse()
+        const block: BlockCommentStyle | undefined =
+            commentStyle.block &&
+            (commentStyle.docPlacement === 'below the definition'
+                ? commentStyle.block
+                : {
+                      ...commentStyle.block,
+                      startRegex: commentStyle.block.endRegex,
+                      endRegex: commentStyle.block.startRegex,
+                  })
+
+        const allLines = fileText.split('\n')
+
+        const docLines =
+            (commentStyle.lineRegex &&
+                findDocstringInLineComments({
+                    lineRegex: commentStyle.lineRegex,
+                    lines: mungeLines(allLines),
+                })) ||
+            (block &&
+                findDocstringInBlockComment({
+                    block,
+                    lines: mungeLines(allLines),
+                }))
+
+        return docLines && unmungeLines(docLines).join('\n')
     }
 
     /**
@@ -230,33 +380,19 @@ export class Handler {
         }
         const codeLineMarkdown = '```' + doc.languageId + '\n' + line + '\n```'
 
-        // Get lines before/after the definition's line that contain comments.
-        const commentsStep = doc.languageId === 'python' ? 1 : -1 // only Python comments come after the definition (docstrings)
-        const MAX_COMMENT_LINES = 13
-        let commentLines: string[] = []
-        for (let i = 0; i < MAX_COMMENT_LINES; i++) {
-            const l = def.range.start.line + commentsStep * (i + 1)
-            let line = lines[l]
-            if (!line) {
-                break
-            }
-            if (isComment(line)) {
-                // Clean up line.
-                line = line.replace(COMMENT_PATTERN, '').trim()
-                line = line.replace(/("""|\*\/)$/, '') // clean up block comment terminators and Python docstring terminators
-                commentLines[commentsStep > 0 ? 'push' : 'unshift'](line)
-            }
-        }
-        const commentsMarkdown = commentLines.join('\n').trim()
-
         return {
             contents: {
                 kind: sourcegraph.MarkupKind.Markdown,
-                value: [commentsMarkdown, codeLineMarkdown]
-                    .filter(v => !!v)
+                value: [
+                    this.findDocstring({
+                        definitionLine: def.range.start.line,
+                        fileText: content,
+                    }),
+                    codeLineMarkdown,
+                ]
+                    .filter(tooltip => tooltip)
                     .join('\n\n---\n\n'),
             },
-            priority: -1,
         }
     }
 
@@ -267,6 +403,7 @@ export class Handler {
         const tokenResult = findSearchToken({
             text: doc.text,
             position: pos,
+            isComment: this.isComment.bind(this),
         })
         if (!tokenResult) {
             return null
@@ -328,6 +465,7 @@ export class Handler {
         const tokenResult = findSearchToken({
             text: doc.text,
             position: pos,
+            isComment: this.isComment.bind(this),
         })
         if (!tokenResult) {
             return null
