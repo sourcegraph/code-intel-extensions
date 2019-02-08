@@ -70,7 +70,7 @@ function main(): void {
         shell.sed('-i', /\$LANGID\b/, langID(name), 'package.json')
         shell.sed('-i', /\$LANG\b/, stylized, 'package.json')
         shell.sed('-i', /"name": ".*"/, `"name": "${name}"`, 'package.json')
-        shell.sed('-i', /"onLanguage:.*"/, `"onLanguage:${langID(name)}"`, 'package.json')
+        shell.sed('-i', /"\*"/, `"onLanguage:${langID(name)}"`, 'package.json')
         shell.sed('-i', /"title": ".*"/, `"title": "${stylized} code intelligence"`, 'package.json')
         shell.sed(
             '-i',
