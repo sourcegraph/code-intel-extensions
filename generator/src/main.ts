@@ -87,7 +87,7 @@ function main(): void {
             'src/extension.ts',
             `import { activateBasicCodeIntel } from '@sourcegraph/basic-code-intel'
 
-export const activate = activateBasicCodeIntel(${tosource(handlerArgs)})
+export const activate = activateBasicCodeIntel(${tosource.default(handlerArgs)})
 `
         )
 
