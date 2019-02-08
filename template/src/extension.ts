@@ -1,30 +1,9 @@
 import { activateBasicCodeIntel } from '../../package/lib'
+import * as sourcegraph from 'sourcegraph'
+import * as spec from '../../languages'
 
-// export const activate = activateBasicCodeIntel({
-//     fileExts: ['cpp', 'c'],
-//     definitionPatterns: [],
-//     commentStyle: {
-//         docPlacement: 'above the definition',
-//         lineRegex: /^\s*\/\/\s*(.*)/,
-//         // lineRegex: /^\s*#\s*(.*)/,
-//         block: {
-//             startRegex: /\/\*\s*/,
-//             contentRegex: /^\s*\*?\s*(.*)/,
-//             endRegex: /\*\//,
-//         },
-//     },
-// })
-
-export const activate = activateBasicCodeIntel({
-    fileExts: ['py'],
-    definitionPatterns: [],
-    commentStyle: {
-        docPlacement: 'below the definition',
-        lineRegex: /^\s*#\s*(.*)/,
-        block: {
-            startRegex: /"""/,
-            contentRegex: /^\s*(.*)/,
-            endRegex: /"""/,
-        },
-    },
-})
+export function activate(ctx: sourcegraph.ExtensionContext): void {
+    for (const language of Object.keys(spec.languages)) {
+        activateBasicCodeIntel(spec.languages[language].handlerArgs)(ctx)
+    }
+}
