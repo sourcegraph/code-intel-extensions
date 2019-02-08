@@ -8,6 +8,7 @@
     "@types/shelljs": "^0.8.2",
     "lodash": "^4.17.11",
     "shelljs": "^0.8.3",
+    "tosource": "^1.0.0",
     "yargs": "^12.0.5"
   },
   "devDependencies": {
