@@ -12,14 +12,6 @@ function sourcegraphID(name: string): string {
     return name in toID ? toID[name] : name
 }
 
-function quote(value: string): string {
-    return `'${value.replace(/\\/g, '\\\\')}'`
-}
-
-function jsStringify(values: string[]): string {
-    return `[${values.map(quote).join(', ')}]`
-}
-
 const doNotGenerate = ['python', 'typescript', 'go']
 
 function main(): void {
