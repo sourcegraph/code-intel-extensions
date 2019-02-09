@@ -156,6 +156,76 @@ function takeWhileInclusive<T>(array: T[], predicate: (t: T) => boolean): T[] {
     return index === -1 ? array : array.slice(0, index + 1)
 }
 
+export function wrapIndentationInCodeBlocks({
+    languageID,
+    docstring,
+}: {
+    languageID: string
+    docstring: string
+}): string {
+    if (
+        /```/.test(docstring) ||
+        /<\//.test(docstring) ||
+        /^(1\.|- |\* )/m.test(docstring)
+    ) {
+        // It's already formatted, or it has numbered or bulleted lists that
+        // would get messed up by this function
+        return docstring
+    }
+
+    type LineKind = 'prose' | 'code'
+    function kindOf(line: string): LineKind | undefined {
+        return (
+            (/^[^\s]/.test(line) && 'prose') ||
+            (/^  .*[^\s]/.test(line) && 'code') ||
+            undefined
+        )
+    }
+
+    const unknownLines = docstring
+        .split('\n')
+        .map(line => ({ line, kind: kindOf(line) }))
+
+    function propagateProse(lines: typeof unknownLines): void {
+        lines.reduce(
+            (s, line) => {
+                if (line.kind === undefined && s === 'prose') {
+                    line.kind = 'prose'
+                }
+                return line.kind
+            },
+            'prose' as LineKind | undefined
+        )
+    }
+
+    propagateProse(unknownLines)
+    propagateProse(unknownLines.slice().reverse())
+    const knownLines: { line: string; kind: LineKind }[] = unknownLines.map(
+        line => ({
+            line: line.line,
+            kind: line.kind === undefined ? 'code' : line.kind,
+        })
+    )
+
+    let resultLines: string[] = []
+    for (let i = 0; i < knownLines.length; i++) {
+        const currentLine = knownLines[i]
+        const nextLine = knownLines[i + 1]
+        resultLines.push(currentLine.line)
+        if (nextLine !== undefined) {
+            if (currentLine.kind === 'prose' && nextLine.kind === 'code') {
+                resultLines.push('```' + languageID)
+            } else if (
+                currentLine.kind === 'code' &&
+                nextLine.kind === 'prose'
+            ) {
+                resultLines.push('```')
+            }
+        }
+    }
+    return resultLines.join('\n')
+}
+
 /**
  * @see package.json contributes.configuration section for the configuration schema.
  */
@@ -200,6 +270,10 @@ export type CommentStyle = {
 
 export interface HandlerArgs {
     /**
+     * Used to label markdown code blocks.
+     */
+    languageID: string
+    /**
      * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`).
      */
     fileExts?: string[]
@@ -226,6 +300,7 @@ export class Handler {
      * api holds a reference to a Sourcegraph API client.
      */
     public api = new API()
+    public languageID: string = ''
     public fileExts: string[] = []
     public definitionPatterns: string[] = []
     public commentStyle: CommentStyle | undefined
@@ -236,11 +311,13 @@ export class Handler {
      * file extensions.
      */
     constructor({
+        languageID,
         fileExts = [],
         definitionPatterns = [],
         commentStyle,
         docstringIgnore,
     }: HandlerArgs) {
+        this.languageID = languageID
         this.fileExts = fileExts
         this.definitionPatterns = definitionPatterns
         this.commentStyle = commentStyle
@@ -284,7 +361,9 @@ export class Handler {
                     docstringIgnore ? docstringIgnore.test(line) : false
                 ),
                 line => new RegExp(/^\s*/.source + lineRegex.source).test(line)
-            ).map(line => line.replace(lineRegex, ''))
+            ).map(line =>
+                line.replace(new RegExp(/^\s*/.source + lineRegex.source), '')
+            )
             return docLines.length > 0 ? docLines : undefined
         }
 
@@ -418,16 +497,22 @@ export class Handler {
             // Don't render the line if it would "break out" of the Markdown code block we will wrap it in.
             return null
         }
-        const codeLineMarkdown = '```' + doc.languageId + '\n' + line + '\n```'
+        const codeLineMarkdown = '```' + this.languageID + '\n' + line + '\n```'
+
+        const docstring = this.findDocstring({
+            definitionLine: def.range.start.line,
+            fileText: content,
+        })
 
         return {
             contents: {
                 kind: sourcegraph.MarkupKind.Markdown,
                 value: [
-                    this.findDocstring({
-                        definitionLine: def.range.start.line,
-                        fileText: content,
-                    }),
+                    docstring &&
+                        wrapIndentationInCodeBlocks({
+                            languageID: this.languageID,
+                            docstring,
+                        }),
                     codeLineMarkdown,
                 ]
                     .filter(tooltip => tooltip)

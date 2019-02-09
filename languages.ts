@@ -35,9 +35,10 @@ const lispStyle: CommentStyle = {
 // The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
-export const languages: { [name: string]: LanguageSpec } = {
-    typescript: {
+export const languages: LanguageSpec[] = [
+    {
         handlerArgs: {
+            languageID: 'typescript',
             fileExts: ['ts', 'tsx', 'js', 'jsx'],
             definitionPatterns: [
                 'var\\s\\b%s\\b',
@@ -52,8 +53,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'TypeScript',
     },
-    python: {
+    {
         handlerArgs: {
+            languageID: 'python',
             fileExts: ['py'],
             definitionPatterns: ['\\b%s\\b='],
             commentStyle: {
@@ -67,16 +69,18 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Python',
     },
-    java: {
+    {
         handlerArgs: {
+            languageID: 'java',
             fileExts: ['java'],
             docstringIgnore: /^\s*@/,
             commentStyle: cStyle,
         },
         stylized: 'Java',
     },
-    go: {
+    {
         handlerArgs: {
+            languageID: 'go',
             fileExts: ['go'],
             definitionPatterns: [
                 '\\b%s(,\\s\\w+)*\\s\\:=',
@@ -88,15 +92,17 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Go',
     },
-    cpp: {
+    {
         handlerArgs: {
+            languageID: 'cpp',
             fileExts: ['c', 'cc', 'cpp', 'hh', 'h'],
             commentStyle: cStyle,
         },
         stylized: 'C++',
     },
-    ruby: {
+    {
         handlerArgs: {
+            languageID: 'ruby',
             fileExts: [
                 'rb',
                 'builder',
@@ -123,8 +129,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Ruby',
     },
-    php: {
+    {
         handlerArgs: {
+            languageID: 'php',
             fileExts: [
                 'php',
                 'phtml',
@@ -139,30 +146,34 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'PHP',
     },
-    csharp: {
+    {
         handlerArgs: {
+            languageID: 'csharp',
             fileExts: ['cs', 'csx'],
             commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
         },
         stylized: 'C#',
     },
-    shell: {
+    {
         handlerArgs: {
+            languageID: 'shell',
             fileExts: ['sh', 'bash', 'zsh'],
             commentStyle: shellStyle,
         },
         stylized: 'Shell',
     },
-    scala: {
+    {
         handlerArgs: {
+            languageID: 'scala',
             fileExts: ['sbt', 'sc', 'scala'],
             definitionPatterns: ['\\b(def|val|var|class|object|trait)\\s%s\\b'],
             commentStyle: cStyle,
         },
         stylized: 'Scala',
     },
-    swift: {
+    {
         handlerArgs: {
+            languageID: 'swift',
             fileExts: ['swift'],
             definitionPatterns: [
                 '\\b(func|class|var|let|for|struct|enum|protocol)\\s%s\\b',
@@ -172,16 +183,18 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Swift',
     },
-    rust: {
+    {
         handlerArgs: {
+            languageID: 'rust',
             fileExts: ['rs', 'rs.in'],
             docstringIgnore: /^#/,
             commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?/ },
         },
         stylized: 'Rust',
     },
-    kotlin: {
+    {
         handlerArgs: {
+            languageID: 'kotlin',
             fileExts: ['kt', 'ktm', 'kts'],
             definitionPatterns: [
                 '\\b(fun|val|var|class|interface)\\s%s\\b',
@@ -192,8 +205,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Kotlin',
     },
-    elixir: {
+    {
         handlerArgs: {
+            languageID: 'elixir',
             fileExts: ['ex', 'exs'],
             docstringIgnore: /^\s*@/,
             definitionPatterns: ['\\b(def|defp|defmodule)\\s%s\\b'],
@@ -204,8 +218,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Elixir',
     },
-    perl: {
+    {
         handlerArgs: {
+            languageID: 'perl',
             fileExts: [
                 'pl',
                 'al',
@@ -223,8 +238,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Perl',
     },
-    lua: {
+    {
         handlerArgs: {
+            languageID: 'lua',
             fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
             commentStyle: {
                 lineRegex: /---?\s?/,
@@ -236,15 +252,17 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Lua',
     },
-    clojure: {
+    {
         handlerArgs: {
+            languageID: 'clojure',
             fileExts: ['clj', 'cljs', 'cljx'],
             commentStyle: lispStyle,
         },
         stylized: 'Clojure',
     },
-    haskell: {
+    {
         handlerArgs: {
+            languageID: 'haskell',
             fileExts: ['hs', 'hsc'],
             definitionPatterns: [
                 '\\b%s\\s::',
@@ -264,8 +282,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Haskell',
     },
-    powershell: {
+    {
         handlerArgs: {
+            languageID: 'powershell',
             fileExts: ['ps1', 'psd1', 'psm1'],
             definitionPatterns: ['^function\\s%s\\b'],
             docstringIgnore: /\{/,
@@ -279,8 +298,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'PowerShell',
     },
-    lisp: {
+    {
         handlerArgs: {
+            languageID: 'lisp',
             fileExts: [
                 'lisp',
                 'asd',
@@ -296,8 +316,9 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Lisp',
     },
-    erlang: {
+    {
         handlerArgs: {
+            languageID: 'erlang',
             fileExts: ['erl'],
             docstringIgnore: /-spec/,
             commentStyle: {
@@ -306,16 +327,18 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'Erlang',
     },
-    dart: {
+    {
         handlerArgs: {
+            languageID: 'dart',
             fileExts: ['dart'],
             definitionPatterns: ['^(abstract\\s)?class\\s%s\\b'],
             commentStyle: { lineRegex: /\/\/\/\s?/ },
         },
         stylized: 'Dart',
     },
-    ocaml: {
+    {
         handlerArgs: {
+            languageID: 'ocaml',
             fileExts: [
                 'ml',
                 'eliom',
@@ -336,11 +359,12 @@ export const languages: { [name: string]: LanguageSpec } = {
         },
         stylized: 'OCaml',
     },
-    r: {
+    {
         handlerArgs: {
+            languageID: 'r',
             fileExts: ['r', 'R', 'rd', 'rsx'],
             commentStyle: { lineRegex: /#'?\s?/ },
         },
         stylized: 'R',
     },
-}
+]
