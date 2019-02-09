@@ -221,6 +221,8 @@ export function wrapIndentationInCodeBlocks({
             ) {
                 resultLines.push('```')
             }
+        } else if (currentLine.kind === 'code') {
+            resultLines.push('```')
         }
     }
     return resultLines.join('\n')
