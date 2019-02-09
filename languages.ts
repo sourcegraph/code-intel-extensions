@@ -175,6 +175,7 @@ export const languages: { [name: string]: LanguageSpec } = {
     rust: {
         handlerArgs: {
             fileExts: ['rs', 'rs.in'],
+            docstringIgnore: /^#/,
             commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?(.*)/ },
         },
         stylized: 'Rust',
