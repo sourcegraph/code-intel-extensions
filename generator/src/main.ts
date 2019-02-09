@@ -28,7 +28,8 @@ function main(): void {
             describe: spec.languages.map(langSpec => langSpec.handlerArgs.languageID).join(','),
             type: 'string',
         })
-        .option('push', { type: 'boolean' }).argv
+        .option('push', { type: 'boolean' })
+        .strict().argv
     const languageFilter = !args.languages
         ? () => true
         : (langSpec: spec.LanguageSpec) => args.languages.split(',').includes(langSpec.handlerArgs.languageID)
