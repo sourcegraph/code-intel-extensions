@@ -176,8 +176,8 @@ export function wrapIndentationInCodeBlocks({
     type LineKind = 'prose' | 'code'
     function kindOf(line: string): LineKind | undefined {
         return (
+            (/^(  |>).*[^\s]/.test(line) && 'code') ||
             (/^[^\s]/.test(line) && 'prose') ||
-            (/^  .*[^\s]/.test(line) && 'code') ||
             undefined
         )
     }
