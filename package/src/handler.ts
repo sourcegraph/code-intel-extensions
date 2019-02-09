@@ -115,11 +115,11 @@ function resultToLocation(res: Result): sourcegraph.Location {
 function findSearchToken({
     text,
     position,
-    isComment,
+    lineRegex,
 }: {
     text: string
     position: sourcegraph.Position
-    isComment: (line: string) => boolean
+    lineRegex?: RegExp
 }): { searchToken: string; isComment: boolean } | undefined {
     const lines = text.split('\n')
     const line = lines[position.line]
@@ -141,10 +141,14 @@ function findSearchToken({
         return undefined
     }
     const searchToken = line.substring(start, end)
+    if (!lineRegex) {
+        return { searchToken, isComment: false }
+    }
+    const match = line.match(lineRegex)
     return {
         searchToken,
         isComment:
-            isComment(line) &&
+            ((match && match.index! <= start) || false) &&
             !new RegExp(`('|"|\`)${searchToken}('|"|\`)`).test(line) &&
             !new RegExp(`${searchToken}\\(`).test(line) &&
             !new RegExp(`\\.${searchToken}`).test(line),
@@ -530,7 +534,7 @@ export class Handler {
         const tokenResult = findSearchToken({
             text: doc.text,
             position: pos,
-            isComment: this.isComment.bind(this),
+            lineRegex: this.commentStyle && this.commentStyle.lineRegex,
         })
         if (!tokenResult) {
             return null
@@ -592,7 +596,7 @@ export class Handler {
         const tokenResult = findSearchToken({
             text: doc.text,
             position: pos,
-            isComment: this.isComment.bind(this),
+            lineRegex: this.commentStyle && this.commentStyle.lineRegex,
         })
         if (!tokenResult) {
             return null
