@@ -50,7 +50,7 @@ function main(): void {
     shell.cp('-R', 'template/node_modules', 'temp/node_modules')
     shell.cd('temp')
 
-    _.forEach(spec.languages.filter(languageFilter), (langSpec: spec.LanguageSpec) => {
+    for (const langSpec of spec.languages.filter(languageFilter)) {
         const languageID = langSpec.handlerArgs.languageID
         const stylized = langSpec.stylized
         if (doNotGenerate.includes(languageID)) {
@@ -117,7 +117,7 @@ export const activate = activateBasicCodeIntel(${tosource.default(langSpec.handl
         } else {
             console.log('Not pushing', languageID)
         }
-    })
+    }
 
     shell.cd('..')
 }
