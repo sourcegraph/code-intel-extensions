@@ -28,7 +28,6 @@ const lispStyle: CommentStyle = {
     docPlacement: 'below the definition',
     block: {
         startRegex: /"/,
-        lineNoiseRegex: /^\s*(.*)/,
         endRegex: /"/,
     },
 }
@@ -62,7 +61,6 @@ export const languages: { [name: string]: LanguageSpec } = {
                 lineRegex: /#\s*(.*)/,
                 block: {
                     startRegex: /"""/,
-                    lineNoiseRegex: /^\s*(.*)/,
                     endRegex: /"""/,
                 },
             },
@@ -231,7 +229,6 @@ export const languages: { [name: string]: LanguageSpec } = {
                 lineRegex: /---?\s+(.*)/,
                 block: {
                     startRegex: /--\[\[/,
-                    lineNoiseRegex: /^\s*(.*)/,
                     endRegex: /\]\]/,
                 },
             },
@@ -260,7 +257,6 @@ export const languages: { [name: string]: LanguageSpec } = {
                 lineRegex: /--[\s|]*(.*)/,
                 block: {
                     startRegex: /{-/,
-                    lineNoiseRegex: /^\s*(.*)/,
                     endRegex: /-}/,
                 },
             },
@@ -276,7 +272,6 @@ export const languages: { [name: string]: LanguageSpec } = {
                 docPlacement: 'below the definition',
                 block: {
                     startRegex: /<#/,
-                    lineNoiseRegex: /^\s*(.*)/,
                     endRegex: /#>/,
                 },
             },
@@ -333,7 +328,7 @@ export const languages: { [name: string]: LanguageSpec } = {
             commentStyle: {
                 block: {
                     startRegex: /\(\*\*?/,
-                    lineNoiseRegex: /^\s*\*?\s*(.*)/,
+                    lineNoiseRegex: cStyle.block.lineNoiseRegex,
                     endRegex: /\*\)/,
                 },
             },

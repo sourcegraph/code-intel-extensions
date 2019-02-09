@@ -310,9 +310,12 @@ export class Handler {
             return takeWhileInclusive(lines, line => !endRegex.test(line))
                 .map(line => line.replace(endRegex, ''))
                 .map(line => {
+                    const indentation = lines[0].match(/^\s*/)![0].length
+                    return line.replace(new RegExp(`^\\s{${indentation}}`), '')
+                })
+                .map(line => {
                     if (lineNoiseRegex) {
-                        const match = line.match(lineNoiseRegex)
-                        return (match && match[1]) || ''
+                        return line.replace(lineNoiseRegex, '')
                     } else {
                         return line
                     }
