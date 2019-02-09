@@ -1,7 +1,6 @@
 import * as shell from 'shelljs'
 import * as _ from 'lodash'
 import * as yargs from 'yargs'
-import { HandlerArgs } from '../../package/lib/handler'
 import * as tosource from 'tosource'
 import * as fs from 'fs'
 import * as spec from '../../languages'
