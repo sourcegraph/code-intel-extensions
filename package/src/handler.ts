@@ -284,10 +284,7 @@ export class Handler {
                     docstringIgnore ? docstringIgnore.test(line) : false
                 ),
                 line => new RegExp(/^\s*/.source + lineRegex.source).test(line)
-            ).map(line => {
-                const match = line.match(lineRegex)
-                return (match && match[1]) || ''
-            })
+            ).map(line => line.replace(lineRegex, ''))
             return docLines.length > 0 ? docLines : undefined
         }
 

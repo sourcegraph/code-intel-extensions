@@ -3,7 +3,7 @@ import { HandlerArgs, CommentStyle } from './package/lib/handler'
 export type LanguageSpec = { handlerArgs: HandlerArgs; stylized: string }
 
 const cStyle: CommentStyle = {
-    lineRegex: /\/\/\s?(.*)/,
+    lineRegex: /\/\/\s?/,
     block: {
         startRegex: /\/\*\*?/,
         lineNoiseRegex: /(^\s*\*\s?)?/,
@@ -12,12 +12,12 @@ const cStyle: CommentStyle = {
 }
 
 const shellStyle: CommentStyle = {
-    lineRegex: /#\s?(.*)/,
+    lineRegex: /#\s?/,
 }
 
 const pythonStyle: CommentStyle = {
     docPlacement: 'below the definition',
-    lineRegex: /#\s?(.*)/,
+    lineRegex: /#\s?/,
     block: {
         startRegex: /"""/,
         endRegex: /"""/,
@@ -58,7 +58,7 @@ export const languages: { [name: string]: LanguageSpec } = {
             definitionPatterns: ['\\b%s\\b='],
             commentStyle: {
                 docPlacement: 'below the definition',
-                lineRegex: /#\s*(.*)/,
+                lineRegex: /#\s?/,
                 block: {
                     startRegex: /"""/,
                     endRegex: /"""/,
@@ -83,7 +83,7 @@ export const languages: { [name: string]: LanguageSpec } = {
                 '(var|const)\\s%s\\s',
             ],
             commentStyle: {
-                lineRegex: /\/\/\s*(.*)/,
+                lineRegex: /\/\/\s?/,
             },
         },
         stylized: 'Go',
@@ -142,7 +142,7 @@ export const languages: { [name: string]: LanguageSpec } = {
     csharp: {
         handlerArgs: {
             fileExts: ['cs', 'csx'],
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?(.*)/ },
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
         },
         stylized: 'C#',
     },
@@ -176,7 +176,7 @@ export const languages: { [name: string]: LanguageSpec } = {
         handlerArgs: {
             fileExts: ['rs', 'rs.in'],
             docstringIgnore: /^#/,
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?(.*)/ },
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?/ },
         },
         stylized: 'Rust',
     },
@@ -219,7 +219,7 @@ export const languages: { [name: string]: LanguageSpec } = {
                 'psgi',
                 't',
             ],
-            commentStyle: { lineRegex: /#\s?(.*)/ },
+            commentStyle: { lineRegex: /#\s?/ },
         },
         stylized: 'Perl',
     },
@@ -227,7 +227,7 @@ export const languages: { [name: string]: LanguageSpec } = {
         handlerArgs: {
             fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
             commentStyle: {
-                lineRegex: /---?\s+(.*)/,
+                lineRegex: /---?\s?/,
                 block: {
                     startRegex: /--\[\[/,
                     endRegex: /\]\]/,
@@ -255,7 +255,7 @@ export const languages: { [name: string]: LanguageSpec } = {
             ],
             docstringIgnore: /INLINE|^#/,
             commentStyle: {
-                lineRegex: /--[\s|]*(.*)/,
+                lineRegex: /--\s?\|?\s?/,
                 block: {
                     startRegex: /{-/,
                     endRegex: /-}/,
@@ -301,7 +301,7 @@ export const languages: { [name: string]: LanguageSpec } = {
             fileExts: ['erl'],
             docstringIgnore: /-spec/,
             commentStyle: {
-                lineRegex: /%%\s?(.*)/,
+                lineRegex: /%%\s?/,
             },
         },
         stylized: 'Erlang',
@@ -310,7 +310,7 @@ export const languages: { [name: string]: LanguageSpec } = {
         handlerArgs: {
             fileExts: ['dart'],
             definitionPatterns: ['^(abstract\\s)?class\\s%s\\b'],
-            commentStyle: { lineRegex: /\/\/\/\s?(.*)/ },
+            commentStyle: { lineRegex: /\/\/\/\s?/ },
         },
         stylized: 'Dart',
     },
@@ -339,7 +339,7 @@ export const languages: { [name: string]: LanguageSpec } = {
     r: {
         handlerArgs: {
             fileExts: ['r', 'R', 'rd', 'rsx'],
-            commentStyle: { lineRegex: /#'?\s?(.*)/ },
+            commentStyle: { lineRegex: /#'?\s?/ },
         },
         stylized: 'R',
     },
