@@ -56,7 +56,7 @@ function main(): void {
         const stylized = langSpec.stylized
         if (doNotGenerate.includes(languageID)) {
             console.log('Skipping', languageID)
-            return
+            continue
         }
         console.log('Updating', languageID)
 
