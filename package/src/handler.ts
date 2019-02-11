@@ -574,7 +574,7 @@ export class Handler {
             }),
             patternQuery('current repository', this.definitionPatterns),
             patternQuery('all repositories', this.definitionPatterns),
-        ].filter((priority): priority is string => Boolean(priority))
+        ].filter((query): query is string => Boolean(query))
 
         for (const query of queries) {
             const symbolResults = (await this.api.search(query)).map(
