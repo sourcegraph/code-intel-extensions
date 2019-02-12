@@ -393,7 +393,10 @@ export class Handler {
                 .map(line => line.replace(endRegex, ''))
                 .map(line => {
                     const indentation = lines[0].match(/^\s*/)![0].length
-                    return line.replace(new RegExp(`^\\s{${indentation}}`), '')
+                    return line.replace(
+                        new RegExp(`^\\s{0,${indentation}}`),
+                        ''
+                    )
                 })
                 .map(line => {
                     if (lineNoiseRegex) {
