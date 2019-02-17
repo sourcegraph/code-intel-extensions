@@ -737,11 +737,12 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.7.0.tgz#9a06f4f137ee84d7df0460c1fdb1135ffa6c50fd"
   integrity sha512-ONhaKPIufzzrlNbqtWFFd+jlnemX6lJAgq9ZeiZtS7I1PIf/la7CW4m83rTXRnVnsMbW2k56pGYu7AUFJD9Pow==
 
-"@sourcegraph/basic-code-intel@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/basic-code-intel/-/basic-code-intel-4.0.0.tgz#70afb1231aa289dba249995e605700ef05c76356"
-  integrity sha512-NzgbK7oK28N1lo5UTEoL6gVRlqz18rp4OvtZVjLJnj8OMuDINeMATVfn5IMmSHW6vT8iW32bad8oAm+weqYtIg==
+"@sourcegraph/basic-code-intel@6.0.2":
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/basic-code-intel/-/basic-code-intel-6.0.2.tgz#2eeaa485f6855b880443efeb10256464f1cc89c6"
+  integrity sha512-VytcW5Xqe/j7uV7GBMa2d+NjJ6PxrggWyownIYlidB6WvCU7JpPYwGeaGhBRq68WfPBYv1pba/LZGC6NOU65oA==
   dependencies:
+    lodash "^4.17.11"
     rxjs "^6.3.3"
     sourcegraph "^20.1.0"
 
@@ -3424,7 +3425,7 @@ lodash.uniq@^4.5.0:
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
   integrity sha1-0CJTc662Uq3BvILklFM5qEJ1R3M=
 
-lodash@^4.17.10, lodash@^4.17.4, lodash@^4.17.5:
+lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.4, lodash@^4.17.5:
   version "4.17.11"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
