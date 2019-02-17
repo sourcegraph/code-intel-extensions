@@ -165,6 +165,7 @@ export const languages: LanguageSpec[] = [
     {
         handlerArgs: {
             languageID: 'scala',
+            docstringIgnore: /^\s*@/,
             fileExts: ['sbt', 'sc', 'scala'],
             definitionPatterns: ['\\b(def|val|var|class|object|trait)\\s%s\\b'],
             commentStyle: cStyle,
