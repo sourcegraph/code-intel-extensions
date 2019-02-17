@@ -569,7 +569,7 @@ export class Handler {
         const queries = [
             patternQuery('current file', this.definitionPatterns),
             makeQuery({
-                searchToken: `\\b${searchToken}\\b`,
+                searchToken: `^${searchToken}$`,
                 searchType: 'symbol',
                 currentFileUri: doc.uri,
                 scope: 'current repository',
