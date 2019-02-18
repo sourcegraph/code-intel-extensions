@@ -1,3 +1,4 @@
 {
-  "extends": ["github>sourcegraph/renovate-config"]
+  "extends": ["github>sourcegraph/renovate-config"],
+  "assignees": ["chrismwendt"]
 }
