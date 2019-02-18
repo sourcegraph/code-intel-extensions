@@ -1,6 +1,7 @@
 # Basic code intelligence for Sourcegraph
 
 [![Build Status](https://travis-ci.org/sourcegraph/sourcegraph-basic-code-intel.svg?branch=master)](https://travis-ci.org/sourcegraph/sourcegraph-basic-code-intel)
+[![codecov](https://codecov.io/gh/sourcegraph/sourcegraph-basic-code-intel/branch/master/graph/badge.svg)](https://codecov.io/gh/sourcegraph/sourcegraph-basic-code-intel)
 
 Many (but not all) of the [programming language Sourcegraph extensions](https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22) are thin wrappers around the basic-code-intel npm package that lives in this repository. They provide fuzzy code intelligence using a combination of ctags and search.
 
