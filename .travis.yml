@@ -15,6 +15,7 @@ jobs:
         - cd package
         - yarn
         - yarn run build
+        - yarn run test
         - bash <(curl -s https://codecov.io/bash)
 stages:
   - test
