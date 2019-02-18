@@ -8,6 +8,7 @@ import * as spec from '../../languages'
 function sourcegraphID(name: string): string {
     const toID = {
         csharp: 'cs',
+        shell: 'bash',
     }
     return name in toID ? toID[name] : name
 }
