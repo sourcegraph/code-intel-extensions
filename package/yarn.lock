@@ -102,22 +102,22 @@
   resolved "https://registry.npmjs.org/@sourcegraph/tsconfig/-/tsconfig-4.0.0.tgz#dd2a406f90760bb789fd89fde4bd0a8d681f2767"
   integrity sha512-jxrhKbek4yu1HUDpUhqR9hAGFiUgaJ9NIM+c8JEkAnvpW67ab1AUFWb82aSVfZWX1UVqfR84AMr7xP3E8LlL+A==
 
-"@types/lodash@^4.14.120":
+"@types/lodash@4.14.120":
   version "4.14.120"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.120.tgz#cf265d06f6c7a710db087ed07523ab8c1a24047b"
   integrity sha512-jQ21kQ120mo+IrDs1nFNVm/AsdFxIx2+vZ347DbogHJPd/JzKNMOqU6HCYin1W6v8l5R9XSO2/e9cxmn7HAnVw==
 
-"@types/mocha@^5.2.3":
+"@types/mocha@5.2.5":
   version "5.2.5"
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-5.2.5.tgz#8a4accfc403c124a0bafe8a9fc61a05ec1032073"
   integrity sha512-lAVp+Kj54ui/vLUFxsJTMtWvZraZxum3w3Nwkble2dNuV5VnPA+Mi2oGX9XYJAaIvZi3tn3cbjS/qcJXRb6Bww==
 
-"@types/node@^10.9.4":
+"@types/node@10.12.12":
   version "10.12.12"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.12.tgz#e15a9d034d9210f00320ef718a50c4a799417c47"
   integrity sha512-Pr+6JRiKkfsFvmU/LK68oBRCQeEg36TyAbPhc2xpez24OOZZCuoIhWGTd39VZy6nGafSbxzGouFPTFD/rR1A0A==
 
-"@types/sprintf-js@^1.1.1":
+"@types/sprintf-js@1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@types/sprintf-js/-/sprintf-js-1.1.1.tgz#40771d9fb5ae14ddd07cf71a2882c86d0d3988c6"
   integrity sha512-h8jF5yPUoHH1QUIDfHgqFs7Y0UykKB5CJ1Z32PHGmHRLmW0pI+kYKAEnXVqeUZ3ygFmDkyvhD4vUZN+RZyTd1w==
