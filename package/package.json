@@ -33,7 +33,7 @@
     "cache": true,
     "reporter": [
       "text",
-      "lcovonly"
+      "json"
     ]
   },
   "browserslist": [
