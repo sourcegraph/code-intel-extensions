@@ -14,8 +14,6 @@
     "lib"
   ],
   "scripts": {
-    "prettier": "prettier '**/*.{js?(on),ts}' --write --list-different",
-    "prettier-check": "npm run prettier -- --write=false",
     "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
     "build": "tsc -p tsconfig.dist.json",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
@@ -54,7 +52,6 @@
     "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",
     "nyc": "^12.0.2",
-    "prettier": "^1.14.2",
     "source-map-support": "^0.5.9",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",

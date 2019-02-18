@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "prettier": "prettier '**/*.{js?(on),ts,yml,md}' --write --list-different",
+    "prettier-check": "npm run prettier -- --write=false"
+  },
+  "devDependencies": {
+    "@sourcegraph/prettierrc": "^2.2.0",
+    "prettier": "^1.16.4"
+  }
+}

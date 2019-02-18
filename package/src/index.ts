@@ -8,7 +8,7 @@ const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
 export function activateBasicCodeIntel(
     args: HandlerArgs
-): ((ctx: sourcegraph.ExtensionContext) => void) {
+): (ctx: sourcegraph.ExtensionContext) => void {
     return function activate(
         ctx: sourcegraph.ExtensionContext = DUMMY_CTX
     ): void {

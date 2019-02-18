@@ -10,9 +10,10 @@ jobs:
     - stage: test
       install: skip
       script:
-        - cd package
         - yarn
         - yarn run prettier-check
+        - cd package
+        - yarn
         - yarn run build
 stages:
   - test

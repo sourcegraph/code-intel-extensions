@@ -4,3 +4,4 @@ coverage/
 .cache/
 lib/
 dist/
+package.json

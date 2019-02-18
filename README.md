@@ -6,9 +6,9 @@ Many (but not all) of the [programming language Sourcegraph extensions](https://
 
 ## Anatomy of this repository
 
-- The basic-code-intel npm [package/](./package/)
-- A template language extension that uses that package [template/](./template/)
-- A script that generates all of the various basic language extensions (all but Go, TypeScript, and Python at the time of writing) [generator/](./generator/)
+-   The basic-code-intel npm [package/](./package/)
+-   A template language extension that uses that package [template/](./template/)
+-   A script that generates all of the various basic language extensions (all but Go, TypeScript, and Python at the time of writing) [generator/](./generator/)
 
 ## Updating the basic-code-intel package
 
@@ -30,7 +30,7 @@ Sourcegraphers only: see [generator/README.md](./generator/README.md) to update 
 1. Take a look at the [Java](https://github.com/sourcegraph/sourcegraph-java/blob/master/src/extension.ts) extension to see how to use the `@sourcegraph/basic-code-intel` package
 1. Change the file extensions, test, and [publish](https://docs.sourcegraph.com/extensions/authoring/publishing)
 
-## Adding a new sourcegraph/sourcegraph-$LANG extension (Sourcegraphers only)
+## Adding a new sourcegraph/sourcegraph-\$LANG extension (Sourcegraphers only)
 
 1. Create a new repository https://github.com/sourcegraph/sourcegraph-LANG
 1. Push a single empty commit to it with any message
