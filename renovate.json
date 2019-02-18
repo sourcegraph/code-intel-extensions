@@ -1,0 +1,3 @@
+{
+  "extends": ["github>sourcegraph/renovate-config"]
+}
