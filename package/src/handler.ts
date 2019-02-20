@@ -611,7 +611,7 @@ export class Handler {
         ): Promise<sourcegraph.Location[]> =>
             (await this.api.search(
                 makeQuery({
-                    searchToken,
+                    searchToken: `\\b${searchToken}\\b`,
                     searchType: 'file',
                     currentFileUri: doc.uri,
                     scope,
