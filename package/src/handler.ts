@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { API, Result, parseUri } from './api'
 import * as sprintf from 'sprintf-js'
-import { takeWhile, dropWhile } from 'lodash'
+import { takeWhile, dropWhile, sortBy } from 'lodash'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -230,6 +230,27 @@ export function wrapIndentationInCodeBlocks({
         }
     }
     return resultLines.join('\n')
+}
+
+function jaccard<T>(a: T[], b: T[]): number {
+    const bSet = new Set(b)
+    const intersection = new Set(a.filter(value => bSet.has(value)))
+    const union = new Set([...a, ...b])
+    return intersection.size / union.size
+}
+
+function sortByProximity({
+    currentLocation,
+    locations,
+}: {
+    currentLocation: string
+    locations: sourcegraph.Location[]
+}): sourcegraph.Location[] {
+    const currentPath = new URL(currentLocation).hash.slice(1)
+    return sortBy(locations, (location: sourcegraph.Location) => {
+        const path = new URL(location.uri.toString()).hash.slice(1)
+        return -jaccard(currentPath.split('/'), path.split('/'))
+    })
 }
 
 /**
@@ -619,9 +640,12 @@ export class Handler {
                 })
             )).map(resultToLocation)
 
-        return [
-            ...(await referencesFrom('current repository')),
-            ...(await referencesFrom('other repositories')),
-        ]
+        return sortByProximity({
+            currentLocation: doc.uri,
+            locations: [
+                ...(await referencesFrom('current repository')),
+                ...(await referencesFrom('other repositories')),
+            ],
+        })
     }
 }
