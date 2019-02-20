@@ -52,7 +52,7 @@ describe('search requests', () => {
         ]
 
         for (const test of tests) {
-            const h = new Handler({})
+            const h = new Handler({ languageID: 'l' })
             const searchQueries: string[] = []
             h.api.search = (searchQuery: string): Promise<Result[]> => {
                 searchQueries.push(searchQuery)
@@ -85,7 +85,7 @@ describe('search requests', () => {
         ]
 
         for (const test of tests) {
-            const h = new Handler({})
+            const h = new Handler({ languageID: 'l' })
             const searchQueries: string[] = []
             h.api.search = (searchQuery: string): Promise<Result[]> => {
                 searchQueries.push(searchQuery)
