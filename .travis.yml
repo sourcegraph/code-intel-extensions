@@ -7,7 +7,7 @@ env:
     - FORCE_COLOR=1
 jobs:
   include:
-    - stage: test
+    - stage: build
       install: skip
       script:
         - yarn
@@ -15,10 +15,8 @@ jobs:
         - cd package
         - yarn
         - yarn run build
-        - yarn run cover
-        - bash <(curl -s https://codecov.io/bash)
 stages:
-  - test
+  - build
 branches:
   only:
     - master
