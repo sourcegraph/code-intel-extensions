@@ -555,6 +555,9 @@ export class Handler {
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> {
+        if (doc.text === undefined) {
+            return null
+        }
         const tokenResult = findSearchToken({
             text: doc.text,
             position: pos,
@@ -617,6 +620,9 @@ export class Handler {
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> {
+        if (doc.text === undefined) {
+            return null
+        }
         const tokenResult = findSearchToken({
             text: doc.text,
             position: pos,
