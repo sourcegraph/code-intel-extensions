@@ -609,7 +609,10 @@ export class Handler {
             )
 
             if (symbolResults.length > 0) {
-                return symbolResults
+                return sortByProximity({
+                    currentLocation: doc.uri,
+                    locations: symbolResults,
+                })
             }
         }
 
