@@ -3,7 +3,7 @@ import { HandlerArgs, CommentStyle } from './package/lib/handler'
 export type LanguageSpec = { handlerArgs: HandlerArgs; stylized: string }
 
 const cStyle: CommentStyle = {
-    lineRegex: /\/\/\s?/,
+    lineRegex: /\/\/\/?\s?/,
     block: {
         startRegex: /\/\*\*?/,
         lineNoiseRegex: /(^\s*\*\s?)?/,
