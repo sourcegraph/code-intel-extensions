@@ -5,7 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/lodash": "4.14.121",
-    "@types/shelljs": "0.8.2",
+    "@types/shelljs": "0.8.3",
     "lodash": "^4.17.11",
     "shelljs": "^0.8.3",
     "tosource": "^1.0.0",
