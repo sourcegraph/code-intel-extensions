@@ -1,14 +1,20 @@
 import { HandlerArgs, CommentStyle } from './package/lib/handler'
 
-export type LanguageSpec = { handlerArgs: HandlerArgs; stylized: string }
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
+export type LanguageSpec = {
+    handlerArgs: Omit<HandlerArgs, 'sourcegraph'>
+    stylized: string
+}
+
+const cStyleBlock = {
+    startRegex: /\/\*\*?/,
+    lineNoiseRegex: /(^\s*\*\s?)?/,
+    endRegex: /\*\//,
+}
 const cStyle: CommentStyle = {
     lineRegex: /\/\/\/?\s?/,
-    block: {
-        startRegex: /\/\*\*?/,
-        lineNoiseRegex: /(^\s*\*\s?)?/,
-        endRegex: /\*\//,
-    },
+    block: cStyleBlock,
 }
 
 const shellStyle: CommentStyle = {
@@ -354,7 +360,7 @@ export const languages: LanguageSpec[] = [
             commentStyle: {
                 block: {
                     startRegex: /\(\*\*?/,
-                    lineNoiseRegex: cStyle.block.lineNoiseRegex,
+                    lineNoiseRegex: cStyleBlock.lineNoiseRegex,
                     endRegex: /\*\)/,
                 },
             },

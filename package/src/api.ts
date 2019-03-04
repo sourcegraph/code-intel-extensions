@@ -1,4 +1,4 @@
-import * as sourcegraph from 'sourcegraph'
+import { Location } from 'sourcegraph'
 import { Settings } from './handler'
 import { memoizeAsync } from './memoizeAsync'
 
@@ -21,9 +21,11 @@ export interface Result {
 }
 
 export class API {
+    constructor(private sourcegraph: typeof import('sourcegraph')) {}
+
     private get traceSearch(): boolean {
         return Boolean(
-            sourcegraph.configuration
+            this.sourcegraph.configuration
                 .get<Settings>()
                 .get('basicCodeIntel.debug.traceSearch')
         )
@@ -95,6 +97,7 @@ export class API {
         const respObj = await queryGraphQL({
             query: graphqlQuery,
             vars: graphqlVars,
+            sourcegraph: this.sourcegraph,
         })
         const results = []
         for (const result of respObj.data.search.results.results) {
@@ -143,7 +146,7 @@ export class API {
     /**
      * Get the text content of a file.
      */
-    async getFileContent(loc: sourcegraph.Location): Promise<string | null> {
+    async getFileContent(loc: Location): Promise<string | null> {
         const graphqlQuery = `query GetContextLines($repo: String!, $rev: String!, $path: String!) {
           repository(name: $repo) {
               commit(rev: $rev) {
@@ -158,6 +161,7 @@ export class API {
         const respObj = await queryGraphQL({
             query: graphqlQuery,
             vars: { repo, rev, path },
+            sourcegraph: this.sourcegraph,
         })
         if (
             !respObj ||
@@ -200,9 +204,11 @@ const queryGraphQL = memoizeAsync(
     async ({
         query,
         vars,
+        sourcegraph,
     }: {
         query: string
         vars: { [name: string]: any }
+        sourcegraph: typeof import('sourcegraph')
     }): Promise<any> => {
         return sourcegraph.commands.executeCommand<any>(
             'queryGraphQL',

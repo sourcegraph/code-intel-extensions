@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -ex
+
+yarn -s
+
+pushd package
+yarn -s
+yarn -s run build
+popd
+
+pushd template
+yarn -s
+yarn -s run prettier
+yarn -s run typecheck
+yarn -s run build
+popd
