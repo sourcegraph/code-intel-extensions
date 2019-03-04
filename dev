@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -ex
+
+yarn
+env FORCE_COLOR=0 \
+  yarn run concurrently \
+    --names serve,build \
+    --prefix name \
+    --prefix-colors bgBlue,bgMagenta \
+    --kill-others \
+    'yarn --cwd template run serve | cat' \
+    'yarn --cwd package run watch:build'

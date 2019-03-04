@@ -10,11 +10,7 @@ jobs:
     - stage: build
       install: skip
       script:
-        - yarn
-        - yarn run prettier-check
-        - cd package
-        - yarn
-        - yarn run build
+        - ./ci
 stages:
   - build
 branches:

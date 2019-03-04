@@ -4,6 +4,7 @@
   "version": "0.0.0-development",
   "title": "Basic code intelligence",
   "description": "Provides basic code intelligence for Java using the Sourcegraph search API",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/sourcegraph/sourcegraph-somelang"

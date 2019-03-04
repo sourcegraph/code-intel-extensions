@@ -4,6 +4,6 @@ import * as spec from '../../languages'
 
 export function activate(ctx: sourcegraph.ExtensionContext): void {
     for (const language of spec.languages) {
-        activateBasicCodeIntel(language.handlerArgs)(ctx)
+        activateBasicCodeIntel({ ...language.handlerArgs, sourcegraph })(ctx)
     }
 }

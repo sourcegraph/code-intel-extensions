@@ -1,7 +1,13 @@
-import * as sourcegraph from 'sourcegraph'
 import { API, Result, parseUri } from './api'
 import * as sprintf from 'sprintf-js'
 import { takeWhile, dropWhile, sortBy } from 'lodash'
+import {
+    DocumentSelector,
+    Location,
+    Position,
+    TextDocument,
+    Hover,
+} from 'sourcegraph'
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -11,9 +17,7 @@ const identCharPattern = /[A-Za-z0-9_\-']/
 /**
  * Selects documents that the extension works on.
  */
-export function documentSelector(
-    fileExts: string[]
-): sourcegraph.DocumentSelector {
+export function documentSelector(fileExts: string[]): DocumentSelector {
     return fileExts.map(ext => ({ pattern: `*.${ext}` }))
 }
 
@@ -99,15 +103,21 @@ function makeQuery({
 /**
  * resultToLocation maps a search result to a LSP Location instance.
  */
-function resultToLocation(res: Result): sourcegraph.Location {
-    const rev = res.rev ? res.rev : 'HEAD'
+function resultToLocation({
+    result,
+    sourcegraph,
+}: {
+    result: Result
+    sourcegraph: typeof import('sourcegraph')
+}): Location {
+    const rev = result.rev ? result.rev : 'HEAD'
     return {
-        uri: new sourcegraph.URI(`git://${res.repo}?${rev}#${res.file}`),
+        uri: new sourcegraph.URI(`git://${result.repo}?${rev}#${result.file}`),
         range: new sourcegraph.Range(
-            res.start.line,
-            res.start.character,
-            res.end.line,
-            res.end.character
+            result.start.line,
+            result.start.character,
+            result.end.line,
+            result.end.character
         ),
     }
 }
@@ -118,7 +128,7 @@ function findSearchToken({
     lineRegex,
 }: {
     text: string
-    position: sourcegraph.Position
+    position: Position
     lineRegex?: RegExp
 }): { searchToken: string; isComment: boolean } | undefined {
     const lines = text.split('\n')
@@ -244,10 +254,10 @@ function sortByProximity({
     locations,
 }: {
     currentLocation: string
-    locations: sourcegraph.Location[]
-}): sourcegraph.Location[] {
+    locations: Location[]
+}): Location[] {
     const currentPath = new URL(currentLocation).hash.slice(1)
-    return sortBy(locations, (location: sourcegraph.Location) => {
+    return sortBy(locations, (location: Location) => {
         const path = new URL(location.uri.toString()).hash.slice(1)
         return -jaccard(currentPath.split('/'), path.split('/'))
     })
@@ -320,13 +330,15 @@ export interface HandlerArgs {
      */
     docstringIgnore?: RegExp
     commentStyle?: CommentStyle
+    sourcegraph: typeof import('sourcegraph')
 }
 
 export class Handler {
     /**
      * api holds a reference to a Sourcegraph API client.
      */
-    public api = new API()
+    public sourcegraph: typeof import('sourcegraph')
+    public api: API
     public languageID: string = ''
     public fileExts: string[] = []
     public definitionPatterns: string[] = []
@@ -343,7 +355,10 @@ export class Handler {
         definitionPatterns = [],
         commentStyle,
         docstringIgnore,
+        sourcegraph,
     }: HandlerArgs) {
+        this.sourcegraph = sourcegraph
+        this.api = new API(sourcegraph)
         this.languageID = languageID
         this.fileExts = fileExts
         this.definitionPatterns = definitionPatterns
@@ -495,9 +510,9 @@ export class Handler {
      * Return the first definition location's line.
      */
     async hover(
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<sourcegraph.Hover | null> {
+        doc: TextDocument,
+        pos: Position
+    ): Promise<Hover | null> {
         const definitions = await this.definition(doc, pos)
         if (!definitions || definitions.length === 0) {
             return null
@@ -536,7 +551,7 @@ export class Handler {
 
         return {
             contents: {
-                kind: sourcegraph.MarkupKind.Markdown,
+                kind: this.sourcegraph.MarkupKind.Markdown,
                 value: [
                     docstring &&
                         wrapIndentationInCodeBlocks({
@@ -552,9 +567,9 @@ export class Handler {
     }
 
     async definition(
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<sourcegraph.Location[] | null> {
+        doc: TextDocument,
+        pos: Position
+    ): Promise<Location[] | null> {
         if (doc.text === undefined) {
             return null
         }
@@ -604,8 +619,8 @@ export class Handler {
         ].filter((query): query is string => Boolean(query))
 
         for (const query of queries) {
-            const symbolResults = (await this.api.search(query)).map(
-                resultToLocation
+            const symbolResults = (await this.api.search(query)).map(result =>
+                resultToLocation({ result, sourcegraph: this.sourcegraph })
             )
 
             if (symbolResults.length > 0) {
@@ -620,9 +635,9 @@ export class Handler {
     }
 
     async references(
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<sourcegraph.Location[] | null> {
+        doc: TextDocument,
+        pos: Position
+    ): Promise<Location[] | null> {
         if (doc.text === undefined) {
             return null
         }
@@ -636,9 +651,7 @@ export class Handler {
         }
         const searchToken = tokenResult.searchToken
 
-        const referencesFrom = async (
-            scope: Scope
-        ): Promise<sourcegraph.Location[]> =>
+        const referencesFrom = async (scope: Scope): Promise<Location[]> =>
             (await this.api.search(
                 makeQuery({
                     searchToken: `\\b${searchToken}\\b`,
@@ -647,7 +660,9 @@ export class Handler {
                     scope,
                     fileExts: this.fileExts,
                 })
-            )).map(resultToLocation)
+            )).map(result =>
+                resultToLocation({ result, sourcegraph: this.sourcegraph })
+            )
 
         return sortByProximity({
             currentLocation: doc.uri,
