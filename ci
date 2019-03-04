@@ -11,7 +11,7 @@ popd
 
 pushd template
 yarn -s
-yarn -s run prettier
+yarn -s run prettier-check
 yarn -s run typecheck
 yarn -s run build
 popd
