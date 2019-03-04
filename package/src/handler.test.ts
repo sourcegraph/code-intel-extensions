@@ -1,103 +1,76 @@
 import * as assert from 'assert'
-import { Handler } from './handler'
-import { Result } from './api'
-import { Position } from 'sourcegraph'
-
-interface SearchTest {
-    crossRepo?: boolean
-    doc: {
-        uri: string
-        text: string
-    }
-    expSearchQueries: string[]
-}
+import { referencesQueries, definitionQueries } from './handler'
+import { TextDocument } from 'sourcegraph'
 
 describe('search requests', () => {
     it('makes correct search requests for goto definition', async () => {
-        const tests: SearchTest[] = [
+        interface DefinitionTest {
+            doc: TextDocument
+            definitionPatterns?: string[]
+            expectedSearchQueries: string[]
+        }
+        const tests: DefinitionTest[] = [
             {
-                crossRepo: undefined,
                 doc: {
-                    uri: 'git://github.com/foo/bar?rev#file.c',
+                    uri: 'git://github.com/foo/bar?rev#file.cpp',
+                    languageId: 'cpp',
                     text: 'token',
                 },
-                expSearchQueries: [
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file',
-                ],
-            },
-            {
-                crossRepo: true,
-                doc: {
-                    uri: 'git://github.com/foo/bar?rev#file.c',
-                    text: 'token',
-                },
-                expSearchQueries: [
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:symbol',
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file',
-                ],
-            },
-            {
-                crossRepo: false,
-                doc: {
-                    uri: 'git://github.com/foo/bar?rev#file.c',
-                    text: 'token',
-                },
-                expSearchQueries: [
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:symbol repo:^github.com/foo/bar$@rev',
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file',
+                definitionPatterns: ['const\\s%s\\s='],
+                expectedSearchQueries: [
+                    // current file
+                    'const\\stoken\\s= case:yes file:.(cpp)$ type:file repo:^github.com/foo/bar$@rev file:^file.cpp$',
+                    // current repo symbols
+                    '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
+                    // current repo definition patterns
+                    'const\\stoken\\s= case:yes file:.(cpp)$ type:file repo:^github.com/foo/bar$@rev',
+                    // all repos definition patterns
+                    'const\\stoken\\s= case:yes file:.(cpp)$ type:file',
                 ],
             },
         ]
 
         for (const test of tests) {
-            const h = new Handler({ languageID: 'l' })
-            const searchQueries: string[] = []
-            h.api.search = (searchQuery: string): Promise<Result[]> => {
-                searchQueries.push(searchQuery)
-                return Promise.resolve([])
-            }
-            await h.definition(
-                {
-                    uri: test.doc.uri,
-                    languageId: 'l',
-                    text: test.doc.text,
-                },
-                { line: 0, character: 0 } as Position
+            assert.deepStrictEqual(
+                definitionQueries({
+                    searchToken: 'token',
+                    doc: test.doc,
+                    fileExts: ['cpp'],
+                    definitionPatterns: test.definitionPatterns || [],
+                }),
+                test.expectedSearchQueries
             )
-            assert.deepStrictEqual(test.expSearchQueries, searchQueries)
         }
     })
 
     it('makes correct search requests for references', async () => {
-        const tests: SearchTest[] = [
+        interface ReferencesTest {
+            doc: TextDocument
+            expectedSearchQueries: string[]
+        }
+        const tests: ReferencesTest[] = [
             {
                 doc: {
-                    uri: 'git://github.com/foo/bar?rev#file.c',
+                    uri: 'git://github.com/foo/bar?rev#file.cpp',
+                    languageId: 'cpp',
                     text: 'token',
                 },
-                expSearchQueries: [
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file repo:^github.com/foo/bar$@rev',
-                    '\\btoken\\b case:yes file:.(h|c|hpp|cpp|m|cc)$ type:file -repo:^github.com/foo/bar$',
+                expectedSearchQueries: [
+                    '\\btoken\\b case:yes file:.(cpp)$ type:file repo:^github.com/foo/bar$@rev',
+                    '\\btoken\\b case:yes file:.(cpp)$ type:file -repo:^github.com/foo/bar$',
                 ],
             },
         ]
 
         for (const test of tests) {
-            const h = new Handler({ languageID: 'l' })
-            const searchQueries: string[] = []
-            h.api.search = (searchQuery: string): Promise<Result[]> => {
-                searchQueries.push(searchQuery)
-                return Promise.resolve([])
-            }
-            await h.references(
-                {
-                    uri: test.doc.uri,
-                    languageId: 'l',
-                    text: test.doc.text,
-                },
-                { line: 0, character: 0 } as Position
+            assert.deepStrictEqual(
+                referencesQueries({
+                    searchToken: 'token',
+                    doc: test.doc,
+                    fileExts: ['cpp'],
+                }),
+                test.expectedSearchQueries
             )
-            assert.deepStrictEqual(test.expSearchQueries, searchQueries)
         }
     })
 })

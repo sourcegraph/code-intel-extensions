@@ -1,6 +1,6 @@
 import { API, Result, parseUri } from './api'
 import * as sprintf from 'sprintf-js'
-import { takeWhile, dropWhile, sortBy } from 'lodash'
+import { takeWhile, dropWhile, sortBy, flatten } from 'lodash'
 import {
     DocumentSelector,
     Location,
@@ -261,6 +261,72 @@ function sortByProximity({
         const path = new URL(location.uri.toString()).hash.slice(1)
         return -jaccard(currentPath.split('/'), path.split('/'))
     })
+}
+
+export function definitionQueries({
+    searchToken,
+    doc,
+    fileExts,
+    definitionPatterns,
+}: {
+    searchToken: string
+    doc: TextDocument
+    fileExts: string[]
+    definitionPatterns: string[]
+}): string[] {
+    const patternQuery = (
+        scope: Scope,
+        patterns: string[]
+    ): string | undefined => {
+        return patterns.length === 0
+            ? undefined
+            : makeQuery({
+                  searchToken: patterns
+                      .map(pattern =>
+                          sprintf.sprintf(`${pattern}`, searchToken)
+                      )
+                      .join('|'),
+                  searchType: 'file',
+                  currentFileUri: doc.uri,
+                  scope,
+                  fileExts,
+              })
+    }
+
+    return [
+        patternQuery('current file', definitionPatterns),
+        makeQuery({
+            searchToken: `^${searchToken}$`,
+            searchType: 'symbol',
+            currentFileUri: doc.uri,
+            scope: 'current repository',
+            fileExts,
+        }),
+        patternQuery('current repository', definitionPatterns),
+        patternQuery('all repositories', definitionPatterns),
+    ].filter((query): query is string => Boolean(query))
+}
+
+export function referencesQueries({
+    searchToken,
+    doc,
+    fileExts,
+}: {
+    searchToken: string
+    doc: TextDocument
+    fileExts: string[]
+}): string[] {
+    const from = (scope: Scope): string =>
+        makeQuery({
+            searchToken: `\\b${searchToken}\\b`,
+            searchType: 'file',
+            currentFileUri: doc.uri,
+            scope,
+            fileExts,
+        })
+    // ⚠️ This CANNOT be simplified to `[from('all repositories')]` because
+    // searches that span all repositories always fail on Sourcegraph.com.
+    return [from('current repository'), from('other repositories')]
 }
 
 /**
@@ -582,39 +648,12 @@ export class Handler {
         }
         const searchToken = tokenResult.searchToken
 
-        const patternQuery = (
-            scope: Scope,
-            patterns: string[]
-        ): string | undefined => {
-            return patterns.length === 0
-                ? undefined
-                : makeQuery({
-                      searchToken: patterns
-                          .map(pattern =>
-                              sprintf.sprintf(`${pattern}`, searchToken)
-                          )
-                          .join('|'),
-                      searchType: 'file',
-                      currentFileUri: doc.uri,
-                      scope,
-                      fileExts: this.fileExts,
-                  })
-        }
-
-        const queries = [
-            patternQuery('current file', this.definitionPatterns),
-            makeQuery({
-                searchToken: `^${searchToken}$`,
-                searchType: 'symbol',
-                currentFileUri: doc.uri,
-                scope: 'current repository',
-                fileExts: this.fileExts,
-            }),
-            patternQuery('current repository', this.definitionPatterns),
-            patternQuery('all repositories', this.definitionPatterns),
-        ].filter((query): query is string => Boolean(query))
-
-        for (const query of queries) {
+        for (const query of definitionQueries({
+            searchToken,
+            doc,
+            fileExts: this.fileExts,
+            definitionPatterns: this.definitionPatterns,
+        })) {
             const symbolResults = (await this.api.search(query)).map(result =>
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
             )
@@ -647,25 +686,19 @@ export class Handler {
         }
         const searchToken = tokenResult.searchToken
 
-        const referencesFrom = async (scope: Scope): Promise<Location[]> =>
-            (await this.api.search(
-                makeQuery({
-                    searchToken: `\\b${searchToken}\\b`,
-                    searchType: 'file',
-                    currentFileUri: doc.uri,
-                    scope,
-                    fileExts: this.fileExts,
-                })
-            )).map(result =>
-                resultToLocation({ result, sourcegraph: this.sourcegraph })
-            )
-
         return sortByProximity({
             currentLocation: doc.uri,
-            locations: [
-                ...(await referencesFrom('current repository')),
-                ...(await referencesFrom('other repositories')),
-            ],
+            locations: flatten(
+                await Promise.all(
+                    referencesQueries({
+                        searchToken,
+                        doc,
+                        fileExts: this.fileExts,
+                    }).map(query => this.api.search(query))
+                )
+            ).map(result =>
+                resultToLocation({ result, sourcegraph: this.sourcegraph })
+            ),
         })
     }
 }
