@@ -267,7 +267,6 @@ function sortByProximity({
  * @see package.json contributes.configuration section for the configuration schema.
  */
 export interface Settings {
-    ['basicCodeIntel.definition.crossRepository']?: boolean
     ['basicCodeIntel.debug.traceSearch']?: boolean
 }
 
