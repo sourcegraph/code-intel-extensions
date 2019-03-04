@@ -12,7 +12,8 @@ const cStyleBlock = {
     lineNoiseRegex: /(^\s*\*\s?)?/,
     endRegex: /\*\//,
 }
-const cStyle: CommentStyle = {
+
+export const cStyle: CommentStyle = {
     lineRegex: /\/\/\/?\s?/,
     block: cStyleBlock,
 }
@@ -21,7 +22,7 @@ const shellStyle: CommentStyle = {
     lineRegex: /#\s?/,
 }
 
-const pythonStyle: CommentStyle = {
+export const pythonStyle: CommentStyle = {
     docPlacement: 'below the definition',
     lineRegex: /#\s?/,
     block: {
