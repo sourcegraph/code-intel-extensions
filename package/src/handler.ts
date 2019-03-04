@@ -280,6 +280,8 @@ export function referencesQueries({
             scope,
             fileExts,
         })
+    // ⚠️ This CANNOT be simplified to `[from('all repositories')]` because
+    // searches that span all repositories always fail on Sourcegraph.com.
     return [from('current repository'), from('other repositories')]
 }
 
