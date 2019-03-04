@@ -1,7 +1,7 @@
 {
   "license": "MIT",
   "scripts": {
-    "prettier": "prettier '**/*.{js?(on),ts,yml,md}' --write --list-different",
+    "prettier": "prettier '{package,tmeplate,generator}/**/*.{js?(on),ts,yml,md}' languages.ts --write --list-different",
     "prettier-check": "npm run prettier -- --write=false"
   },
   "devDependencies": {

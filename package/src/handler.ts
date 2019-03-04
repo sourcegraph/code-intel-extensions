@@ -508,10 +508,7 @@ export class Handler {
     /**
      * Return the first definition location's line.
      */
-    async hover(
-        doc: TextDocument,
-        pos: Position
-    ): Promise<Hover | null> {
+    async hover(doc: TextDocument, pos: Position): Promise<Hover | null> {
         const definitions = await this.definition(doc, pos)
         if (!definitions || definitions.length === 0) {
             return null
