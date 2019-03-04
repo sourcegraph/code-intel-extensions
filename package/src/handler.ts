@@ -329,6 +329,131 @@ export function referencesQueries({
     return [from('current repository'), from('other repositories')]
 }
 
+export function findDocstring({
+    definitionLine,
+    fileText,
+    commentStyle,
+    docstringIgnore,
+}: {
+    definitionLine: number
+    fileText: string
+    commentStyle?: CommentStyle
+    docstringIgnore?: RegExp
+}): string | undefined {
+    if (!commentStyle) {
+        return undefined
+    }
+
+    function findDocstringInLineComments({
+        lineRegex,
+        lines,
+    }: {
+        lineRegex: RegExp
+        lines: string[]
+    }): string[] | undefined {
+        const docLines = takeWhile(
+            dropWhile(lines, line =>
+                docstringIgnore ? docstringIgnore.test(line) : false
+            ),
+            line => new RegExp(/^\s*/.source + lineRegex.source).test(line)
+        ).map(line =>
+            line.replace(new RegExp(/^\s*/.source + lineRegex.source), '')
+        )
+        return docLines.length > 0 ? docLines : undefined
+    }
+
+    function findDocstringInBlockComment({
+        block: { startRegex, lineNoiseRegex, endRegex },
+        lines,
+    }: {
+        block: BlockCommentStyle
+        lines: string[]
+    }): string[] | undefined {
+        // ⚠️ Local mutation
+        lines = lines.slice()
+        lines = dropWhile(lines, line =>
+            docstringIgnore ? docstringIgnore.test(line) : false
+        )
+        if (!lines[0] || !startRegex.test(lines[0])) {
+            return undefined
+        }
+        lines[0] = lines[0].replace(startRegex, '')
+        return takeWhileInclusive(lines, line => !endRegex.test(line))
+            .map(line => line.replace(endRegex, ''))
+            .map(line => {
+                const indentation = lines[0].match(/^\s*/)![0].length
+                return line.replace(new RegExp(`^\\s{0,${indentation}}`), '')
+            })
+            .map(line => {
+                if (lineNoiseRegex) {
+                    return line.replace(lineNoiseRegex, '')
+                } else {
+                    return line
+                }
+            })
+    }
+
+    function inlineComment(line: string): string[] | undefined {
+        const lineMatch =
+            (commentStyle &&
+                commentStyle.lineRegex &&
+                line.match(commentStyle.lineRegex)) ||
+            undefined
+        const blockMatch =
+            (commentStyle &&
+                commentStyle.block &&
+                line.match(
+                    // This nasty regex matches an inline block comment by
+                    // using a trick from
+                    // https://stackoverflow.com/a/3850095/2061958
+                    new RegExp(
+                        commentStyle.block.startRegex.source +
+                            '((?:(?!' +
+                            commentStyle.block.endRegex.source +
+                            ').)*)' +
+                            commentStyle.block.endRegex.source
+                    )
+                )) ||
+            undefined
+        return (lineMatch && [lineMatch[1]]) || (blockMatch && [blockMatch[1]])
+    }
+
+    const mungeLines: (lines: string[]) => string[] =
+        commentStyle.docPlacement === 'below the definition'
+            ? lines => lines.slice(definitionLine + 1)
+            : lines => lines.slice(0, definitionLine).reverse()
+    const unmungeLines: (lines: string[]) => string[] =
+        commentStyle.docPlacement === 'below the definition'
+            ? lines => lines
+            : lines => lines.reverse()
+    const block: BlockCommentStyle | undefined =
+        commentStyle.block &&
+        (commentStyle.docPlacement === 'below the definition'
+            ? commentStyle.block
+            : {
+                  ...commentStyle.block,
+                  startRegex: commentStyle.block.endRegex,
+                  endRegex: commentStyle.block.startRegex,
+              })
+
+    const allLines = fileText.split('\n')
+
+    const docLines =
+        inlineComment(allLines[definitionLine]) ||
+        (commentStyle.lineRegex &&
+            findDocstringInLineComments({
+                lineRegex: commentStyle.lineRegex,
+                lines: mungeLines(allLines),
+            })) ||
+        (block &&
+            findDocstringInBlockComment({
+                block,
+                lines: mungeLines(allLines),
+            }))
+
+    return docLines && unmungeLines(docLines).join('\n')
+}
+
 /**
  * @see package.json contributes.configuration section for the configuration schema.
  */
@@ -442,135 +567,6 @@ export class Handler {
         )
     }
 
-    findDocstring({
-        definitionLine,
-        fileText,
-    }: {
-        definitionLine: number
-        fileText: string
-    }): string | undefined {
-        const commentStyle = this.commentStyle
-        const docstringIgnore = this.docstringIgnore
-
-        if (!commentStyle) {
-            return undefined
-        }
-
-        function findDocstringInLineComments({
-            lineRegex,
-            lines,
-        }: {
-            lineRegex: RegExp
-            lines: string[]
-        }): string[] | undefined {
-            const docLines = takeWhile(
-                dropWhile(lines, line =>
-                    docstringIgnore ? docstringIgnore.test(line) : false
-                ),
-                line => new RegExp(/^\s*/.source + lineRegex.source).test(line)
-            ).map(line =>
-                line.replace(new RegExp(/^\s*/.source + lineRegex.source), '')
-            )
-            return docLines.length > 0 ? docLines : undefined
-        }
-
-        function findDocstringInBlockComment({
-            block: { startRegex, lineNoiseRegex, endRegex },
-            lines,
-        }: {
-            block: BlockCommentStyle
-            lines: string[]
-        }): string[] | undefined {
-            // ⚠️ Local mutation
-            lines = lines.slice()
-            lines = dropWhile(lines, line =>
-                docstringIgnore ? docstringIgnore.test(line) : false
-            )
-            if (!lines[0] || !startRegex.test(lines[0])) {
-                return undefined
-            }
-            lines[0] = lines[0].replace(startRegex, '')
-            return takeWhileInclusive(lines, line => !endRegex.test(line))
-                .map(line => line.replace(endRegex, ''))
-                .map(line => {
-                    const indentation = lines[0].match(/^\s*/)![0].length
-                    return line.replace(
-                        new RegExp(`^\\s{0,${indentation}}`),
-                        ''
-                    )
-                })
-                .map(line => {
-                    if (lineNoiseRegex) {
-                        return line.replace(lineNoiseRegex, '')
-                    } else {
-                        return line
-                    }
-                })
-        }
-
-        function inlineComment(line: string): string[] | undefined {
-            const lineMatch =
-                (commentStyle &&
-                    commentStyle.lineRegex &&
-                    line.match(commentStyle.lineRegex)) ||
-                undefined
-            const blockMatch =
-                (commentStyle &&
-                    commentStyle.block &&
-                    line.match(
-                        // This nasty regex matches an inline block comment by
-                        // using a trick from
-                        // https://stackoverflow.com/a/3850095/2061958
-                        new RegExp(
-                            commentStyle.block.startRegex.source +
-                                '((?:(?!' +
-                                commentStyle.block.endRegex.source +
-                                ').)*)' +
-                                commentStyle.block.endRegex.source
-                        )
-                    )) ||
-                undefined
-            return (
-                (lineMatch && [lineMatch[1]]) || (blockMatch && [blockMatch[1]])
-            )
-        }
-
-        const mungeLines: (lines: string[]) => string[] =
-            commentStyle.docPlacement === 'below the definition'
-                ? lines => lines.slice(definitionLine + 1)
-                : lines => lines.slice(0, definitionLine).reverse()
-        const unmungeLines: (lines: string[]) => string[] =
-            commentStyle.docPlacement === 'below the definition'
-                ? lines => lines
-                : lines => lines.reverse()
-        const block: BlockCommentStyle | undefined =
-            commentStyle.block &&
-            (commentStyle.docPlacement === 'below the definition'
-                ? commentStyle.block
-                : {
-                      ...commentStyle.block,
-                      startRegex: commentStyle.block.endRegex,
-                      endRegex: commentStyle.block.startRegex,
-                  })
-
-        const allLines = fileText.split('\n')
-
-        const docLines =
-            inlineComment(allLines[definitionLine]) ||
-            (commentStyle.lineRegex &&
-                findDocstringInLineComments({
-                    lineRegex: commentStyle.lineRegex,
-                    lines: mungeLines(allLines),
-                })) ||
-            (block &&
-                findDocstringInBlockComment({
-                    block,
-                    lines: mungeLines(allLines),
-                }))
-
-        return docLines && unmungeLines(docLines).join('\n')
-    }
-
     /**
      * Return the first definition location's line.
      */
@@ -606,9 +602,11 @@ export class Handler {
         }
         const codeLineMarkdown = '```' + this.languageID + '\n' + line + '\n```'
 
-        const docstring = this.findDocstring({
+        const docstring = findDocstring({
             definitionLine: def.range.start.line,
             fileText: content,
+            commentStyle: this.commentStyle,
+            docstringIgnore: this.docstringIgnore,
         })
 
         return {
