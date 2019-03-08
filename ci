@@ -8,6 +8,7 @@ yarn -s run prettier-check
 pushd package
 yarn -s
 yarn -s run build
+yarn -s run test
 popd
 
 pushd template
