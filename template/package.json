@@ -18,6 +18,28 @@
     "*"
   ],
   "contributes": {
+    "actions": [
+      {
+        "id": "impreciseResults",
+        "title": "Imprecise results",
+        "command": "open",
+        "commandArguments": [
+          "GENERATOR:IMPRECISE_RESULTS_URL"
+        ],
+        "actionItem": {
+          "label": "Imprecise results",
+          "description": "These locations are computed using heuristics. (If available:) use a language server for precise results."
+        }
+      }
+    ],
+    "menus": {
+      "panel/toolbar": [
+        {
+          "action": "impreciseResults",
+          "when": "isImprecise"
+        }
+      ]
+    },
     "configuration": {
       "title": "Basic code intelligence settings",
       "properties": {

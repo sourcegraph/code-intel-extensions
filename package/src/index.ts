@@ -12,6 +12,8 @@ export function activateBasicCodeIntel(
     ): void {
         const h = new Handler(args)
 
+        sourcegraph.internal.updateContext({ isImprecise: true })
+
         ctx.subscriptions.add(
             sourcegraph.languages.registerHoverProvider(
                 documentSelector(h.fileExts),
