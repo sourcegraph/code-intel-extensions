@@ -3,15 +3,18 @@
 set -ex
 
 yarn -s
+git diff --exit-code
 yarn -s run prettier-check
 
 pushd package
 yarn -s
+git diff --exit-code
 yarn -s run build
 popd
 
 pushd template
 yarn -s
+git diff --exit-code
 yarn -s run typecheck
 yarn -s run build
 popd
