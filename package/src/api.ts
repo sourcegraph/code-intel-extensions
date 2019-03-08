@@ -216,5 +216,5 @@ const queryGraphQL = memoizeAsync(
             vars
         )
     },
-    arg => JSON.stringify(arg)
+    arg => JSON.stringify({ query: arg.query, vars: arg.vars })
 )
