@@ -5,6 +5,7 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 export type LanguageSpec = {
     handlerArgs: Omit<HandlerArgs, 'sourcegraph'>
     stylized: string
+    hasLanguageServer?: boolean
 }
 
 const cStyleBlock = {
@@ -59,6 +60,7 @@ export const languages: LanguageSpec[] = [
             commentStyle: cStyle,
         },
         stylized: 'TypeScript',
+        hasLanguageServer: true,
     },
     {
         handlerArgs: {
@@ -75,6 +77,7 @@ export const languages: LanguageSpec[] = [
             },
         },
         stylized: 'Python',
+        hasLanguageServer: true,
     },
     {
         handlerArgs: {
@@ -98,6 +101,7 @@ export const languages: LanguageSpec[] = [
             },
         },
         stylized: 'Go',
+        hasLanguageServer: true,
     },
     {
         handlerArgs: {

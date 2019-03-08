@@ -104,7 +104,7 @@ function main(): void {
         )
         shell.sed(
             '-i',
-            /"description": ".*"/,
+            /^  "description": ".*"/,
             `"description": "Provides basic code intelligence for ${stylized} using the Sourcegraph search API"`,
             'package.json'
         )
@@ -112,6 +112,26 @@ function main(): void {
             '-i',
             /"url": ".*"/,
             `"url": "https://github.com/sourcegraph/sourcegraph-${languageID}"`,
+            'package.json'
+        )
+        shell.sed(
+            '-i',
+            /GENERATOR:IMPRECISE_RESULTS_URL/,
+            langSpec.hasLanguageServer
+                ? `https://github.com/sourcegraph/sourcegraph-${
+                      langSpec.handlerArgs.languageID
+                  }`
+                : `https://github.com/sourcegraph/sourcegraph-${
+                      langSpec.handlerArgs.languageID
+                  }#limitations`,
+            'package.json'
+        )
+        shell.sed(
+            '-i',
+            /"These locations are computed using heuristics.*"/,
+            langSpec.hasLanguageServer
+                ? `These locations are computed using heuristics. Use a language server for precise results."`
+                : `These locations are computed using heuristics.`,
             'package.json'
         )
         shell.sed('-i', /\$LANGNAME\b/, languageID, 'README.md')
