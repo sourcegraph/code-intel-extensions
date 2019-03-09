@@ -12,6 +12,7 @@ jobs:
     - stage: build
       install: skip
       script:
+        - yarn --version
         - ./ci
 stages:
   - build
