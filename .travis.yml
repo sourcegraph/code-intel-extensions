@@ -5,14 +5,11 @@ cache:
 env:
   global:
     - FORCE_COLOR=1
-before_install:
-  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.10.1
 jobs:
   include:
     - stage: build
       install: skip
       script:
-        - yarn --version
         - ./ci
 stages:
   - build

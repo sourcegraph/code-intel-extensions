@@ -20,8 +20,6 @@ yarn -s run typecheck
 yarn -s run build
 popd
 
-git diff --exit-code
-
 # Make sure package version and template dependency version match
 LATEST="$(cat package/package.json | jq -r .version)"
 DEP="$(cat template/package.json | jq -r ".dependencies[\"@sourcegraph/basic-code-intel\"]")"
