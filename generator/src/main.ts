@@ -81,9 +81,9 @@ function main(): void {
 
         shell.exec(`git checkout --orphan temp`)
 
-        shell.sed('-i', /\$LANGNAME\b/, languageID, 'package.json')
-        shell.sed('-i', /\$LANGID\b/, sourcegraphID(languageID), 'package.json')
-        shell.sed('-i', /\$LANG\b/, stylized, 'package.json')
+        shell.sed('-i', /LANGNAME\b/g, languageID, 'package.json')
+        shell.sed('-i', /LANGID\b/g, sourcegraphID(languageID), 'package.json')
+        shell.sed('-i', /LANG\b/g, stylized, 'package.json')
         shell.sed(
             '-i',
             /"name": ".*"/,
@@ -134,8 +134,8 @@ function main(): void {
                 : `"These locations are computed using heuristics."`,
             'package.json'
         )
-        shell.sed('-i', /\$LANGNAME\b/, languageID, 'README.md')
-        shell.sed('-i', /\$LANG\b/, stylized, 'README.md')
+        shell.sed('-i', /LANGNAME\b/g, languageID, 'README.md')
+        shell.sed('-i', /LANG\b/g, stylized, 'README.md')
         shell.sed(
             '-i',
             /\.\.\/\.\.\/package\/lib/,
