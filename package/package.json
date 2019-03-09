@@ -61,7 +61,8 @@
   "dependencies": {
     "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
-    "sourcegraph": "^23.0.0"
+    "sourcegraph": "^23.0.0",
+    "sprintf-js": "^1.1.2"
   },
   "sideEffects": false
 }
