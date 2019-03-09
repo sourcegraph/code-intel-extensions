@@ -23,7 +23,7 @@ npm publish
 
 Then, update the version in the downstream language extensions by bumping the version in `package.json`.
 
-Sourcegraphers only: see [generator/README.md](./generator/README.md) to update `sourcegraph/sourcegraph-$LANG` repositories.
+Sourcegraphers only: see [generator/README.md](./generator/README.md) to update `sourcegraph/sourcegraph-LANG` repositories.
 
 ## Creating your own language extension based on @sourcegraph/basic-code-intel
 
@@ -31,7 +31,7 @@ Sourcegraphers only: see [generator/README.md](./generator/README.md) to update 
 1. Take a look at the [Java](https://github.com/sourcegraph/sourcegraph-java/blob/master/src/extension.ts) extension to see how to use the `@sourcegraph/basic-code-intel` package
 1. Change the file extensions, test, and [publish](https://docs.sourcegraph.com/extensions/authoring/publishing)
 
-## Adding a new sourcegraph/sourcegraph-\$LANG extension (Sourcegraphers only)
+## Adding a new sourcegraph/sourcegraph-LANG extension (Sourcegraphers only)
 
 1. Create a new repository https://github.com/sourcegraph/sourcegraph-LANG
 1. Push a single empty commit to it with any message

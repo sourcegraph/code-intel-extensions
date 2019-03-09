@@ -1,10 +1,10 @@
-# \$LANG code intelligence for Sourcegraph
+# LANG code intelligence for Sourcegraph
 
-A [Sourcegraph extension](https://docs.sourcegraph.com/extensions) that provides code intelligence (go-to-definition and find-references) for \$LANG, using text-based heuristics.
+A [Sourcegraph extension](https://docs.sourcegraph.com/extensions) that provides code intelligence (go-to-definition and find-references) for LANG, using text-based heuristics.
 
-[**🗃️ Source code**](https://github.com/sourcegraph/sourcegraph-$LANGNAME)
+[**🗃️ Source code**](https://github.com/sourcegraph/sourcegraph-LANGNAME)
 
-[**➕ Add to Sourcegraph**](https://sourcegraph.com/extensions/sourcegraph/$LANGNAME) (see [usage instructions](#usage) for self-hosted Sourcegraph instances)
+[**➕ Add to Sourcegraph**](https://sourcegraph.com/extensions/sourcegraph/LANGNAME) (see [usage instructions](#usage) for self-hosted Sourcegraph instances)
 
 ## Features
 
@@ -16,9 +16,9 @@ Here's what it looks like on Sourcegraph (this screenshot shows Python as an exa
 
 ## Usage
 
-1. Enable the `sourcegraph/$LANGNAME` extension:
-    - On Sourcegraph.com, visit [sourcegraph.com/extensions/sourcegraph/\$LANGNAME](https://sourcegraph.com/extensions/sourcegraph/$LANGNAME) to enable it.
-    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/$LANGNAME`, and enable it.
+1. Enable the `sourcegraph/LANGNAME` extension:
+    - On Sourcegraph.com, visit [sourcegraph.com/extensions/sourcegraph/LANGNAME](https://sourcegraph.com/extensions/sourcegraph/LANGNAME) to enable it.
+    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/LANGNAME`, and enable it.
 1. Visit any code file on Sourcegraph.
 1. Hover over a token in the code file.
     - Click **Find references** to see all references to the token.
@@ -36,12 +36,12 @@ The command palette (<kbd>≡</kbd>) lets you toggle other options:
 
 This extension adds the same features to code files and diffs on your code host if you're using the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension). To use it on your code host:
 
-1. Follow the [usage steps](#usage) above to enable this `sourcegraph/$LANGNAME` extension.
+1. Follow the [usage steps](#usage) above to enable this `sourcegraph/LANGNAME` extension.
 1. Install the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
     - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
 1. Visit any file on your code host and hover over a token to see **Find references** and (if available) **Go to definition** actions.
 
-![screenshot of using $LANGNAME on GitHub](https://user-images.githubusercontent.com/1976/50882271-0c5f3180-1399-11e9-9697-e4e4fa4e29e9.png)
+![screenshot of using LANGNAME on GitHub](https://user-images.githubusercontent.com/1976/50882271-0c5f3180-1399-11e9-9697-e4e4fa4e29e9.png)
 
 ### Limitations
 
