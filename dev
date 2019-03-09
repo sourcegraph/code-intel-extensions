@@ -2,7 +2,10 @@
 
 set -ex
 
-yarn
+yarn -s
+yarn -s --cwd package
+yarn -s --cwd generator
+yarn -s --cwd template
 env FORCE_COLOR=0 \
   yarn run concurrently \
     --names serve,build \
