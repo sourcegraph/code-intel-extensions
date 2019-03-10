@@ -1,0 +1,7 @@
+env:
+  FORCE_COLOR: '1'
+
+steps:
+  - command: |-
+      ./ci
+    label: ':pipeline:'
