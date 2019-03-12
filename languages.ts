@@ -48,15 +48,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'typescript',
             fileExts: ['ts', 'tsx', 'js', 'jsx'],
-            definitionPatterns: [
-                'var\\s\\b%s\\b',
-                'let\\s\\b%s\\b',
-                'const\\s\\b%s\\b',
-                'function\\s\\b%s\\b',
-                'interface\\s\\b%s\\b',
-                'type\\s\\b%s\\b',
-                '\\b%s\\b:',
-            ],
             commentStyle: cStyle,
         },
         stylized: 'TypeScript',
@@ -66,7 +57,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'python',
             fileExts: ['py'],
-            definitionPatterns: ['\\b%s\\b='],
             commentStyle: {
                 docPlacement: 'below the definition',
                 lineRegex: /#\s?/,
@@ -92,10 +82,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'go',
             fileExts: ['go'],
-            definitionPatterns: [
-                '\\b%s(,\\s\\w+)*\\s\\:=',
-                '(var|const)\\s%s\\s',
-            ],
             commentStyle: {
                 lineRegex: /\/\/\s?/,
             },
@@ -178,7 +164,6 @@ export const languages: LanguageSpec[] = [
             languageID: 'scala',
             docstringIgnore: /^\s*@/,
             fileExts: ['sbt', 'sc', 'scala'],
-            definitionPatterns: ['\\b(def|val|var|class|object|trait)\\s%s\\b'],
             commentStyle: cStyle,
         },
         stylized: 'Scala',
@@ -187,10 +172,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'swift',
             fileExts: ['swift'],
-            definitionPatterns: [
-                '\\b(func|class|var|let|for|struct|enum|protocol)\\s%s\\b',
-                '\\bfunc\\s.*\\s%s:',
-            ],
             docstringIgnore: /^\s*@/,
             commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
         },
@@ -209,11 +190,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'kotlin',
             fileExts: ['kt', 'ktm', 'kts'],
-            definitionPatterns: [
-                '\\b(fun|val|var|class|interface)\\s%s\\b',
-                '\\bfun\\s.*\\s%s:',
-                '\\bfor\\s\\(%s\\sin',
-            ],
             commentStyle: cStyle,
         },
         stylized: 'Kotlin',
@@ -223,7 +199,6 @@ export const languages: LanguageSpec[] = [
             languageID: 'elixir',
             fileExts: ['ex', 'exs'],
             docstringIgnore: /^\s*@/,
-            definitionPatterns: ['\\b(def|defp|defmodule)\\s%s\\b'],
             commentStyle: {
                 ...pythonStyle,
                 docPlacement: 'above the definition',
@@ -277,13 +252,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'haskell',
             fileExts: ['hs', 'hsc'],
-            definitionPatterns: [
-                '\\b%s\\s::',
-                '^data\\s%s\\b',
-                '^newtype\\s%s\\b',
-                '^type\\s%s\\b',
-                '^class.*\\b%s\\b',
-            ],
             docstringIgnore: /INLINE|^#/,
             commentStyle: {
                 lineRegex: /--\s?\|?\s?/,
@@ -299,7 +267,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'powershell',
             fileExts: ['ps1', 'psd1', 'psm1'],
-            definitionPatterns: ['^function\\s%s\\b'],
             docstringIgnore: /\{/,
             commentStyle: {
                 docPlacement: 'below the definition',
@@ -344,7 +311,6 @@ export const languages: LanguageSpec[] = [
         handlerArgs: {
             languageID: 'dart',
             fileExts: ['dart'],
-            definitionPatterns: ['^(abstract\\s)?class\\s%s\\b'],
             commentStyle: { lineRegex: /\/\/\/\s?/ },
         },
         stylized: 'Dart',
