@@ -107,7 +107,7 @@
     "typescript": "^3.2.1"
   },
   "dependencies": {
-    "@sourcegraph/basic-code-intel": "6.0.7",
+    "@sourcegraph/basic-code-intel": "6.0.8",
     "rxjs": "^6.3.3"
   },
   "sideEffects": false
