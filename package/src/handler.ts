@@ -266,10 +266,12 @@ export function definitionQueries({
     searchToken,
     doc,
     fileExts,
+    isSourcegraphDotCom,
 }: {
     searchToken: string
     doc: TextDocument
     fileExts: string[]
+    isSourcegraphDotCom: boolean
 }): string[] {
     const queryIn = (scope: Scope): string =>
         makeQuery({
@@ -282,7 +284,7 @@ export function definitionQueries({
     return [
         queryIn('current file'),
         queryIn('current repository'),
-        queryIn('other repositories'),
+        ...(isSourcegraphDotCom ? [] : [queryIn('all repositories')]),
     ]
 }
 
@@ -616,6 +618,9 @@ export class Handler {
             searchToken,
             doc,
             fileExts: this.fileExts,
+            isSourcegraphDotCom:
+                this.sourcegraph.internal.sourcegraphURL.href ===
+                'https://sourcegraph.com/',
         })) {
             const symbolResults = (await this.api.search(query)).map(result =>
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
