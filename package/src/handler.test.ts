@@ -26,8 +26,8 @@ describe('search requests', () => {
                     '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev file:^file.cpp$',
                     // current repo symbols
                     '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
-                    // other repo symbols
-                    '^token$ case:yes file:.(cpp)$ type:symbol -repo:^github.com/foo/bar$',
+                    // all repo symbols
+                    '^token$ case:yes file:.(cpp)$ type:symbol',
                 ],
             },
         ]
@@ -38,6 +38,7 @@ describe('search requests', () => {
                     searchToken: 'token',
                     doc: test.doc,
                     fileExts: ['cpp'],
+                    isSourcegraphDotCom: false,
                 }),
                 test.expectedSearchQueries
             )
