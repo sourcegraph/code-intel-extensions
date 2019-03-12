@@ -1,5 +1,4 @@
 import { API, Result, parseUri } from './api'
-import * as sprintf from 'sprintf-js'
 import { takeWhile, dropWhile, sortBy, flatten } from 'lodash'
 import {
     DocumentSelector,
@@ -267,44 +266,24 @@ export function definitionQueries({
     searchToken,
     doc,
     fileExts,
-    definitionPatterns,
 }: {
     searchToken: string
     doc: TextDocument
     fileExts: string[]
-    definitionPatterns: string[]
 }): string[] {
-    const patternQuery = (
-        scope: Scope,
-        patterns: string[]
-    ): string | undefined => {
-        return patterns.length === 0
-            ? undefined
-            : makeQuery({
-                  searchToken: patterns
-                      .map(pattern =>
-                          sprintf.sprintf(`${pattern}`, searchToken)
-                      )
-                      .join('|'),
-                  searchType: 'file',
-                  currentFileUri: doc.uri,
-                  scope,
-                  fileExts,
-              })
-    }
-
-    return [
-        patternQuery('current file', definitionPatterns),
+    const queryIn = (scope: Scope): string =>
         makeQuery({
             searchToken: `^${searchToken}$`,
             searchType: 'symbol',
             currentFileUri: doc.uri,
-            scope: 'current repository',
+            scope,
             fileExts,
-        }),
-        patternQuery('current repository', definitionPatterns),
-        patternQuery('all repositories', definitionPatterns),
-    ].filter((query): query is string => Boolean(query))
+        })
+    return [
+        queryIn('current file'),
+        queryIn('current repository'),
+        queryIn('other repositories'),
+    ]
 }
 
 export function referencesQueries({
@@ -505,16 +484,6 @@ export interface HandlerArgs {
      */
     fileExts?: string[]
     /**
-     * Format strings which, when passed a token, return regexes that match
-     * lines where that token is defined (e.g. `const %s =`). Sourcegraph's
-     * search interprets literal whitespace ` ` in the query as a wildcard `.*`,
-     * so to get around that you need to use `\s` in your regexes instead (e.g
-     * `const\s%s\s=`).
-     *
-     * TODO: replace whitespace on the fly so this warning isn't necessary.
-     */
-    definitionPatterns?: string[]
-    /**
      * Regex that matches lines between a definition and the docstring that
      * should be ignored. Java example: `/^\s*@/` for annotations.
      */
@@ -531,7 +500,6 @@ export class Handler {
     public api: API
     public languageID: string = ''
     public fileExts: string[] = []
-    public definitionPatterns: string[] = []
     public commentStyle: CommentStyle | undefined
     public docstringIgnore: RegExp | undefined
 
@@ -542,7 +510,6 @@ export class Handler {
     constructor({
         languageID,
         fileExts = [],
-        definitionPatterns = [],
         commentStyle,
         docstringIgnore,
         sourcegraph,
@@ -551,7 +518,6 @@ export class Handler {
         this.api = new API(sourcegraph)
         this.languageID = languageID
         this.fileExts = fileExts
-        this.definitionPatterns = definitionPatterns
         this.commentStyle = commentStyle
         this.docstringIgnore = docstringIgnore
     }
@@ -650,7 +616,6 @@ export class Handler {
             searchToken,
             doc,
             fileExts: this.fileExts,
-            definitionPatterns: this.definitionPatterns,
         })) {
             const symbolResults = (await this.api.search(query)).map(result =>
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
