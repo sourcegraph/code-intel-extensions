@@ -130,8 +130,8 @@ function main(): void {
             '-i',
             /"These locations are computed using heuristics.*"/,
             langSpec.hasLanguageServer
-                ? `"These locations are computed using heuristics. Use a language server for precise results."`
-                : `"These locations are computed using heuristics."`,
+                ? `"Results come from text search and heuristics. To use a language server for precise results, click to go to the README and follow the deployment instructions."`
+                : `"Results come from text search and heuristics."`,
             'package.json'
         )
         shell.sed('-i', /LANGNAME\b/g, languageID, 'README.md')
