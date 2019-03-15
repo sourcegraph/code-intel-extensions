@@ -128,7 +128,7 @@ function main(): void {
         )
         shell.sed(
             '-i',
-            /"These locations are computed using heuristics.*"/,
+            /"Results come from text search and heuristics.*"/,
             langSpec.hasLanguageServer
                 ? `"Results come from text search and heuristics. To use a language server for precise results, click to go to the README and follow the deployment instructions."`
                 : `"Results come from text search and heuristics."`,
