@@ -38,10 +38,16 @@ export class API {
     /**
      * search returns the list of results fetched from the Sourcegraph search API.
      */
-    async search(searchQuery: string): Promise<Result[]> {
+    async search({
+        query,
+        fileLocal = false,
+    }: {
+        query: string
+        fileLocal?: boolean
+    }): Promise<Result[]> {
         if (this.traceSearch) {
             console.log('%c' + 'Search', 'font-weight:bold;', {
-                query: searchQuery,
+                query,
             })
         }
 
@@ -68,7 +74,7 @@ export class API {
                     symbols {
                       name
                       containerName
-                      fileLocal
+                      ${fileLocal ? 'fileLocal' : ''}
                       url
                       kind
                       location {
@@ -97,7 +103,7 @@ export class API {
               }
             }
           }`
-        const graphqlVars = { query: searchQuery }
+        const graphqlVars = { query }
 
         const respObj = await queryGraphQL({
             query: graphqlQuery,
