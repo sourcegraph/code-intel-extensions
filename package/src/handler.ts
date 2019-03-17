@@ -707,7 +707,7 @@ export class Handler {
                 const { repo, rev, path } = parseUri(doc.uri)
 
                 const r = await this.api.search({
-                    query: `repo:${repo}@${rev} file:${path} type:symbol ^`, // ^ matches everything (can't leave out a query)
+                    query: `repo:${repo}@${rev} count:1000 file:${path} type:symbol ^`, // ^ matches everything (can't leave out a query)
                     fileLocal: true,
                 })
                 editor.setDecorations(
