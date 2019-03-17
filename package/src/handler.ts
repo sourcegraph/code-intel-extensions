@@ -628,10 +628,22 @@ export class Handler {
                 this.sourcegraph.internal.sourcegraphURL.href ===
                 'https://sourcegraph.com/',
         })) {
-            const symbolResults = (await this.api.search({ query })).map(
-                result =>
+            const symbolResults = (await this.api.search({
+                query,
+                fileLocal: Boolean(
+                    this.sourcegraph.configuration
+                        .get()
+                        .get('feature.fileLocal')
+                ),
+            }))
+                .filter(
+                    result =>
+                        !result.fileLocal ||
+                        result.file === new URL(doc.uri).hash.replace(/^#/, '')
+                )
+                .map(result =>
                     resultToLocation({ result, sourcegraph: this.sourcegraph })
-            )
+                )
 
             if (symbolResults.length > 0) {
                 return sortByProximity({
