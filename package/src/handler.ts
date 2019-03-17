@@ -1,5 +1,5 @@
 import { API, Result, parseUri } from './api'
-import { takeWhile, dropWhile, sortBy, flatten } from 'lodash'
+import { takeWhile, dropWhile, sortBy, flatten, omit } from 'lodash'
 import {
     DocumentSelector,
     Location,
@@ -504,6 +504,7 @@ export class Handler {
     public fileExts: string[] = []
     public commentStyle: CommentStyle | undefined
     public docstringIgnore: RegExp | undefined
+    public debugAnnotatedURIs: string[]
 
     /**
      * Constructs a new Handler that provides code intelligence on files with the given
@@ -522,6 +523,7 @@ export class Handler {
         this.fileExts = fileExts
         this.commentStyle = commentStyle
         this.docstringIgnore = docstringIgnore
+        this.debugAnnotatedURIs = []
     }
 
     /**
@@ -539,6 +541,10 @@ export class Handler {
      * Return the first definition location's line.
      */
     async hover(doc: TextDocument, pos: Position): Promise<Hover | null> {
+        if (this.sourcegraph.configuration.get().get('codeintel.debug')) {
+            this.debugAnnotate(doc)
+        }
+
         const definitions = await this.definition(doc, pos)
         if (!definitions || definitions.length === 0) {
             return null
@@ -668,5 +674,49 @@ export class Handler {
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
             ),
         })
+    }
+
+    /**
+     * Highlights lines that contain symbol definitions in red.
+     */
+    async debugAnnotate(doc: TextDocument): Promise<void> {
+        if (this.debugAnnotatedURIs.includes(doc.uri)) {
+            return
+        }
+        this.debugAnnotatedURIs.push(doc.uri)
+        setTimeout(async () => {
+            const editor = this.sourcegraph.app.activeWindow
+                ? this.sourcegraph.app.activeWindow.visibleViewComponents[0]
+                : undefined
+            if (!editor) {
+                console.log('NO EDITOR')
+            } else {
+                const { repo, rev, path } = parseUri(doc.uri)
+
+                const r = await this.api.search(
+                    `repo:${repo}@${rev} file:${path} type:symbol ^` // ^ matches everything (can't leave out a query)
+                )
+                editor.setDecorations(
+                    this.sourcegraph.app.createDecorationType(),
+                    r.map(v => ({
+                        range: new this.sourcegraph.Range(
+                            v.start.line,
+                            0,
+                            v.end.line,
+                            0
+                        ), // -1 because lines are 0 indexed
+                        border: 'solid',
+                        borderWidth: '0 0 0 10px',
+                        borderColor: 'red',
+                        backgroundColor: 'hsla(0,100%,50%, 0.05)',
+                        after: {
+                            contentText: `    ${JSON.stringify(
+                                omit(v, 'repo', 'rev', 'start', 'end', 'file')
+                            )}`,
+                        },
+                    }))
+                )
+            }
+        }, 500)
     }
 }

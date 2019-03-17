@@ -18,6 +18,10 @@ export interface Result {
         character: number
     }
     preview?: string // only for text search results
+    symbolName?: string
+    symbolKind?: string
+    containerName?: string
+    fileLocal?: boolean
 }
 
 export class API {
@@ -64,6 +68,7 @@ export class API {
                     symbols {
                       name
                       containerName
+                      fileLocal
                       url
                       kind
                       location {
@@ -115,6 +120,10 @@ export class API {
                             line: sym.location.range.end.line,
                             character: sym.location.range.end.character,
                         },
+                        symbolName: sym.name,
+                        symbolKind: sym.kind,
+                        containerName: sym.containerName,
+                        fileLocal: sym.fileLocal,
                     })
                 }
             }
@@ -200,7 +209,7 @@ export function parseUri(
 }
 
 // TODO(sqs): this will never release the memory of the cached responses; use an LRU cache or similar.
-const queryGraphQL = memoizeAsync(
+export const queryGraphQL = memoizeAsync(
     async ({
         query,
         vars,
