@@ -440,6 +440,7 @@ export function findDocstring({
  */
 export interface Settings {
     ['basicCodeIntel.debug.traceSearch']?: boolean
+    ['fileLocal']?: boolean
 }
 
 interface BlockCommentStyle {
@@ -628,14 +629,7 @@ export class Handler {
                 this.sourcegraph.internal.sourcegraphURL.href ===
                 'https://sourcegraph.com/',
         })) {
-            const symbolResults = (await this.api.search({
-                query,
-                fileLocal: Boolean(
-                    this.sourcegraph.configuration
-                        .get()
-                        .get('feature.fileLocal')
-                ),
-            }))
+            const symbolResults = (await this.api.search(query))
                 .filter(
                     result =>
                         !result.fileLocal ||
@@ -681,7 +675,7 @@ export class Handler {
                         searchToken,
                         doc,
                         fileExts: this.fileExts,
-                    }).map(query => this.api.search({ query }))
+                    }).map(query => this.api.search(query))
                 )
             ).map(result =>
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
@@ -706,10 +700,10 @@ export class Handler {
             } else {
                 const { repo, rev, path } = parseUri(doc.uri)
 
-                const r = await this.api.search({
-                    query: `repo:${repo}@${rev} count:1000 file:${path} type:symbol ^`, // ^ matches everything (can't leave out a query)
-                    fileLocal: true,
-                })
+                // ^ matches everything (can't leave out a query)
+                const r = await this.api.search(
+                    `repo:${repo}@${rev} count:1000 file:${path} type:symbol ^`
+                )
                 editor.setDecorations(
                     this.sourcegraph.app.createDecorationType(),
                     r.map(v => ({

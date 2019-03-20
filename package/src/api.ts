@@ -38,13 +38,11 @@ export class API {
     /**
      * search returns the list of results fetched from the Sourcegraph search API.
      */
-    async search({
-        query,
-        fileLocal = false,
-    }: {
-        query: string
-        fileLocal?: boolean
-    }): Promise<Result[]> {
+    async search(query: string): Promise<Result[]> {
+        const fileLocal =
+            this.sourcegraph.configuration.get<Settings>().get('fileLocal') ||
+            false
+
         if (this.traceSearch) {
             console.log('%c' + 'Search', 'font-weight:bold;', {
                 query,
