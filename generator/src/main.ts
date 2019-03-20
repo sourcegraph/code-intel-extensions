@@ -1,9 +1,7 @@
 import * as shell from 'shelljs'
 import * as _ from 'lodash'
 import * as yargs from 'yargs'
-import * as tosource from 'tosource'
-import * as fs from 'fs'
-import * as spec from '../../languages'
+import { languageSpecs, LanguageSpec } from '../../languages'
 
 function sourcegraphID(name: string): string {
     const toID = {
@@ -18,7 +16,7 @@ const doNotGenerate = ['python', 'typescript', 'go']
 function main(): void {
     const args = yargs
         .option('languages', {
-            describe: spec.languages
+            describe: languageSpecs
                 .map(langSpec => langSpec.handlerArgs.languageID)
                 .join(','),
             type: 'string',
@@ -27,7 +25,7 @@ function main(): void {
         .strict().argv
     const languageFilter = !args.languages
         ? () => true
-        : (langSpec: spec.LanguageSpec) =>
+        : (langSpec: LanguageSpec) =>
               args.languages
                   .split(',')
                   .includes(langSpec.handlerArgs.languageID)
@@ -52,7 +50,7 @@ function main(): void {
     shell.cp('-R', 'template/node_modules', 'temp/node_modules')
     shell.cd('temp')
 
-    for (const langSpec of spec.languages.filter(languageFilter)) {
+    for (const langSpec of languageSpecs.filter(languageFilter)) {
         const languageID = langSpec.handlerArgs.languageID
         const stylized = langSpec.stylized
         if (doNotGenerate.includes(languageID)) {
@@ -143,14 +141,11 @@ function main(): void {
             'src/extension.ts'
         )
 
-        fs.writeFileSync(
-            'src/extension.ts',
-            `import { activateBasicCodeIntel } from '@sourcegraph/basic-code-intel'
-
-export const activate = activateBasicCodeIntel(${tosource.default(
-                langSpec.handlerArgs
-            )})
-`
+        shell.sed(
+            '-i',
+            /const languageID = 'all'/,
+            `const languageID = '${languageID}'`,
+            'src/extension.ts'
         )
 
         shell.exec(

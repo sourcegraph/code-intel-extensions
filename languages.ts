@@ -43,7 +43,7 @@ const lispStyle: CommentStyle = {
 // The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
-export const languages: LanguageSpec[] = [
+export const languageSpecs: LanguageSpec[] = [
     {
         handlerArgs: {
             languageID: 'typescript',
