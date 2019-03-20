@@ -1,6 +1,6 @@
 import { activateBasicCodeIntel } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
-import { languageSpecs } from './languages'
+import { languageSpecs } from '../../languages'
 
 export function activate(ctx: sourcegraph.ExtensionContext): void {
     // This is set to an individual language ID by the generator script.
