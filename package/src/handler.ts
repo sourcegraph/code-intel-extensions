@@ -292,10 +292,12 @@ export function referencesQueries({
     searchToken,
     doc,
     fileExts,
+    isSourcegraphDotCom,
 }: {
     searchToken: string
     doc: TextDocument
     fileExts: string[]
+    isSourcegraphDotCom: boolean
 }): string[] {
     const from = (scope: Scope): string =>
         makeQuery({
@@ -305,9 +307,11 @@ export function referencesQueries({
             scope,
             fileExts,
         })
-    // ⚠️ This CANNOT be simplified to `[from('all repositories')]` because
-    // searches that span all repositories always fail on Sourcegraph.com.
-    return [from('current repository'), from('other repositories')]
+
+    return [
+        from('current repository'),
+        ...(isSourcegraphDotCom ? [] : [from('other repositories')]),
+    ]
 }
 
 export function findDocstring({
@@ -697,6 +701,9 @@ export class Handler {
                         searchToken,
                         doc,
                         fileExts: this.fileExts,
+                        isSourcegraphDotCom:
+                            this.sourcegraph.internal.sourcegraphURL.href ===
+                            'https://sourcegraph.com/',
                     }).map(query => this.api.search(query))
                 )
             ).map(result =>
@@ -724,7 +731,7 @@ export class Handler {
 
                 // ^ matches everything (can't leave out a query)
                 const r = await this.api.search(
-                    `repo:${repo}@${rev} count:1000 file:${path} type:symbol ^`
+                    `repo:^${repo}$@${rev} count:1000 file:${path} type:symbol ^`
                 )
                 editor.setDecorations(
                     this.sourcegraph.app.createDecorationType(),
