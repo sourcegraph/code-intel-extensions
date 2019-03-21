@@ -40,6 +40,10 @@ const lispStyle: CommentStyle = {
     },
 }
 
+function dir(path: string) {
+    return path.slice(0, path.lastIndexOf('/'))
+}
+
 // The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
@@ -84,6 +88,37 @@ export const languageSpecs: LanguageSpec[] = [
             fileExts: ['go'],
             commentStyle: {
                 lineRegex: /\/\/\s?/,
+            },
+            filterDefinitions: ({ doc, pos, fileContent, results }) => {
+                const currentFileImportedPaths = fileContent
+                    .split('\n')
+                    .map(line => {
+                        // Matches the import at index 3
+                        const match = /^(import |\t)(\w+ |\. )?"(.*)"$/.exec(
+                            line
+                        )
+                        return match ? match[3] : undefined
+                    })
+                    .filter((x): x is string => Boolean(x))
+
+                const currentFileURL = new URL(doc.uri)
+                const currentRepository =
+                    currentFileURL.hostname + currentFileURL.pathname
+                const currentFilePath = currentFileURL.hash.slice(1)
+                const currentFileImportPath =
+                    currentRepository + '/' + dir(currentFilePath)
+
+                const filteredResults = results.filter(result => {
+                    const resultImportPath =
+                        result.repo + '/' + dir(result.file)
+                    return (
+                        currentFileImportedPaths.some(i =>
+                            resultImportPath.includes(i)
+                        ) || resultImportPath === currentFileImportPath
+                    )
+                })
+
+                return filteredResults.length === 0 ? results : filteredResults
             },
         },
         stylized: 'Go',

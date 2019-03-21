@@ -477,6 +477,13 @@ export type CommentStyle = {
     block?: BlockCommentStyle
 }
 
+type FilterDefinitions = (args: {
+    doc: TextDocument
+    fileContent: string
+    pos: Position
+    results: Result[]
+}) => Result[]
+
 export interface HandlerArgs {
     /**
      * Used to label markdown code blocks.
@@ -493,6 +500,11 @@ export interface HandlerArgs {
     docstringIgnore?: RegExp
     commentStyle?: CommentStyle
     sourcegraph: typeof import('sourcegraph')
+    /**
+     * Callback that filters the given symbol search results (e.g. to drop
+     * results from non-imported files).
+     */
+    filterDefinitions?: FilterDefinitions
 }
 
 export class Handler {
@@ -506,6 +518,7 @@ export class Handler {
     public commentStyle: CommentStyle | undefined
     public docstringIgnore: RegExp | undefined
     public debugAnnotatedURIs: string[]
+    public filterDefinitions: FilterDefinitions
 
     /**
      * Constructs a new Handler that provides code intelligence on files with the given
@@ -517,6 +530,7 @@ export class Handler {
         commentStyle,
         docstringIgnore,
         sourcegraph,
+        filterDefinitions: filterDefinitions = ({ results }) => results,
     }: HandlerArgs) {
         this.sourcegraph = sourcegraph
         this.api = new API(sourcegraph)
@@ -525,6 +539,7 @@ export class Handler {
         this.commentStyle = commentStyle
         this.docstringIgnore = docstringIgnore
         this.debugAnnotatedURIs = []
+        this.filterDefinitions = filterDefinitions
     }
 
     /**
@@ -605,11 +620,15 @@ export class Handler {
         doc: TextDocument,
         pos: Position
     ): Promise<Location[] | null> {
-        if (doc.text === undefined) {
+        const fileContent = await this.api.getFileContent(
+            new this.sourcegraph.Location(new URL(doc.uri))
+        )
+        if (!fileContent) {
             return null
         }
+
         const tokenResult = findSearchToken({
-            text: doc.text,
+            text: fileContent,
             position: pos,
             lineRegex: this.commentStyle && this.commentStyle.lineRegex,
         })
@@ -629,15 +648,18 @@ export class Handler {
                 this.sourcegraph.internal.sourcegraphURL.href ===
                 'https://sourcegraph.com/',
         })) {
-            const symbolResults = (await this.api.search(query))
-                .filter(
+            const symbolResults = this.filterDefinitions({
+                doc,
+                pos,
+                fileContent,
+                results: (await this.api.search(query)).filter(
                     result =>
                         !result.fileLocal ||
                         result.file === new URL(doc.uri).hash.replace(/^#/, '')
-                )
-                .map(result =>
-                    resultToLocation({ result, sourcegraph: this.sourcegraph })
-                )
+                ),
+            }).map(result =>
+                resultToLocation({ result, sourcegraph: this.sourcegraph })
+            )
 
             if (symbolResults.length > 0) {
                 return sortByProximity({
