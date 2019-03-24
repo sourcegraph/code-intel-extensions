@@ -737,10 +737,8 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.7.0.tgz#9a06f4f137ee84d7df0460c1fdb1135ffa6c50fd"
   integrity sha512-ONhaKPIufzzrlNbqtWFFd+jlnemX6lJAgq9ZeiZtS7I1PIf/la7CW4m83rTXRnVnsMbW2k56pGYu7AUFJD9Pow==
 
-"@sourcegraph/basic-code-intel@6.0.11":
+"@sourcegraph/basic-code-intel@../package":
   version "6.0.11"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/basic-code-intel/-/basic-code-intel-6.0.11.tgz#f0aa71979061dac4d24da8498de61990ed4e3503"
-  integrity sha512-c20Cfxrvk39pgPfggVI0rfnwGk9ol/3pHHPPbzmhdMuVVdZisZYx1xJwkIFoWLbysdw+avMQmpLlWD68LQwD5w==
   dependencies:
     lodash "^4.17.11"
     rxjs "^6.3.3"

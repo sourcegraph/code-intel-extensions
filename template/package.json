@@ -6,7 +6,7 @@
   "description": "Provides basic code intelligence for Java using the Sourcegraph search API",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-somelang"
+    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
   },
   "categories": [
     "Programming languages"
@@ -24,7 +24,7 @@
         "title": "References: Search mode",
         "command": "open",
         "commandArguments": [
-          "GENERATOR:IMPRECISE_RESULTS_URL"
+          "https://github.com/sourcegraph/sourcegraph-basic-code-intel#limitations"
         ],
         "actionItem": {
           "label": "References: Search mode",
@@ -107,7 +107,7 @@
     "typescript": "^3.2.1"
   },
   "dependencies": {
-    "@sourcegraph/basic-code-intel": "6.0.11",
+    "@sourcegraph/basic-code-intel": "../package",
     "rxjs": "^6.3.3"
   },
   "sideEffects": false

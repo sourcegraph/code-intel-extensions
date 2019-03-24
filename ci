@@ -16,13 +16,3 @@ yarn -s --frozen-lockfile
 yarn -s run typecheck
 yarn -s run build
 popd
-
-# Make sure package version and template dependency version match
-LATEST="$(cat package/package.json | jq -r .version)"
-DEP="$(cat template/package.json | jq -r ".dependencies[\"@sourcegraph/basic-code-intel\"]")"
-if [ "$LATEST" != "$DEP" ]; then
-  echo "template/package.json's @sourcegraph/basic-code-intel version is old."
-  echo " - $LATEST package/package.json"
-  echo " - $DEP template/package.json"
-  exit 1
-fi
