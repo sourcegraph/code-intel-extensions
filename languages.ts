@@ -1,4 +1,5 @@
 import { HandlerArgs, CommentStyle } from './package/lib/handler'
+const path = require('path-browserify')
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
@@ -52,6 +53,28 @@ export const languageSpecs: LanguageSpec[] = [
             languageID: 'typescript',
             fileExts: ['ts', 'tsx', 'js', 'jsx'],
             commentStyle: cStyle,
+            filterDefinitions: ({ filePath, fileContent, results }) => {
+                const imports = fileContent
+                    .split('\n')
+                    .map(line => {
+                        // Matches the import at index 1
+                        const match =
+                            /from ['"](.*)['"];?$/.exec(line) ||
+                            /require\(['"](.*)['"]\);?$/.exec(line)
+                        return match ? match[1] : undefined
+                    })
+                    .filter((x): x is string => Boolean(x))
+
+                const filteredResults = results.filter(result => {
+                    return imports.some(
+                        i =>
+                            path.join(dir(filePath), i) ===
+                            result.file.replace(/\.[^/.]+$/, '')
+                    )
+                })
+
+                return filteredResults.length === 0 ? results : filteredResults
+            },
         },
         stylized: 'TypeScript',
     },
@@ -76,7 +99,7 @@ export const languageSpecs: LanguageSpec[] = [
             fileExts: ['java'],
             docstringIgnore: /^\s*@/,
             commentStyle: cStyle,
-            filterDefinitions: ({ doc, pos, fileContent, results }) => {
+            filterDefinitions: ({ fileContent, results }) => {
                 const currentFileImports = fileContent
                     .split('\n')
                     .map(line => {
@@ -131,7 +154,7 @@ export const languageSpecs: LanguageSpec[] = [
             commentStyle: {
                 lineRegex: /\/\/\s?/,
             },
-            filterDefinitions: ({ doc, pos, fileContent, results }) => {
+            filterDefinitions: ({ repo, filePath, fileContent, results }) => {
                 const currentFileImportedPaths = fileContent
                     .split('\n')
                     .map(line => {
@@ -143,12 +166,7 @@ export const languageSpecs: LanguageSpec[] = [
                     })
                     .filter((x): x is string => Boolean(x))
 
-                const currentFileURL = new URL(doc.uri)
-                const currentRepository =
-                    currentFileURL.hostname + currentFileURL.pathname
-                const currentFilePath = currentFileURL.hash.slice(1)
-                const currentFileImportPath =
-                    currentRepository + '/' + dir(currentFilePath)
+                const currentFileImportPath = repo + '/' + dir(filePath)
 
                 const filteredResults = results.filter(result => {
                     const resultImportPath =
