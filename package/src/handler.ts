@@ -262,6 +262,24 @@ function sortByProximity({
     })
 }
 
+/**
+ * Extracts the components of a TextDocument.uri like:
+ *
+ * git://github.com/Microsoft/vscode?5688d00dd592a165530a82945c4ade4dad6b01e7#extensions/css-language-features/server/src/pathCompletion.ts
+ *
+ * into its `{ repo, rev, filePath }` components.
+ */
+function repoRevFilePath(
+    uri: string
+): { repo: string; rev: string; filePath: string } {
+    const url = new URL(uri)
+    return {
+        repo: url.hostname + url.pathname,
+        rev: url.search.slice(1),
+        filePath: url.hash.slice(1),
+    }
+}
+
 export function definitionQueries({
     searchToken,
     doc,
@@ -482,7 +500,9 @@ export type CommentStyle = {
 }
 
 type FilterDefinitions = (args: {
-    doc: TextDocument
+    repo: string
+    rev: string
+    filePath: string
     fileContent: string
     pos: Position
     results: Result[]
@@ -653,7 +673,7 @@ export class Handler {
                 'https://sourcegraph.com/',
         })) {
             const symbolResults = this.filterDefinitions({
-                doc,
+                ...repoRevFilePath(doc.uri),
                 pos,
                 fileContent,
                 results: (await this.api.search(query)).filter(
