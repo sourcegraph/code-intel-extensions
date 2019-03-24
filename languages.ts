@@ -40,10 +40,6 @@ const lispStyle: CommentStyle = {
     },
 }
 
-function dir(path: string) {
-    return path.slice(0, path.lastIndexOf('/'))
-}
-
 // The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
@@ -68,7 +64,7 @@ export const languageSpecs: LanguageSpec[] = [
                 const filteredResults = results.filter(result => {
                     return imports.some(
                         i =>
-                            path.join(dir(filePath), i) ===
+                            path.join(path.dirname(filePath), i) ===
                             result.file.replace(/\.[^/.]+$/, '')
                     )
                 })
@@ -89,6 +85,48 @@ export const languageSpecs: LanguageSpec[] = [
                     startRegex: /"""/,
                     endRegex: /"""/,
                 },
+            },
+            filterDefinitions: ({ filePath, fileContent, results }) => {
+                const imports = fileContent
+                    .split('\n')
+                    .map(line => {
+                        // Matches the import at index 1
+                        const match =
+                            /^import ([\.\w]*)/.exec(line) ||
+                            /^from ([\.\w]*)/.exec(line)
+                        return match ? match[1] : undefined
+                    })
+                    .filter((x): x is string => Boolean(x))
+
+                /**
+                 * Converts a relative import to a relative path, or undefined
+                 * if the import is not relative.
+                 */
+                function relativeImportToPath(i: string): string | undefined {
+                    const match = /^(\.)(\.*)(.*)/.exec(i)
+                    if (!match) {
+                        return undefined
+                    }
+                    const parentDots = match[2]
+                    const pkg = match[3]
+                    return (
+                        parentDots.replace(/\./g, '../') +
+                        pkg.replace(/\./g, '/')
+                    )
+                }
+
+                const filteredResults = results.filter(result => {
+                    return imports.some(i =>
+                        relativeImportToPath(i)
+                            ? path.join(
+                                  path.dirname(filePath),
+                                  relativeImportToPath(i)
+                              ) === result.file.replace(/\.[^/.]+$/, '')
+                            : result.file.includes(i.replace(/\./g, '/'))
+                    )
+                })
+
+                return filteredResults.length === 0 ? results : filteredResults
             },
         },
         stylized: 'Python',
@@ -136,7 +174,8 @@ export const languageSpecs: LanguageSpec[] = [
                 const filteredResults = results.filter(result => {
                     // Check if the result's file in any of the imported packages or the current package
                     return [...currentFileImports, currentPackage].some(i =>
-                        dir(result.file)
+                        path
+                            .dirname(result.file)
                             .replace(/\//g, '.')
                             .endsWith(i)
                     )
@@ -166,11 +205,12 @@ export const languageSpecs: LanguageSpec[] = [
                     })
                     .filter((x): x is string => Boolean(x))
 
-                const currentFileImportPath = repo + '/' + dir(filePath)
+                const currentFileImportPath =
+                    repo + '/' + path.dirname(filePath)
 
                 const filteredResults = results.filter(result => {
                     const resultImportPath =
-                        result.repo + '/' + dir(result.file)
+                        result.repo + '/' + path.dirname(result.file)
                     return [
                         ...currentFileImportedPaths,
                         currentFileImportPath,
