@@ -659,7 +659,11 @@ export class Handler {
                 results: (await this.api.search(query)).filter(
                     result =>
                         !result.fileLocal ||
-                        result.file === new URL(doc.uri).hash.replace(/^#/, '')
+                        result.file ===
+                            new URL(doc.uri).hash.replace(/^#/, '') ||
+                        // https://github.com/universal-ctags/ctags/issues/1844
+                        (doc.languageId === 'java' &&
+                            result.symbolKind === 'ENUMMEMBER')
                 ),
             }).map(result =>
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
