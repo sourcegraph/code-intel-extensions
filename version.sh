@@ -11,3 +11,11 @@ version="$1"
 
 gsed -i 's/"version": ".*"/"version": "'$version'"/' package/package.json
 gsed -i 's/"@sourcegraph\/basic-code-intel": ".*"/"@sourcegraph\/basic-code-intel": "'$version'"/' template/package.json
+
+pushd package
+npm publish
+popd
+
+yarn --cwd template
+
+echo "Make sure you commit and push the changes"
