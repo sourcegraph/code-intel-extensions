@@ -79,6 +79,51 @@ export const languageSpecs: LanguageSpec[] = [
             fileExts: ['java'],
             docstringIgnore: /^\s*@/,
             commentStyle: cStyle,
+            filterDefinitions: ({ doc, pos, fileContent, results }) => {
+                const currentFileImports = fileContent
+                    .split('\n')
+                    .map(line => {
+                        // Matches the import at index 1
+                        //
+                        // - Non-static imports have the form: package.class
+                        // - Static imports have the form: package.class+.symbol
+                        //
+                        // In practice, packages are lowercase and and classes
+                        // are uppercase. Take advantage of that to determine
+                        // the package in static imports (otherwise it would be
+                        // ambiguous).
+                        const match =
+                            /^import static ([a-z_0-9\.]+)\.[A-Z][\w\.]+;$/.exec(
+                                line
+                            ) || /^import ([\w\.]+);$/.exec(line)
+                        return match ? match[1] : undefined
+                    })
+                    .filter((x): x is string => Boolean(x))
+
+                const currentPackage: string | undefined = fileContent
+                    .split('\n')
+                    .map(line => {
+                        // Matches the package name at index 1
+                        const match = /^package ([\w\.]+);$/.exec(line)
+                        return match ? match[1] : undefined
+                    })
+                    .find(x => Boolean(x))
+
+                if (!currentPackage) {
+                    return results
+                }
+
+                const filteredResults = results.filter(result => {
+                    // Check if the result's file in any of the imported packages or the current package
+                    return [...currentFileImports, currentPackage].some(i =>
+                        dir(result.file)
+                            .replace(/\//g, '.')
+                            .endsWith(i)
+                    )
+                })
+
+                return filteredResults.length === 0 ? results : filteredResults
+            },
         },
         stylized: 'Java',
     },
@@ -111,11 +156,10 @@ export const languageSpecs: LanguageSpec[] = [
                 const filteredResults = results.filter(result => {
                     const resultImportPath =
                         result.repo + '/' + dir(result.file)
-                    return (
-                        currentFileImportedPaths.some(i =>
-                            resultImportPath.includes(i)
-                        ) || resultImportPath === currentFileImportPath
-                    )
+                    return [
+                        ...currentFileImportedPaths,
+                        currentFileImportPath,
+                    ].some(i => resultImportPath === i)
                 })
 
                 return filteredResults.length === 0 ? results : filteredResults
