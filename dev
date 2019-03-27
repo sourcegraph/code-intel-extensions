@@ -13,4 +13,5 @@ env FORCE_COLOR=0 \
     --prefix-colors bgBlue,bgMagenta \
     --kill-others \
     'yarn --cwd template run serve | cat' \
+    'yarn --cwd template run watch:typecheck' \
     'yarn --cwd package run watch:build'
