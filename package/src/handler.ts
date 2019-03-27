@@ -627,12 +627,12 @@ export class Handler {
             contents: {
                 kind: this.sourcegraph.MarkupKind.Markdown,
                 value: [
+                    codeLineMarkdown,
                     docstring &&
                         wrapIndentationInCodeBlocks({
                             languageID: this.languageID,
                             docstring,
                         }),
-                    codeLineMarkdown,
                 ]
                     .filter(tooltip => tooltip)
                     .join('\n\n---\n\n'),
