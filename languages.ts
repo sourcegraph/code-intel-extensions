@@ -55,8 +55,8 @@ export const languageSpecs: LanguageSpec[] = [
                     .map(line => {
                         // Matches the import at index 1
                         const match =
-                            /from ['"](.*)['"];?$/.exec(line) ||
-                            /require\(['"](.*)['"]\);?$/.exec(line)
+                            /\bfrom ['"](.*)['"];?$/.exec(line) ||
+                            /\brequire\(['"](.*)['"]\)/.exec(line)
                         return match ? match[1] : undefined
                     })
                     .filter((x): x is string => Boolean(x))
