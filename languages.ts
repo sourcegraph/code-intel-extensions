@@ -237,8 +237,15 @@ export const languageSpecs: LanguageSpec[] = [
                     .filter((x): x is string => Boolean(x))
 
                 const filteredResults = results.filter(result => {
-                    return imports.some(
-                        i => path.parse(i).name === path.parse(result.file).name
+                    return imports.some(i =>
+                        path
+                            .join(
+                                path.parse(result.file).dir,
+                                path.parse(result.file).name
+                            )
+                            .endsWith(
+                                path.join(path.parse(i).dir, path.parse(i).name)
+                            )
                     )
                 })
 
