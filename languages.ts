@@ -225,7 +225,7 @@ export const languageSpecs: LanguageSpec[] = [
     {
         handlerArgs: {
             languageID: 'cpp',
-            fileExts: ['c', 'cc', 'cpp', 'hh', 'h'],
+            fileExts: ['c', 'cc', 'cpp', 'hh', 'h', 'hpp'],
             commentStyle: cStyle,
         },
         stylized: 'C++',
