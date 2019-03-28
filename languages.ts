@@ -51,7 +51,7 @@ export const languageSpecs: LanguageSpec[] = [
             commentStyle: cStyle,
             filterDefinitions: ({ filePath, fileContent, results }) => {
                 const imports = fileContent
-                    .split('\n')
+                    .split(/\r?\n/)
                     .map(line => {
                         // Matches the import at index 1
                         const match =
@@ -88,7 +88,7 @@ export const languageSpecs: LanguageSpec[] = [
             },
             filterDefinitions: ({ filePath, fileContent, results }) => {
                 const imports = fileContent
-                    .split('\n')
+                    .split(/\r?\n/)
                     .map(line => {
                         // Matches the import at index 1
                         const match =
@@ -139,7 +139,7 @@ export const languageSpecs: LanguageSpec[] = [
             commentStyle: cStyle,
             filterDefinitions: ({ fileContent, results }) => {
                 const currentFileImports = fileContent
-                    .split('\n')
+                    .split(/\r?\n/)
                     .map(line => {
                         // Matches the import at index 1
                         //
@@ -159,7 +159,7 @@ export const languageSpecs: LanguageSpec[] = [
                     .filter((x): x is string => Boolean(x))
 
                 const currentPackage: string | undefined = fileContent
-                    .split('\n')
+                    .split(/\r?\n/)
                     .map(line => {
                         // Matches the package name at index 1
                         const match = /^package ([\w\.]+);$/.exec(line)
@@ -195,7 +195,7 @@ export const languageSpecs: LanguageSpec[] = [
             },
             filterDefinitions: ({ repo, filePath, fileContent, results }) => {
                 const currentFileImportedPaths = fileContent
-                    .split('\n')
+                    .split(/\r?\n/)
                     .map(line => {
                         // Matches the import at index 3
                         const match = /^(import |\t)(\w+ |\. )?"(.*)"$/.exec(
@@ -227,6 +227,23 @@ export const languageSpecs: LanguageSpec[] = [
             languageID: 'cpp',
             fileExts: ['c', 'cc', 'cpp', 'hh', 'h', 'hpp'],
             commentStyle: cStyle,
+            filterDefinitions: ({ filePath, fileContent, results }) => {
+                const imports = fileContent
+                    .split(/\r?\n/)
+                    .map(line => {
+                        const match = /^#include "(.*)"$/.exec(line)
+                        return match ? match[1] : undefined
+                    })
+                    .filter((x): x is string => Boolean(x))
+
+                const filteredResults = results.filter(result => {
+                    return imports.some(
+                        i => path.parse(i).name === path.parse(result.file).name
+                    )
+                })
+
+                return filteredResults.length === 0 ? results : filteredResults
+            },
         },
         stylized: 'C++',
     },
