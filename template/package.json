@@ -98,7 +98,7 @@
     "mocha": "^5.2.0",
     "nyc": "^12.0.2",
     "parcel-bundler": "^1.10.0",
-    "prettier": "^1.14.2",
+    "prettier": "^1.16.4",
     "source-map-support": "^0.5.9",
     "sourcegraph": "^23.0.0",
     "ts-node": "^7.0.1",
