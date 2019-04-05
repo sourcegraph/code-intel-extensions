@@ -300,7 +300,6 @@ export function definitionQueries({
             fileExts,
         })
     return [
-        queryIn('current file'),
         queryIn('current repository'),
         ...(isSourcegraphDotCom ? [] : [queryIn('all repositories')]),
     ]

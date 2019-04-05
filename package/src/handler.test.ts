@@ -22,8 +22,6 @@ describe('search requests', () => {
                     text: 'token',
                 },
                 expectedSearchQueries: [
-                    // current file symbols
-                    '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev file:^file.cpp$',
                     // current repo symbols
                     '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
                     // all repo symbols
