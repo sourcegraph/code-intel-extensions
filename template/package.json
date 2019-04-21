@@ -35,7 +35,6 @@
         "id": "feedback",
         "command": "feedback",
         "title": "Submit basic code intel feedback",
-        "command": "open",
         "commandArguments": [
           "https://docs.google.com/forms/d/e/1FAIpQLSfmn4M3nVj6R5m8UuAor_4ft8IMhieND_Uu8AlerhGO7X9C9w/viewform"
         ],
