@@ -30,6 +30,9 @@ function activateWithArgs(
     const h = new Handler({ ...args, sourcegraph })
 
     sourcegraph.internal.updateContext({ isImprecise: true })
+    if (sourcegraph.configuration.get().get('basicCodeIntel.showFeedback')) {
+        sourcegraph.internal.updateContext({ showFeedback: true })
+    }
 
     ctx.subscriptions.add(
         sourcegraph.languages.registerHoverProvider(
