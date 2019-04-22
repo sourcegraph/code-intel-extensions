@@ -1,3 +1,4 @@
+import { concat, Subscription, from } from 'rxjs'
 import { API, Result, parseUri } from './api'
 import { takeWhile, dropWhile, sortBy, flatten, omit } from 'lodash'
 import {
@@ -454,6 +455,55 @@ export function findDocstring({
             }))
 
     return docLines && unmungeLines(docLines).join('\n')
+}
+
+export function registerFeedbackButton({
+    languageID,
+    sourcegraph,
+    isPrecise,
+}: {
+    languageID: string
+    isPrecise: boolean
+    sourcegraph: typeof import('sourcegraph')
+}): Subscription {
+    if (sourcegraph.configuration.get().get('codeIntel.showFeedback')) {
+        return concat(
+            // Update the context once upon page load...
+            from(sourcegraph.workspace.textDocuments),
+            // ...and whenever a document is opened.
+            sourcegraph.workspace.onDidOpenTextDocument
+        ).subscribe(document => {
+            sourcegraph.internal.updateContext({
+                showFeedback: true,
+                'codeIntel.feedbackLink': feedbackLink({
+                    currentFile: document && document.uri,
+                    language: languageID,
+                    kind: isPrecise ? 'Precise' : 'Default',
+                }).href,
+            })
+        })
+    }
+    return Subscription.EMPTY
+}
+
+function feedbackLink({
+    currentFile,
+    language,
+    kind,
+}: {
+    currentFile?: string
+    language: string
+    kind: 'Default' | 'Precise'
+}): URL {
+    const url = new URL(
+        'https://docs.google.com/forms/d/e/1FAIpQLSfmn4M3nVj6R5m8UuAor_4ft8IMhieND_Uu8AlerhGO7X9C9w/viewform?usp=pp_url'
+    )
+    if (currentFile) {
+        url.searchParams.append('entry.1135698969', currentFile)
+    }
+    url.searchParams.append('entry.55312909', language)
+    url.searchParams.append('entry.1824476739', kind)
+    return url
 }
 
 /**

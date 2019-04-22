@@ -1,8 +1,7 @@
-import { Handler, HandlerArgs } from '../../package/lib'
+import { Handler, HandlerArgs, registerFeedbackButton } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 import { documentSelector } from '../../package/lib/handler'
-import { concat, of } from 'rxjs'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
@@ -32,23 +31,13 @@ function activateWithArgs(
 
     sourcegraph.internal.updateContext({ isImprecise: true })
 
-    if (sourcegraph.configuration.get().get('basicCodeIntel.showFeedback')) {
-        concat(
-            // Update the context once upon page load...
-            of(undefined),
-            // ...and whenever a document is opened.
-            sourcegraph.workspace.onDidOpenTextDocument
-        ).subscribe(document => {
-            sourcegraph.internal.updateContext({
-                showFeedback: true,
-                'codeIntel.feedbackLink': feedbackLink({
-                    currentFile: document && document.uri,
-                    language: args.languageID,
-                    kind: 'Default',
-                }).href,
-            })
+    ctx.subscriptions.add(
+        registerFeedbackButton({
+            languageID: args.languageID,
+            sourcegraph,
+            isPrecise: false,
         })
-    }
+    )
 
     ctx.subscriptions.add(
         sourcegraph.languages.registerHoverProvider(
@@ -74,24 +63,4 @@ function activateWithArgs(
             }
         )
     )
-}
-
-function feedbackLink({
-    currentFile,
-    language,
-    kind,
-}: {
-    currentFile?: string
-    language: string
-    kind: 'Default' | 'Precise'
-}): URL {
-    const url = new URL(
-        'https://docs.google.com/forms/d/e/1FAIpQLSfmn4M3nVj6R5m8UuAor_4ft8IMhieND_Uu8AlerhGO7X9C9w/viewform?usp=pp_url'
-    )
-    if (currentFile) {
-        url.searchParams.append('entry.1135698969', currentFile)
-    }
-    url.searchParams.append('entry.55312909', language)
-    url.searchParams.append('entry.1824476739', kind)
-    return url
 }
