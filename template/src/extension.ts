@@ -1,4 +1,4 @@
-import { Handler, HandlerArgs } from '../../package/lib'
+import { Handler, HandlerArgs, registerFeedbackButton } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 import { documentSelector } from '../../package/lib/handler'
@@ -30,6 +30,14 @@ function activateWithArgs(
     const h = new Handler({ ...args, sourcegraph })
 
     sourcegraph.internal.updateContext({ isImprecise: true })
+
+    ctx.subscriptions.add(
+        registerFeedbackButton({
+            languageID: args.languageID,
+            sourcegraph,
+            isPrecise: false,
+        })
+    )
 
     ctx.subscriptions.add(
         sourcegraph.languages.registerHoverProvider(

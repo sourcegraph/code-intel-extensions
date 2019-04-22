@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { Handler, HandlerArgs, documentSelector } from './handler'
 
-export { Handler, HandlerArgs } from './handler'
+export { Handler, HandlerArgs, registerFeedbackButton } from './handler'
 
 // No-op for Sourcegraph versions prior to 3.0-preview
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
