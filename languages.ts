@@ -225,7 +225,7 @@ export const languageSpecs: LanguageSpec[] = [
     {
         handlerArgs: {
             languageID: 'cpp',
-            fileExts: ['c', 'cc', 'cpp', 'hh', 'h', 'hpp'],
+            fileExts: ['c', 'cc', 'cpp', 'hh', 'h', 'hpp', /* Arduino */ 'ino'],
             commentStyle: cStyle,
             filterDefinitions: ({ filePath, fileContent, results }) => {
                 const imports = fileContent
