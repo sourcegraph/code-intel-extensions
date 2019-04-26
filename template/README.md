@@ -2,7 +2,7 @@
 
 A [Sourcegraph extension](https://docs.sourcegraph.com/extensions) that provides code intelligence (go-to-definition and find-references) for LANG, using text-based heuristics.
 
-[**🗃️ Source code**](https://github.com/sourcegraph/sourcegraph-LANGNAME)
+[**🗃️ Source code**](https://github.com/sourcegraph/sourcegraph-basic-code-intel)
 
 [**➕ Add to Sourcegraph**](https://sourcegraph.com/extensions/sourcegraph/LANGNAME) (see [usage instructions](#usage) for self-hosted Sourcegraph instances)
 
