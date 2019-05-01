@@ -1,0 +1,1 @@
+../../../../tree-sitter/tree-sitter/target/release/tree-sitter.js

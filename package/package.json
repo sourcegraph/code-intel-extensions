@@ -58,6 +58,7 @@
     "typescript": "^3.2.1"
   },
   "dependencies": {
+    "babel-polyfill": "^6.26.0",
     "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
     "sourcegraph": "^23.0.0"

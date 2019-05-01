@@ -6,6 +6,7 @@
     "moduleResolution": "node",
     "lib": ["es2018", "webworker"],
     "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
     "noErrorTruncation": true,
     "skipLibCheck": true,
     "declaration": false,

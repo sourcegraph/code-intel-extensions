@@ -108,7 +108,7 @@ export class API {
             vars: graphqlVars,
             sourcegraph: this.sourcegraph,
         })
-        const results = []
+        const results: any[] = []
         for (const result of respObj.data.search.results.results) {
             if (result.symbols) {
                 for (const sym of result.symbols) {
