@@ -8,7 +8,8 @@ yarn -s run prettier-check
 pushd package
 yarn -s --frozen-lockfile
 yarn -s run build
-yarn -s run test
+yarn -s run cover
+bash <(curl -s https://codecov.io/bash)
 popd
 
 pushd template
