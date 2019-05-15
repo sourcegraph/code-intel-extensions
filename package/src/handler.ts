@@ -8,6 +8,303 @@ import {
     TextDocument,
     Hover,
 } from 'sourcegraph'
+import TreeSitter from './tree-sitter.js'
+
+namespace TreeSitter {
+    export type SyntaxNode = any
+    export type Point = any
+}
+TreeSitter.init()
+    .then(() => console.log('init'))
+    .catch(() => console.log('fail'))
+
+async function tsdef({
+    text,
+    position,
+}: {
+    text: string
+    position: Position
+}): Promise<any> {
+    const TypeScript = await TreeSitter.Language.load(
+        'http://localhost:5001/tree-sitter-typescript.wasm'
+    )
+
+    function flatten<T>(xs: any): T[] {
+        return [].concat.apply([], xs)
+    }
+
+    function pretty(node) {
+        function prettyLines(node) {
+            return node
+                ? [
+                      node.type +
+                          (node.namedChildren.length !== 0
+                              ? ''
+                              : ' ' + node.text),
+                      ...flatten(
+                          node.namedChildren.map(x =>
+                              prettyLines(x).map(y => '  ' + y)
+                          )
+                      ),
+                  ]
+                : []
+        }
+        return prettyLines(node).join('\n')
+    }
+
+    type Selector = (node: TreeSitter.SyntaxNode) => TreeSitter.SyntaxNode[]
+
+    function children(): Selector {
+        return node => node.namedChildren
+    }
+
+    function nthchild(n: number): Selector {
+        return node => (node.namedChildren[n] ? [node.namedChildren[n]] : [])
+    }
+
+    function pipe(...selectors: Selector[]): Selector {
+        return selectors.reduce(
+            (acc, cur) => n => flatten(acc(n).map(n => cur(n))),
+            x => [x]
+        )
+    }
+
+    function match(name: string): Selector {
+        return node => {
+            return node.type === name ? [node] : []
+        }
+    }
+
+    // function descendant(name: string): Selector {
+    //     return node => [
+    //         ...flatten(node.namedChildren.map(n => descendant(name)(n))),
+    //         ...(node.type === name ? [node] : []),
+    //     ]
+    // }
+
+    function choice(...selectors: Selector[]): Selector {
+        return node => {
+            for (const selector of selectors) {
+                const nodes = selector(node)
+                if (nodes.length > 0) {
+                    return nodes
+                }
+            }
+            return []
+        }
+    }
+
+    const unimplemented = name => () => {
+        // console.log(name, 'is unimplemented')
+        return []
+    }
+
+    const selectorByLanguage = {
+        typescript: (() => {
+            const identifier = match('identifier')
+            const shorthand_property_identifier = match(
+                'shorthand_property_identifier'
+            )
+            // TODO figure out how to do more deeply nested object destructuring. Need laziness.
+            const pair = pipe(
+                match('pair'),
+                nthchild(1),
+                identifier
+            )
+            const object = pipe(
+                match('object_pattern'),
+                children(),
+                choice(pair, shorthand_property_identifier)
+            )
+            const array = unimplemented('array')
+            const rest_parameter = unimplemented('rest_parameter')
+            const optional_parameter = unimplemented('optional_parameter')
+            const _destructuring_pattern = choice(object, array)
+            const required_parameter = pipe(
+                match('required_parameter'),
+                children(),
+                choice(identifier, _destructuring_pattern)
+            )
+            const formal_parameters = pipe(
+                match('formal_parameters'),
+                children(),
+                choice(required_parameter, rest_parameter, optional_parameter)
+            )
+            const call_signature = pipe(
+                match('call_signature'),
+                children(),
+                formal_parameters
+            )
+            const arrow_function = pipe(
+                match('arrow_function'),
+                nthchild(0),
+                choice(identifier, call_signature)
+            )
+            const fn = pipe(
+                match('function'),
+                children(),
+                call_signature
+            )
+            const variable_declarator = pipe(
+                match('variable_declarator'),
+                children(),
+                identifier
+            )
+            const lexical_declaration = pipe(
+                match('lexical_declaration'),
+                children(),
+                variable_declarator
+            )
+            const statement_block = pipe(
+                match('statement_block'),
+                children(),
+                lexical_declaration
+            )
+            const program = pipe(
+                match('program'),
+                children(),
+                lexical_declaration
+            )
+            return choice(
+                arrow_function,
+                fn,
+                statement_block,
+                program
+                // ...more
+            )
+        })(),
+    }
+
+    function definition({
+        selector,
+        rootNode,
+        index,
+        position,
+    }: {
+        selector: Selector
+        rootNode: TreeSitter.SyntaxNode
+        index?: number
+        position?: TreeSitter.Point
+    }): TreeSitter.SyntaxNode | undefined {
+        const refNode =
+            (index && rootNode.descendantForIndex(index + 1)) ||
+            rootNode.descendantForPosition(position)
+        if (
+            !refNode ||
+            !['identifier', 'shorthand_property_identifier'].includes(
+                refNode.type
+            )
+        ) {
+            console.log('Node is not an identifier', refNode && refNode.type)
+            return undefined
+        } else {
+            const idenfitier = refNode.text
+            function go(
+                node: TreeSitter.SyntaxNode | null
+            ): TreeSitter.SyntaxNode | undefined {
+                if (node === null) {
+                    return undefined
+                } else {
+                    const hit = selector(node).find(
+                        candidate => candidate.text === idenfitier
+                    )
+                    return hit ? hit : go(node.parent)
+                }
+            }
+            return go(refNode)
+        }
+    }
+
+    function test() {
+        function testCase({
+            selector,
+            code,
+        }: {
+            selector: Selector
+            code: string
+        }) {
+            const parser = new TreeSitter()
+            parser.setLanguage(TypeScript)
+            const tree = parser.parse(code.replace('&', '').replace('*', ''))
+
+            const defIndex = code.indexOf('&')
+            const refIndex = code.replace('&', '').indexOf('*')
+
+            if (refIndex === -1) {
+                console.error('Test must contain *, but did not:', code)
+            }
+
+            const def = definition({
+                selector,
+                rootNode: tree.rootNode,
+                index: refIndex,
+            })
+
+            if (defIndex === -1 && def === undefined) {
+                return
+            }
+
+            if (defIndex === -1 && def !== undefined) {
+                console.log('Found a definition when it should not have.')
+                return
+            }
+
+            if (def === undefined) {
+                console.log('No def =(')
+                console.log(code)
+                console.log(pretty(tree.rootNode))
+                return
+            }
+
+            if (def.startIndex !== defIndex) {
+                console.log('Expected index', defIndex)
+                console.log('Got index', def.startIndex)
+                console.log(code)
+                console.log(pretty(tree.rootNode))
+            }
+        }
+
+        const testsByLanguage = {
+            typescript: [
+                '() => *x',
+                '&x => *x',
+                '(&x) => *x',
+                '(&x, y) => *x',
+                '&x => y => *x',
+                'function foo(&x) { function bar(y) { return *x + y } }',
+                'function foo(&x, y) { return *x }',
+                '({&x}) => *x',
+                '({y:&x}) => *x',
+                '{const &x = 5; console.log(*x)}',
+                'const &x = 5; console.log(*x)',
+            ],
+        }
+
+        console.log('Testing...')
+        for (const key of Object.keys(testsByLanguage)) {
+            for (const code of testsByLanguage[key]) {
+                testCase({ selector: selectorByLanguage[key], code })
+            }
+        }
+        console.log('Testing... done', new Date())
+    }
+
+    test()
+
+    const parser = new TreeSitter()
+    parser.setLanguage(TypeScript)
+    const tree = parser.parse(text)
+    const d = definition({
+        selector: selectorByLanguage['typescript'],
+        rootNode: tree.rootNode,
+        position: { row: position.line, column: position.character + 1 },
+    })
+    if (d) {
+        return d.startPosition
+    } else {
+        return undefined
+    }
+}
 
 /**
  * identCharPattern is used to match identifier tokens
@@ -698,6 +995,19 @@ export class Handler {
         )
         if (!fileContent) {
             return null
+        }
+
+        const d = await tsdef({
+            text: fileContent,
+            position: pos,
+        })
+        if (d) {
+            return [
+                new this.sourcegraph.Location(
+                    new URL(doc.uri),
+                    new this.sourcegraph.Position(d.row, d.column)
+                ),
+            ]
         }
 
         const tokenResult = findSearchToken({
