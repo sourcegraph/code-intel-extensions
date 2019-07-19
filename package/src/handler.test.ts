@@ -36,7 +36,7 @@ describe('search requests', () => {
                     searchToken: 'token',
                     doc: test.doc,
                     fileExts: ['cpp'],
-                    isSourcegraphDotCom: false,
+                    enableGlobalSymbolSearch: false,
                 }),
                 test.expectedSearchQueries
             )
