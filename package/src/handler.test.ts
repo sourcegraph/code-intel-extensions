@@ -13,6 +13,7 @@ describe('search requests', () => {
         interface DefinitionTest {
             doc: TextDocument
             expectedSearchQueries: string[]
+            enableGlobalSymbolSearch: boolean
         }
         const tests: DefinitionTest[] = [
             {
@@ -21,11 +22,24 @@ describe('search requests', () => {
                     languageId: 'cpp',
                     text: 'token',
                 },
+                enableGlobalSymbolSearch: true,
                 expectedSearchQueries: [
                     // current repo symbols
                     '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
                     // all repo symbols
                     '^token$ case:yes file:.(cpp)$ type:symbol',
+                ],
+            },
+            {
+                doc: {
+                    uri: 'git://github.com/foo/bar?rev#file.cpp',
+                    languageId: 'cpp',
+                    text: 'token',
+                },
+                enableGlobalSymbolSearch: false,
+                expectedSearchQueries: [
+                    // current repo symbols
+                    '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
                 ],
             },
         ]
@@ -36,7 +50,7 @@ describe('search requests', () => {
                     searchToken: 'token',
                     doc: test.doc,
                     fileExts: ['cpp'],
-                    enableGlobalSymbolSearch: false,
+                    enableGlobalSymbolSearch: test.enableGlobalSymbolSearch,
                 }),
                 test.expectedSearchQueries
             )
