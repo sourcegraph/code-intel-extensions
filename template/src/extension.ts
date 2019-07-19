@@ -1,7 +1,6 @@
-import { Handler, HandlerArgs, registerFeedbackButton } from '../../package/lib'
+import { activateBasicCodeIntel } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
-import { documentSelector } from '../../package/lib/handler'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
@@ -11,56 +10,14 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
 
     if (languageID === 'all') {
         for (const languageSpec of languageSpecs) {
-            activateWithArgs(ctx, { ...languageSpec.handlerArgs, sourcegraph })
+            activateBasicCodeIntel({ ...languageSpec.handlerArgs, sourcegraph })(ctx)
         }
     } else {
         // TODO consider Record<LanguageID, LanguageSpec>
-        activateWithArgs(ctx, {
+        activateBasicCodeIntel({
             ...languageSpecs.find(l => l.handlerArgs.languageID === languageID)!
                 .handlerArgs,
             sourcegraph,
-        })
+        })(ctx)
     }
-}
-
-function activateWithArgs(
-    ctx: sourcegraph.ExtensionContext,
-    args: HandlerArgs
-): void {
-    const h = new Handler({ ...args, sourcegraph })
-
-    sourcegraph.internal.updateContext({ isImprecise: true })
-
-    ctx.subscriptions.add(
-        registerFeedbackButton({
-            languageID: args.languageID,
-            sourcegraph,
-            isPrecise: false,
-        })
-    )
-
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerHoverProvider(
-            documentSelector(h.fileExts),
-            {
-                provideHover: (doc, pos) => h.hover(doc, pos),
-            }
-        )
-    )
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerDefinitionProvider(
-            documentSelector(h.fileExts),
-            {
-                provideDefinition: (doc, pos) => h.definition(doc, pos),
-            }
-        )
-    )
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerReferenceProvider(
-            documentSelector(h.fileExts),
-            {
-                provideReferences: (doc, pos) => h.references(doc, pos),
-            }
-        )
-    )
 }
