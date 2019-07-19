@@ -8,29 +8,48 @@ export { Handler, HandlerArgs, registerFeedbackButton } from './handler'
 // No-op for Sourcegraph versions prior to 3.0-preview
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
-export function activateBasicCodeIntel(args: HandlerArgs): (ctx: sourcegraph.ExtensionContext) => void {
-    return function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
+export function activateBasicCodeIntel(
+    args: HandlerArgs
+): (ctx: sourcegraph.ExtensionContext) => void {
+    return function activate(
+        ctx: sourcegraph.ExtensionContext = DUMMY_CTX
+    ): void {
         const h = new Handler({ ...args, sourcegraph })
 
         sourcegraph.internal.updateContext({ isImprecise: true })
 
         ctx.subscriptions.add(
-            sourcegraph.languages.registerHoverProvider(documentSelector(h.fileExts), {
-                provideHover: async (doc, pos) =>
-                    (await hasLSIF(doc)) ? await lsif.provideHover(doc, pos) : await h.hover(doc, pos),
-            })
+            sourcegraph.languages.registerHoverProvider(
+                documentSelector(h.fileExts),
+                {
+                    provideHover: async (doc, pos) =>
+                        (await hasLSIF(doc))
+                            ? await lsif.provideHover(doc, pos)
+                            : await h.hover(doc, pos),
+                }
+            )
         )
         ctx.subscriptions.add(
-            sourcegraph.languages.registerDefinitionProvider(documentSelector(h.fileExts), {
-                provideDefinition: async (doc, pos) =>
-                    (await hasLSIF(doc)) ? await lsif.provideDefinition(doc, pos) : await h.definition(doc, pos),
-            })
+            sourcegraph.languages.registerDefinitionProvider(
+                documentSelector(h.fileExts),
+                {
+                    provideDefinition: async (doc, pos) =>
+                        (await hasLSIF(doc))
+                            ? await lsif.provideDefinition(doc, pos)
+                            : await h.definition(doc, pos),
+                }
+            )
         )
         ctx.subscriptions.add(
-            sourcegraph.languages.registerReferenceProvider(documentSelector(h.fileExts), {
-                provideReferences: async (doc, pos) =>
-                    (await hasLSIF(doc)) ? await lsif.provideReferences(doc, pos) : await h.references(doc, pos),
-            })
+            sourcegraph.languages.registerReferenceProvider(
+                documentSelector(h.fileExts),
+                {
+                    provideReferences: async (doc, pos) =>
+                        (await hasLSIF(doc))
+                            ? await lsif.provideReferences(doc, pos)
+                            : await h.references(doc, pos),
+                }
+            )
         )
     }
 }
@@ -67,7 +86,10 @@ async function send({
     path: string
     position: LSP.Position
 }): Promise<any> {
-    const url = new URL('.api/lsif/request', sourcegraph.internal.sourcegraphURL)
+    const url = new URL(
+        '.api/lsif/request',
+        sourcegraph.internal.sourcegraphURL
+    )
     url.searchParams.set('repository', repositoryFromDoc(doc))
     url.searchParams.set('commit', commitFromDoc(doc))
 

@@ -7,10 +7,17 @@ import * as LSP from 'vscode-languageserver-types'
 export const convertPosition = (
     sourcegraph: typeof import('sourcegraph'),
     position: LSP.Position
-): sourcegraph.Position => new sourcegraph.Position(position.line, position.character)
+): sourcegraph.Position =>
+    new sourcegraph.Position(position.line, position.character)
 
-export const convertRange = (sourcegraph: typeof import('sourcegraph'), range: LSP.Range): sourcegraph.Range =>
-    new sourcegraph.Range(convertPosition(sourcegraph, range.start), convertPosition(sourcegraph, range.end))
+export const convertRange = (
+    sourcegraph: typeof import('sourcegraph'),
+    range: LSP.Range
+): sourcegraph.Range =>
+    new sourcegraph.Range(
+        convertPosition(sourcegraph, range.start),
+        convertPosition(sourcegraph, range.end)
+    )
 
 export function convertHover(
     sourcegraph: typeof import('sourcegraph'),
@@ -19,7 +26,9 @@ export function convertHover(
     if (!hover) {
         return null
     }
-    const contents = Array.isArray(hover.contents) ? hover.contents : [hover.contents]
+    const contents = Array.isArray(hover.contents)
+        ? hover.contents
+        : [hover.contents]
     return {
         range: hover.range && convertRange(sourcegraph, hover.range),
         contents: {
@@ -36,7 +45,13 @@ export function convertHover(
                     if (!content.value) {
                         return ''
                     }
-                    return '```' + content.language + '\n' + content.value + '\n```'
+                    return (
+                        '```' +
+                        content.language +
+                        '\n' +
+                        content.value +
+                        '\n```'
+                    )
                 })
                 .filter(str => !!str.trim())
                 .join('\n\n---\n\n'),
@@ -59,6 +74,8 @@ export function convertLocations(
     if (!locationOrLocations) {
         return null
     }
-    const locations = Array.isArray(locationOrLocations) ? locationOrLocations : [locationOrLocations]
+    const locations = Array.isArray(locationOrLocations)
+        ? locationOrLocations
+        : [locationOrLocations]
     return locations.map(location => convertLocation(sourcegraph, location))
 }

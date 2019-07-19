@@ -10,12 +10,16 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
 
     if (languageID === 'all') {
         for (const languageSpec of languageSpecs) {
-            activateBasicCodeIntel({ ...languageSpec.handlerArgs, sourcegraph })(ctx)
+            activateBasicCodeIntel({
+                ...languageSpec.handlerArgs,
+                sourcegraph,
+            })(ctx)
         }
     } else {
         // TODO consider Record<LanguageID, LanguageSpec>
         activateBasicCodeIntel({
-            ...languageSpecs.find(l => l.handlerArgs.languageID === languageID)!.handlerArgs,
+            ...languageSpecs.find(l => l.handlerArgs.languageID === languageID)!
+                .handlerArgs,
             sourcegraph,
         })(ctx)
     }
