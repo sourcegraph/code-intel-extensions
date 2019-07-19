@@ -4,13 +4,18 @@
 import * as sourcegraph from 'sourcegraph'
 import * as LSP from 'vscode-languageserver-types'
 
-export const convertPosition = (sourcegraph: typeof import('sourcegraph'), position: LSP.Position): sourcegraph.Position =>
-    new sourcegraph.Position(position.line, position.character)
+export const convertPosition = (
+    sourcegraph: typeof import('sourcegraph'),
+    position: LSP.Position
+): sourcegraph.Position => new sourcegraph.Position(position.line, position.character)
 
 export const convertRange = (sourcegraph: typeof import('sourcegraph'), range: LSP.Range): sourcegraph.Range =>
     new sourcegraph.Range(convertPosition(sourcegraph, range.start), convertPosition(sourcegraph, range.end))
 
-export function convertHover(sourcegraph: typeof import('sourcegraph'), hover: LSP.Hover | null): sourcegraph.Hover | null {
+export function convertHover(
+    sourcegraph: typeof import('sourcegraph'),
+    hover: LSP.Hover | null
+): sourcegraph.Hover | null {
     if (!hover) {
         return null
     }
