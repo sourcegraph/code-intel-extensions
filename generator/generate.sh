@@ -1,3 +1,6 @@
 #!/bin/bash
 
-ts-node -P generator/tsconfig.json generator/src/main.ts "$@"
+set -ex
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+yarn run ts-node -P tsconfig.json src/main.ts "$@"

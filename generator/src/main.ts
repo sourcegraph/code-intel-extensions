@@ -35,10 +35,10 @@ function main(): void {
     shell.rm('-rf', 'temp')
     shell.mkdir('temp')
     console.log(
-        'Copying template/node_modules to temp/node_modules (takes ~15s) once up front'
+        'Copying ../template/node_modules to temp/node_modules (takes ~15s) once up front'
     )
-    shell.cp('-R', 'template/node_modules', 'temp/node_modules')
-    shell.cd('temp')
+    shell.cp('-R', '../template/node_modules', '../temp/node_modules')
+    shell.cd('../temp')
 
     for (const langSpec of languageSpecs.filter(languageFilter)) {
         const languageID = langSpec.handlerArgs.languageID
@@ -53,7 +53,7 @@ function main(): void {
         shell.exec(
             `find . -mindepth 1 -maxdepth 1 ! -name 'node_modules' -exec rm -rf '{}' ';'`
         )
-        // Copy from template/ everything but node_modules
+        // Copy from ../template/ everything but node_modules
         shell.exec(
             `find ../template -mindepth 1 -maxdepth 1 ! -name 'node_modules' -exec cp -R '{}' . ';'`
         )
