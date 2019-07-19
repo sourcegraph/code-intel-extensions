@@ -75,7 +75,7 @@ function setPath(doc: sourcegraph.TextDocument, path: string): string {
     return url.href
 }
 
-async function send({
+async function queryLSIF({
     doc,
     method,
     path,
@@ -151,7 +151,7 @@ const lsif = {
         position: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
         console.log('lsifhover')
-        const hover: LSP.Hover | null = await send({
+        const hover: LSP.Hover | null = await queryLSIF({
             doc,
             method: 'hover',
             path: pathFromDoc(doc),
@@ -167,7 +167,7 @@ const lsif = {
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Definition | null> => {
-        const body: LSP.Location | LSP.Location[] | null = await send({
+        const body: LSP.Location | LSP.Location[] | null = await queryLSIF({
             doc,
             method: 'definitions',
             path: pathFromDoc(doc),
@@ -189,7 +189,7 @@ const lsif = {
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Location[] | null> => {
-        const locations: LSP.Location[] | null = await send({
+        const locations: LSP.Location[] | null = await queryLSIF({
             doc,
             method: 'references',
             path: pathFromDoc(doc),
