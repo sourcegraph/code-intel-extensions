@@ -1,7 +1,8 @@
-node_modules/
-.git/
-coverage/
 .cache/
-lib/
+.nyc_output/
+coverage/
 dist/
-package.json
+node_modules/
+temp/
+lib/
+yarn-error.log
