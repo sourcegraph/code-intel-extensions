@@ -114,6 +114,10 @@ async function send({
 const lsifDocs = new Map<string, Promise<boolean>>()
 
 async function hasLSIF(doc: sourcegraph.TextDocument): Promise<boolean> {
+    if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+        return false
+    }
+
     if (lsifDocs.has(doc.uri)) {
         return lsifDocs.get(doc.uri)!
     }
