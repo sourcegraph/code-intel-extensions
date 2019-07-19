@@ -2,6 +2,7 @@ import * as sourcegraph from 'sourcegraph'
 import { Handler, HandlerArgs, documentSelector } from './handler'
 import * as LSP from 'vscode-languageserver-types'
 import { convertLocations, convertHover } from './lsp-conversion'
+import { queryGraphQL } from './api'
 
 export { Handler, HandlerArgs, registerFeedbackButton } from './handler'
 
@@ -128,6 +129,19 @@ async function hasLSIF(doc: sourcegraph.TextDocument): Promise<boolean> {
     url.searchParams.set('file', pathFromDoc(doc))
 
     const hasLSIFPromise = (async () => {
+        try {
+            // Prevent leaking the name of a private repository to
+            // Sourcegraph.com by relying on the Sourcegraph extension host's
+            // private repository detection, which will throw an error when
+            // making a GraphQL request.
+            await queryGraphQL({
+                query: `query { currentUser { id } }`,
+                vars: {},
+                sourcegraph,
+            })
+        } catch (e) {
+            return false
+        }
         const response = await fetch(url.href, {
             method: 'POST',
             headers: new Headers({
