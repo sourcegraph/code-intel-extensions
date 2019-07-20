@@ -14,10 +14,26 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         if (sourcegraph.configuration.get().get('codeIntel.lsif')) {
             initLSIF()
         } else {
-            activateBasicCodeIntel({
+            const handler = new Handler({
                 ...languageSpec.handlerArgs,
                 sourcegraph,
-            })(ctx)
+            })
+            const goFiles = [{ pattern: '*.go' }]
+            ctx.subscriptions.add(
+                sourcegraph.languages.registerHoverProvider(goFiles, {
+                    provideHover: handler.hover.bind(handler),
+                })
+            )
+            ctx.subscriptions.add(
+                sourcegraph.languages.registerDefinitionProvider(goFiles, {
+                    provideDefinition: handler.definition.bind(handler),
+                })
+            )
+            ctx.subscriptions.add(
+                sourcegraph.languages.registerReferenceProvider(goFiles, {
+                    provideReferences: handler.references.bind(handler),
+                })
+            )
         }
     }
 }
