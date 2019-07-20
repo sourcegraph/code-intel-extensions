@@ -60,7 +60,7 @@
   "dependencies": {
     "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
-    "sourcegraph": "^23.0.0",
+    "sourcegraph": "^23.0.1",
     "vscode-languageserver-types": "^3.14.0"
   },
   "sideEffects": false
