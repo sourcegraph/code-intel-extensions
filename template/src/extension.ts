@@ -1,7 +1,6 @@
-import { Handler, HandlerArgs, registerFeedbackButton } from '../../package/lib'
+import { Handler, initLSIF } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
-import { documentSelector } from '../../package/lib/handler'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
@@ -9,58 +8,32 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     // This is set to an individual language ID by the generator script.
     const languageID = 'all'
 
-    if (languageID === 'all') {
-        for (const languageSpec of languageSpecs) {
-            activateWithArgs(ctx, { ...languageSpec.handlerArgs, sourcegraph })
+    for (const languageSpec of languageID === 'all'
+        ? languageSpecs
+        : [languageSpecs.find(l => l.handlerArgs.languageID === languageID)!]) {
+        if (sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            initLSIF()
+        } else {
+            const handler = new Handler({
+                ...languageSpec.handlerArgs,
+                sourcegraph,
+            })
+            const goFiles = [{ pattern: '*.go' }]
+            ctx.subscriptions.add(
+                sourcegraph.languages.registerHoverProvider(goFiles, {
+                    provideHover: handler.hover.bind(handler),
+                })
+            )
+            ctx.subscriptions.add(
+                sourcegraph.languages.registerDefinitionProvider(goFiles, {
+                    provideDefinition: handler.definition.bind(handler),
+                })
+            )
+            ctx.subscriptions.add(
+                sourcegraph.languages.registerReferenceProvider(goFiles, {
+                    provideReferences: handler.references.bind(handler),
+                })
+            )
         }
-    } else {
-        // TODO consider Record<LanguageID, LanguageSpec>
-        activateWithArgs(ctx, {
-            ...languageSpecs.find(l => l.handlerArgs.languageID === languageID)!
-                .handlerArgs,
-            sourcegraph,
-        })
     }
-}
-
-function activateWithArgs(
-    ctx: sourcegraph.ExtensionContext,
-    args: HandlerArgs
-): void {
-    const h = new Handler({ ...args, sourcegraph })
-
-    sourcegraph.internal.updateContext({ isImprecise: true })
-
-    ctx.subscriptions.add(
-        registerFeedbackButton({
-            languageID: args.languageID,
-            sourcegraph,
-            isPrecise: false,
-        })
-    )
-
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerHoverProvider(
-            documentSelector(h.fileExts),
-            {
-                provideHover: (doc, pos) => h.hover(doc, pos),
-            }
-        )
-    )
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerDefinitionProvider(
-            documentSelector(h.fileExts),
-            {
-                provideDefinition: (doc, pos) => h.definition(doc, pos),
-            }
-        )
-    )
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerReferenceProvider(
-            documentSelector(h.fileExts),
-            {
-                provideReferences: (doc, pos) => h.references(doc, pos),
-            }
-        )
-    )
 }

@@ -565,7 +565,7 @@ export interface HandlerArgs {
     /**
      * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`).
      */
-    fileExts?: string[]
+    fileExts: string[]
     /**
      * Regex that matches lines between a definition and the docstring that
      * should be ignored. Java example: `/^\s*@/` for annotations.
