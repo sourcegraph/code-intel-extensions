@@ -1,6 +1,7 @@
-import { Handler, initLSIF } from '../../package/lib'
+import { Handler } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
+import { documentSelector } from '../../package/lib/handler'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
@@ -11,29 +12,25 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     for (const languageSpec of languageID === 'all'
         ? languageSpecs
         : [languageSpecs.find(l => l.handlerArgs.languageID === languageID)!]) {
-        if (sourcegraph.configuration.get().get('codeIntel.lsif')) {
-            initLSIF()
-        } else {
-            const handler = new Handler({
-                ...languageSpec.handlerArgs,
-                sourcegraph,
+        const handler = new Handler({
+            ...languageSpec.handlerArgs,
+            sourcegraph,
+        })
+        const selector = documentSelector(languageSpec.handlerArgs.fileExts)
+        ctx.subscriptions.add(
+            sourcegraph.languages.registerHoverProvider(selector, {
+                provideHover: handler.hover.bind(handler),
             })
-            const goFiles = [{ pattern: '*.go' }]
-            ctx.subscriptions.add(
-                sourcegraph.languages.registerHoverProvider(goFiles, {
-                    provideHover: handler.hover.bind(handler),
-                })
-            )
-            ctx.subscriptions.add(
-                sourcegraph.languages.registerDefinitionProvider(goFiles, {
-                    provideDefinition: handler.definition.bind(handler),
-                })
-            )
-            ctx.subscriptions.add(
-                sourcegraph.languages.registerReferenceProvider(goFiles, {
-                    provideReferences: handler.references.bind(handler),
-                })
-            )
-        }
+        )
+        ctx.subscriptions.add(
+            sourcegraph.languages.registerDefinitionProvider(selector, {
+                provideDefinition: handler.definition.bind(handler),
+            })
+        )
+        ctx.subscriptions.add(
+            sourcegraph.languages.registerReferenceProvider(selector, {
+                provideReferences: handler.references.bind(handler),
+            })
+        )
     }
 }
