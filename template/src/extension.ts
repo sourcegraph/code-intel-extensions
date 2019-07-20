@@ -1,4 +1,4 @@
-import { activateBasicCodeIntel } from '../../package/lib'
+import { Handler, initLSIF } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 
@@ -8,19 +8,16 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     // This is set to an individual language ID by the generator script.
     const languageID = 'all'
 
-    if (languageID === 'all') {
-        for (const languageSpec of languageSpecs) {
+    for (const languageSpec of languageID === 'all'
+        ? languageSpecs
+        : [languageSpecs.find(l => l.handlerArgs.languageID === languageID)!]) {
+        if (sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            initLSIF()
+        } else {
             activateBasicCodeIntel({
                 ...languageSpec.handlerArgs,
                 sourcegraph,
             })(ctx)
         }
-    } else {
-        // TODO consider Record<LanguageID, LanguageSpec>
-        activateBasicCodeIntel({
-            ...languageSpecs.find(l => l.handlerArgs.languageID === languageID)!
-                .handlerArgs,
-            sourcegraph,
-        })(ctx)
     }
 }
