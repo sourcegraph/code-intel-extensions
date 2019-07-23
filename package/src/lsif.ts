@@ -46,7 +46,7 @@ async function queryLSIF({
         method: 'POST',
         headers: new Headers({
             'content-type': 'application/json',
-            'x-requested-with': 'Sourcegraph LSIF extension',
+            'x-requested-with': 'Basic code intel',
         }),
         body: JSON.stringify({
             method,
@@ -94,7 +94,7 @@ export const mkIsLSIFAvailable = (lsifDocs: Map<string, Promise<boolean>>) => (
         const response = await fetch(url.href, {
             method: 'POST',
             headers: new Headers({
-                'x-requested-with': 'Sourcegraph LSIF extension',
+                'x-requested-with': 'Basic code intel',
             }),
         })
         if (!response.ok) {
