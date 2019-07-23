@@ -60,52 +60,63 @@ async function queryLSIF({
     return await response.json()
 }
 
-export const mkIsLSIFAvailable = (lsifDocs: Map<string, Promise<boolean>>) => (
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position
-): Promise<boolean> => {
-    if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
-        return Promise.resolve(false)
-    }
+/**
+ * Creates an asynchronous predicate on a doc that checks for the existence of
+ * LSIF data for the given doc. It's a constructor because it creates an
+ * internal cache to reduce network traffic.
+ */
+export const mkIsLSIFAvailable = () => {
+    const lsifDocs = new Map<string, Promise<boolean>>()
+    return (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<boolean> => {
+        if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            return Promise.resolve(false)
+        }
 
-    if (lsifDocs.has(doc.uri)) {
-        return lsifDocs.get(doc.uri)!
-    }
+        if (lsifDocs.has(doc.uri)) {
+            return lsifDocs.get(doc.uri)!
+        }
 
-    const url = new URL('.api/lsif/exists', sourcegraph.internal.sourcegraphURL)
-    url.searchParams.set('repository', repositoryFromDoc(doc))
-    url.searchParams.set('commit', commitFromDoc(doc))
-    url.searchParams.set('file', pathFromDoc(doc))
+        const url = new URL(
+            '.api/lsif/exists',
+            sourcegraph.internal.sourcegraphURL
+        )
+        url.searchParams.set('repository', repositoryFromDoc(doc))
+        url.searchParams.set('commit', commitFromDoc(doc))
+        url.searchParams.set('file', pathFromDoc(doc))
 
-    const hasLSIFPromise = (async () => {
-        try {
-            // Prevent leaking the name of a private repository to
-            // Sourcegraph.com by relying on the Sourcegraph extension host's
-            // private repository detection, which will throw an error when
-            // making a GraphQL request.
-            await queryGraphQL({
-                query: `query { currentUser { id } }`,
-                vars: {},
-                sourcegraph,
+        const hasLSIFPromise = (async () => {
+            try {
+                // Prevent leaking the name of a private repository to
+                // Sourcegraph.com by relying on the Sourcegraph extension host's
+                // private repository detection, which will throw an error when
+                // making a GraphQL request.
+                await queryGraphQL({
+                    query: `query { currentUser { id } }`,
+                    vars: {},
+                    sourcegraph,
+                })
+            } catch (e) {
+                return false
+            }
+            const response = await fetch(url.href, {
+                method: 'POST',
+                headers: new Headers({
+                    'x-requested-with': 'Basic code intel',
+                }),
             })
-        } catch (e) {
-            return false
-        }
-        const response = await fetch(url.href, {
-            method: 'POST',
-            headers: new Headers({
-                'x-requested-with': 'Basic code intel',
-            }),
-        })
-        if (!response.ok) {
-            throw new Error(`LSIF /exists returned ${response.statusText}`)
-        }
-        return await response.json()
-    })()
+            if (!response.ok) {
+                throw new Error(`LSIF /exists returned ${response.statusText}`)
+            }
+            return await response.json()
+        })()
 
-    lsifDocs.set(doc.uri, hasLSIFPromise)
+        lsifDocs.set(doc.uri, hasLSIFPromise)
 
-    return hasLSIFPromise
+        return hasLSIFPromise
+    }
 }
 
 async function hover(
@@ -208,9 +219,7 @@ export const asyncFirst = <A extends any[], R>(
 }
 
 export function initLSIF() {
-    const lsifDocs = new Map<string, Promise<boolean>>()
-
-    const isLSIFAvailable = mkIsLSIFAvailable(lsifDocs)
+    const isLSIFAvailable = mkIsLSIFAvailable()
 
     return {
         hover: asyncWhen<
