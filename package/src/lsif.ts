@@ -202,7 +202,9 @@ export const wrapMaybe = <Arguments extends any[], ReturnType>(
  */
 export function when<Arguments extends any[], ReturnType>(
     predicate: (...args: Arguments) => boolean
-): (f: (...args: Arguments) => Promise<ReturnType>) => (...args: Arguments) => Promise<Maybe<ReturnType>> {
+): (
+    f: (...args: Arguments) => Promise<ReturnType>
+) => (...args: Arguments) => Promise<Maybe<ReturnType>> {
     return f => async (...args) =>
         predicate(...args) ? { value: await f(...args) } : undefined
 }
@@ -238,7 +240,43 @@ export const asyncFirst = <Arguments extends any[], ReturnType>(
     return defaultValue
 }
 
-export function initLSIF() {
+export interface MaybeProviders {
+    hover: (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ) => Promise<Maybe<sourcegraph.Hover | null>>
+    definition: (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ) => Promise<Maybe<sourcegraph.Definition | null>>
+    references: (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ) => Promise<Maybe<sourcegraph.Location[] | null>>
+}
+
+export interface Providers {
+    hover: (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ) => Promise<sourcegraph.Hover | null>
+    definition: (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ) => Promise<sourcegraph.Definition | null>
+    references: (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ) => Promise<sourcegraph.Location[] | null>
+}
+
+export const noopMaybeProviders = {
+    hover: () => Promise.resolve(undefined),
+    definition: () => Promise.resolve(undefined),
+    references: () => Promise.resolve(undefined),
+}
+
+export function initLSIF(): MaybeProviders {
     const isLSIFAvailable = mkIsLSIFAvailable()
 
     return {
