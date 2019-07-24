@@ -1,2 +1,2 @@
 export { Handler, HandlerArgs } from './handler'
-export { initLSIF } from './lsif'
+export { initLSIF, asyncWhen, when, wrapMaybe, Maybe, MaybeProviders, noopMaybeProviders } from './lsif'
