@@ -180,15 +180,37 @@ async function references(
     )
 }
 
+/**
+ * An optional value of type T. It's either `{ value: T }` or `undefined`.
+ */
 export type Maybe<T> = { value: T } | undefined
 
-export const wrapMaybe = <A extends any[], R>(
-    f: (...args: A) => Promise<R>
-) => async (...args: A): Promise<Maybe<R>> => {
-    const r = await f(...args)
-    return r !== undefined ? { value: r } : undefined
+/**
+ * Converts an async function that returns a type `ReturnType` to an async
+ * function that returns the type `Maybe<ReturnType>`.
+ */
+export const wrapMaybe = <Arguments extends any[], ReturnType>(
+    f: (...args: Arguments) => Promise<ReturnType>
+) => async (...args: Arguments): Promise<Maybe<ReturnType>> => {
+    const returnValue = await f(...args)
+    return returnValue !== undefined ? { value: returnValue } : undefined
 }
 
+/**
+ * Only runs the given async function `f` when the given sync predicate on the arguments
+ * succeeds.
+ */
+export function when<Arguments extends any[], ReturnType>(
+    predicate: (...args: Arguments) => boolean
+): (f: (...args: Arguments) => Promise<ReturnType>) => (...args: Arguments) => Promise<Maybe<ReturnType>> {
+    return f => async (...args) =>
+        predicate(...args) ? { value: await f(...args) } : undefined
+}
+
+/**
+ * Only runs the given async function `f` when the given async predicate on the arguments
+ * succeeds. Async version of `when`.
+ */
 export function asyncWhen<A extends any[], R>(
     asyncPredicate: (...args: A) => Promise<boolean>
 ): (f: (...args: A) => Promise<R>) => (...args: A) => Promise<Maybe<R>> {
@@ -198,30 +220,30 @@ export function asyncWhen<A extends any[], R>(
             : undefined
 }
 
-export function when<A extends any[], R>(
-    predicate: (...args: A) => boolean
-): (f: (...args: A) => Promise<R>) => (...args: A) => Promise<Maybe<R>> {
-    return f => async (...args) =>
-        predicate(...args) ? { value: await f(...args) } : undefined
-}
-
-export const asyncFirst = <A extends any[], R>(
-    fs: ((...args: A) => Promise<Maybe<R>>)[],
-    defaultR: R
-) => async (...args: A): Promise<R> => {
+/**
+ * Takes an array of async functions `fs` that return `Maybe<ReturnType>`, calls
+ * each `f` in series, bails when one returns `{ value: ... }`, and returns that
+ * value. Defaults to `defaultValue` when no `f` returns `{ value: ... }`.
+ */
+export const asyncFirst = <Arguments extends any[], ReturnType>(
+    fs: ((...args: Arguments) => Promise<Maybe<ReturnType>>)[],
+    defaultValue: ReturnType
+) => async (...args: Arguments): Promise<ReturnType> => {
     for (const f of fs) {
-        const r = await f(...args)
-        if (r !== undefined) {
-            return r.value
+        const maybeReturnValue = await f(...args)
+        if (maybeReturnValue !== undefined) {
+            return maybeReturnValue.value
         }
     }
-    return defaultR
+    return defaultValue
 }
 
 export function initLSIF() {
     const isLSIFAvailable = mkIsLSIFAvailable()
 
     return {
+        // You can read this as "only send a hover request when LSIF data is
+        // available for the given doc".
         hover: asyncWhen<
             [sourcegraph.TextDocument, sourcegraph.Position],
             sourcegraph.Hover | null
