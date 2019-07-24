@@ -61,13 +61,12 @@ export const languageSpecs: LanguageSpec[] = [
                     })
                     .filter((x): x is string => Boolean(x))
 
-                const filteredResults = results.filter(result => {
-                    return imports.some(
+                const filteredResults = results.filter(result =>
+                    imports.some(
                         i =>
                             path.join(path.dirname(filePath), i) ===
                             result.file.replace(/\.[^/.]+$/, '')
-                    )
-                })
+                    ))
 
                 return filteredResults.length === 0 ? results : filteredResults
             },
@@ -115,16 +114,15 @@ export const languageSpecs: LanguageSpec[] = [
                     )
                 }
 
-                const filteredResults = results.filter(result => {
-                    return imports.some(i =>
+                const filteredResults = results.filter(result =>
+                    imports.some(i =>
                         relativeImportToPath(i)
                             ? path.join(
                                   path.dirname(filePath),
                                   relativeImportToPath(i)
                               ) === result.file.replace(/\.[^/.]+$/, '')
                             : result.file.includes(i.replace(/\./g, '/'))
-                    )
-                })
+                    ))
 
                 return filteredResults.length === 0 ? results : filteredResults
             },
@@ -171,6 +169,7 @@ export const languageSpecs: LanguageSpec[] = [
                     return results
                 }
 
+                // tslint:disable-next-line: arrow-return-shorthand
                 const filteredResults = results.filter(result => {
                     // Check if the result's file in any of the imported packages or the current package
                     return [...currentFileImports, currentPackage].some(i =>
@@ -236,8 +235,8 @@ export const languageSpecs: LanguageSpec[] = [
                     })
                     .filter((x): x is string => Boolean(x))
 
-                const filteredResults = results.filter(result => {
-                    return imports.some(i =>
+                const filteredResults = results.filter(result =>
+                    imports.some(i =>
                         path
                             .join(
                                 path.parse(result.file).dir,
@@ -246,8 +245,7 @@ export const languageSpecs: LanguageSpec[] = [
                             .endsWith(
                                 path.join(path.parse(i).dir, path.parse(i).name)
                             )
-                    )
-                })
+                    ))
 
                 return filteredResults.length === 0 ? results : filteredResults
             },

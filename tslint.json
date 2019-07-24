@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "@sourcegraph/tslint-config"
+  ],
+  "rules": {
+    "rxjs-no-wholesale": false,
+    "forin": false,
+    "ordered-imports": false,
+    "await-promise": [true, "Thenable"]
+  }
+}
