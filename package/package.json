@@ -1,6 +1,6 @@
 {
   "name": "@sourcegraph/basic-code-intel",
-  "version": "7.0.2",
+  "version": "7.0.3",
   "description": "Common library for providing basic code intelligence in Sourcegraph extensions",
   "repository": {
     "type": "git",
