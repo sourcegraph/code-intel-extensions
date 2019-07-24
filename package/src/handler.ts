@@ -512,6 +512,7 @@ function feedbackLink({
 export interface Settings {
     ['basicCodeIntel.debug.traceSearch']?: boolean
     ['fileLocal']?: boolean
+    ['codeIntel.globalSymbolSearch']?: boolean
 }
 
 interface BlockCommentStyle {
@@ -715,14 +716,8 @@ export class Handler {
 
         const globalSymbolSearchSetting =
             this.sourcegraph.configuration
-                .get()
-                .get('codeIntel.globalSymbolSearch') === undefined
-                ? true
-                : Boolean(
-                      this.sourcegraph.configuration
-                          .get()
-                          .get('codeIntel.globalSymbolSearch')
-                  )
+                .get<Settings>()
+                .get('codeIntel.globalSymbolSearch') !== false
         const isSourcegraphDotCom =
             this.sourcegraph.internal.sourcegraphURL.href ===
             'https://sourcegraph.com/'
