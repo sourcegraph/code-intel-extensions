@@ -20,7 +20,10 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         const selector = documentSelector(languageSpec.handlerArgs.fileExts)
         ctx.subscriptions.add(
             sourcegraph.languages.registerHoverProvider(selector, {
-                provideHover: asyncFirst([lsif.hover, wrapMaybe(handler.hover.bind(handler))], null),
+                provideHover: asyncFirst(
+                    [lsif.hover, wrapMaybe(handler.hover.bind(handler))],
+                    null
+                ),
             })
         )
         ctx.subscriptions.add(
