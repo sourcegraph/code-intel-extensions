@@ -11,7 +11,7 @@ function sourcegraphID(name: string): string {
     return name in toID ? toID[name] : name
 }
 
-const doNotGenerate = ['python', 'typescript', 'go']
+const doNotGenerate = ['typescript', 'go']
 
 function main(): void {
     const args = yargs
