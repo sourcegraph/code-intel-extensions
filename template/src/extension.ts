@@ -1,4 +1,4 @@
-import { Handler } from '../../package/lib'
+import { Handler, initLSIF, asyncFirst, wrapMaybe } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 import { documentSelector } from '../../package/lib/handler'
@@ -12,6 +12,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     for (const languageSpec of languageID === 'all'
         ? languageSpecs
         : [languageSpecs.find(l => l.handlerArgs.languageID === languageID)!]) {
+        const lsif = initLSIF()
         const handler = new Handler({
             ...languageSpec.handlerArgs,
             sourcegraph,
@@ -19,7 +20,10 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         const selector = documentSelector(languageSpec.handlerArgs.fileExts)
         ctx.subscriptions.add(
             sourcegraph.languages.registerHoverProvider(selector, {
-                provideHover: handler.hover.bind(handler),
+                provideHover: asyncFirst(
+                    [lsif.hover, wrapMaybe(handler.hover.bind(handler))],
+                    null
+                ),
             })
         )
         ctx.subscriptions.add(

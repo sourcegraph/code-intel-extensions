@@ -43,6 +43,7 @@
     "last 1 Safari versions"
   ],
   "devDependencies": {
+    "@sourcegraph/extension-api-stubs": "^0.2.2",
     "@sourcegraph/tsconfig": "^4.0.0",
     "@types/lodash": "4.14.135",
     "@types/mocha": "5.2.7",
