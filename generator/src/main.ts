@@ -32,8 +32,8 @@ function main(): void {
 
     shell.set('-e')
 
-    shell.rm('-rf', 'temp')
-    shell.mkdir('temp')
+    shell.rm('-rf', '../temp')
+    shell.mkdir('../temp')
     console.log(
         'Copying ../template/node_modules to temp/node_modules (takes ~15s) once up front'
     )
