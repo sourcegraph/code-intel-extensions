@@ -7,6 +7,7 @@ import {
 } from './handler'
 import { TextDocument } from 'sourcegraph'
 import { pythonStyle, cStyle } from '../../languages'
+import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 
 describe('search requests', () => {
     it('makes correct search requests for goto definition', async () => {
@@ -17,11 +18,11 @@ describe('search requests', () => {
         }
         const tests: DefinitionTest[] = [
             {
-                doc: {
+                doc: createStubTextDocument({
                     uri: 'git://github.com/foo/bar?rev#file.cpp',
                     languageId: 'cpp',
                     text: 'token',
-                },
+                }),
                 enableGlobalSymbolSearch: true,
                 expectedSearchQueries: [
                     // current repo symbols
@@ -31,11 +32,11 @@ describe('search requests', () => {
                 ],
             },
             {
-                doc: {
+                doc: createStubTextDocument({
                     uri: 'git://github.com/foo/bar?rev#file.cpp',
                     languageId: 'cpp',
                     text: 'token',
-                },
+                }),
                 enableGlobalSymbolSearch: false,
                 expectedSearchQueries: [
                     // current repo symbols
@@ -64,11 +65,11 @@ describe('search requests', () => {
         }
         const tests: ReferencesTest[] = [
             {
-                doc: {
+                doc: createStubTextDocument({
                     uri: 'git://github.com/foo/bar?rev#file.cpp',
                     languageId: 'cpp',
                     text: 'token',
-                },
+                }),
                 expectedSearchQueries: [
                     '\\btoken\\b case:yes file:.(cpp)$ type:file repo:^github.com/foo/bar$@rev',
                     '\\btoken\\b case:yes file:.(cpp)$ type:file -repo:^github.com/foo/bar$',
