@@ -67,9 +67,7 @@ async function queryLSIF({
  */
 export const mkIsLSIFAvailable = () => {
     const lsifDocs = new Map<string, Promise<boolean>>()
-    return (
-        doc: sourcegraph.TextDocument,
-    ): Promise<boolean> => {
+    return (doc: sourcegraph.TextDocument): Promise<boolean> => {
         if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
             return Promise.resolve(false)
         }
