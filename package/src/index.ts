@@ -8,4 +8,5 @@ export {
     Maybe,
     MaybeProviders,
     noopMaybeProviders,
+    mkIsLSIFAvailable,
 } from './lsif'
