@@ -9,4 +9,8 @@ export {
     MaybeProviders,
     noopMaybeProviders,
     mkIsLSIFAvailable,
+    hover,
+    definition,
+    references,
+    Providers,
 } from './lsif'
