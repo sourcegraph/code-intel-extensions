@@ -116,7 +116,7 @@ export const mkIsLSIFAvailable = () => {
     }
 }
 
-async function hover(
+export async function hover(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ): Promise<sourcegraph.Hover | null> {
@@ -132,7 +132,7 @@ async function hover(
     return convertHover(sourcegraph, hover)
 }
 
-async function definition(
+export async function definition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ): Promise<sourcegraph.Definition | null> {
@@ -155,7 +155,7 @@ async function definition(
     )
 }
 
-async function references(
+export async function references(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ): Promise<sourcegraph.Location[] | null> {
