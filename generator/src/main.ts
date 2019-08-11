@@ -101,6 +101,10 @@ function main(): void {
             'src/extension.ts'
         )
 
+        shell.exec(
+            `bash -c 'cat package.json | jq --argjson icon "$(echo -n "data:image/png;base64,$(base64 < ../icons/${languageID}.png)" | jq -R -s .)" ".icon = \\$icon" > package.json'`
+        )
+
         shell.exec(`yarn --non-interactive`)
         if (args.publish) {
             shell.exec(
