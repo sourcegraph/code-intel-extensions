@@ -6,8 +6,6 @@
   },
   "devDependencies": {
     "@sourcegraph/prettierrc": "^3.0.1",
-    "chokidar-cli-infanticide": "^1.3.1",
-    "concurrently": "^4.1.0",
     "prettier": "^1.18.2",
     "typescript": "^3.3.3333"
   },

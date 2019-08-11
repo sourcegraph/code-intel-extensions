@@ -3,15 +3,5 @@
 set -ex
 
 yarn -s
-yarn -s --cwd package
-yarn -s --cwd generator
-yarn -s --cwd template
-env FORCE_COLOR=0 \
-  yarn run concurrently \
-    --names serve,build \
-    --prefix name \
-    --prefix-colors bgBlue,bgMagenta \
-    --kill-others \
-    'yarn --cwd template run serve | cat' \
-    'yarn --cwd template run watch:typecheck' \
-    'yarn --cwd package run watch:build'
+
+goreman -set-ports=false -exit-on-error start
