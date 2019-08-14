@@ -103,8 +103,13 @@ function main(): void {
         )
 
         const pkg = JSON.parse(fs.readFileSync('package.json').toString())
-        const icon = 'data:image/png;base64,' + fs.readFileSync(`../icons/${languageID}.png`).toString('base64')
-        fs.writeFileSync('package.json', JSON.stringify({ ...pkg, icon }, null, 2))
+        const icon =
+            'data:image/png;base64,' +
+            fs.readFileSync(`../icons/${languageID}.png`).toString('base64')
+        fs.writeFileSync(
+            'package.json',
+            JSON.stringify({ ...pkg, icon }, null, 2)
+        )
 
         shell.exec(`yarn --non-interactive`)
         if (args.publish) {
