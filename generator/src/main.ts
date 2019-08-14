@@ -1,4 +1,5 @@
 import * as shell from 'shelljs'
+import * as fs from 'fs'
 import * as _ from 'lodash'
 import * as yargs from 'yargs'
 import { languageSpecs, LanguageSpec } from '../../languages'
@@ -101,9 +102,9 @@ function main(): void {
             'src/extension.ts'
         )
 
-        shell.exec(
-            `bash -c 'cat package.json | jq --argjson icon "$(echo -n "data:image/png;base64,$(base64 < ../icons/${languageID}.png)" | jq -R -s .)" ".icon = \\$icon" > package.json'`
-        )
+        const pkg = JSON.parse(fs.readFileSync('package.json').toString())
+        const icon = 'data:image/png;base64,' + fs.readFileSync(`../icons/${languageID}.png`).toString('base64')
+        fs.writeFileSync('package.json', JSON.stringify({ ...pkg, icon }, null, 2))
 
         shell.exec(`yarn --non-interactive`)
         if (args.publish) {
