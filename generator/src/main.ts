@@ -1,4 +1,5 @@
 import * as shell from 'shelljs'
+import * as fs from 'fs'
 import * as _ from 'lodash'
 import * as yargs from 'yargs'
 import { languageSpecs, LanguageSpec } from '../../languages'
@@ -99,6 +100,15 @@ function main(): void {
             /const languageID = 'all'/,
             `const languageID = '${languageID}'`,
             'src/extension.ts'
+        )
+
+        const pkg = JSON.parse(fs.readFileSync('package.json').toString())
+        const icon =
+            'data:image/png;base64,' +
+            fs.readFileSync(`../icons/${languageID}.png`).toString('base64')
+        fs.writeFileSync(
+            'package.json',
+            JSON.stringify({ ...pkg, icon }, null, 2)
         )
 
         shell.exec(`yarn --non-interactive`)
