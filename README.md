@@ -5,6 +5,33 @@
 
 Many (but not all) of the [programming language Sourcegraph extensions](https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22) are thin wrappers around the basic-code-intel npm package that lives in this repository. They provide fuzzy code intelligence using a combination of ctags and search.
 
+## Development
+
+First install [goreman](https://github.com/mattn/goreman):
+
+```
+$ go get github.com/mattn/goreman
+```
+
+Then run:
+
+```
+$ ./dev
+```
+
+Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
+
+```json
+  "extensions": {
+      "sourcegraph/cpp": false,
+      ...
+  }
+```
+
+Then sideload the extension (http://localhost:1234) on your Sourcegraph instance and refresh the page.
+
+Open the browser Network tab and you should start seeing `graphql?Search` calls when you hover over tokens.
+
 ## Anatomy of this repository
 
 -   The basic-code-intel npm [package/](./package/)
