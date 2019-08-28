@@ -109,25 +109,25 @@
     "last 1 Safari versions"
   ],
   "devDependencies": {
-    "@types/mocha": "",
+    "@types/mocha": "^5.2.7",
     "@types/node": "12.x",
-    "lnfs-cli": "",
-    "mkdirp": "",
-    "mocha": "",
-    "nyc": "",
+    "lnfs-cli": "^2.1.0",
+    "mkdirp": "^0.5.1",
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
     "parcel": "1.x",
-    "prettier": "",
-    "source-map-support": "",
+    "prettier": "^1.18.2",
+    "source-map-support": "^0.5.13",
     "sourcegraph": "23.0.1",
-    "ts-node": "",
-    "tsc-watch": "",
-    "tslint": "",
-    "tslint-language-service": "",
-    "typescript": ""
+    "ts-node": "^8.3.0",
+    "tsc-watch": "^2.4.0",
+    "tslint": "^5.18.0",
+    "tslint-language-service": "^0.9.9",
+    "typescript": "^3.5.3"
   },
   "dependencies": {
     "@sourcegraph/basic-code-intel": "../package",
-    "rxjs": ""
+    "rxjs": "^6.3.3"
   },
   "sideEffects": false
 }
