@@ -18,7 +18,7 @@
     "build": "tsc -p tsconfig.dist.json",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
     "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
-    "watch:build": "tsc -p tsconfig.dist.json -w",
+    "watch:build": "tsc-watch -p tsconfig.dist.json -w --noClear",
     "watch:test": "npm run test -- -w"
   },
   "nyc": {
@@ -54,6 +54,7 @@
     "nyc": "^12.0.2",
     "source-map-support": "^0.5.9",
     "ts-node": "^7.0.1",
+    "tsc-watch": "^2.4.0",
     "tslint": "^5.18.0",
     "tslint-language-service": "^0.9.9",
     "typescript": "^3.2.1"
