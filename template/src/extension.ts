@@ -28,12 +28,24 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerDefinitionProvider(selector, {
-                provideDefinition: handler.definition.bind(handler),
+                provideDefinition: asyncFirst(
+                    [
+                        lsif.definition,
+                        wrapMaybe(handler.definition.bind(handler)),
+                    ],
+                    null
+                ),
             })
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerReferenceProvider(selector, {
-                provideReferences: handler.references.bind(handler),
+                provideReferences: asyncFirst(
+                    [
+                        lsif.references,
+                        wrapMaybe(handler.references.bind(handler)),
+                    ],
+                    null
+                ),
             })
         )
     }
