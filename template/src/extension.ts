@@ -44,7 +44,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                         lsif.references,
                         wrapMaybe(handler.references.bind(handler)),
                     ],
-                    null
+                    []
                 ),
             })
         )
