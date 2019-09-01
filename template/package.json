@@ -110,7 +110,7 @@
   ],
   "devDependencies": {
     "@types/mocha": "5.2.7",
-    "@types/node": "12.7.1",
+    "@types/node": "12.7.3",
     "lnfs-cli": "^2.1.0",
     "mkdirp": "^0.5.1",
     "mocha": "^6.2.0",
