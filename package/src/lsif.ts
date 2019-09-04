@@ -19,6 +19,10 @@ function pathFromDoc(doc: sourcegraph.TextDocument): string {
 }
 
 function setPath(doc: sourcegraph.TextDocument, path: string): string {
+    if (path.startsWith('git://')) {
+        return path
+    }
+
     const url = new URL(doc.uri)
     url.hash = path
     return url.href
