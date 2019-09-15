@@ -109,7 +109,7 @@ export const mkIsLSIFAvailable = () => {
                 }),
             })
             if (!response.ok) {
-                throw new Error(`LSIF /exists returned ${response.statusText}`)
+                return false
             }
             return await response.json()
         })()
