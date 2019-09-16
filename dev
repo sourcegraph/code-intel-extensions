@@ -4,4 +4,6 @@ set -ex
 
 yarn -s
 
+( cd template && yarn -s )
+( cd package && yarn -s )
 goreman -set-ports=false -exit-on-error start
