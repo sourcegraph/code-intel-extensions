@@ -761,7 +761,7 @@
   integrity sha512-ONhaKPIufzzrlNbqtWFFd+jlnemX6lJAgq9ZeiZtS7I1PIf/la7CW4m83rTXRnVnsMbW2k56pGYu7AUFJD9Pow==
 
 "@sourcegraph/basic-code-intel@../package":
-  version "7.0.5"
+  version "7.0.6"
   dependencies:
     lodash "^4.17.11"
     rxjs "^6.3.3"
@@ -6051,10 +6051,10 @@ ts-node@^8.3.0:
     source-map-support "^0.5.6"
     yn "^3.0.0"
 
-tsc-watch@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/tsc-watch/-/tsc-watch-2.4.0.tgz#0b3b9d98d8032ba02acae1d38a7ebb16da0591f7"
-  integrity sha512-HTNRQm/P2YdP34b7bhaSOjVQ/YdTJGkNYyAD0scEcK7qXX7BWsBG8n3YlYHC9a6mX//gs5ouWQ3DXrBWjVp6rQ==
+tsc-watch@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/tsc-watch/-/tsc-watch-3.0.2.tgz#02be5a026d9790d1597020258bddc81e7f8ed379"
+  integrity sha512-APe93XTBrDjeoqfX9yiViVs/V8u/I8twKwfqWCB1WVHY/g20T1sFAV8DXSWHe54FBDCEzWQNP6pIO8uZF+52ag==
   dependencies:
     cross-spawn "^5.1.0"
     node-cleanup "^2.1.2"
