@@ -265,6 +265,39 @@ export const languageSpecs: LanguageSpec[] = [
     },
     {
         handlerArgs: {
+            languageID: 'cuda',
+            fileExts: ['cu', 'cuh'],
+            commentStyle: cStyle,
+            filterDefinitions: ({ filePath, fileContent, results }) => {
+                // Note: this is copy-pasted from C++
+                const imports = fileContent
+                    .split(/\r?\n/)
+                    .map(line => {
+                        const match = /^#include "(.*)"$/.exec(line)
+                        return match ? match[1] : undefined
+                    })
+                    .filter((x): x is string => Boolean(x))
+
+                const filteredResults = results.filter(result => {
+                    return imports.some(i =>
+                        path
+                            .join(
+                                path.parse(result.file).dir,
+                                path.parse(result.file).name
+                            )
+                            .endsWith(
+                                path.join(path.parse(i).dir, path.parse(i).name)
+                            )
+                    )
+                })
+
+                return filteredResults.length === 0 ? results : filteredResults
+            },
+        },
+        stylized: 'CUDA',
+    },
+    {
+        handlerArgs: {
             languageID: 'ruby',
             fileExts: [
                 'rb',
