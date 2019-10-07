@@ -63,4 +63,4 @@ Sourcegraphers only: see [generator/README.md](./generator/README.md) to update 
 1. Create a new repository https://github.com/sourcegraph/sourcegraph-LANG
 1. Push a single empty commit to it with any message
 1. Add an entry to `languages` in [`generator/src/main.ts`](generator/src/main.ts)
-1. Run `bash generate.sh`
+1. Run `bash generate.sh --languages <language name> --publish`
