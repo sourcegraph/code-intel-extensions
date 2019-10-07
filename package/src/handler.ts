@@ -549,7 +549,7 @@ export type CommentStyle = {
     block?: BlockCommentStyle
 }
 
-type FilterDefinitions = (args: {
+export type FilterDefinitions = (args: {
     repo: string
     rev: string
     filePath: string
