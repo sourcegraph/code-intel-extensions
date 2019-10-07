@@ -9,7 +9,7 @@
     "lodash": "^4.17.11",
     "shelljs": "^0.8.3",
     "tosource": "^1.0.0",
-    "yargs": "^13.3.0"
+    "yargs": "^14.2.0"
   },
   "devDependencies": {
     "@types/yargs": "13.0.3",
