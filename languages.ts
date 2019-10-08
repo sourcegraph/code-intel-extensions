@@ -40,6 +40,30 @@ const lispStyle: CommentStyle = {
     },
 }
 
+const cppFilterDefinitions: HandlerArgs['filterDefinitions'] = ({
+    filePath,
+    fileContent,
+    results,
+}) => {
+    const imports = fileContent
+        .split(/\r?\n/)
+        .map(line => {
+            const match = /^#include "(.*)"$/.exec(line)
+            return match ? match[1] : undefined
+        })
+        .filter((x): x is string => Boolean(x))
+
+    const filteredResults = results.filter(result => {
+        return imports.some(i =>
+            path
+                .join(path.parse(result.file).dir, path.parse(result.file).name)
+                .endsWith(path.join(path.parse(i).dir, path.parse(i).name))
+        )
+    })
+
+    return filteredResults.length === 0 ? results : filteredResults
+}
+
 // The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
 // The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
 // The extensions come from shared/src/languages.ts
@@ -236,32 +260,18 @@ export const languageSpecs: LanguageSpec[] = [
                 /* Arduino */ 'ino',
             ],
             commentStyle: cStyle,
-            filterDefinitions: ({ filePath, fileContent, results }) => {
-                const imports = fileContent
-                    .split(/\r?\n/)
-                    .map(line => {
-                        const match = /^#include "(.*)"$/.exec(line)
-                        return match ? match[1] : undefined
-                    })
-                    .filter((x): x is string => Boolean(x))
-
-                const filteredResults = results.filter(result => {
-                    return imports.some(i =>
-                        path
-                            .join(
-                                path.parse(result.file).dir,
-                                path.parse(result.file).name
-                            )
-                            .endsWith(
-                                path.join(path.parse(i).dir, path.parse(i).name)
-                            )
-                    )
-                })
-
-                return filteredResults.length === 0 ? results : filteredResults
-            },
+            filterDefinitions: cppFilterDefinitions,
         },
         stylized: 'C++',
+    },
+    {
+        handlerArgs: {
+            languageID: 'cuda',
+            fileExts: ['cu', 'cuh'],
+            commentStyle: cStyle,
+            filterDefinitions: cppFilterDefinitions,
+        },
+        stylized: 'CUDA',
     },
     {
         handlerArgs: {
