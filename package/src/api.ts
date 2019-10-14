@@ -160,7 +160,7 @@ export class API {
      * Get the text content of a file.
      */
     async getFileContent(loc: Location): Promise<string | null> {
-        const graphqlQuery = `query GetContextLines($repo: String!, $rev: String!, $path: String!) {
+        const graphqlQuery = `query GetFileContent($repo: String!, $rev: String!, $path: String!) {
           repository(name: $repo) {
               commit(rev: $rev) {
                 file(path: $path) {
@@ -180,7 +180,8 @@ export class API {
             !respObj ||
             !respObj.data ||
             !respObj.data.repository ||
-            !respObj.data.repository.commit
+            !respObj.data.repository.commit ||
+            !respObj.data.repository.commit.file
         ) {
             return null
         }
