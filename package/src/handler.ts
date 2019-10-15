@@ -80,7 +80,7 @@ function makeQuery({
             console.error('bad searchType', searchType)
     }
 
-    const { repo, rev, path } = parseUri(currentFileUri)
+    const { repo, rev, path } = parseUri(new URL(currentFileUri))
     switch (scope) {
         case 'current file':
             terms.push(`repo:^${repo}$@${rev}`)
@@ -808,7 +808,7 @@ export class Handler {
             if (!editor) {
                 console.log('NO EDITOR')
             } else {
-                const { repo, rev, path } = parseUri(doc.uri)
+                const { repo, rev, path } = parseUri(new URL(doc.uri))
 
                 // ^ matches everything (can't leave out a query)
                 const r = await this.api.search(

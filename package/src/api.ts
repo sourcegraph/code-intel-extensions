@@ -170,7 +170,7 @@ export class API {
             }
           }`
 
-        const { repo, rev, path } = parseUri(loc.uri.toString())
+        const { repo, rev, path } = parseUri(loc.uri)
         const respObj = await queryGraphQL({
             query: graphqlQuery,
             vars: { repo, rev, path },
@@ -189,26 +189,12 @@ export class API {
 }
 
 export function parseUri(
-    uri: string
+    uri: URL
 ): { repo: string; rev: string; path: string } {
-    if (!uri.startsWith('git://')) {
-        throw new Error('unexpected uri format: ' + uri)
-    }
-    const repoRevPath = uri.substr('git://'.length)
-    const i = repoRevPath.indexOf('?')
-    if (i < 0) {
-        throw new Error('unexpected uri format: ' + uri)
-    }
-    const revPath = repoRevPath.substr(i + 1)
-    const j = revPath.indexOf('#')
-    if (j < 0) {
-        throw new Error('unexpected uri format: ' + uri)
-    }
-    const path = revPath.substr(j + 1)
     return {
-        repo: repoRevPath.substring(0, i),
-        rev: revPath.substring(0, j),
-        path: path,
+        repo: uri.host + uri.pathname,
+        rev: decodeURIComponent(uri.search.slice(1)), // strip the leading ?
+        path: decodeURIComponent(uri.hash.slice(1)), // strip the leading #
     }
 }
 
