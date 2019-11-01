@@ -4,7 +4,7 @@
   "main": "dist/main.js",
   "license": "MIT",
   "dependencies": {
-    "@types/lodash": "4.14.142",
+    "@types/lodash": "4.14.144",
     "@types/shelljs": "0.8.5",
     "lodash": "^4.17.11",
     "shelljs": "^0.8.3",
