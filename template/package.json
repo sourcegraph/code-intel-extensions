@@ -121,7 +121,7 @@
     "sourcegraph": "23.0.1",
     "ts-node": "^8.3.0",
     "tsc-watch": "^2.4.0",
-    "tslint": "^5.20.0",
+    "tslint": "^5.20.1",
     "tslint-language-service": "^0.9.9",
     "typescript": "^3.5.3"
   },
