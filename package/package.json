@@ -45,7 +45,7 @@
   "devDependencies": {
     "@sourcegraph/extension-api-stubs": "^0.2.2",
     "@sourcegraph/tsconfig": "^4.0.0",
-    "@types/lodash": "4.14.144",
+    "@types/lodash": "4.14.145",
     "@types/mocha": "5.2.7",
     "@types/node": "10.12.12",
     "lnfs-cli": "^2.1.0",
