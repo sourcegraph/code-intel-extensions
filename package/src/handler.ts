@@ -32,7 +32,7 @@ function fileExtTerm(sourceFile: string, fileExts: string[]): string {
     const ext = sourceFile.substring(i + 1).toLowerCase()
     const match = fileExts.includes(ext)
     if (match) {
-        return `file:\.(${fileExts.join('|')})$`
+        return `file:\\.(${fileExts.join('|')})$`
     }
     return ''
 }

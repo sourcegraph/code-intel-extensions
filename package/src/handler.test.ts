@@ -26,9 +26,9 @@ describe('search requests', () => {
                 enableGlobalSymbolSearch: true,
                 expectedSearchQueries: [
                     // current repo symbols
-                    '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
+                    '^token$ case:yes file:\\.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
                     // all repo symbols
-                    '^token$ case:yes file:.(cpp)$ type:symbol',
+                    '^token$ case:yes file:\\.(cpp)$ type:symbol',
                 ],
             },
             {
@@ -40,7 +40,7 @@ describe('search requests', () => {
                 enableGlobalSymbolSearch: false,
                 expectedSearchQueries: [
                     // current repo symbols
-                    '^token$ case:yes file:.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
+                    '^token$ case:yes file:\\.(cpp)$ type:symbol repo:^github.com/foo/bar$@rev',
                 ],
             },
         ]
@@ -71,8 +71,8 @@ describe('search requests', () => {
                     text: 'token',
                 }),
                 expectedSearchQueries: [
-                    '\\btoken\\b case:yes file:.(cpp)$ type:file repo:^github.com/foo/bar$@rev',
-                    '\\btoken\\b case:yes file:.(cpp)$ type:file -repo:^github.com/foo/bar$',
+                    '\\btoken\\b case:yes file:\\.(cpp)$ type:file repo:^github.com/foo/bar$@rev',
+                    '\\btoken\\b case:yes file:\\.(cpp)$ type:file -repo:^github.com/foo/bar$',
                 ],
             },
         ]
