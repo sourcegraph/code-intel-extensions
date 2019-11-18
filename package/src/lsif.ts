@@ -117,9 +117,7 @@ export const mkIsLSIFAvailable = () => {
             }
             const available: boolean = await response.json()
             if (available) {
-                console.log(
-                    `LSIF data is available for repository=${repository} commit=${commit} file=${file}`
-                )
+                console.log('Using LSIF data', { repository, commit, file })
             }
             return available
         })()
