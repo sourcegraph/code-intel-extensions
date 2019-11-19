@@ -80,13 +80,17 @@ export const mkIsLSIFAvailable = () => {
             return lsifDocs.get(doc.uri)!
         }
 
+        const repository = repositoryFromDoc(doc)
+        const commit = commitFromDoc(doc)
+        const file = pathFromDoc(doc)
+
         const url = new URL(
             '.api/lsif/exists',
             sourcegraph.internal.sourcegraphURL
         )
-        url.searchParams.set('repository', repositoryFromDoc(doc))
-        url.searchParams.set('commit', commitFromDoc(doc))
-        url.searchParams.set('file', pathFromDoc(doc))
+        url.searchParams.set('repository', repository)
+        url.searchParams.set('commit', commit)
+        url.searchParams.set('file', file)
 
         const hasLSIFPromise = (async () => {
             try {
@@ -111,7 +115,11 @@ export const mkIsLSIFAvailable = () => {
             if (!response.ok) {
                 return false
             }
-            return await response.json()
+            const available: boolean = await response.json()
+            if (available) {
+                console.log('Using LSIF data', { repository, commit, file })
+            }
+            return available
         })()
 
         lsifDocs.set(doc.uri, hasLSIFPromise)
