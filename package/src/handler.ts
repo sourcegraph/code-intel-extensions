@@ -285,12 +285,12 @@ export function definitionQueries({
     searchToken,
     doc,
     fileExts,
-    enableGlobalSymbolSearch,
+    isSourcegraphDotCom,
 }: {
     searchToken: string
     doc: TextDocument
     fileExts: string[]
-    enableGlobalSymbolSearch: boolean
+    isSourcegraphDotCom: boolean
 }): string[] {
     const queryIn = (scope: Scope): string =>
         makeQuery({
@@ -302,7 +302,7 @@ export function definitionQueries({
         })
     return [
         queryIn('current repository'),
-        ...(enableGlobalSymbolSearch ? [queryIn('all repositories')] : []),
+        ...(isSourcegraphDotCom ? [] : [queryIn('all repositories')]),
     ]
 }
 
@@ -512,7 +512,6 @@ function feedbackLink({
 export interface Settings {
     ['basicCodeIntel.debug.traceSearch']?: boolean
     ['fileLocal']?: boolean
-    ['codeIntel.globalSymbolSearch']?: boolean
 }
 
 interface BlockCommentStyle {
@@ -714,20 +713,13 @@ export class Handler {
         }
         const searchToken = tokenResult.searchToken
 
-        const globalSymbolSearchSetting =
-            this.sourcegraph.configuration
-                .get<Settings>()
-                .get('codeIntel.globalSymbolSearch') !== false
-        const isSourcegraphDotCom =
-            this.sourcegraph.internal.sourcegraphURL.href ===
-            'https://sourcegraph.com/'
-
         for (const query of definitionQueries({
             searchToken,
             doc,
             fileExts: this.fileExts,
-            enableGlobalSymbolSearch:
-                globalSymbolSearchSetting && !isSourcegraphDotCom,
+            isSourcegraphDotCom:
+                this.sourcegraph.internal.sourcegraphURL.href ===
+                'https://sourcegraph.com/',
         })) {
             const symbolResults = this.filterDefinitions({
                 ...repoRevFilePath(doc.uri),
