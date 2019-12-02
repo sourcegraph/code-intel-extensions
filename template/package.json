@@ -64,6 +64,10 @@
         "basicCodeIntel.debug.traceSearch": {
           "type": "boolean",
           "description": "Trace Sourcegraph search API requests in the console."
+        },
+        "codeIntel.lsif": {
+          "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.",
+          "type": "boolean"
         }
       }
     }
