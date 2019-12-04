@@ -3,6 +3,11 @@ import * as LSP from 'vscode-languageserver-types'
 import { convertLocations, convertHover } from './lsp-conversion'
 import { queryGraphQL } from './api'
 
+/**
+ * The date that the LSIF GraphQL API resolvers became available.
+ */
+const GRAPHQL_API_MINIMUM_DATE = '2019-12-01'
+
 function repositoryFromDoc(doc: sourcegraph.TextDocument): string {
     const url = new URL(doc.uri)
     return url.hostname + url.pathname
@@ -115,11 +120,7 @@ export const mkIsLSIFAvailable = () => {
             if (!response.ok) {
                 return false
             }
-            const available: boolean = await response.json()
-            if (available) {
-                console.log('Using LSIF data', { repository, commit, file })
-            }
-            return available
+            return response.json()
         })()
 
         lsifDocs.set(doc.uri, hasLSIFPromise)
@@ -286,6 +287,54 @@ export const noopMaybeProviders = {
 }
 
 export function initLSIF(): MaybeProviders {
+    const provider = (async () => {
+        if (await supportsGraphQL()) {
+            console.log('Using LSIF GraphQL API')
+            return initGraphQL()
+        }
+
+        console.log('Using LSIF HTTP API')
+        return initHTTP()
+    })()
+
+    return {
+        // If graphQL is supported, use the GraphQL implementation.
+        // Otherwise, use the legacy HTTP implementation.
+        definition: async (...args) => (await provider).definition(...args),
+        references: async (...args) => (await provider).references(...args),
+        hover: async (...args) => (await provider).hover(...args),
+    }
+}
+
+async function  supportsGraphQL(): Promise<boolean> {
+    const query = `
+        query SiteVersion {
+            site {
+                productVersion
+            }
+        }
+    `
+
+    const respObj = await queryGraphQL({
+        query,
+        vars:{},
+        sourcegraph,
+    })
+
+    const productVersion:string = respObj.data.site.productVersion
+    if (productVersion === 'dev') {
+        return true
+    }
+
+    // Product versions have the form `49952_2019-12-04_c6f43e0`.
+    // We want to use the GraphQL resolvers if the instance is known to have them.
+    // Check to see if the product version occurs after the date the resolvers became
+    // available. We still support the LSIF HTTP API up to this date, so anything
+    // before it can still fall back safely.
+    return productVersion.split('_')[1].localeCompare(GRAPHQL_API_MINIMUM_DATE) > 0
+}
+
+function initHTTP(): MaybeProviders {
     const isLSIFAvailable = mkIsLSIFAvailable()
 
     return {
@@ -303,5 +352,241 @@ export function initLSIF(): MaybeProviders {
             [sourcegraph.TextDocument, sourcegraph.Position],
             sourcegraph.Location[] | null
         >(isLSIFAvailable)(references),
+    }
+}
+
+function initGraphQL(): MaybeProviders {
+    const noLSIFData = new Set<string>()
+
+    const cacheUndefined = <R>(
+        f: (
+            doc: sourcegraph.TextDocument,
+            pos: sourcegraph.Position
+        ) => Promise<Maybe<R>>
+    ) => async (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<Maybe<R>> => {
+        if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            return undefined
+        }
+
+        if (noLSIFData.has(doc.uri)) {
+            return undefined
+        }
+
+        const result = await f(doc, pos)
+        if (result === undefined) {
+            noLSIFData.add(doc.uri)
+        }
+
+        return result
+    }
+
+    return {
+        definition: cacheUndefined(definitionGraphQL),
+        references: cacheUndefined(referencesGraphQL),
+        hover: cacheUndefined(hoverGraphQL),
+    }
+}
+
+async function definitionGraphQL(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<Maybe<sourcegraph.Definition | null>> {
+    const query = `
+        query Definitions($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            repository(name: $repository) {
+                commit(rev: $commit) {
+                    blob(path: $path) {
+                        definitions(line: $line, character: $character) {
+                            __typename
+                            ... on LocationConnection {
+                                nodes {
+                                    resource {
+                                        path
+                                        repository {
+                                            name
+                                        }
+                                        commit {
+                                            oid
+                                        }
+                                    }
+                                    range {
+                                        start {
+                                            line
+                                            character
+                                        }
+                                        end {
+                                            line
+                                            character
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const vars = {
+        repository: repositoryFromDoc(doc),
+        commit: commitFromDoc(doc),
+        path: pathFromDoc(doc),
+        line: position.line,
+        character: position.character,
+    }
+
+    const respObj = await queryGraphQL({
+        query,
+        vars,
+        sourcegraph,
+    })
+
+    const definitions: {
+        __typename: string
+        nodes: LocationConnectionNode[]
+    } = respObj.data.repository.commit.blob.definitions
+
+    return definitions.__typename === 'NoLSIFData'
+        ? undefined
+        : { value: definitions.nodes.map(nodeToLocation) }
+}
+
+async function referencesGraphQL(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<Maybe<sourcegraph.Location[] | null>> {
+    const query = `
+        query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            repository(name: $repository) {
+                commit(rev: $commit) {
+                    blob(path: $path) {
+                        references(line: $line, character: $character) {
+                            __typename
+                            ... on LocationConnection {
+                                nodes {
+                                    resource {
+                                        path
+                                        repository {
+                                            name
+                                        }
+                                        commit {
+                                            oid
+                                        }
+                                    }
+                                    range {
+                                        start {
+                                            line
+                                            character
+                                        }
+                                        end {
+                                            line
+                                            character
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const vars = {
+        repository: repositoryFromDoc(doc),
+        commit: commitFromDoc(doc),
+        path: pathFromDoc(doc),
+        line: position.line,
+        character: position.character,
+    }
+
+    const respObj = await queryGraphQL({
+        query,
+        vars,
+        sourcegraph,
+    })
+
+    const references: { __typename: string; nodes: LocationConnectionNode[] } =
+        respObj.data.repository.commit.blob.references
+
+    return references.__typename === 'NoLSIFData'
+        ? undefined
+        : { value: references.nodes.map(nodeToLocation) }
+}
+
+async function hoverGraphQL(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<Maybe<sourcegraph.Hover | null>> {
+    const query = `
+        query Hover($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            repository(name: $repository) {
+                commit(rev: $commit) {
+                    blob(path: $path) {
+                        hover(line: $line, character: $character) {
+                            __typename
+                            ... on Markdown {
+                                text
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const vars = {
+        repository: repositoryFromDoc(doc),
+        commit: commitFromDoc(doc),
+        path: pathFromDoc(doc),
+        line: position.line,
+        character: position.character,
+    }
+
+    const respObj = await queryGraphQL({
+        query,
+        vars,
+        sourcegraph,
+    })
+
+    const hover: { __typename: string; text: string } =
+        respObj.data.repository.commit.blob.hover
+
+    return hover.__typename === 'NoLSIFData'
+        ? undefined
+        : {
+              value: {
+                  contents: {
+                      value: hover.text,
+                      kind: sourcegraph.MarkupKind.Markdown,
+                  },
+              },
+          }
+}
+
+type LocationConnectionNode = {
+    resource: {
+        path: string
+        repository: { name: string }
+        commit: { oid: string }
+    }
+    range: sourcegraph.Range
+}
+
+function nodeToLocation(node: LocationConnectionNode): sourcegraph.Location {
+    return {
+        uri: new sourcegraph.URI(
+            `git://${node.resource.repository.name}?${node.resource.commit.oid}#${node.resource.path}`
+        ),
+        range: new sourcegraph.Range(
+            node.range.start.line,
+            node.range.start.character,
+            node.range.end.line,
+            node.range.end.character
+        ),
     }
 }
