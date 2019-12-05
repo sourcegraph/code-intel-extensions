@@ -1,12 +1,15 @@
 import * as sourcegraph from 'sourcegraph'
+
 import * as LSP from 'vscode-languageserver-types'
 import { convertLocations, convertHover } from './lsp-conversion'
 import { queryGraphQL } from './api'
+import { compareVersion } from './versions'
 
-/**
- * The date that the LSIF GraphQL API resolvers became available.
- */
+/** The date that the LSIF GraphQL API resolvers became available. */
 const GRAPHQL_API_MINIMUM_DATE = '2019-12-01'
+
+/** The version that the LSIF GraphQL API resolvers became available. */
+const GRAPHQL_API_MINIMUM_VERSION = '3.11'
 
 function repositoryFromDoc(doc: sourcegraph.TextDocument): string {
     const url = new URL(doc.uri)
@@ -306,7 +309,7 @@ export function initLSIF(): MaybeProviders {
     }
 }
 
-async function  supportsGraphQL(): Promise<boolean> {
+async function supportsGraphQL(): Promise<boolean> {
     const query = `
         query SiteVersion {
             site {
@@ -317,21 +320,15 @@ async function  supportsGraphQL(): Promise<boolean> {
 
     const respObj = await queryGraphQL({
         query,
-        vars:{},
+        vars: {},
         sourcegraph,
     })
 
-    const productVersion:string = respObj.data.site.productVersion
-    if (productVersion === 'dev') {
-        return true
-    }
-
-    // Product versions have the form `49952_2019-12-04_c6f43e0`.
-    // We want to use the GraphQL resolvers if the instance is known to have them.
-    // Check to see if the product version occurs after the date the resolvers became
-    // available. We still support the LSIF HTTP API up to this date, so anything
-    // before it can still fall back safely.
-    return productVersion.split('_')[1].localeCompare(GRAPHQL_API_MINIMUM_DATE) > 0
+    return compareVersion({
+        productVersion: respObj.data.site.productVersion,
+        minimumVersion: GRAPHQL_API_MINIMUM_VERSION,
+        minimumDate: GRAPHQL_API_MINIMUM_DATE,
+    })
 }
 
 function initHTTP(): MaybeProviders {
@@ -399,9 +396,8 @@ async function definitionGraphQL(
             repository(name: $repository) {
                 commit(rev: $commit) {
                     blob(path: $path) {
-                        definitions(line: $line, character: $character) {
-                            __typename
-                            ... on LocationConnection {
+                        lsif {
+                            definitions(line: $line, character: $character) {
                                 nodes {
                                     resource {
                                         path
@@ -431,28 +427,11 @@ async function definitionGraphQL(
         }
     `
 
-    const vars = {
-        repository: repositoryFromDoc(doc),
-        commit: commitFromDoc(doc),
-        path: pathFromDoc(doc),
-        line: position.line,
-        character: position.character,
-    }
+    const lsifObj = await queryLSIFGraphQL<{
+        definitions: { nodes: LocationConnectionNode[] }
+    }>({ doc, query, position })
 
-    const respObj = await queryGraphQL({
-        query,
-        vars,
-        sourcegraph,
-    })
-
-    const definitions: {
-        __typename: string
-        nodes: LocationConnectionNode[]
-    } = respObj.data.repository.commit.blob.definitions
-
-    return definitions.__typename === 'NoLSIFData'
-        ? undefined
-        : { value: definitions.nodes.map(nodeToLocation) }
+    return lsifObj && { value: lsifObj.definitions.nodes.map(nodeToLocation) }
 }
 
 async function referencesGraphQL(
@@ -464,9 +443,8 @@ async function referencesGraphQL(
             repository(name: $repository) {
                 commit(rev: $commit) {
                     blob(path: $path) {
-                        references(line: $line, character: $character) {
-                            __typename
-                            ... on LocationConnection {
+                        lsif {
+                            references(line: $line, character: $character) {
                                 nodes {
                                     resource {
                                         path
@@ -496,26 +474,11 @@ async function referencesGraphQL(
         }
     `
 
-    const vars = {
-        repository: repositoryFromDoc(doc),
-        commit: commitFromDoc(doc),
-        path: pathFromDoc(doc),
-        line: position.line,
-        character: position.character,
-    }
+    const lsifObj = await queryLSIFGraphQL<{
+        references: { nodes: LocationConnectionNode[] }
+    }>({ doc, query, position })
 
-    const respObj = await queryGraphQL({
-        query,
-        vars,
-        sourcegraph,
-    })
-
-    const references: { __typename: string; nodes: LocationConnectionNode[] } =
-        respObj.data.repository.commit.blob.references
-
-    return references.__typename === 'NoLSIFData'
-        ? undefined
-        : { value: references.nodes.map(nodeToLocation) }
+    return lsifObj && { value: lsifObj.references.nodes.map(nodeToLocation) }
 }
 
 async function hoverGraphQL(
@@ -527,9 +490,8 @@ async function hoverGraphQL(
             repository(name: $repository) {
                 commit(rev: $commit) {
                     blob(path: $path) {
-                        hover(line: $line, character: $character) {
-                            __typename
-                            ... on Markdown {
+                        lsif {
+                            hover(line: $line, character: $character) {
                                 text
                             }
                         }
@@ -538,6 +500,36 @@ async function hoverGraphQL(
             }
         }
     `
+
+    const lsifObj = await queryLSIFGraphQL<{ hover: { text: string } }>({
+        doc,
+        query,
+        position,
+    })
+
+    return (
+        lsifObj && {
+            value: {
+                contents: {
+                    value: lsifObj.hover.text,
+                    kind: sourcegraph.MarkupKind.Markdown,
+                },
+            },
+        }
+    )
+}
+
+async function queryLSIFGraphQL<T>({
+    doc,
+    query,
+    position,
+}: {
+    doc: sourcegraph.TextDocument
+    query: string
+    position: LSP.Position
+}): Promise<T | undefined> {
+    repositoryFromDoc(doc)
+    commitFromDoc(doc)
 
     const vars = {
         repository: repositoryFromDoc(doc),
@@ -553,19 +545,8 @@ async function hoverGraphQL(
         sourcegraph,
     })
 
-    const hover: { __typename: string; text: string } =
-        respObj.data.repository.commit.blob.hover
-
-    return hover.__typename === 'NoLSIFData'
-        ? undefined
-        : {
-              value: {
-                  contents: {
-                      value: hover.text,
-                      kind: sourcegraph.MarkupKind.Markdown,
-                  },
-              },
-          }
+    // TODO - check errors
+    return respObj.data.repository.commit.blob.lsif
 }
 
 type LocationConnectionNode = {
