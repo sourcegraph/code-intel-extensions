@@ -492,7 +492,19 @@ async function hoverGraphQL(
                     blob(path: $path) {
                         lsif {
                             hover(line: $line, character: $character) {
-                                text
+                                markdown {
+                                    text
+                                }
+                                range {
+                                    start {
+                                        line
+                                        character
+                                    }
+                                    end {
+                                        line
+                                        character
+                                    }
+                                }
                             }
                         }
                     }
@@ -501,7 +513,9 @@ async function hoverGraphQL(
         }
     `
 
-    const lsifObj = await queryLSIFGraphQL<{ hover: { text: string } }>({
+    const lsifObj = await queryLSIFGraphQL<{
+        hover: { markdown: { text: string }; range: sourcegraph.Range }
+    }>({
         doc,
         query,
         position,
@@ -511,9 +525,10 @@ async function hoverGraphQL(
         lsifObj && {
             value: {
                 contents: {
-                    value: lsifObj.hover.text,
+                    value: lsifObj.hover.markdown.text,
                     kind: sourcegraph.MarkupKind.Markdown,
                 },
+                range: lsifObj.hover.range,
             },
         }
     )
