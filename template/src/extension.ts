@@ -39,13 +39,17 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerReferenceProvider(selector, {
-                provideReferences: asyncFirst(
-                    [
-                        lsif.references,
-                        wrapMaybe(handler.references.bind(handler)),
-                    ],
-                    []
-                ),
+                provideReferences: async (doc, pos) => {
+                    // Concatenates LSIF results (if present) with text search
+                    // results because LSIF data might be sparse.
+                    const lsifReferences = await lsif.references(doc, pos)
+                    return [
+                        ...(lsifReferences === undefined
+                            ? []
+                            : lsifReferences.value),
+                        ...(await handler.references(doc, pos)),
+                    ]
+                },
             })
         )
     }

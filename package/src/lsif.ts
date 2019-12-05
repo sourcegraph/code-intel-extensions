@@ -131,7 +131,7 @@ export const mkIsLSIFAvailable = () => {
 export async function hover(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Hover | null> {
+): Promise<Maybe<sourcegraph.Hover>> {
     const hover: LSP.Hover | null = await queryLSIF({
         doc,
         method: 'hover',
@@ -139,15 +139,15 @@ export async function hover(
         position,
     })
     if (!hover) {
-        return null
+        return undefined
     }
-    return convertHover(sourcegraph, hover)
+    return { value: convertHover(sourcegraph, hover) }
 }
 
 export async function definition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Definition | null> {
+): Promise<Maybe<sourcegraph.Definition>> {
     const body: LSP.Location | LSP.Location[] | null = await queryLSIF({
         doc,
         method: 'definitions',
@@ -155,29 +155,38 @@ export async function definition(
         position,
     })
     if (!body) {
-        return null
+        return undefined
     }
     const locations = Array.isArray(body) ? body : [body]
-    return convertLocations(
-        sourcegraph,
-        locations.map((definition: LSP.Location) => ({
-            ...definition,
-            uri: setPath(doc, definition.uri),
-        }))
-    )
+    if (locations.length === 0) {
+        return undefined
+    }
+    return {
+        value: convertLocations(
+            sourcegraph,
+            locations.map((definition: LSP.Location) => ({
+                ...definition,
+                uri: setPath(doc, definition.uri),
+            }))
+        ),
+    }
 }
 
 export async function references(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Location[] | null> {
-    const locations: LSP.Location[] | null = await queryLSIF({
+): Promise<sourcegraph.Location[]> {
+    const body: LSP.Location[] | null = await queryLSIF({
         doc,
         method: 'references',
         path: pathFromDoc(doc),
         position,
     })
-    if (!locations) {
+    if (!body) {
+        return []
+    }
+    const locations = Array.isArray(body) ? body : [body]
+    if (locations.length === 0) {
         return []
     }
     return convertLocations(
@@ -232,6 +241,17 @@ export function asyncWhen<A extends any[], R>(
 }
 
 /**
+ * Only runs the given async function `f` when the given async predicate on the arguments
+ * succeeds. Async version of `when`.
+ */
+export function asyncWhenMaybe<A extends any[], R>(
+    asyncPredicate: (...args: A) => Promise<boolean>
+): (f: (...args: A) => Promise<Maybe<R>>) => (...args: A) => Promise<Maybe<R>> {
+    return f => async (...args) =>
+        (await asyncPredicate(...args)) ? await f(...args) : undefined
+}
+
+/**
  * Takes an array of async functions `fs` that return `Maybe<ReturnType>`, calls
  * each `f` in series, bails when one returns `{ value: ... }`, and returns that
  * value. Defaults to `defaultValue` when no `f` returns `{ value: ... }`.
@@ -253,15 +273,15 @@ export interface MaybeProviders {
     hover: (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ) => Promise<Maybe<sourcegraph.Hover | null>>
+    ) => Promise<Maybe<sourcegraph.Hover>>
     definition: (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ) => Promise<Maybe<sourcegraph.Definition | null>>
+    ) => Promise<Maybe<sourcegraph.Definition>>
     references: (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ) => Promise<Maybe<sourcegraph.Location[] | null>>
+    ) => Promise<Maybe<sourcegraph.Location[]>>
 }
 
 export interface Providers {
@@ -291,17 +311,17 @@ export function initLSIF(): MaybeProviders {
     return {
         // You can read this as "only send a hover request when LSIF data is
         // available for the given doc".
-        hover: asyncWhen<
+        hover: asyncWhenMaybe<
             [sourcegraph.TextDocument, sourcegraph.Position],
-            sourcegraph.Hover | null
+            sourcegraph.Hover
         >(isLSIFAvailable)(hover),
-        definition: asyncWhen<
+        definition: asyncWhenMaybe<
             [sourcegraph.TextDocument, sourcegraph.Position],
-            sourcegraph.Definition | null
+            sourcegraph.Definition
         >(isLSIFAvailable)(definition),
         references: asyncWhen<
             [sourcegraph.TextDocument, sourcegraph.Position],
-            sourcegraph.Location[] | null
+            sourcegraph.Location[]
         >(isLSIFAvailable)(references),
     }
 }
