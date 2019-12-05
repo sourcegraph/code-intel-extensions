@@ -9,7 +9,7 @@ import { compareVersion } from './versions'
 const GRAPHQL_API_MINIMUM_DATE = '2019-12-01'
 
 /** The version that the LSIF GraphQL API resolvers became available. */
-const GRAPHQL_API_MINIMUM_VERSION = '3.11'
+const GRAPHQL_API_MINIMUM_VERSION = '3.11.0'
 
 function repositoryFromDoc(doc: sourcegraph.TextDocument): string {
     const url = new URL(doc.uri)
