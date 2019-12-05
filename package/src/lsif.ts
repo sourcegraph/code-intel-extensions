@@ -554,13 +554,40 @@ async function queryLSIFGraphQL<T>({
         character: position.character,
     }
 
-    const respObj = await queryGraphQL({
+    const respObj: {
+        data: {
+            repository: {
+                commit: {
+                    blob: {
+                        lsif: T
+                    }
+                }
+            }
+        }
+        errors: Error[]
+    } = await queryGraphQL({
         query,
         vars,
         sourcegraph,
     })
 
-    // TODO - check errors
+    if (respObj.errors) {
+        const asError = (err: { message: string }): Error =>
+            Object.assign(new Error(err.message), err)
+
+        if (respObj.errors.length === 1) {
+            throw asError(respObj.errors[0])
+        }
+
+        throw Object.assign(
+            new Error(respObj.errors.map(e => e.message).join('\n')),
+            {
+                name: 'AggregateError',
+                errors: respObj.errors.map(asError),
+            }
+        )
+    }
+
     return respObj.data.repository.commit.blob.lsif
 }
 
