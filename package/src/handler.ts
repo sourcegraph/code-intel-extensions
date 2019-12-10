@@ -749,12 +749,9 @@ export class Handler {
         return []
     }
 
-    async references(
-        doc: TextDocument,
-        pos: Position
-    ): Promise<Location[] | null> {
+    async references(doc: TextDocument, pos: Position): Promise<Location[]> {
         if (doc.text === undefined) {
-            return null
+            return []
         }
         const tokenResult = findSearchToken({
             text: doc.text,
@@ -762,7 +759,7 @@ export class Handler {
             lineRegex: this.commentStyle && this.commentStyle.lineRegex,
         })
         if (!tokenResult) {
-            return null
+            return []
         }
         const searchToken = tokenResult.searchToken
 

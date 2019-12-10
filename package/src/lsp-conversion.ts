@@ -21,11 +21,8 @@ export const convertRange = (
 
 export function convertHover(
     sourcegraph: typeof import('sourcegraph'),
-    hover: LSP.Hover | null
-): sourcegraph.Hover | null {
-    if (!hover) {
-        return null
-    }
+    hover: LSP.Hover
+): sourcegraph.Hover {
     const contents = Array.isArray(hover.contents)
         ? hover.contents
         : [hover.contents]
@@ -69,13 +66,7 @@ export const convertLocation = (
 
 export function convertLocations(
     sourcegraph: typeof import('sourcegraph'),
-    locationOrLocations: LSP.Location | LSP.Location[] | null
-): sourcegraph.Location[] | null {
-    if (!locationOrLocations) {
-        return null
-    }
-    const locations = Array.isArray(locationOrLocations)
-        ? locationOrLocations
-        : [locationOrLocations]
+    locations: LSP.Location[]
+): sourcegraph.Location[] {
     return locations.map(location => convertLocation(sourcegraph, location))
 }
