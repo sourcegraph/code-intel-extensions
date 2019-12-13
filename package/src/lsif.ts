@@ -81,6 +81,7 @@ export const mkIsLSIFAvailable = () => {
     const lsifDocs = new Map<string, Promise<boolean>>()
     return (doc: sourcegraph.TextDocument): Promise<boolean> => {
         if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            console.log('LSIF is not enabled in global settings')
             return Promise.resolve(false)
         }
 
@@ -303,11 +304,13 @@ export const noopMaybeProviders = {
 export function initLSIF(): MaybeProviders {
     const provider = (async () => {
         if (await supportsGraphQL()) {
-            console.log('Using LSIF GraphQL API')
+            console.log('Sourcegraph instance supports LSIF GraphQL API')
             return initGraphQL()
         }
 
-        console.log('Using LSIF HTTP API')
+        console.log(
+            'Sourcegraph instance does not support LSIF GraphQL API, falling back to HTTP API'
+        )
         return initHTTP()
     })()
 
@@ -376,6 +379,7 @@ function initGraphQL(): MaybeProviders {
         pos: sourcegraph.Position
     ): Promise<Maybe<R>> => {
         if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            console.log('LSIF is not enabled in global settings')
             return undefined
         }
 
