@@ -6,7 +6,7 @@ import { queryGraphQL } from './api'
 import { compareVersion } from './versions'
 
 /** The date that the LSIF GraphQL API resolvers became available. */
-const GRAPHQL_API_MINIMUM_DATE = '2019-12-01'
+const GRAPHQL_API_MINIMUM_DATE = '2019-12-12'
 
 /** The version that the LSIF GraphQL API resolvers became available. */
 const GRAPHQL_API_MINIMUM_VERSION = '3.11.0'
