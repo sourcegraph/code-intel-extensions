@@ -211,10 +211,10 @@ export async function references(
         character: position.character,
     })
 
-    return  convertLocations(
-            sourcegraph,
-            locations.map(r => ({ ...r, uri: setPath(doc, r.uri) }))
-        )
+    return convertLocations(
+        sourcegraph,
+        locations.map(r => ({ ...r, uri: setPath(doc, r.uri) }))
+    )
 }
 
 /**

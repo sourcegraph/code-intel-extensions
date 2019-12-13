@@ -745,7 +745,7 @@ export class Handler {
             )
 
             if (symbolResults.length > 0) {
-                const locations= sortByProximity({
+                const locations = sortByProximity({
                     currentLocation: doc.uri,
                     locations: symbolResults,
                 })
