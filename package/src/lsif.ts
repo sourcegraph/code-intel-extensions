@@ -145,6 +145,12 @@ export async function hover(
     if (!hover) {
         return null
     }
+
+    console.debug('Received hover', {
+        source: 'HTTP API',
+        line: position.line,
+        character: position.character,
+    })
     return convertHover(sourcegraph, hover)
 }
 
@@ -162,12 +168,14 @@ export async function definition(
         return null
     }
     const locations = Array.isArray(body) ? body : [body]
+    console.debug(`Received ${locations.length} definitions`, {
+        source: 'HTTP API',
+        line: position.line,
+        character: position.character,
+    })
     return convertLocations(
         sourcegraph,
-        locations.map((definition: LSP.Location) => ({
-            ...definition,
-            uri: setPath(doc, definition.uri),
-        }))
+        locations.map(d => ({ ...d, uri: setPath(doc, d.uri) }))
     )
 }
 
@@ -184,12 +192,15 @@ export async function references(
     if (!locations) {
         return []
     }
+
+    console.debug(`Received ${locations.length} references`, {
+        source: 'HTTP API',
+        line: position.line,
+        character: position.character,
+    })
     return convertLocations(
         sourcegraph,
-        locations.map((reference: LSP.Location) => ({
-            ...reference,
-            uri: setPath(doc, reference.uri),
-        }))
+        locations.map(r => ({ ...r, uri: setPath(doc, r.uri) }))
     )
 }
 
@@ -431,7 +442,17 @@ async function definitionGraphQL(
         definitions: { nodes: LocationConnectionNode[] }
     }>({ doc, query, position })
 
-    return lsifObj && { value: lsifObj.definitions.nodes.map(nodeToLocation) }
+    if (!lsifObj) {
+        return undefined
+    }
+
+    const nodes = lsifObj.definitions.nodes
+    console.debug(`Received ${nodes.length} definitions`, {
+        source: 'GraphQL API',
+        line: position.line,
+        character: position.character,
+    })
+    return { value: nodes.map(nodeToLocation) }
 }
 
 async function referencesGraphQL(
@@ -478,7 +499,17 @@ async function referencesGraphQL(
         references: { nodes: LocationConnectionNode[] }
     }>({ doc, query, position })
 
-    return lsifObj && { value: lsifObj.references.nodes.map(nodeToLocation) }
+    if (!lsifObj) {
+        return undefined
+    }
+
+    const nodes = lsifObj.references.nodes
+    console.debug(`Received ${nodes.length} references`, {
+        source: 'GraphQL API',
+        line: position.line,
+        character: position.character,
+    })
+    return { value: nodes.map(nodeToLocation) }
 }
 
 async function hoverGraphQL(
@@ -521,17 +552,21 @@ async function hoverGraphQL(
         position,
     })
 
-    return (
-        lsifObj && {
-            value: {
-                contents: {
-                    value: lsifObj.hover.markdown.text,
-                    kind: sourcegraph.MarkupKind.Markdown,
-                },
-                range: lsifObj.hover.range,
-            },
-        }
-    )
+    if (!lsifObj) {
+        return undefined
+    }
+
+    const contents = {
+        value: lsifObj.hover.markdown.text,
+        kind: sourcegraph.MarkupKind.Markdown,
+    }
+
+    console.debug('Received hover', {
+        source: 'GraphQL API',
+        line: position.line,
+        character: position.character,
+    })
+    return { value: { contents, range: lsifObj.hover.range } }
 }
 
 async function queryLSIFGraphQL<T>({
