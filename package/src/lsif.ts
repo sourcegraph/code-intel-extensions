@@ -1,5 +1,4 @@
 import * as sourcegraph from 'sourcegraph'
-
 import * as LSP from 'vscode-languageserver-types'
 import { convertLocations, convertHover } from './lsp-conversion'
 import { queryGraphQL } from './api'
