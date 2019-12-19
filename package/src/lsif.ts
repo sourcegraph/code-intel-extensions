@@ -199,8 +199,7 @@ export async function references(
 }
 
 /**
- * An optional value of type T. It's either `{ value: T }` when a value exists, and
- * `undefined` otherwise.
+ * An optional value of type T. It's either `{ value: T }` or `undefined`.
  */
 export type Maybe<T> = { value: T } | undefined
 
