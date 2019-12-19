@@ -44,14 +44,28 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         ctx.subscriptions.add(
             sourcegraph.languages.registerReferenceProvider(selector, {
                 provideReferences: async (doc, pos) => {
-                    // Concatenates LSIF results (if present) with text search
-                    // results because LSIF data might be sparse.
+                    // Gets an opaque value that is the same for all locations
+                    // within a file but different from other files.
+                    const file = (loc: sourcegraph.Location) =>
+                        `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
+
+                    // Concatenates LSIF results (if present) with fuzzy results
+                    // because LSIF data might be sparse.
                     const lsifReferences = await lsif.references(doc, pos)
+                    const fuzzyReferences = await handler.references(doc, pos)
+
+                    const lsifFiles = new Set(
+                        (lsifReferences ? lsifReferences.value : []).map(file)
+                    )
+
                     return [
                         ...(lsifReferences === undefined
                             ? []
                             : lsifReferences.value),
-                        ...(await handler.references(doc, pos)),
+                        // Drop fuzzy references from files that have LSIF results.
+                        ...fuzzyReferences.filter(
+                            fuzzyRef => !lsifFiles.has(file(fuzzyRef))
+                        ),
                     ]
                 },
             })
