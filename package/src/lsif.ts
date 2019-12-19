@@ -199,9 +199,17 @@ export async function references(
 }
 
 /**
- * An optional value of type T. It's either `{ value: T }` or `undefined`.
+ * TODO
  */
-export type Maybe<T> = { value: T } | undefined
+export const NoData: 'no data' = 'no data'
+
+/**
+ * An optional value of type T. It's either `{ value: T }` when a value exists,
+ * `undefined` when LSIF is not enabled or there is no data for the given repository,
+ * or `NoData` when LSIF is available but cannot be used for the query such as when
+ * the LSIF dump is out of date.
+ */
+export type Maybe<T> = { value: T } | typeof NoData | undefined
 
 /**
  * Converts an async function that returns a type `ReturnType` to an async
@@ -262,7 +270,7 @@ export const asyncFirst = <Arguments extends any[], ReturnType>(
 ) => async (...args: Arguments): Promise<ReturnType> => {
     for (const f of fs) {
         const maybeReturnValue = await f(...args)
-        if (maybeReturnValue !== undefined) {
+        if (maybeReturnValue !== undefined && maybeReturnValue !== NoData) {
             return maybeReturnValue.value
         }
     }
