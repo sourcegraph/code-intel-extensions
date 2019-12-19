@@ -672,12 +672,6 @@ export class Handler {
             docstringIgnore: this.docstringIgnore,
         })
 
-        console.debug('Received hover', {
-            source: 'Search',
-            line: pos.line,
-            character: pos.character,
-        })
-
         return {
             contents: {
                 kind: this.sourcegraph.MarkupKind.Markdown,
@@ -745,16 +739,10 @@ export class Handler {
             )
 
             if (symbolResults.length > 0) {
-                const locations = sortByProximity({
+                return sortByProximity({
                     currentLocation: doc.uri,
                     locations: symbolResults,
                 })
-                console.debug(`Received ${locations.length} definitions`, {
-                    source: 'Search',
-                    line: pos.line,
-                    character: pos.character,
-                })
-                return locations
             }
         }
 
@@ -775,7 +763,7 @@ export class Handler {
         }
         const searchToken = tokenResult.searchToken
 
-        const locations = sortByProximity({
+        return sortByProximity({
             currentLocation: doc.uri,
             locations: flatten(
                 await Promise.all(
@@ -792,12 +780,6 @@ export class Handler {
                 resultToLocation({ result, sourcegraph: this.sourcegraph })
             ),
         })
-        console.debug(`Received ${locations.length} references`, {
-            source: 'Search',
-            line: pos.line,
-            character: pos.character,
-        })
-        return locations
     }
 
     /**

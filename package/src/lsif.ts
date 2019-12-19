@@ -127,7 +127,6 @@ export const mkIsLSIFAvailable = () => {
         })()
 
         lsifDocs.set(doc.uri, hasLSIFPromise)
-
         return hasLSIFPromise
     }
 }
@@ -146,11 +145,6 @@ export async function hover(
         return undefined
     }
 
-    console.debug('Received hover', {
-        source: 'HTTP API',
-        line: position.line,
-        character: position.character,
-    })
     return { value: convertHover(sourcegraph, hover) }
 }
 
@@ -171,12 +165,6 @@ export async function definition(
     if (locations.length === 0) {
         return undefined
     }
-
-    console.debug(`Received ${locations.length} definitions`, {
-        source: 'HTTP API',
-        line: position.line,
-        character: position.character,
-    })
 
     return {
         value: convertLocations(
@@ -203,12 +191,6 @@ export async function references(
     if (locations.length === 0) {
         return []
     }
-
-    console.debug(`Received ${locations.length} references`, {
-        source: 'HTTP API',
-        line: position.line,
-        character: position.character,
-    })
 
     return convertLocations(
         sourcegraph,
@@ -472,13 +454,7 @@ async function definitionGraphQL(
         return undefined
     }
 
-    const nodes = lsifObj.definitions.nodes
-    console.debug(`Received ${nodes.length} definitions`, {
-        source: 'GraphQL API',
-        line: position.line,
-        character: position.character,
-    })
-    return { value: nodes.map(nodeToLocation) }
+    return { value: lsifObj.definitions.nodes.map(nodeToLocation) }
 }
 
 async function referencesGraphQL(
@@ -529,13 +505,7 @@ async function referencesGraphQL(
         return undefined
     }
 
-    const nodes = lsifObj.references.nodes
-    console.debug(`Received ${nodes.length} references`, {
-        source: 'GraphQL API',
-        line: position.line,
-        character: position.character,
-    })
-    return { value: nodes.map(nodeToLocation) }
+    return { value: lsifObj.references.nodes.map(nodeToLocation) }
 }
 
 async function hoverGraphQL(
@@ -582,17 +552,15 @@ async function hoverGraphQL(
         return undefined
     }
 
-    const contents = {
-        value: lsifObj.hover.markdown.text,
-        kind: sourcegraph.MarkupKind.Markdown,
+    return {
+        value: {
+            contents: {
+                value: lsifObj.hover.markdown.text,
+                kind: sourcegraph.MarkupKind.Markdown,
+            },
+            range: lsifObj.hover.range,
+        },
     }
-
-    console.debug('Received hover', {
-        source: 'GraphQL API',
-        line: position.line,
-        character: position.character,
-    })
-    return { value: { contents, range: lsifObj.hover.range } }
 }
 
 async function queryLSIFGraphQL<T>({
