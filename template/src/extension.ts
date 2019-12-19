@@ -1,4 +1,4 @@
-import { Handler, initLSIF, StaleData } from '../../package/lib'
+import { Handler, initLSIF } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 import { documentSelector } from '../../package/lib/handler'
@@ -39,7 +39,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                 provideHover: async (doc, pos) => {
                     // Return LSIF result if one exists
                     const lsifResult = await lsif.hover(doc, pos)
-                    if (lsifResult !== undefined && lsifResult !== StaleData) {
+                    if (lsifResult !== undefined) {
                         return lsifResult.value
                     }
 
@@ -61,7 +61,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                 provideDefinition: async (doc, pos) => {
                     // Return LSIF result if one exists
                     const lsifResult = await lsif.definition(doc, pos)
-                    if (lsifResult !== undefined && lsifResult !== StaleData) {
+                    if (lsifResult !== undefined) {
                         return lsifResult.value
                     }
 
@@ -89,9 +89,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                     // Get and extract LSIF results
                     const lsifResult = await lsif.references(doc, pos)
                     const lsifValues =
-                        lsifResult !== undefined && lsifResult !== StaleData
-                            ? lsifResult.value
-                            : []
+                        lsifResult !== undefined ? lsifResult.value : []
 
                     const lsifFiles = new Set(lsifValues.map(file))
 
