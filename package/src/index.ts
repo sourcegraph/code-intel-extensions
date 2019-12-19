@@ -13,5 +13,4 @@ export {
     definition,
     references,
     Providers,
-    NoData,
 } from './lsif'
