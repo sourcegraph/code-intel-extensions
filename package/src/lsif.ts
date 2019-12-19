@@ -144,7 +144,6 @@ export async function hover(
     if (!hover) {
         return undefined
     }
-
     return { value: convertHover(sourcegraph, hover) }
 }
 
@@ -165,7 +164,6 @@ export async function definition(
     if (locations.length === 0) {
         return undefined
     }
-
     return {
         value: convertLocations(
             sourcegraph,
@@ -191,7 +189,6 @@ export async function references(
     if (locations.length === 0) {
         return []
     }
-
     return convertLocations(
         sourcegraph,
         locations.map(r => ({ ...r, uri: setPath(doc, r.uri) }))
