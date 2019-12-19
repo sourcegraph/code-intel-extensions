@@ -5,6 +5,11 @@ import { documentSelector } from '../../package/lib/handler'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
+// Gets an opaque value that is the same for all locations
+// within a file but different from other files.
+const file = (loc: sourcegraph.Location) =>
+    `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
+
 // TODO
 /** circled question mark icons */
 const whiteBadge = `data:image/svg+xml;base64,${btoa(
@@ -37,60 +42,43 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         ctx.subscriptions.add(
             sourcegraph.languages.registerHoverProvider(selector, {
                 provideHover: async (doc, pos) => {
-                    // Return LSIF result if one exists
                     const lsifResult = await lsif.hover(doc, pos)
-                    if (lsifResult !== undefined) {
+                    if (lsifResult) {
                         return lsifResult.value
                     }
 
-                    // Fall back to search-based hover result
                     const val = await handler.hover(doc, pos)
                     if (!val) {
                         return undefined
                     }
 
-                    return {
-                        ...val,
-                        badge,
-                    }
+                    return { ...val, badge }
                 },
             })
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerDefinitionProvider(selector, {
                 provideDefinition: async (doc, pos) => {
-                    // Return LSIF result if one exists
                     const lsifResult = await lsif.definition(doc, pos)
-                    if (lsifResult !== undefined) {
+                    if (lsifResult) {
                         return lsifResult.value
                     }
 
-                    // Fall back to search-based hover result
                     const val = await handler.definition(doc, pos)
                     if (!val) {
                         return undefined
                     }
 
-                    return val.map(v => ({
-                        ...v,
-                        badge,
-                    }))
+                    return val.map(v => ({ ...v, badge }))
                 },
             })
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerReferenceProvider(selector, {
                 provideReferences: async (doc, pos) => {
-                    // Gets an opaque value that is the same for all locations
-                    // within a file but different from other files.
-                    const file = (loc: sourcegraph.Location) =>
-                        `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
-
                     // Get and extract LSIF results
                     const lsifResult = await lsif.references(doc, pos)
-                    const lsifValues =
-                        lsifResult !== undefined ? lsifResult.value : []
-
+                    const lsifValues = lsifResult ? lsifResult.value : []
                     const lsifFiles = new Set(lsifValues.map(file))
 
                     // Unconditionally get search references and append them with
@@ -103,10 +91,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
 
                     return [
                         ...lsifValues,
-                        ...searchReferences.map(v => ({
-                            ...v,
-                            badge,
-                        })),
+                        ...searchReferences.map(v => ({ ...v, badge })),
                     ]
                 },
             })
