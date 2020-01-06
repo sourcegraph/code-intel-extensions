@@ -78,7 +78,7 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                 provideReferences: async (doc, pos) => {
                     // Get and extract LSIF results
                     const lsifResult = await lsif.references(doc, pos)
-                    const lsifValues = lsifResult ? lsifResult.value : []
+                    const lsifReferences = lsifResult ? lsifResult.value : []
                     const lsifFiles = new Set(lsifValues.map(file))
 
                     // Unconditionally get search references and append them with
