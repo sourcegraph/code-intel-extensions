@@ -51,7 +51,7 @@ function makeInfoIcon(color: string): string {
  * The badge to send back on all results that come from searched-based data.
  */
 export const impreciseBadge = {
-    icon: makeInfoIcon('ffffff'),
+    icon: makeInfoIcon('#ffffff'),
     light: { icon: makeInfoIcon('#000000') },
     hoverMessage:
         'This result is provided by search-based heuristics. See our documentation for a more precise code intelligence solution.',
