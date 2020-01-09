@@ -1,5 +1,7 @@
 function makeIcon(svg: string): string {
-    return `data:image/svg+xml;base64,${btoa(svg.replace(/^\s+/g, '').replace('\n', ''))}`
+    return `data:image/svg+xml;base64,${btoa(
+        svg.replace(/^\s+/g, '').replace('\n', '')
+    )}`
 }
 
 /**
@@ -51,6 +53,8 @@ function makeInfoIcon(color: string): string {
 export const impreciseBadge = {
     icon: makeInfoIcon('ffffff'),
     light: { icon: makeInfoIcon('000000') },
-    hoverMessage: 'This result is provided by search based heuristics. See our documentation for a more precise code intelligence solution.',
-    linkURL: 'https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence',
+    hoverMessage:
+        'This result is provided by search based heuristics. See our documentation for a more precise code intelligence solution.',
+    linkURL:
+        'https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence',
 }
