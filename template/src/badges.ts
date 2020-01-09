@@ -11,7 +11,7 @@ function makeIcon(svg: string): string {
  */
 function makeInfoIcon(color: string): string {
     return makeIcon(`
-        <svg xmlns='http://www.w3.org/2000/svg' style="width:24px;height:24px" viewBox="0 0 24 24" fill="#${color}">
+        <svg xmlns='http://www.w3.org/2000/svg' style="width:24px;height:24px" viewBox="0 0 24 24" fill="${color}">
             <path d="
                 M11,
                 9H13V7H11M12,
