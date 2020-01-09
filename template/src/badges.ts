@@ -52,7 +52,7 @@ function makeInfoIcon(color: string): string {
  */
 export const impreciseBadge = {
     icon: makeInfoIcon('ffffff'),
-    light: { icon: makeInfoIcon('000000') },
+    light: { icon: makeInfoIcon('#000000') },
     hoverMessage:
         'This result is provided by search-based heuristics. See our documentation for a more precise code intelligence solution.',
     linkURL:
