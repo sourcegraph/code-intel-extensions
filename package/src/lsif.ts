@@ -4,11 +4,17 @@ import { convertLocations, convertHover } from './lsp-conversion'
 import { queryGraphQL } from './api'
 import { compareVersion } from './versions'
 
-/** The date that the LSIF GraphQL API resolvers became available. */
-const GRAPHQL_API_MINIMUM_DATE = '2019-12-20'
+/**
+ * The date that the LSIF GraphQL API resolvers became available.
+ *
+ * Specifically, ensure that the commit 34e6a67ecca30afb4a5d8d200fc88a724d3c4ac5
+ * exists, as there is a bad performance issue prior to that when a force push
+ * removes commits from the codehost for which we have LSIF data.
+ */
+const GRAPHQL_API_MINIMUM_DATE = '2020-01-08'
 
 /** The version that the LSIF GraphQL API resolvers became available. */
-const GRAPHQL_API_MINIMUM_VERSION = '3.11.0'
+const GRAPHQL_API_MINIMUM_VERSION = '3.12.0'
 
 function repositoryFromDoc(doc: sourcegraph.TextDocument): string {
     const url = new URL(doc.uri)
