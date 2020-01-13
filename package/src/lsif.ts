@@ -2,6 +2,19 @@ import * as sourcegraph from 'sourcegraph'
 import * as LSP from 'vscode-languageserver-types'
 import { convertLocations, convertHover } from './lsp-conversion'
 import { queryGraphQL } from './api'
+import { compareVersion } from './versions'
+
+/**
+ * The date that the LSIF GraphQL API resolvers became available.
+ *
+ * Specifically, ensure that the commit 34e6a67ecca30afb4a5d8d200fc88a724d3c4ac5
+ * exists, as there is a bad performance issue prior to that when a force push
+ * removes commits from the codehost for which we have LSIF data.
+ */
+const GRAPHQL_API_MINIMUM_DATE = '2020-01-08'
+
+/** The version that the LSIF GraphQL API resolvers became available. */
+const GRAPHQL_API_MINIMUM_VERSION = '3.12.0'
 
 function repositoryFromDoc(doc: sourcegraph.TextDocument): string {
     const url = new URL(doc.uri)
@@ -73,6 +86,7 @@ export const mkIsLSIFAvailable = () => {
     const lsifDocs = new Map<string, Promise<boolean>>()
     return (doc: sourcegraph.TextDocument): Promise<boolean> => {
         if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            console.log('LSIF is not enabled in global settings')
             return Promise.resolve(false)
         }
 
@@ -115,15 +129,10 @@ export const mkIsLSIFAvailable = () => {
             if (!response.ok) {
                 return false
             }
-            const available: boolean = await response.json()
-            if (available) {
-                console.log('Using LSIF data', { repository, commit, file })
-            }
-            return available
+            return response.json()
         })()
 
         lsifDocs.set(doc.uri, hasLSIFPromise)
-
         return hasLSIFPromise
     }
 }
@@ -164,10 +173,7 @@ export async function definition(
     return {
         value: convertLocations(
             sourcegraph,
-            locations.map((definition: LSP.Location) => ({
-                ...definition,
-                uri: setPath(doc, definition.uri),
-            }))
+            locations.map(d => ({ ...d, uri: setPath(doc, d.uri) }))
         ),
     }
 }
@@ -191,10 +197,7 @@ export async function references(
     }
     return convertLocations(
         sourcegraph,
-        locations.map((reference: LSP.Location) => ({
-            ...reference,
-            uri: setPath(doc, reference.uri),
-        }))
+        locations.map(r => ({ ...r, uri: setPath(doc, r.uri) }))
     )
 }
 
@@ -306,6 +309,50 @@ export const noopMaybeProviders = {
 }
 
 export function initLSIF(): MaybeProviders {
+    const provider = (async () => {
+        if (await supportsGraphQL()) {
+            console.log('Sourcegraph instance supports LSIF GraphQL API')
+            return initGraphQL()
+        }
+
+        console.log(
+            'Sourcegraph instance does not support LSIF GraphQL API, falling back to HTTP API'
+        )
+        return initHTTP()
+    })()
+
+    return {
+        // If graphQL is supported, use the GraphQL implementation.
+        // Otherwise, use the legacy HTTP implementation.
+        definition: async (...args) => (await provider).definition(...args),
+        references: async (...args) => (await provider).references(...args),
+        hover: async (...args) => (await provider).hover(...args),
+    }
+}
+
+async function supportsGraphQL(): Promise<boolean> {
+    const query = `
+        query SiteVersion {
+            site {
+                productVersion
+            }
+        }
+    `
+
+    const respObj = await queryGraphQL({
+        query,
+        vars: {},
+        sourcegraph,
+    })
+
+    return compareVersion({
+        productVersion: respObj.data.site.productVersion,
+        minimumVersion: GRAPHQL_API_MINIMUM_VERSION,
+        minimumDate: GRAPHQL_API_MINIMUM_DATE,
+    })
+}
+
+function initHTTP(): MaybeProviders {
     const isLSIFAvailable = mkIsLSIFAvailable()
 
     return {
@@ -323,5 +370,278 @@ export function initLSIF(): MaybeProviders {
             [sourcegraph.TextDocument, sourcegraph.Position],
             sourcegraph.Location[]
         >(isLSIFAvailable)(references),
+    }
+}
+
+function initGraphQL(): MaybeProviders {
+    const noLSIFData = new Set<string>()
+
+    const cacheUndefined = <R>(
+        f: (
+            doc: sourcegraph.TextDocument,
+            pos: sourcegraph.Position
+        ) => Promise<Maybe<R>>
+    ) => async (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<Maybe<R>> => {
+        if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
+            console.log('LSIF is not enabled in global settings')
+            return undefined
+        }
+
+        if (noLSIFData.has(doc.uri)) {
+            return undefined
+        }
+
+        const result = await f(doc, pos)
+        if (result === undefined) {
+            noLSIFData.add(doc.uri)
+        }
+
+        return result
+    }
+
+    return {
+        definition: cacheUndefined(definitionGraphQL),
+        references: cacheUndefined(referencesGraphQL),
+        hover: cacheUndefined(hoverGraphQL),
+    }
+}
+
+async function definitionGraphQL(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<Maybe<sourcegraph.Definition | null>> {
+    const query = `
+        query Definitions($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            repository(name: $repository) {
+                commit(rev: $commit) {
+                    blob(path: $path) {
+                        lsif {
+                            definitions(line: $line, character: $character) {
+                                nodes {
+                                    resource {
+                                        path
+                                        repository {
+                                            name
+                                        }
+                                        commit {
+                                            oid
+                                        }
+                                    }
+                                    range {
+                                        start {
+                                            line
+                                            character
+                                        }
+                                        end {
+                                            line
+                                            character
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const lsifObj = await queryLSIFGraphQL<{
+        definitions: { nodes: LocationConnectionNode[] }
+    }>({ doc, query, position })
+
+    if (!lsifObj) {
+        return undefined
+    }
+
+    return { value: lsifObj.definitions.nodes.map(nodeToLocation) }
+}
+
+async function referencesGraphQL(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<Maybe<sourcegraph.Location[]>> {
+    const query = `
+        query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            repository(name: $repository) {
+                commit(rev: $commit) {
+                    blob(path: $path) {
+                        lsif {
+                            references(line: $line, character: $character) {
+                                nodes {
+                                    resource {
+                                        path
+                                        repository {
+                                            name
+                                        }
+                                        commit {
+                                            oid
+                                        }
+                                    }
+                                    range {
+                                        start {
+                                            line
+                                            character
+                                        }
+                                        end {
+                                            line
+                                            character
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const lsifObj = await queryLSIFGraphQL<{
+        references: { nodes: LocationConnectionNode[] }
+    }>({ doc, query, position })
+
+    if (!lsifObj) {
+        return undefined
+    }
+
+    return { value: lsifObj.references.nodes.map(nodeToLocation) }
+}
+
+async function hoverGraphQL(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<Maybe<sourcegraph.Hover>> {
+    const query = `
+        query Hover($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            repository(name: $repository) {
+                commit(rev: $commit) {
+                    blob(path: $path) {
+                        lsif {
+                            hover(line: $line, character: $character) {
+                                markdown {
+                                    text
+                                }
+                                range {
+                                    start {
+                                        line
+                                        character
+                                    }
+                                    end {
+                                        line
+                                        character
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const lsifObj = await queryLSIFGraphQL<{
+        hover: { markdown: { text: string }; range: sourcegraph.Range }
+    }>({
+        doc,
+        query,
+        position,
+    })
+
+    if (!lsifObj) {
+        return undefined
+    }
+
+    return {
+        value: {
+            contents: {
+                value: lsifObj.hover.markdown.text,
+                kind: sourcegraph.MarkupKind.Markdown,
+            },
+            range: lsifObj.hover.range,
+        },
+    }
+}
+
+async function queryLSIFGraphQL<T>({
+    doc,
+    query,
+    position,
+}: {
+    doc: sourcegraph.TextDocument
+    query: string
+    position: LSP.Position
+}): Promise<T | undefined> {
+    repositoryFromDoc(doc)
+    commitFromDoc(doc)
+
+    const vars = {
+        repository: repositoryFromDoc(doc),
+        commit: commitFromDoc(doc),
+        path: pathFromDoc(doc),
+        line: position.line,
+        character: position.character,
+    }
+
+    const respObj: {
+        data: {
+            repository: {
+                commit: {
+                    blob: {
+                        lsif: T
+                    }
+                }
+            }
+        }
+        errors: Error[]
+    } = await queryGraphQL({
+        query,
+        vars,
+        sourcegraph,
+    })
+
+    if (respObj.errors) {
+        const asError = (err: { message: string }): Error =>
+            Object.assign(new Error(err.message), err)
+
+        if (respObj.errors.length === 1) {
+            throw asError(respObj.errors[0])
+        }
+
+        throw Object.assign(
+            new Error(respObj.errors.map(e => e.message).join('\n')),
+            {
+                name: 'AggregateError',
+                errors: respObj.errors.map(asError),
+            }
+        )
+    }
+
+    return respObj.data.repository.commit.blob.lsif
+}
+
+type LocationConnectionNode = {
+    resource: {
+        path: string
+        repository: { name: string }
+        commit: { oid: string }
+    }
+    range: sourcegraph.Range
+}
+
+function nodeToLocation(node: LocationConnectionNode): sourcegraph.Location {
+    return {
+        uri: new sourcegraph.URI(
+            `git://${node.resource.repository.name}?${node.resource.commit.oid}#${node.resource.path}`
+        ),
+        range: new sourcegraph.Range(
+            node.range.start.line,
+            node.range.start.character,
+            node.range.end.line,
+            node.range.end.character
+        ),
     }
 }

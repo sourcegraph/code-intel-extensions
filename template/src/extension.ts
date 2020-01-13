@@ -9,10 +9,14 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     // This is set to an individual language ID by the generator script.
     const languageID = 'all'
 
+    // LSIF is not language-specific, and we only want to initialize it once.
+    // Otherwise we will make a flurry of calls to the frontend to check if
+    // LSIF is enabled.
+    const lsif = initLSIF()
+
     for (const languageSpec of languageID === 'all'
         ? languageSpecs
         : [languageSpecs.find(l => l.handlerArgs.languageID === languageID)!]) {
-        const lsif = initLSIF()
         const handler = new Handler({
             ...languageSpec.handlerArgs,
             sourcegraph,
