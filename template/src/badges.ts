@@ -54,7 +54,7 @@ export const impreciseBadge = {
     icon: makeInfoIcon('#ffffff'),
     light: { icon: makeInfoIcon('#000000') },
     hoverMessage:
-        'Search-based results - for precise results see, our LSIF documentation.',
+        'Search-based results - click to see how these results are calculated and how to get precise intelligence with LSIF.',
     linkURL:
         'https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence',
 }
