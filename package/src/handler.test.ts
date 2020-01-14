@@ -4,6 +4,7 @@ import {
     definitionQueries,
     findDocstring,
     wrapIndentationInCodeBlocks,
+    findSearchToken,
 } from './handler'
 import { TextDocument } from 'sourcegraph'
 import { pythonStyle, cStyle } from '../../languages'
@@ -298,6 +299,22 @@ prose
   code2
 \`\`\`
         `
+        )
+    })
+})
+
+describe('findSearchToken', () => {
+    it('custom identCharPattern', () => {
+        assert.deepStrictEqual(
+            findSearchToken({
+                text: '(defn skip-ws! []',
+                position: { line: 0, character: 6 },
+                identCharPattern: /[A-Za-z0-9_\-!?]/,
+            }),
+            {
+                isComment: false,
+                searchToken: 'skip-ws!',
+            }
         )
     })
 })
