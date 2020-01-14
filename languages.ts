@@ -423,7 +423,7 @@ export const languageSpecs: LanguageSpec[] = [
             languageID: 'clojure',
             fileExts: ['clj', 'cljs', 'cljx'],
             commentStyle: lispStyle,
-            identCharPattern: /[A-Za-z0-9_\-!?+*>]/,
+            identCharPattern: /[A-Za-z0-9_\-!?+*<>]/,
         },
         stylized: 'Clojure',
     },
