@@ -57,10 +57,6 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                         return undefined
                     }
 
-                    console.log('ok gonna add imprecise...', {
-                        vs: val.map(v => ({ ...v, badge: impreciseBadge })),
-                    })
-
                     return val.map(v => ({ ...v, badge: impreciseBadge }))
                 },
             })
