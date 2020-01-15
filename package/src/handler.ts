@@ -10,9 +10,11 @@ import {
 } from 'sourcegraph'
 
 /**
- * identCharPattern is used to match identifier tokens
+ * The default regex for characters allowed in an identifier. It works well for
+ * C-like languages (C/C++, C#, Java, etc.) but not for languages that allow
+ * punctuation characters (e.g. Ruby).
  */
-const identCharPattern = /[A-Za-z0-9_\-']/
+const DEFAULT_IDENT_CHAR_PATTERN = /[A-Za-z0-9_]/
 
 /**
  * Selects documents that the extension works on.
@@ -122,15 +124,18 @@ function resultToLocation({
     }
 }
 
-function findSearchToken({
+export function findSearchToken({
     text,
     position,
     lineRegex,
+    identCharPattern,
 }: {
     text: string
-    position: Position
+    position: { line: number; character: number }
     lineRegex?: RegExp
+    identCharPattern?: RegExp
 }): { searchToken: string; isComment: boolean } | undefined {
+    identCharPattern = identCharPattern || DEFAULT_IDENT_CHAR_PATTERN
     const lines = text.split('\n')
     const line = lines[position.line]
     let end = line.length
@@ -572,6 +577,10 @@ export interface HandlerArgs {
      */
     docstringIgnore?: RegExp
     commentStyle?: CommentStyle
+    /**
+     * Regex that matches characters in an identifier.
+     */
+    identCharPattern?: RegExp
     sourcegraph: typeof import('sourcegraph')
     /**
      * Callback that filters the given symbol search results (e.g. to drop
@@ -589,6 +598,7 @@ export class Handler {
     public languageID: string = ''
     public fileExts: string[] = []
     public commentStyle: CommentStyle | undefined
+    public identCharPattern: RegExp | undefined
     public docstringIgnore: RegExp | undefined
     public debugAnnotatedURIs: string[]
     public filterDefinitions: FilterDefinitions
@@ -601,6 +611,7 @@ export class Handler {
         languageID,
         fileExts = [],
         commentStyle,
+        identCharPattern,
         docstringIgnore,
         sourcegraph,
         filterDefinitions: filterDefinitions = ({ results }) => results,
@@ -610,6 +621,7 @@ export class Handler {
         this.languageID = languageID
         this.fileExts = fileExts
         this.commentStyle = commentStyle
+        this.identCharPattern = identCharPattern
         this.docstringIgnore = docstringIgnore
         this.debugAnnotatedURIs = []
         this.filterDefinitions = filterDefinitions
@@ -704,6 +716,7 @@ export class Handler {
             text: fileContent,
             position: pos,
             lineRegex: this.commentStyle && this.commentStyle.lineRegex,
+            identCharPattern: this.identCharPattern,
         })
         if (!tokenResult) {
             return null
@@ -757,6 +770,7 @@ export class Handler {
             text: doc.text,
             position: pos,
             lineRegex: this.commentStyle && this.commentStyle.lineRegex,
+            identCharPattern: this.identCharPattern,
         })
         if (!tokenResult) {
             return []

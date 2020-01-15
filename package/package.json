@@ -1,6 +1,6 @@
 {
   "name": "@sourcegraph/basic-code-intel",
-  "version": "7.0.10",
+  "version": "9.0.0",
   "description": "Common library for providing basic code intelligence in Sourcegraph extensions",
   "repository": {
     "type": "git",
@@ -48,6 +48,7 @@
     "@types/lodash": "4.14.149",
     "@types/mocha": "5.2.7",
     "@types/node": "10.12.12",
+    "@types/semver": "^6.2.0",
     "lnfs-cli": "^2.1.0",
     "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",
@@ -62,6 +63,7 @@
   "dependencies": {
     "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
+    "semver": "^6.3.0",
     "sourcegraph": "^23.0.1",
     "vscode-languageserver-types": "^3.14.0"
   },
