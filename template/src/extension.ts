@@ -1,8 +1,7 @@
-import { Handler, initLSIF } from '../../package/lib'
+import { Handler, initLSIF, impreciseBadge } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 import { documentSelector } from '../../package/lib/handler'
-import { impreciseBadge } from './badges'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
 
@@ -57,6 +56,10 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                     if (!val) {
                         return undefined
                     }
+
+                    console.log('ok gonna add imprecise...', {
+                        vs: val.map(v => ({ ...v, badge: impreciseBadge })),
+                    })
 
                     return val.map(v => ({ ...v, badge: impreciseBadge }))
                 },
