@@ -1,9 +1,14 @@
-import { Handler, initLSIF, asyncFirst, wrapMaybe } from '../../package/lib'
+import { Handler, initLSIF, impreciseBadge } from '../../package/lib'
 import * as sourcegraph from 'sourcegraph'
 import { languageSpecs } from '../../languages'
 import { documentSelector } from '../../package/lib/handler'
 
 const DUMMY_CTX = { subscriptions: { add: (_unsubscribable: any) => void 0 } }
+
+// Gets an opaque value that is the same for all locations
+// within a file but different from other files.
+const file = (loc: sourcegraph.Location) =>
+    `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
 
 export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
     // This is set to an individual language ID by the generator script.
@@ -24,48 +29,60 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
         const selector = documentSelector(languageSpec.handlerArgs.fileExts)
         ctx.subscriptions.add(
             sourcegraph.languages.registerHoverProvider(selector, {
-                provideHover: asyncFirst(
-                    [lsif.hover, wrapMaybe(handler.hover.bind(handler))],
-                    null
-                ),
+                provideHover: async (doc, pos) => {
+                    const lsifResult = await lsif.hover(doc, pos)
+                    if (lsifResult) {
+                        return lsifResult.value
+                    }
+
+                    const val = await handler.hover(doc, pos)
+                    if (!val) {
+                        return undefined
+                    }
+
+                    return { ...val, badge: impreciseBadge }
+                },
             })
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerDefinitionProvider(selector, {
-                provideDefinition: asyncFirst(
-                    [
-                        lsif.definition,
-                        wrapMaybe(handler.definition.bind(handler)),
-                    ],
-                    null
-                ),
+                provideDefinition: async (doc, pos) => {
+                    const lsifResult = await lsif.definition(doc, pos)
+                    if (lsifResult) {
+                        return lsifResult.value
+                    }
+
+                    const val = await handler.definition(doc, pos)
+                    if (!val) {
+                        return undefined
+                    }
+
+                    return val.map(v => ({ ...v, badge: impreciseBadge }))
+                },
             })
         )
         ctx.subscriptions.add(
             sourcegraph.languages.registerReferenceProvider(selector, {
                 provideReferences: async (doc, pos) => {
-                    // Gets an opaque value that is the same for all locations
-                    // within a file but different from other files.
-                    const file = (loc: sourcegraph.Location) =>
-                        `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
+                    // Get and extract LSIF results
+                    const lsifResult = await lsif.references(doc, pos)
+                    const lsifValues = lsifResult ? lsifResult.value : []
+                    const lsifFiles = new Set(lsifValues.map(file))
 
-                    // Concatenates LSIF results (if present) with fuzzy results
-                    // because LSIF data might be sparse.
-                    const lsifReferences = await lsif.references(doc, pos)
-                    const fuzzyReferences = await handler.references(doc, pos)
-
-                    const lsifFiles = new Set(
-                        (lsifReferences ? lsifReferences.value : []).map(file)
-                    )
+                    // Unconditionally get search references and append them with
+                    // precise results because LSIF data might be sparse. Remove any
+                    // search-based result that occurs in a file with an LSIF result.
+                    const searchReferences = (await handler.references(
+                        doc,
+                        pos
+                    )).filter(fuzzyRef => !lsifFiles.has(file(fuzzyRef)))
 
                     return [
-                        ...(lsifReferences === undefined
-                            ? []
-                            : lsifReferences.value),
-                        // Drop fuzzy references from files that have LSIF results.
-                        ...fuzzyReferences.filter(
-                            fuzzyRef => !lsifFiles.has(file(fuzzyRef))
-                        ),
+                        ...lsifValues,
+                        ...searchReferences.map(v => ({
+                            ...v,
+                            badge: impreciseBadge,
+                        })),
                     ]
                 },
             })
