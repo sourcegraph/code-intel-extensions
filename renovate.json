@@ -1,6 +1,4 @@
 {
   "extends": ["github>sourcegraph/renovate-config"],
-  "force": {
-    "assignees": ["chrismwendt"]
-  }
+  "reviewers": ["team:code-intel"]
 }
