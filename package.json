@@ -7,7 +7,7 @@
   "devDependencies": {
     "@sourcegraph/prettierrc": "^3.0.1",
     "prettier": "^1.18.2",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.7.2"
   },
   "dependencies": {
     "path-browserify": "^1.0.0"

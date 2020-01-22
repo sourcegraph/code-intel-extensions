@@ -5,7 +5,7 @@
  * @param resolver If resolver provided, it determines the cache key for storing the result based on
  * the first argument provided to the memoized function.
  */
-export function memoizeAsync<P, T>(
+export function memoizeAsync<P extends {}, T>(
     func: (params: P) => Promise<T>,
     resolver?: (params: P) => string
 ): (params: P, force?: boolean) => Promise<T> {
