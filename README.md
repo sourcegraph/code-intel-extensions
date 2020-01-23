@@ -28,7 +28,7 @@ Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and
   }
 ```
 
-Then sideload the extension (http://localhost:1234) on your Sourcegraph instance and refresh the page. Make sure you don't see two of the same language extension.
+Then [sideload the extension](https://docs.sourcegraph.com/extensions/authoring/local_development) (http://localhost:1234) on your Sourcegraph instance and refresh the page. Make sure you don't see two of the same language extension.
 
 Open the browser Network tab and you should start seeing `graphql?Search` calls when you hover over tokens.
 
