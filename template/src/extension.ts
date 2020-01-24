@@ -72,10 +72,9 @@ export function activate(ctx: sourcegraph.ExtensionContext = DUMMY_CTX): void {
                     // Unconditionally get search references and append them with
                     // precise results because LSIF data might be sparse. Remove any
                     // search-based result that occurs in a file with an LSIF result.
-                    const searchReferences = (await handler.references(
-                        doc,
-                        pos
-                    )).filter(fuzzyRef => !lsifFiles.has(file(fuzzyRef)))
+                    const searchReferences = (
+                        await handler.references(doc, pos)
+                    ).filter(fuzzyRef => !lsifFiles.has(file(fuzzyRef)))
 
                     return [
                         ...lsifValues,

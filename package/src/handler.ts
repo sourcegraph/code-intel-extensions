@@ -206,15 +206,12 @@ export function wrapIndentationInCodeBlocks({
         .map(line => ({ line, kind: kindOf(line) }))
 
     function propagateProse(lines: typeof unknownLines): void {
-        lines.reduce(
-            (s, line) => {
-                if (line.kind === undefined && s === 'prose') {
-                    line.kind = 'prose'
-                }
-                return line.kind
-            },
-            'prose' as LineKind | undefined
-        )
+        lines.reduce((s, line) => {
+            if (line.kind === undefined && s === 'prose') {
+                line.kind = 'prose'
+            }
+            return line.kind
+        }, 'prose' as LineKind | undefined)
     }
 
     propagateProse(unknownLines)
