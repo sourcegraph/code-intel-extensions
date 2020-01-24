@@ -40,6 +40,17 @@ const lispStyle: CommentStyle = {
     },
 }
 
+/**
+ * Filter a list of candidate definitions to select those likely to be valid
+ * cross-references for a definition in this file. Accept candidates located in
+ * files that are a suffix match (ignoring file extension) for some import of
+ * the current file.
+ *
+ * For imports we examine user `#include` and `#import` paths, as well as
+ * Objective C module `@import` package names. If no candidates match, fall
+ * back to the raw (unfiltered) results so that the user doesn't get an empty
+ * response unless there really is nothing.
+ */
 const cppFilterDefinitions: HandlerArgs['filterDefinitions'] = ({
     filePath,
     fileContent,
@@ -48,17 +59,28 @@ const cppFilterDefinitions: HandlerArgs['filterDefinitions'] = ({
     const imports = fileContent
         .split(/\r?\n/)
         .map(line => {
-            const match = /^#include "(.*)"$/.exec(line)
-            return match ? match[1] : undefined
+            // Rewrite `@import x.y.z;` as x/y/z to simulate path matching.
+            // In plain C and C++ files, expect this to be empty.
+            const matchImport = /^@import (\w+);$/.exec(line)
+            if (matchImport) {
+                return matchImport[1].replace(/\./g, '/')
+            }
+
+            // Capture paths from #include and #import directives.
+            // N.B. Only user paths ("") are captured, not system (<>) paths.
+            return /^#(include|import) "(.*)"$/.exec(line)?.[2]
         })
         .filter((x): x is string => Boolean(x))
 
+    // Select results whose file path shares a suffix with some import.
+    // N.B. Paths are compared without file extensions.
     const filteredResults = results.filter(result => {
-        return imports.some(i =>
-            path
-                .join(path.parse(result.file).dir, path.parse(result.file).name)
-                .endsWith(path.join(path.parse(i).dir, path.parse(i).name))
-        )
+        const resultParsed = path.parse(result.file)
+        const candidate = path.join(resultParsed.dir, resultParsed.name)
+        return imports.some(i => {
+            const iParsed = path.parse(i)
+            return candidate.endsWith(path.join(iParsed.dir, iParsed.name))
+        })
     })
 
     return filteredResults.length === 0 ? results : filteredResults
@@ -258,6 +280,7 @@ export const languageSpecs: LanguageSpec[] = [
                 'h',
                 'hpp',
                 /* Arduino */ 'ino',
+                /* Objective C */ 'm',
             ],
             commentStyle: cStyle,
             filterDefinitions: cppFilterDefinitions,
