@@ -1,3 +1,10 @@
+export { activateCodeIntel } from './activation'
+export {
+    AbortError,
+    createAbortError,
+    isAbortError,
+    throwIfAbortError,
+} from './abortion'
 export { impreciseBadge } from './badges'
 export { Handler, HandlerArgs } from './handler'
 export {
