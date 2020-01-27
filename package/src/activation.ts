@@ -154,7 +154,11 @@ function createDefinitionProvider(
     async function* provideDefinition(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ): AsyncGenerator<sourcegraph.Definition | null|undefined, void, undefined> {
+    ): AsyncGenerator<
+        sourcegraph.Definition | null | undefined,
+        void,
+        undefined
+    > {
         const lsifResult = await lsifProviders.definition(doc, pos)
         if (lsifResult) {
             yield lsifResult.value
@@ -172,7 +176,6 @@ function createDefinitionProvider(
             return
         }
 
-
         if (!Array.isArray(searchResult)) {
             yield { ...searchResult, badge: impreciseBadge }
             return
@@ -182,12 +185,10 @@ function createDefinitionProvider(
     }
 
     return {
-        provideDefinition: memoizePrevious(
-            areProviderParamsEqual,
-            (doc, pos) =>
-                observableFromAsyncGenerator(
-                    abortPrevious(() => provideDefinition(doc, pos))
-                ).pipe(shareReplay(1))
+        provideDefinition: memoizePrevious(areProviderParamsEqual, (doc, pos) =>
+            observableFromAsyncGenerator(
+                abortPrevious(() => provideDefinition(doc, pos))
+            ).pipe(shareReplay(1))
         ),
     }
 }
@@ -250,7 +251,7 @@ function createHoverProvider(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): AsyncGenerator<
-        sourcegraph.Badged<sourcegraph.Hover> | null|undefined,
+        sourcegraph.Badged<sourcegraph.Hover> | null | undefined,
         void,
         undefined
     > {
@@ -449,11 +450,9 @@ export function memoizePrevious<P extends any[], R>(
     let previousArgs: P
     return (...args) => {
         if (previousArgs && compare(previousArgs, args)) {
-            console.log('returning previous')
             return previousResult
         }
         previousArgs = args
-        console.log('invoking function')
         previousResult = fn(...args)
         return previousResult
     }
