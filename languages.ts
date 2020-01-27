@@ -552,4 +552,38 @@ export const languageSpecs: LanguageSpec[] = [
         },
         stylized: 'R',
     },
+    {
+        handlerArgs: {
+            languageID: 'pascal',
+            fileExts: ['p', 'pas', 'pp'],
+            commentStyle: {
+                // Traditional: (* this is a comment *)
+                // Customary:   { this is also a comment }
+                block: {
+                    startRegex: /(\{|\(\*)\s?/,
+                    endRegex: /(\}|\*\))/,
+                },
+
+                // TODO: Some Pascal implementations support //-comments too.
+                // Is that common enough to support here?
+            },
+        },
+        stylized: 'Pascal',
+    },
+    {
+        handlerArgs: {
+            languageID: 'verilog',
+            fileExts: ['sv', 'svh', 'svi', 'v'],
+            commentStyle: cStyle,
+        },
+        stylized: 'Verilog',
+    },
+    {
+        handlerArgs: {
+            languageID: 'vhdl',
+            fileExts: ['vhd', 'vhdl'],
+            commentStyle: { lineRegex: /--+\s?/ },
+        },
+        stylized: 'VHDL',
+    },
 ]
