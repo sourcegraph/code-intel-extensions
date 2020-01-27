@@ -236,6 +236,7 @@ function createReferencesProvider(
 
     return {
         provideReferences: (doc, pos, ctx) =>
+            // TODO - add memoizePrevious, abortPrevious
             observableFromAsyncGenerator(() =>
                 provideReferences(doc, pos, ctx)
             ),
@@ -336,6 +337,7 @@ function createExternalReferencesProvider(
 ): sourcegraph.ReferenceProvider {
     return {
         provideReferences: (doc, pos, ctx) =>
+            // TODO - add memoizePrevious, abortPrevious
             observableFromAsyncGenerator(() =>
                 externalReferencesProvider.references(doc, pos, ctx)
             ),
@@ -353,6 +355,7 @@ function registerImplementationsProvider(
             selector,
             {
                 provideLocations: (doc, pos) =>
+                    // TODO - add memoizePrevious, abortPrevious
                     observableFromAsyncGenerator(() =>
                         implementationsProvider.locations(doc, pos)
                     ),
