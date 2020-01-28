@@ -3,7 +3,6 @@
 # https://help.github.com/articles/about-codeowners/
 
 * @sourcegraph/code-intel
-*.ts @sourcegraph/code-intel @sourcegraph/web
 
 # Configured through Renovate
 package.json
