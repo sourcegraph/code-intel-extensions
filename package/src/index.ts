@@ -1,24 +1,14 @@
 export { activateCodeIntel } from './activation'
+export { HandlerArgs } from './search/handler'
+export { CommentStyle, BlockCommentStyle } from './search/comments'
+export {
+    LSPProviders,
+    ExternalReferenceProvider,
+    ImplementationsProvider,
+} from './lsp/providers'
 export {
     AbortError,
     createAbortError,
     isAbortError,
     throwIfAbortError,
 } from './abortion'
-export { impreciseBadge } from './badges'
-export { Handler, HandlerArgs } from './handler'
-export {
-    initLSIF,
-    asyncFirst,
-    asyncWhen,
-    when,
-    wrapMaybe,
-    Maybe,
-    MaybeProviders,
-    noopMaybeProviders,
-    mkIsLSIFAvailable,
-    hover,
-    definition,
-    references,
-    Providers,
-} from './lsif'
