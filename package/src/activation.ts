@@ -9,7 +9,7 @@ import {
     shareReplay,
 } from 'rxjs/operators'
 import { Observer, BehaviorSubject, from, Observable, noop } from 'rxjs'
-import { createAbortError } from './abortion'
+import { createAbortError } from './abort'
 
 export type Maybe<T> = { value: T } | undefined
 
