@@ -173,7 +173,7 @@ function createDefinitionProvider(
         }
 
         if (!Array.isArray(searchResult)) {
-            const badged = ({ ...searchResult, badge: impreciseBadge })
+            const badged = { ...searchResult, badge: impreciseBadge }
             yield badged
             return
         }
