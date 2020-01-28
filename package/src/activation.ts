@@ -8,7 +8,7 @@ import {
     distinctUntilChanged,
     shareReplay,
 } from 'rxjs/operators'
-import { BehaviorSubject, from, Observable, noop } from 'rxjs'
+import { Observer, BehaviorSubject, from, Observable, noop } from 'rxjs'
 import { createAbortError } from './abortion'
 
 export type Maybe<T> = { value: T } | undefined
@@ -154,11 +154,7 @@ function createDefinitionProvider(
     async function* provideDefinition(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ): AsyncGenerator<
-        sourcegraph.Definition | null | undefined,
-        void,
-        undefined
-    > {
+    ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
         const lsifResult = await lsifProviders.definition(doc, pos)
         if (lsifResult) {
             yield lsifResult.value
@@ -177,7 +173,8 @@ function createDefinitionProvider(
         }
 
         if (!Array.isArray(searchResult)) {
-            yield { ...searchResult, badge: impreciseBadge }
+            const badged = ({ ...searchResult, badge: impreciseBadge })
+            yield badged
             return
         }
 
@@ -235,7 +232,11 @@ function createReferencesProvider(
     }
 
     return {
-        provideReferences: (doc, pos, ctx) =>
+        provideReferences: (
+            doc: sourcegraph.TextDocument,
+            pos: sourcegraph.Position,
+            ctx: sourcegraph.ReferenceContext
+        ) =>
             // TODO - add memoizePrevious, abortPrevious
             observableFromAsyncGenerator(() =>
                 provideReferences(doc, pos, ctx)
@@ -336,7 +337,11 @@ function createExternalReferencesProvider(
     externalReferencesProvider: ExternalReferenceProvider
 ): sourcegraph.ReferenceProvider {
     return {
-        provideReferences: (doc, pos, ctx) =>
+        provideReferences: (
+            doc: sourcegraph.TextDocument,
+            pos: sourcegraph.Position,
+            ctx: sourcegraph.ReferenceContext
+        ) =>
             // TODO - add memoizePrevious, abortPrevious
             observableFromAsyncGenerator(() =>
                 externalReferencesProvider.references(doc, pos, ctx)
@@ -354,7 +359,10 @@ function registerImplementationsProvider(
             implementationsProvider.implId,
             selector,
             {
-                provideLocations: (doc, pos) =>
+                provideLocations: (
+                    doc: sourcegraph.TextDocument,
+                    pos: sourcegraph.Position
+                ) =>
                     // TODO - add memoizePrevious, abortPrevious
                     observableFromAsyncGenerator(() =>
                         implementationsProvider.locations(doc, pos)
@@ -383,7 +391,7 @@ export const areProviderParamsEqual = (
 export const observableFromAsyncGenerator = <T>(
     generator: () => AsyncGenerator<T, unknown, void>
 ): Observable<T> =>
-    new Observable(observer => {
+    new Observable((observer: Observer<T>) => {
         const iterator = generator()
         let unsubscribed = false
         let iteratorDone = false
