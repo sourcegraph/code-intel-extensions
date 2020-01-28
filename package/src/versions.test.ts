@@ -15,6 +15,19 @@ describe('compareVersions', () => {
         }
     })
 
+    it('should return enabledForDev flag when product version is suffixed with dev', () => {
+        for (const value of [true, false]) {
+            const enabled = compareVersion({
+                productVersion: 'test-user-dev',
+                minimumDate: '',
+                minimumVersion: '',
+                enableForDev: value,
+            })
+
+            assert.equal(enabled, value)
+        }
+    })
+
     it('should compare semantic versions', () => {
         const tests: {
             productVersion: string
