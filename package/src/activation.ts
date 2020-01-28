@@ -115,11 +115,7 @@ function createDefinitionProvider(
     }
 
     return {
-        provideDefinition: memoizePrevious(areProviderParamsEqual, (doc, pos) =>
-            observableFromAsyncGenerator(
-                abortPrevious(() => provideDefinition(doc, pos))
-            ).pipe(shareReplay(1))
-        ),
+        provideDefinition: wrap(areProviderParamsEqual, provideDefinition),
     }
 }
 
@@ -165,11 +161,10 @@ function createReferencesProvider(
     }
 
     return {
-        provideReferences: (doc, pos, ctx) =>
-            // TODO - add memoizePrevious, abortPrevious
-            observableFromAsyncGenerator(() =>
-                provideReferences(doc, pos, ctx)
-            ),
+        provideReferences: wrap(
+            areProviderParamsContextEqual,
+            provideReferences
+        ),
     }
 }
 
@@ -207,13 +202,7 @@ function createHoverProvider(
     }
 
     return {
-        provideHover: memoizePrevious(
-            areProviderParamsEqual,
-            (textDocument, position) =>
-                observableFromAsyncGenerator(
-                    abortPrevious(() => provideHover(textDocument, position))
-                ).pipe(shareReplay(1))
-        ),
+        provideHover: wrap(areProviderParamsEqual, provideHover),
     }
 }
 
@@ -266,11 +255,12 @@ function createExternalReferencesProvider(
     externalReferencesProvider: ExternalReferenceProvider
 ): sourcegraph.ReferenceProvider {
     return {
-        provideReferences: (doc, pos, ctx) =>
-            // TODO - add memoizePrevious, abortPrevious
-            observableFromAsyncGenerator(() =>
-                externalReferencesProvider.references(doc, pos, ctx)
-            ),
+        provideReferences: wrap(
+            areProviderParamsContextEqual,
+            externalReferencesProvider.references.bind(
+                externalReferencesProvider
+            )
+        ),
     }
 }
 
@@ -284,11 +274,12 @@ function registerImplementationsProvider(
             implementationsProvider.implId,
             selector,
             {
-                provideLocations: (doc, pos) =>
-                    // TODO - add memoizePrevious, abortPrevious
-                    observableFromAsyncGenerator(() =>
-                        implementationsProvider.locations(doc, pos)
-                    ),
+                provideLocations: wrap(
+                    areProviderParamsEqual,
+                    implementationsProvider.locations.bind(
+                        implementationsProvider
+                    )
+                ),
             }
         )
     )
@@ -305,10 +296,50 @@ function registerImplementationsProvider(
 //
 //
 
+const wrap = <P extends any[], R>(
+    compare: (a: P, b: P) => boolean,
+    fn: (...args: P) => AsyncGenerator<R, void, void>
+): ((...args: P) => Observable<R>) =>
+    memoizePrevious(compare, (...args) =>
+        observableFromAsyncGenerator(abortPrevious(() => fn(...args))).pipe(
+            shareReplay(1)
+        )
+    )
+
 const areProviderParamsEqual = (
     [doc1, pos1]: [sourcegraph.TextDocument, sourcegraph.Position],
     [doc2, pos2]: [sourcegraph.TextDocument, sourcegraph.Position]
 ): boolean => doc1.uri === doc2.uri && pos1.isEqual(pos2)
+
+const areProviderParamsContextEqual = (
+    [doc1, pos1]: [
+        sourcegraph.TextDocument,
+        sourcegraph.Position,
+        sourcegraph.ReferenceContext
+    ],
+    [doc2, pos2]: [
+        sourcegraph.TextDocument,
+        sourcegraph.Position,
+        sourcegraph.ReferenceContext
+    ]
+): boolean => areProviderParamsEqual([doc1, pos1], [doc2, pos2])
+
+/** Workaround for https://github.com/sourcegraph/sourcegraph/issues/1321 */
+function memoizePrevious<P extends any[], R>(
+    compare: (a: P, b: P) => boolean,
+    fn: (...args: P) => R
+): (...args: P) => R {
+    let previousResult: R
+    let previousArgs: P
+    return (...args) => {
+        if (previousArgs && compare(previousArgs, args)) {
+            return previousResult
+        }
+        previousArgs = args
+        previousResult = fn(...args)
+        return previousResult
+    }
+}
 
 const observableFromAsyncGenerator = <T>(
     generator: () => AsyncGenerator<T, unknown, void>
@@ -371,22 +402,5 @@ const abortPrevious = <P extends any[], R>(
                 return
             }
         }
-    }
-}
-
-/** Workaround for https://github.com/sourcegraph/sourcegraph/issues/1321 */
-function memoizePrevious<P extends any[], R>(
-    compare: (a: P, b: P) => boolean,
-    fn: (...args: P) => R
-): (...args: P) => R {
-    let previousResult: R
-    let previousArgs: P
-    return (...args) => {
-        if (previousArgs && compare(previousArgs, args)) {
-            return previousResult
-        }
-        previousArgs = args
-        previousResult = fn(...args)
-        return previousResult
     }
 }
