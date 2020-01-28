@@ -1,4 +1,4 @@
-export { activateCodeIntel } from './activation'
+export { activateCodeIntel, LSPProviders } from './activation'
 export {
     AbortError,
     createAbortError,

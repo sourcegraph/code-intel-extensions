@@ -2,13 +2,8 @@ import * as sourcegraph from 'sourcegraph'
 import { HandlerArgs, Handler } from './handler'
 import { initLSIF } from './lsif'
 import { impreciseBadge } from './badges'
-import {
-    map,
-    finalize,
-    distinctUntilChanged,
-    shareReplay,
-} from 'rxjs/operators'
-import { Observer, BehaviorSubject, from, Observable } from 'rxjs'
+import { shareReplay } from 'rxjs/operators'
+import { Observer, Observable } from 'rxjs'
 import { createAbortError } from './abort'
 
 export type Maybe<T> = { value: T } | undefined
@@ -63,29 +58,6 @@ export interface LSPProviders {
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ) => AsyncGenerator<sourcegraph.Hover | null, void, undefined>
-
-    externalReferences?: ExternalReferenceProvider
-    implementations?: ImplementationsProvider
-}
-
-export interface ExternalReferenceProvider {
-    settingName: string
-
-    references: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position,
-        context: sourcegraph.ReferenceContext
-    ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
-}
-
-export interface ImplementationsProvider {
-    implId: string
-    panelTitle: string
-
-    locations: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
 }
 
 export function activateCodeIntel(
@@ -123,27 +95,6 @@ export function activateCodeIntel(
             createHoverProvider(lsifProviders, searchProviders, lspProviders)
         )
     )
-
-    if (lspProviders) {
-        const externalReferencesProvider = lspProviders.externalReferences
-        const implementationsProvider = lspProviders.implementations
-
-        if (externalReferencesProvider) {
-            registerExternalReferencesProvider(
-                ctx,
-                selector,
-                externalReferencesProvider
-            )
-        }
-
-        if (implementationsProvider) {
-            registerImplementationsProvider(
-                ctx,
-                selector,
-                implementationsProvider
-            )
-        }
-    }
 }
 
 function createDefinitionProvider(
@@ -271,92 +222,6 @@ function createHoverProvider(
     return {
         provideHover: wrap(areProviderParamsEqual, provideHover),
     }
-}
-
-function registerExternalReferencesProvider<S extends { [key: string]: any }>(
-    ctx: sourcegraph.ExtensionContext,
-    selector: sourcegraph.DocumentSelector,
-    externalReferencesProvider: ExternalReferenceProvider
-) {
-    const settings: BehaviorSubject<Partial<S>> = new BehaviorSubject<
-        Partial<S>
-    >({})
-    ctx.subscriptions.add(
-        sourcegraph.configuration.subscribe(() => {
-            settings.next(sourcegraph.configuration.get<Partial<S>>().value)
-        })
-    )
-
-    let registration: sourcegraph.Unsubscribable | undefined
-
-    const register = () => {
-        registration = sourcegraph.languages.registerReferenceProvider(
-            selector,
-            createExternalReferencesProvider(externalReferencesProvider)
-        )
-    }
-
-    const deregister = () => {
-        if (registration) {
-            registration.unsubscribe()
-            registration = undefined
-        }
-    }
-
-    ctx.subscriptions.add(
-        from(settings)
-            .pipe(
-                map(
-                    settings =>
-                        !!settings[externalReferencesProvider.settingName]
-                ),
-                distinctUntilChanged(),
-                map(enabled => (enabled ? register : deregister)()),
-                finalize(() => deregister())
-            )
-            .subscribe()
-    )
-}
-
-function createExternalReferencesProvider(
-    externalReferencesProvider: ExternalReferenceProvider
-): sourcegraph.ReferenceProvider {
-    return {
-        provideReferences: wrap(
-            areProviderParamsContextEqual,
-            externalReferencesProvider.references.bind(
-                externalReferencesProvider
-            )
-        ),
-    }
-}
-
-function registerImplementationsProvider(
-    ctx: sourcegraph.ExtensionContext,
-    selector: sourcegraph.DocumentSelector,
-    implementationsProvider: ImplementationsProvider
-) {
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerLocationProvider(
-            implementationsProvider.implId,
-            selector,
-            {
-                provideLocations: wrap(
-                    areProviderParamsEqual,
-                    implementationsProvider.locations.bind(
-                        implementationsProvider
-                    )
-                ),
-            }
-        )
-    )
-
-    const IMPL_ID = implementationsProvider.implId
-    const panelView = sourcegraph.app.createPanelView(IMPL_ID)
-    panelView.title = implementationsProvider.panelTitle
-    panelView.component = { locationProvider: IMPL_ID }
-    panelView.priority = 160
-    ctx.subscriptions.add(panelView)
 }
 
 //
