@@ -64,7 +64,7 @@
     "lodash": "^4.17.11",
     "rxjs": "^6.3.3",
     "semver": "^6.3.0",
-    "sourcegraph": "^23.0.1",
+    "sourcegraph": "^23.1.0",
     "vscode-languageserver-types": "^3.14.0"
   },
   "sideEffects": false
