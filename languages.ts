@@ -594,4 +594,12 @@ export const languageSpecs: LanguageSpec[] = [
         },
         stylized: 'GraphQL',
     },
+    {
+        handlerArgs: {
+            languageID: 'groovy',
+            fileExts: ['groovy'],
+            commentStyle: cStyle,
+        },
+        stylized: 'Groovy',
+    },
 ]
