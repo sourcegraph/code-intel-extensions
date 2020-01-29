@@ -9,7 +9,9 @@ export type LocationConnectionNode = {
     range: sourcegraph.Range
 }
 
-export function nodeToLocation(node: LocationConnectionNode): sourcegraph.Location {
+export function nodeToLocation(
+    node: LocationConnectionNode
+): sourcegraph.Location {
     return {
         uri: new sourcegraph.URI(
             `git://${node.resource.repository.name}?${node.resource.commit.oid}#${node.resource.path}`

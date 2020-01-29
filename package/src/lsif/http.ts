@@ -32,7 +32,6 @@ export function initHTTP(): LSIFProviders {
     }
 }
 
-
 /**
  * Creates an asynchronous predicate on a doc that checks for the existence of
  * LSIF data for the given doc. It's a constructor because it creates an
@@ -92,7 +91,6 @@ const createLSIFAvailablilityCheck = () => {
         return hasLSIFPromise
     }
 }
-
 
 async function definition(
     doc: sourcegraph.TextDocument,

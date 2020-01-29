@@ -2,19 +2,10 @@ import * as sourcegraph from 'sourcegraph'
 import { HandlerArgs, Handler } from './search/handler'
 import { initLSIF } from './lsif/activation'
 import { impreciseBadge } from './badges'
-import {
-    map,
-    finalize,
-    distinctUntilChanged,
-    shareReplay,
-} from 'rxjs/operators'
-import { BehaviorSubject, from, Observable, noop } from 'rxjs'
-import { createAbortError } from './abortion'
-import {
-    LSPProviders,
-    ExternalReferenceProvider,
-    ImplementationsProvider,
-} from './lsp/providers'
+import { shareReplay } from 'rxjs/operators'
+import { Observable } from 'rxjs'
+import { createAbortError } from './abort'
+import { LSPProviders } from './lsp/providers'
 import { LSIFProviders } from './lsif/providers'
 import { SearchProviders } from './search/providers'
 
@@ -53,27 +44,6 @@ export function activateCodeIntel(
             createHoverProvider(lsifProviders, searchProviders, lspProviders)
         )
     )
-
-    if (lspProviders) {
-        const externalReferencesProvider = lspProviders.externalReferences
-        const implementationsProvider = lspProviders.implementations
-
-        if (externalReferencesProvider) {
-            registerExternalReferencesProvider(
-                ctx,
-                selector,
-                externalReferencesProvider
-            )
-        }
-
-        if (implementationsProvider) {
-            registerImplementationsProvider(
-                ctx,
-                selector,
-                implementationsProvider
-            )
-        }
-    }
 }
 
 function createDefinitionProvider(
@@ -115,11 +85,7 @@ function createDefinitionProvider(
     }
 
     return {
-        provideDefinition: memoizePrevious(areProviderParamsEqual, (doc, pos) =>
-            observableFromAsyncGenerator(
-                abortPrevious(() => provideDefinition(doc, pos))
-            ).pipe(shareReplay(1))
-        ),
+        provideDefinition: wrap(areProviderParamsEqual, provideDefinition),
     }
 }
 
@@ -165,11 +131,10 @@ function createReferencesProvider(
     }
 
     return {
-        provideReferences: (doc, pos, ctx) =>
-            // TODO - add memoizePrevious, abortPrevious
-            observableFromAsyncGenerator(() =>
-                provideReferences(doc, pos, ctx)
-            ),
+        provideReferences: wrap(
+            areProviderParamsContextEqual,
+            provideReferences
+        ),
     }
 }
 
@@ -207,108 +172,39 @@ function createHoverProvider(
     }
 
     return {
-        provideHover: memoizePrevious(
-            areProviderParamsEqual,
-            (textDocument, position) =>
-                observableFromAsyncGenerator(
-                    abortPrevious(() => provideHover(textDocument, position))
-                ).pipe(shareReplay(1))
-        ),
+        provideHover: wrap(areProviderParamsEqual, provideHover),
     }
-}
-
-function registerExternalReferencesProvider<S extends { [key: string]: any }>(
-    ctx: sourcegraph.ExtensionContext,
-    selector: sourcegraph.DocumentSelector,
-    externalReferencesProvider: ExternalReferenceProvider
-) {
-    const settings: BehaviorSubject<Partial<S>> = new BehaviorSubject<
-        Partial<S>
-    >({})
-    ctx.subscriptions.add(
-        sourcegraph.configuration.subscribe(() => {
-            settings.next(sourcegraph.configuration.get<Partial<S>>().value)
-        })
-    )
-
-    let registration: sourcegraph.Unsubscribable | undefined
-
-    const register = () => {
-        registration = sourcegraph.languages.registerReferenceProvider(
-            selector,
-            createExternalReferencesProvider(externalReferencesProvider)
-        )
-    }
-
-    const deregister = () => {
-        if (registration) {
-            registration.unsubscribe()
-            registration = undefined
-        }
-    }
-
-    ctx.subscriptions.add(
-        from(settings)
-            .pipe(
-                map(
-                    settings =>
-                        !!settings[externalReferencesProvider.settingName]
-                ),
-                distinctUntilChanged(),
-                map(enabled => (enabled ? register : deregister)()),
-                finalize(() => deregister())
-            )
-            .subscribe()
-    )
-}
-
-function createExternalReferencesProvider(
-    externalReferencesProvider: ExternalReferenceProvider
-): sourcegraph.ReferenceProvider {
-    return {
-        provideReferences: (doc, pos, ctx) =>
-            // TODO - add memoizePrevious, abortPrevious
-            observableFromAsyncGenerator(() =>
-                externalReferencesProvider.references(doc, pos, ctx)
-            ),
-    }
-}
-
-function registerImplementationsProvider(
-    ctx: sourcegraph.ExtensionContext,
-    selector: sourcegraph.DocumentSelector,
-    implementationsProvider: ImplementationsProvider
-) {
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerLocationProvider(
-            implementationsProvider.implId,
-            selector,
-            {
-                provideLocations: (doc, pos) =>
-                    // TODO - add memoizePrevious, abortPrevious
-                    observableFromAsyncGenerator(() =>
-                        implementationsProvider.locations(doc, pos)
-                    ),
-            }
-        )
-    )
-
-    const IMPL_ID = implementationsProvider.implId
-    const panelView = sourcegraph.app.createPanelView(IMPL_ID)
-    panelView.title = implementationsProvider.panelTitle
-    panelView.component = { locationProvider: IMPL_ID }
-    panelView.priority = 160
-    ctx.subscriptions.add(panelView)
 }
 
 //
 //
 //
+
+const wrap = <P extends any[], R>(
+    compare: (a: P, b: P) => boolean,
+    fn: (...args: P) => AsyncGenerator<R, void, void>
+): ((...args: P) => Observable<R>) =>
+    memoizePrevious(compare, (...args) =>
+        observableFromAsyncGenerator(() => fn(...args)).pipe(shareReplay(1))
+    )
 
 const areProviderParamsEqual = (
     [doc1, pos1]: [sourcegraph.TextDocument, sourcegraph.Position],
     [doc2, pos2]: [sourcegraph.TextDocument, sourcegraph.Position]
 ): boolean => doc1.uri === doc2.uri && pos1.isEqual(pos2)
+
+const areProviderParamsContextEqual = (
+    [doc1, pos1]: [
+        sourcegraph.TextDocument,
+        sourcegraph.Position,
+        sourcegraph.ReferenceContext
+    ],
+    [doc2, pos2]: [
+        sourcegraph.TextDocument,
+        sourcegraph.Position,
+        sourcegraph.ReferenceContext
+    ]
+): boolean => areProviderParamsEqual([doc1, pos1], [doc2, pos2])
 
 const observableFromAsyncGenerator = <T>(
     generator: () => AsyncGenerator<T, unknown, void>
@@ -346,33 +242,6 @@ const observableFromAsyncGenerator = <T>(
             }
         }
     })
-
-/**
- * Similar to Rx `switchMap`, finishes the generator returned from the previous call whenever the function is called again.
- *
- * Workaround for https://github.com/sourcegraph/sourcegraph/issues/1190
- */
-const abortPrevious = <P extends any[], R>(
-    fn: (...args: P) => AsyncGenerator<R, void, void>
-): ((...args: P) => AsyncGenerator<R, void, void>) => {
-    let abort = noop
-    return async function*(...args) {
-        abort()
-        let aborted = false
-        abort = () => {
-            aborted = true
-        }
-        for await (const element of fn(...args)) {
-            if (aborted) {
-                return
-            }
-            yield element
-            if (aborted) {
-                return
-            }
-        }
-    }
-}
 
 /** Workaround for https://github.com/sourcegraph/sourcegraph/issues/1321 */
 function memoizePrevious<P extends any[], R>(
