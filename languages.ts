@@ -586,4 +586,12 @@ export const languageSpecs: LanguageSpec[] = [
         },
         stylized: 'VHDL',
     },
+    {
+        handlerArgs: {
+            languageID: 'graphql',
+            fileExts: ['graphql'],
+            commentStyle: shellStyle,
+        },
+        stylized: 'GraphQL',
+    },
 ]
