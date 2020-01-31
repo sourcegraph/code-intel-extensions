@@ -32,7 +32,7 @@
     "mz": "^2.7.0",
     "opentracing": "^0.14.4",
     "path-browserify": "^1.0.0",
-    "rxjs": "^6.5.3",
+    "rxjs": "^6.5.4",
     "semver": "^6.3.0",
     "sourcegraph": "^23.1.0",
     "tagged-template-noop": "^2.1.1",
