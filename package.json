@@ -47,7 +47,7 @@
     "@sourcegraph/extension-api-stubs": "^0.2.3",
     "@sourcegraph/prettierrc": "^3.0.1",
     "@sourcegraph/tsconfig": "^4.0.0",
-    "@sourcegraph/tslint-config": "^13.4.0",
+    "@sourcegraph/tslint-config": "^14.0.3",
     "@types/fs-extra": "^8.0.1",
     "@types/lodash": "4.14.149",
     "@types/mocha": "5.2.7",

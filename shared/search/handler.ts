@@ -691,9 +691,9 @@ export function wrapIndentationInCodeBlocks({
     let resultLines: string[] = []
     for (let i = 0; i < knownLines.length; i++) {
         const currentLine = knownLines[i]
-        const nextLine = knownLines[i + 1]
         resultLines.push(currentLine.line)
-        if (nextLine !== undefined) {
+        if (i + 1 < knownLines.length) {
+            const nextLine = knownLines[i + 1]
             if (currentLine.kind === 'prose' && nextLine.kind === 'code') {
                 resultLines.push('```' + languageID)
             } else if (
