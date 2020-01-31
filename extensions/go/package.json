@@ -36,9 +36,10 @@
     "onLanguage:go"
   ],
   "scripts": {
+    "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts && dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-go@$(git rev-parse HEAD)/-/raw/extension/src/",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
-    "sourcegraph:prepublish": "tsc -b . && parcel build --out-file extension.js src/extension.ts && dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-go@$(git rev-parse HEAD)/-/raw/extension/src/",
+    "sourcegraph:prepublish": "yarn run build",
     "publish": "yarn -s && src ext publish"
   },
   "contributes": {

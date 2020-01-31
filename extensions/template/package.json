@@ -34,9 +34,10 @@
     "*"
   ],
   "scripts": {
+    "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
-    "sourcegraph:prepublish": "tsc -b . && parcel build --out-file extension.js src/extension.ts",
+    "sourcegraph:prepublish": "yarn run build",
     "publish": "yarn -s && src ext publish"
   },
   "contributes": {
