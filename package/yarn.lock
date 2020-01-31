@@ -1373,9 +1373,9 @@ locate-path@^2.0.0:
     path-exists "^3.0.0"
 
 lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.5:
-  version "4.17.11"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
-  integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
+  version "4.17.15"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
+  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
 
 lolex@^4.0.1, lolex@^4.1.0:
   version "4.1.0"
@@ -2184,11 +2184,6 @@ source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.1:
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
 
 sourcegraph@^23.0.1, sourcegraph@^23.1.0:
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-23.1.0.tgz#3178979805239cdf777d7b2cb9aae99c2a3d1dcb"
-  integrity sha512-pcHP/Ad1TGJWDu4vh8iDE1bi4LOvDgc2Q+amlByjSfeg2+vd4jldpaW4HuP/fMVGYvvzxOa4jrjlluWeXFqyoA==
-
-sourcegraph@^23.1.0:
   version "23.1.0"
   resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-23.1.0.tgz#3178979805239cdf777d7b2cb9aae99c2a3d1dcb"
   integrity sha512-pcHP/Ad1TGJWDu4vh8iDE1bi4LOvDgc2Q+amlByjSfeg2+vd4jldpaW4HuP/fMVGYvvzxOa4jrjlluWeXFqyoA==
