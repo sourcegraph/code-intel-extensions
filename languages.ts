@@ -379,6 +379,15 @@ export const languageSpecs: LanguageSpec[] = [
     },
     {
         handlerArgs: {
+            languageID: 'objective-c',
+            fileExts: ['m', 'mm', 'h'],
+            docstringIgnore: /^\s*@/,
+            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
+        },
+        stylized: 'Objective-C',
+    },
+    {
+        handlerArgs: {
             languageID: 'rust',
             fileExts: ['rs', 'rs.in'],
             docstringIgnore: /^#/,
