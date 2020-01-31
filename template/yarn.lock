@@ -766,7 +766,7 @@
     lodash "^4.17.11"
     rxjs "^6.3.3"
     semver "^6.3.0"
-    sourcegraph "^23.0.1"
+    sourcegraph "^23.1.0"
     vscode-languageserver-types "^3.14.0"
 
 "@types/mocha@5.2.7":
@@ -5579,10 +5579,10 @@ source-map@^0.5.0, source-map@^0.5.3, source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-sourcegraph@23.0.1, sourcegraph@^23.0.1:
-  version "23.0.1"
-  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-23.0.1.tgz#715fcf4129a6d94bc3bfd2740d9c706ae6357ffe"
-  integrity sha512-4We7zqhOagOVxNFdS6/xT/Crhb0Arw/9ytGBu8JuHfjo5yjMtcUYt22kZyu2TaPHXwyPW9muUi1eKSFA6Qg4lw==
+sourcegraph@23.1.0, sourcegraph@^23.1.0:
+  version "23.1.0"
+  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-23.1.0.tgz#3178979805239cdf777d7b2cb9aae99c2a3d1dcb"
+  integrity sha512-pcHP/Ad1TGJWDu4vh8iDE1bi4LOvDgc2Q+amlByjSfeg2+vd4jldpaW4HuP/fMVGYvvzxOa4jrjlluWeXFqyoA==
 
 spawn-wrap@^1.4.2:
   version "1.4.2"
