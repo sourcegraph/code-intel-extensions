@@ -17,6 +17,7 @@
     "tslint": "tslint -p tsconfig.json --format stylish",
     "eslint": "eslint --cache '**/*.ts?(x)'",
     "test": "nyc --reporter=text mocha '**/*.test.ts'",
+    "deduplicate": "yarn-deduplicate -s fewer",
     "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./dev/scripts/generate.ts",
     "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts"
   },
@@ -69,5 +70,8 @@
     "tslint": "^5.20.1",
     "typescript": "^3.7.2",
     "yarn-deduplicate": "^1.1.1"
+  },
+  "resolutions": {
+    "vscode-languageserver-protocol": "3.14.1"
   }
 }

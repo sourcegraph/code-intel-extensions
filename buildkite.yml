@@ -3,19 +3,13 @@ env:
 
 steps:
   - label: ':white_check_mark:'
-    command: ./dev/ci/check_all.sh
+    command: ./dev/ci/check-all.sh
 
-  # - label: ':lipstick: :lint-roller:'
-  #   command: ./dev/ci/lint.sh
-
-  - label: ':typescript:'
-    command: cd extensions/go && yarn run build
-
-  - label: ':typescript:'
-    command: cd extensions/template && yarn run build
-
-  - label: ':typescript:'
-    command: cd extensions/typescript && yarn run build
+  - label: ':lipstick: :lint-roller:'
+    command: ./dev/ci/lint.sh
 
   - label: ':jest:'
     command: ./dev/ci/test.sh
+
+  - label: ':typescript:'
+    command: ./dev/ci/build-all.sh

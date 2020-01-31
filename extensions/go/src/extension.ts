@@ -39,18 +39,31 @@ import {
     Range,
 } from 'vscode-languageserver-types'
 
-
-export const convertPosition = (sourcegraph: typeof import('sourcegraph'), position: Position): sourcegraph.Position =>
+export const convertPosition = (
+    sourcegraph: typeof import('sourcegraph'),
+    position: Position
+): sourcegraph.Position =>
     new sourcegraph.Position(position.line, position.character)
 
-export const convertRange = (sourcegraph: typeof import('sourcegraph'), range: Range): sourcegraph.Range =>
-    new sourcegraph.Range(convertPosition(sourcegraph, range.start), convertPosition(sourcegraph, range.end))
+export const convertRange = (
+    sourcegraph: typeof import('sourcegraph'),
+    range: Range
+): sourcegraph.Range =>
+    new sourcegraph.Range(
+        convertPosition(sourcegraph, range.start),
+        convertPosition(sourcegraph, range.end)
+    )
 
-export function convertHover(sourcegraph: typeof import('sourcegraph'), hover: Hover | null): sourcegraph.Hover | null {
+export function convertHover(
+    sourcegraph: typeof import('sourcegraph'),
+    hover: Hover | null
+): sourcegraph.Hover | null {
     if (!hover) {
         return null
     }
-    const contents = Array.isArray(hover.contents) ? hover.contents : [hover.contents]
+    const contents = Array.isArray(hover.contents)
+        ? hover.contents
+        : [hover.contents]
     return {
         range: hover.range && convertRange(sourcegraph, hover.range),
         contents: {
@@ -67,15 +80,19 @@ export function convertHover(sourcegraph: typeof import('sourcegraph'), hover: H
                     if (!content.value) {
                         return ''
                     }
-                    return '```' + content.language + '\n' + content.value + '\n```'
+                    return (
+                        '```' +
+                        content.language +
+                        '\n' +
+                        content.value +
+                        '\n```'
+                    )
                 })
                 .filter(str => !!str.trim())
                 .join('\n\n---\n\n'),
         },
     }
 }
-
-
 
 // If we can rid ourselves of file:// URIs, this type won't be necessary and we
 // can use lspext.Xreference directly.

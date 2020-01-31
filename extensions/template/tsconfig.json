@@ -1,8 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "references": [
-    { "path": "../../shared" },
-  ],
+  "references": [{ "path": "../../shared" }],
   "compilerOptions": {
     "outDir": "dist"
   },

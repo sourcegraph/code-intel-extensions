@@ -4,18 +4,18 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 
 ## Repository structure
 
-- [`src/extensions/go`](./src/extensions/go) The Go extension (supports LSP)
-- [`src/extensions/typescript`](./src/extensions/typescript) The TypeScript extension (supports LSP)
-- [`src/extensions/template`](./src/extensions/template) Template for all other languages (**does not** support LSP)
-- [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
-- [`dev/scripts/generate.ts`](./scripts/generate.ts) Generates language extensions given language definitions
-- [`dev/scripts/publish.ts`](./scripts/publish.ts) Publishes language extensions
+-   [`src/extensions/go`](./src/extensions/go) The Go extension (supports LSP)
+-   [`src/extensions/typescript`](./src/extensions/typescript) The TypeScript extension (supports LSP)
+-   [`src/extensions/template`](./src/extensions/template) Template for all other languages (**does not** support LSP)
+-   [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
+-   [`dev/scripts/generate.ts`](./scripts/generate.ts) Generates language extensions given language definitions
+-   [`dev/scripts/publish.ts`](./scripts/publish.ts) Publishes language extensions
 
 ## Development
 
 1. Run `yarn`
-2. Run `yarn --cwd extensions/{go,typescript,template} run serve` (pick one, `template` includes all others)
-3. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
+1. Run `yarn --cwd extensions/{go,typescript,template} run serve` (pick one, `template` includes all others)
+1. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
 
 ```json
 {
@@ -31,11 +31,11 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 
 ## Publishing extensions
 
-- For Go: `yarn --cwd extensions/go run publish`
-- For TypeScript: `yarn --cwd extensions/typescript run publish`
-- For all others:
-  1. `yarn run generate` (optional: to generate only a few languages, pass `--languages lang1,lang2`)
-  1. `yarn run publish` (supports `--languages`, too)
+-   For Go: `yarn --cwd extensions/go run publish`
+-   For TypeScript: `yarn --cwd extensions/typescript run publish`
+-   For all others:
+    1. `yarn run generate` (optional: to generate only a few languages, pass `--languages lang1,lang2`)
+    1. `yarn run publish` (supports `--languages`, too)
 
 ## Adding a language extension
 
