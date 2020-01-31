@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "references": [
+    { "path": "../../shared" },
+    { "path": "../../language-specs" }
+  ],
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "include": ["./**/*"]
+}

@@ -2,6 +2,11 @@ env:
   FORCE_COLOR: '1'
 
 steps:
-  - command: |-
-      ./ci
-    label: ':pipeline:'
+  - label: ':white_check_mark:'
+    command: ./dev/check_all.sh
+
+  - label: ':lipstick: :lint-roller:'
+    command: ./dev/lint.sh
+
+  - label: ':jest:'
+    command: ./dev/test.sh
