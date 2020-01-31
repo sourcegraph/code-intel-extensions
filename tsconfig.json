@@ -1,6 +1,7 @@
 {
   "extends": "@sourcegraph/tsconfig",
   "references": [
+    { "path": "shared" },
     { "path": "extensions/go" },
     { "path": "extensions/template" },
     { "path": "extensions/typescript" }

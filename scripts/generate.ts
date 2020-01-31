@@ -2,7 +2,7 @@ import { copy, emptyDir, ensureDir } from 'fs-extra'
 import * as child_process from 'mz/child_process'
 import * as fs from 'mz/fs'
 import * as path from 'path'
-import { LanguageSpec } from '../language-specs/languages'
+import { LanguageSpec } from '../shared/language-specs/languages'
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {

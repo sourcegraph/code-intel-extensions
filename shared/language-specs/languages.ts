@@ -1,4 +1,4 @@
-import { HandlerArgs, CommentStyle } from '../shared/index'
+import { HandlerArgs, CommentStyle } from '../index'
 const path = require('path-browserify')
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>

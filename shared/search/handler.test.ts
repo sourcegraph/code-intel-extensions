@@ -7,7 +7,7 @@ import {
     findSearchToken,
 } from './handler'
 import { TextDocument } from 'sourcegraph'
-import { pythonStyle, cStyle } from '../../language-specs/languages'
+import { pythonStyle, cStyle } from '../../shared/language-specs/languages'
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 
 describe('search requests', () => {

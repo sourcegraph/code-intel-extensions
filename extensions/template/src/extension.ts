@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import { languageSpecs } from '../../../language-specs/languages'
+import { languageSpecs } from '../../../shared/language-specs/languages'
 import { activateCodeIntel } from '../../../shared/index'
 import { languageID } from './language'
 
