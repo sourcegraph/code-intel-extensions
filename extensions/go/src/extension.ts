@@ -5,7 +5,6 @@ import {
     LSPProviders,
     HandlerArgs,
 } from '../../../shared/index'
-import { convertHover } from '@sourcegraph/lsp-client/dist/lsp-conversion'
 import * as wsrpc from '@sourcegraph/vscode-ws-jsonrpc'
 import { ajax } from 'rxjs/ajax'
 import * as sourcegraph from 'sourcegraph'
@@ -16,24 +15,13 @@ import * as convert from './convert-lsp-to-sea'
 import * as lspext from './lspext'
 
 import * as path from 'path'
-import {
-    BehaviorSubject,
-    from,
-    Observable,
-    Observer,
-    of,
-    throwError,
-    Unsubscribable,
-} from 'rxjs'
+import { BehaviorSubject, from, Observable, Unsubscribable } from 'rxjs'
 import {
     concatMap,
     distinctUntilChanged,
     map,
     mergeMap,
     scan,
-    shareReplay,
-    switchMap,
-    take,
     finalize,
 } from 'rxjs/operators'
 
@@ -43,6 +31,51 @@ import {
 } from '@sourcegraph/vscode-ws-jsonrpc'
 import gql from 'tagged-template-noop'
 import { Settings } from './settings'
+
+import {
+    Hover,
+    MarkupContent,
+    Position,
+    Range,
+} from 'vscode-languageserver-types'
+
+
+export const convertPosition = (sourcegraph: typeof import('sourcegraph'), position: Position): sourcegraph.Position =>
+    new sourcegraph.Position(position.line, position.character)
+
+export const convertRange = (sourcegraph: typeof import('sourcegraph'), range: Range): sourcegraph.Range =>
+    new sourcegraph.Range(convertPosition(sourcegraph, range.start), convertPosition(sourcegraph, range.end))
+
+export function convertHover(sourcegraph: typeof import('sourcegraph'), hover: Hover | null): sourcegraph.Hover | null {
+    if (!hover) {
+        return null
+    }
+    const contents = Array.isArray(hover.contents) ? hover.contents : [hover.contents]
+    return {
+        range: hover.range && convertRange(sourcegraph, hover.range),
+        contents: {
+            kind: sourcegraph.MarkupKind.Markdown,
+            value: contents
+                .map(content => {
+                    if (MarkupContent.is(content)) {
+                        // Assume it's markdown. To be correct, markdown would need to be escaped for non-markdown kinds.
+                        return content.value
+                    }
+                    if (typeof content === 'string') {
+                        return content
+                    }
+                    if (!content.value) {
+                        return ''
+                    }
+                    return '```' + content.language + '\n' + content.value + '\n```'
+                })
+                .filter(str => !!str.trim())
+                .join('\n\n---\n\n'),
+        },
+    }
+}
+
+
 
 // If we can rid ourselves of file:// URIs, this type won't be necessary and we
 // can use lspext.Xreference directly.
