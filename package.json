@@ -17,8 +17,8 @@
     "tslint": "tslint -p tsconfig.json --format stylish",
     "eslint": "eslint --cache '**/*.ts?(x)'",
     "test": "nyc --reporter=text mocha '**/*.test.ts'",
-    "generate": "yarn -s && yarn run ts-node -P tsconfig.json scripts/generate.ts",
-    "publish": "yarn run ts-node -P tsconfig.json scripts/publish.ts"
+    "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./dev/scripts/generate.ts",
+    "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts"
   },
   "dependencies": {
     "@sourcegraph/lightstep-tracer-webworker": "^0.20.14-fork.3",
