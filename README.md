@@ -1,6 +1,6 @@
 # Sourcegraph code intelligence extensions
 
-This repository contains the code for the [Sourcegraph extensions that provide code intelligence](<(https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22)>). These extensions provide precise code intelligence via LSIF and Language Servers, and provides fuzzy code intelligence using a combination of ctags and search.
+This repository contains the code for the [Sourcegraph extensions that provide code intelligence](https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22). These extensions provide precise code intelligence via LSIF and Language Servers, and provides fuzzy code intelligence using a combination of ctags and search.
 
 ## Development
 
