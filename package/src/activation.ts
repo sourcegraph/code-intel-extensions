@@ -1,64 +1,13 @@
 import * as sourcegraph from 'sourcegraph'
-import { HandlerArgs, Handler } from './handler'
-import { initLSIF } from './lsif'
+import { HandlerArgs, Handler } from './search/handler'
+import { initLSIF } from './lsif/activation'
 import { impreciseBadge } from './badges'
 import { shareReplay } from 'rxjs/operators'
-import { Observer, Observable } from 'rxjs'
+import { Observable, Observer } from 'rxjs'
 import { createAbortError } from './abort'
-
-export type Maybe<T> = { value: T } | undefined
-
-export interface LSIFProviders {
-    hover: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => Promise<Maybe<sourcegraph.Hover | null>>
-
-    definition: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => Promise<Maybe<sourcegraph.Definition>>
-
-    references: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => Promise<Maybe<sourcegraph.Location[] | null>>
-}
-
-export interface SearchProviders {
-    definition: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => Promise<sourcegraph.Definition>
-
-    references: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => Promise<sourcegraph.Location[] | null>
-
-    hover: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => Promise<sourcegraph.Hover | null>
-}
-
-export interface LSPProviders {
-    definition: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => AsyncGenerator<sourcegraph.Definition, void, undefined>
-
-    references: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position,
-        context: sourcegraph.ReferenceContext
-    ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
-
-    hover: (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ) => AsyncGenerator<sourcegraph.Hover | null, void, undefined>
-}
+import { LSPProviders } from './lsp/providers'
+import { LSIFProviders } from './lsif/providers'
+import { SearchProviders } from './search/providers'
 
 export function activateCodeIntel(
     ctx: sourcegraph.ExtensionContext,
@@ -108,7 +57,7 @@ function createDefinitionProvider(
     ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
         const lsifResult = await lsifProviders.definition(doc, pos)
         if (lsifResult) {
-            yield lsifResult.value
+            yield lsifResult
             return
         }
 
@@ -159,7 +108,7 @@ function createReferencesProvider(
 
         // Get and extract LSIF results
         const lsifResult = await lsifProviders.references(doc, pos)
-        const lsifReferences = (lsifResult && lsifResult.value) || []
+        const lsifReferences = lsifResult || []
         const lsifFiles = new Set(lsifReferences.map(file))
 
         // Unconditionally get search references and append them with
@@ -201,7 +150,7 @@ function createHoverProvider(
     > {
         const lsifResult = await lsifProviders.hover(doc, pos)
         if (lsifResult) {
-            yield lsifResult.value
+            yield lsifResult
             return
         }
 
@@ -236,7 +185,7 @@ const wrap = <P extends any[], R>(
         observableFromAsyncGenerator(() => fn(...args)).pipe(shareReplay(1))
     )
 
-export const areProviderParamsEqual = (
+const areProviderParamsEqual = (
     [doc1, pos1]: [sourcegraph.TextDocument, sourcegraph.Position],
     [doc2, pos2]: [sourcegraph.TextDocument, sourcegraph.Position]
 ): boolean => doc1.uri === doc2.uri && pos1.isEqual(pos2)
@@ -254,7 +203,7 @@ const areProviderParamsContextEqual = (
     ]
 ): boolean => areProviderParamsEqual([doc1, pos1], [doc2, pos2])
 
-export const observableFromAsyncGenerator = <T>(
+const observableFromAsyncGenerator = <T>(
     generator: () => AsyncGenerator<T, unknown, void>
 ): Observable<T> =>
     new Observable((observer: Observer<T>) => {
@@ -292,7 +241,7 @@ export const observableFromAsyncGenerator = <T>(
     })
 
 /** Workaround for https://github.com/sourcegraph/sourcegraph/issues/1321 */
-export function memoizePrevious<P extends any[], R>(
+function memoizePrevious<P extends any[], R>(
     compare: (a: P, b: P) => boolean,
     fn: (...args: P) => R
 ): (...args: P) => R {
