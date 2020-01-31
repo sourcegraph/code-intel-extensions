@@ -1,4 +1,7 @@
-import { createStubSourcegraphAPI, createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+import {
+    createStubSourcegraphAPI,
+    createStubTextDocument,
+} from '@sourcegraph/extension-api-stubs'
 import * as mock from 'mock-require'
 const stubAPI = createStubSourcegraphAPI()
 // For modules importing Range/Location/Position/URI/etc
@@ -26,9 +29,16 @@ const logger = new NoopLogger()
 describe('register()', () => {
     it('should initialize one connection with each workspace folder if the server is multi-root capable', async () => {
         const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
+        sourcegraph.workspace.roots = [
+            { uri: new URL('git://repo1?rev') },
+            { uri: new URL('git://repo2?rev') },
+        ]
         const server = {
-            initialize: sinon.spy((params: InitializeParams): InitializeResult => ({ capabilities: {} })),
+            initialize: sinon.spy(
+                (params: InitializeParams): InitializeResult => ({
+                    capabilities: {},
+                })
+            ),
         }
         const createConnection = stubTransport(server)
         await register({
@@ -53,9 +63,16 @@ describe('register()', () => {
     })
     it('should initialize one connection for each workspace folder if the server is not multi-root capable', async () => {
         const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
+        sourcegraph.workspace.roots = [
+            { uri: new URL('git://repo1?rev') },
+            { uri: new URL('git://repo2?rev') },
+        ]
         const server = {
-            initialize: sinon.spy((params: InitializeParams): InitializeResult => ({ capabilities: {} })),
+            initialize: sinon.spy(
+                (params: InitializeParams): InitializeResult => ({
+                    capabilities: {},
+                })
+            ),
         }
         const createConnection = stubTransport(server)
         await register({
@@ -84,9 +101,16 @@ describe('register()', () => {
     })
     it('should close a connection when a workspace folder is closed', async () => {
         const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
+        sourcegraph.workspace.roots = [
+            { uri: new URL('git://repo1?rev') },
+            { uri: new URL('git://repo2?rev') },
+        ]
         const server = {
-            initialize: sinon.spy((params: InitializeParams): InitializeResult => ({ capabilities: {} })),
+            initialize: sinon.spy(
+                (params: InitializeParams): InitializeResult => ({
+                    capabilities: {},
+                })
+            ),
         }
         const createConnection = stubTransport(server)
         await register({
@@ -112,15 +136,17 @@ describe('register()', () => {
                     },
                 })
             ),
-            'textDocument/references': sinon.spy((params: ReferenceParams): Location[] => [
-                {
-                    uri: new URL('bar.ts', repoRoot).href,
-                    range: {
-                        start: { line: 1, character: 2 },
-                        end: { line: 3, character: 4 },
+            'textDocument/references': sinon.spy(
+                (params: ReferenceParams): Location[] => [
+                    {
+                        uri: new URL('bar.ts', repoRoot).href,
+                        range: {
+                            start: { line: 1, character: 2 },
+                            end: { line: 3, character: 4 },
+                        },
                     },
-                },
-            ]),
+                ]
+            ),
         }
         const createConnection = stubTransport(server)
 
@@ -156,7 +182,10 @@ describe('register()', () => {
 
         sinon.assert.calledOnce(stubAPI.languages.registerReferenceProvider)
 
-        const [selector, provider] = stubAPI.languages.registerReferenceProvider.args[0]
+        const [
+            selector,
+            provider,
+        ] = stubAPI.languages.registerReferenceProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
@@ -177,7 +206,10 @@ describe('register()', () => {
         assert.deepStrictEqual(result, [
             {
                 uri: new URL('bar.ts', repoRoot),
-                range: new stubAPI.Range(new stubAPI.Position(1, 2), new stubAPI.Position(3, 4)),
+                range: new stubAPI.Range(
+                    new stubAPI.Position(1, 2),
+                    new stubAPI.Position(3, 4)
+                ),
             },
         ])
     })
@@ -235,7 +267,10 @@ describe('register()', () => {
 
         sinon.assert.calledOnce(stubAPI.languages.registerDefinitionProvider)
 
-        const [selector, provider] = stubAPI.languages.registerDefinitionProvider.args[0]
+        const [
+            selector,
+            provider,
+        ] = stubAPI.languages.registerDefinitionProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
@@ -254,7 +289,10 @@ describe('register()', () => {
         assert.deepStrictEqual(result, [
             {
                 uri: new URL('bar.ts', repoRoot),
-                range: new sourcegraph.Range(new sourcegraph.Position(1, 2), new sourcegraph.Position(3, 4)),
+                range: new sourcegraph.Range(
+                    new sourcegraph.Position(1, 2),
+                    new sourcegraph.Position(3, 4)
+                ),
             },
         ])
     })
@@ -262,7 +300,9 @@ describe('register()', () => {
         const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
         const server = {
             initialize: sinon.spy(
-                async (params: InitializeParams): Promise<InitializeResult> => ({
+                async (
+                    params: InitializeParams
+                ): Promise<InitializeResult> => ({
                     capabilities: {
                         hoverProvider: true,
                     },
@@ -270,7 +310,10 @@ describe('register()', () => {
             ),
             'textDocument/hover': sinon.spy(
                 async (params: TextDocumentPositionParams): Promise<Hover> => ({
-                    contents: { kind: MarkupKind.Markdown, value: 'Hello World' },
+                    contents: {
+                        kind: MarkupKind.Markdown,
+                        value: 'Hello World',
+                    },
                 })
             ),
         }
@@ -310,7 +353,10 @@ describe('register()', () => {
         // Assert hover provider was registered
         sinon.assert.calledOnce(stubAPI.languages.registerHoverProvider)
 
-        const [selector, hoverProvider] = stubAPI.languages.registerHoverProvider.args[0]
+        const [
+            selector,
+            hoverProvider,
+        ] = stubAPI.languages.registerHoverProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',

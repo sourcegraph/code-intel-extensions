@@ -1,5 +1,8 @@
 import * as sourcegraph from 'sourcegraph'
-import { TextDocumentPositionParams, WorkspaceFolder } from 'vscode-languageserver-protocol'
+import {
+    TextDocumentPositionParams,
+    WorkspaceFolder,
+} from 'vscode-languageserver-protocol'
 import {
     Diagnostic,
     DiagnosticSeverity,
@@ -11,7 +14,13 @@ import {
 } from 'vscode-languageserver-types'
 
 export const convertProviderParams = (
-    { textDocument, position }: { textDocument: sourcegraph.TextDocument; position: sourcegraph.Position },
+    {
+        textDocument,
+        position,
+    }: {
+        textDocument: sourcegraph.TextDocument
+        position: sourcegraph.Position
+    },
     { clientToServerURI }: { clientToServerURI: (u: URL) => URL }
 ): TextDocumentPositionParams => ({
     textDocument: {
@@ -23,17 +32,31 @@ export const convertProviderParams = (
     },
 })
 
-export const convertPosition = (sourcegraph: typeof import('sourcegraph'), position: Position): sourcegraph.Position =>
+export const convertPosition = (
+    sourcegraph: typeof import('sourcegraph'),
+    position: Position
+): sourcegraph.Position =>
     new sourcegraph.Position(position.line, position.character)
 
-export const convertRange = (sourcegraph: typeof import('sourcegraph'), range: Range): sourcegraph.Range =>
-    new sourcegraph.Range(convertPosition(sourcegraph, range.start), convertPosition(sourcegraph, range.end))
+export const convertRange = (
+    sourcegraph: typeof import('sourcegraph'),
+    range: Range
+): sourcegraph.Range =>
+    new sourcegraph.Range(
+        convertPosition(sourcegraph, range.start),
+        convertPosition(sourcegraph, range.end)
+    )
 
-export function convertHover(sourcegraph: typeof import('sourcegraph'), hover: Hover | null): sourcegraph.Hover | null {
+export function convertHover(
+    sourcegraph: typeof import('sourcegraph'),
+    hover: Hover | null
+): sourcegraph.Hover | null {
     if (!hover) {
         return null
     }
-    const contents = Array.isArray(hover.contents) ? hover.contents : [hover.contents]
+    const contents = Array.isArray(hover.contents)
+        ? hover.contents
+        : [hover.contents]
     return {
         range: hover.range && convertRange(sourcegraph, hover.range),
         contents: {
@@ -50,7 +73,13 @@ export function convertHover(sourcegraph: typeof import('sourcegraph'), hover: H
                     if (!content.value) {
                         return ''
                     }
-                    return '```' + content.language + '\n' + content.value + '\n```'
+                    return (
+                        '```' +
+                        content.language +
+                        '\n' +
+                        content.value +
+                        '\n```'
+                    )
                 })
                 .filter(str => !!str.trim())
                 .join('\n\n---\n\n'),
@@ -73,7 +102,9 @@ export function convertLocations(
     if (!locationOrLocations) {
         return null
     }
-    const locations = Array.isArray(locationOrLocations) ? locationOrLocations : [locationOrLocations]
+    const locations = Array.isArray(locationOrLocations)
+        ? locationOrLocations
+        : [locationOrLocations]
     return locations.map(location => convertLocation(sourcegraph, location))
 }
 
@@ -88,15 +119,18 @@ export const convertDiagnosticToDecoration = (
     diagnostic: Diagnostic
 ): sourcegraph.TextDocumentDecoration => ({
     after: {
-        color: DIAGNOSTIC_COLORS[diagnostic.severity ?? DiagnosticSeverity.Hint],
+        color:
+            DIAGNOSTIC_COLORS[diagnostic.severity ?? DiagnosticSeverity.Hint],
         contentText: diagnostic.message,
     },
     range: convertRange(sourcegraph, diagnostic.range),
 })
 
-export const toLSPWorkspaceFolder = ({ clientToServerURI }: { clientToServerURI: (u: URL) => URL }) => (
-    root: sourcegraph.WorkspaceRoot
-): WorkspaceFolder => {
+export const toLSPWorkspaceFolder = ({
+    clientToServerURI,
+}: {
+    clientToServerURI: (u: URL) => URL
+}) => (root: sourcegraph.WorkspaceRoot): WorkspaceFolder => {
     const serverUri = clientToServerURI(new URL(root.uri.toString()))
     return {
         uri: serverUri.href,

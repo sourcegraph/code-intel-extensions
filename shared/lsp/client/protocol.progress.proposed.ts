@@ -54,6 +54,8 @@ export interface ProgressParams {
  * to ask the client to indicate progress.
  */
 export namespace WindowProgressNotification {
-    export const type = new NotificationType<ProgressParams, void>('window/progress')
+    export const type = new NotificationType<ProgressParams, void>(
+        'window/progress'
+    )
     export type HandlerSignature = NotificationHandler<ProgressParams>
 }

@@ -43,12 +43,14 @@ export const LSP_TO_LOG_LEVEL: Record<MessageType, LogLevel> = {
 /**
  * Formats values to a message by pretty-printing objects
  */
-const format = (value: any): string => (typeof value === 'string' ? value : inspect(value, { depth: Infinity }))
+const format = (value: any): string =>
+    typeof value === 'string' ? value : inspect(value, { depth: Infinity })
 
 /**
  * Removes auth info from URLs
  */
-export const redact = (message: string): string => message.replace(/(https?:\/\/)[^@\/]+@([^\s$]+)/g, '$1$2')
+export const redact = (message: string): string =>
+    message.replace(/(https?:\/\/)[^@\/]+@([^\s$]+)/g, '$1$2')
 
 /**
  * Logger that formats the logged values and removes any auth info in URLs.
@@ -66,7 +68,10 @@ export class RedactingLogger extends AbstractLogger {
 }
 
 export class PrefixedLogger extends AbstractLogger {
-    constructor(private readonly logger: Logger, private readonly prefix: string) {
+    constructor(
+        private readonly logger: Logger,
+        private readonly prefix: string
+    ) {
         super()
     }
 

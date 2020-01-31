@@ -1,8 +1,16 @@
 import { Unsubscribable } from 'sourcegraph'
-import { DocumentFilter, DocumentSelector, RequestType, ServerCapabilities } from 'vscode-languageserver-protocol'
+import {
+    DocumentFilter,
+    DocumentSelector,
+    RequestType,
+    ServerCapabilities,
+} from 'vscode-languageserver-protocol'
 import { LSPConnection } from '..'
 
-export interface Feature<R extends RequestType<any, any, any, any>, C extends keyof ServerCapabilities> {
+export interface Feature<
+    R extends RequestType<any, any, any, any>,
+    C extends keyof ServerCapabilities
+> {
     capabilityName: C
     capabilityToRegisterOptions: (
         capability: ServerCapabilities[C],
@@ -19,7 +27,9 @@ export interface Feature<R extends RequestType<any, any, any, any>, C extends ke
     }): Unsubscribable
 }
 
-export type RegistrationOptions<T extends RequestType<any, any, any, any>> = Exclude<T['_'], undefined>[3]
+export type RegistrationOptions<
+    T extends RequestType<any, any, any, any>
+> = Exclude<T['_'], undefined>[3]
 
 export function scopeDocumentSelectorToRoot(
     documentSelector: DocumentSelector | null,
@@ -32,7 +42,10 @@ export function scopeDocumentSelectorToRoot(
         return documentSelector
     }
     return documentSelector
-        .map((filter): DocumentFilter => (typeof filter === 'string' ? { language: filter } : filter))
+        .map(
+            (filter): DocumentFilter =>
+                typeof filter === 'string' ? { language: filter } : filter
+        )
         .map(filter => ({
             ...filter,
             // TODO filter.pattern needs to be run resolved relative to server root URI before mounting on clientRootUri
