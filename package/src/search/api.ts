@@ -1,6 +1,6 @@
 import { Location } from 'sourcegraph'
-import { Settings } from './handler'
-import { memoizeAsync } from './memoizeAsync'
+import { Settings } from './settings'
+import { queryGraphQL } from '../graphql'
 
 /**
  * Result represents a search result returned from the Sourcegraph API.
@@ -197,23 +197,3 @@ export function parseUri(
         path: decodeURIComponent(uri.hash.slice(1)), // strip the leading #
     }
 }
-
-// TODO(sqs): this will never release the memory of the cached responses; use an LRU cache or similar.
-export const queryGraphQL = memoizeAsync(
-    async ({
-        query,
-        vars,
-        sourcegraph,
-    }: {
-        query: string
-        vars: { [name: string]: any }
-        sourcegraph: typeof import('sourcegraph')
-    }): Promise<any> => {
-        return sourcegraph.commands.executeCommand<any>(
-            'queryGraphQL',
-            query,
-            vars
-        )
-    },
-    arg => JSON.stringify({ query: arg.query, vars: arg.vars })
-)

@@ -4,21 +4,6 @@
 import * as sourcegraph from 'sourcegraph'
 import * as LSP from 'vscode-languageserver-types'
 
-export const convertPosition = (
-    sourcegraph: typeof import('sourcegraph'),
-    position: LSP.Position
-): sourcegraph.Position =>
-    new sourcegraph.Position(position.line, position.character)
-
-export const convertRange = (
-    sourcegraph: typeof import('sourcegraph'),
-    range: LSP.Range
-): sourcegraph.Range =>
-    new sourcegraph.Range(
-        convertPosition(sourcegraph, range.start),
-        convertPosition(sourcegraph, range.end)
-    )
-
 export function convertHover(
     sourcegraph: typeof import('sourcegraph'),
     hover: LSP.Hover
@@ -56,7 +41,14 @@ export function convertHover(
     }
 }
 
-export const convertLocation = (
+export function convertLocations(
+    sourcegraph: typeof import('sourcegraph'),
+    locations: LSP.Location[]
+): sourcegraph.Location[] {
+    return locations.map(location => convertLocation(sourcegraph, location))
+}
+
+const convertLocation = (
     sourcegraph: typeof import('sourcegraph'),
     location: LSP.Location
 ): sourcegraph.Location => ({
@@ -64,9 +56,17 @@ export const convertLocation = (
     range: convertRange(sourcegraph, location.range),
 })
 
-export function convertLocations(
+const convertRange = (
     sourcegraph: typeof import('sourcegraph'),
-    locations: LSP.Location[]
-): sourcegraph.Location[] {
-    return locations.map(location => convertLocation(sourcegraph, location))
-}
+    range: LSP.Range
+): sourcegraph.Range =>
+    new sourcegraph.Range(
+        convertPosition(sourcegraph, range.start),
+        convertPosition(sourcegraph, range.end)
+    )
+
+const convertPosition = (
+    sourcegraph: typeof import('sourcegraph'),
+    position: LSP.Position
+): sourcegraph.Position =>
+    new sourcegraph.Position(position.line, position.character)
