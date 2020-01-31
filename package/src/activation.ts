@@ -54,11 +54,7 @@ function createDefinitionProvider(
     async function* provideDefinition(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ): AsyncGenerator<
-        sourcegraph.Definition | null | undefined,
-        void,
-        undefined
-    > {
+    ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
         const lsifResult = await lsifProviders.definition(doc, pos)
         if (lsifResult) {
             yield lsifResult
@@ -77,7 +73,8 @@ function createDefinitionProvider(
         }
 
         if (!Array.isArray(searchResult)) {
-            yield { ...searchResult, badge: impreciseBadge }
+            const badged = { ...searchResult, badge: impreciseBadge }
+            yield badged
             return
         }
 
@@ -209,7 +206,7 @@ const areProviderParamsContextEqual = (
 const observableFromAsyncGenerator = <T>(
     generator: () => AsyncGenerator<T, unknown, void>
 ): Observable<T> =>
-    new Observable(observer => {
+    new Observable((observer: Observer<T>) => {
         const iterator = generator()
         let unsubscribed = false
         let iteratorDone = false
