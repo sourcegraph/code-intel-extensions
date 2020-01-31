@@ -1,5 +1,4 @@
 import { copy, emptyDir, ensureDir } from 'fs-extra'
-import * as child_process from 'mz/child_process'
 import * as fs from 'mz/fs'
 import * as path from 'path'
 import { LanguageSpec } from '../../shared/language-specs/languages'
@@ -16,7 +15,7 @@ async function generate({
     stylized,
     handlerArgs: { languageID },
 }: LanguageSpec): Promise<void> {
-    console.log(`Constructing ${languageID} extension from template`)
+    console.log(`Generating ${languageID} extension`)
 
     const langDir = path.join('temp', languageID)
     const iconFilename = path.join('icons', `${languageID}.png`)
@@ -62,10 +61,6 @@ async function generate({
         // Update code to only provide intel for one language
         `export const languageID: string | undefined = '${languageID}'\n`
     )
-
-    // Build the extension
-    console.log(`Building ${languageID} extension`)
-    await child_process.exec(`yarn --cwd ${langDir} --non-interactive`)
 }
 
 main().catch(err => {
