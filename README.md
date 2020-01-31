@@ -2,33 +2,44 @@
 
 This repository contains the code for the [Sourcegraph extensions that provide code intelligence](https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22). These extensions provide precise code intelligence via LSIF and Language Servers, and provides fuzzy code intelligence using a combination of ctags and search.
 
+## Repository structure
+
+- [`src/extensions/go`](./src/extensions/go) The Go extension (supports LSP)
+- [`src/extensions/typescript`](./src/extensions/typescript) The TypeScript extension (supports LSP)
+- [`src/extensions/template`](./src/extensions/template) Template for all other languages (**does not** support LSP)
+- [`language-specs/languages.ts`](./language-specs/languages.ts) Language definitions, which are fed into the template to instantiate many language extensions
+- [`scripts/generate.ts`](./scripts/generate.ts) Generates language extensions given language definitions
+- [`scripts/publish.ts`](./scripts/publilsh.ts) Publishes language extensions
+
 ## Development
 
-First, run `yarn` in the root.
-
-To develop the Go or TypeScript extensions, navigate into that language's extension directory and run `yarn run serve`. To develop an extension for any other language, run the same command from `extensions/template`.
-
-Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
+1. Run `yarn`
+2. Run `yarn --cwd extensions/{go,typescript,template} run serve` (pick one, `template` includes all others)
+3. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
 
 ```json
+{
+  ...
   "extensions": {
       "sourcegraph/cpp": false,
       ...
   }
+}
 ```
 
-Then [sideload the extension](https://docs.sourcegraph.com/extensions/authoring/local_development) (http://localhost:1234) on your Sourcegraph instance and refresh the page. Make sure you don't see two of the same language extension.
+4. [Sideload the extension](https://docs.sourcegraph.com/extensions/authoring/local_development) (hit OK on the alert to accept the default URL http://localhost:1234) on your Sourcegraph instance and refresh the page. Make sure you don't see two of the same language extension in the **Ext** menu.
 
-## Generating extensions
+## Publishing extensions
 
-Extensions without Language Server support (all extensions _except_ for Go and TypeScript) are defined declaratively in [languages.ts](languages.ts).
+- For Go: `yarn --cwd extensions/go run publish`
+- For TypeScript: `yarn --cwd extensions/typescript run publish`
+- For all others:
+  1. `yarn run generate` (optional: to generate only a few languages, pass `--languages lang1,lang2`)
+  1. `yarn run publish` (supports `--languages`, too)
 
-To generate an extension for a language defined in this way, run `yarn run generate` in the root of this project. To generate extensions only a specific set of langauges, run `yarn run generate --langauges lang1,lang2` instead.
-
-To publish the generated extension, run `yarn run publish`. To publish extensions only a specific set of languages, run `yarn run publish --languages lang1,lang2` instead.
-
-## Adding a new sourcegraph/sourcegraph-LANG extension
+## Adding a language extension
 
 1. Add an entry to `languages` in [`generator/src/main.ts`](generator/src/main.ts)
 1. (optional, to enable jump to definition) Ensure the language is present in the command line arguments to universal-ctags https://github.com/sourcegraph/sourcegraph/blob/21efc6844838e773b9a8f4a7ba1d5628e8076984/cmd/symbols/internal/pkg/ctags/parser.go#L71
+1. Make sure there is a mapping entry for the `languageID` in https://github.com/sourcegraph/sourcegraph/blob/master/shared/src/languages.ts#L40
 1. Generate and publish the extension as described in the previous section
