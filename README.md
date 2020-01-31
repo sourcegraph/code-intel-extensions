@@ -7,9 +7,9 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 - [`src/extensions/go`](./src/extensions/go) The Go extension (supports LSP)
 - [`src/extensions/typescript`](./src/extensions/typescript) The TypeScript extension (supports LSP)
 - [`src/extensions/template`](./src/extensions/template) Template for all other languages (**does not** support LSP)
-- [`language-specs/languages.ts`](./language-specs/languages.ts) Language definitions, which are fed into the template to instantiate many language extensions
-- [`scripts/generate.ts`](./scripts/generate.ts) Generates language extensions given language definitions
-- [`scripts/publish.ts`](./scripts/publilsh.ts) Publishes language extensions
+- [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
+- [`dev/scripts/generate.ts`](./scripts/generate.ts) Generates language extensions given language definitions
+- [`dev/scripts/publish.ts`](./scripts/publish.ts) Publishes language extensions
 
 ## Development
 
