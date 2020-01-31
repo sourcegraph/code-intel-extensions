@@ -118,7 +118,7 @@
     "lnfs-cli": "^2.1.0",
     "mkdirp": "^0.5.1",
     "mocha": "^6.2.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "parcel": "1.x",
     "prettier": "^1.19.1",
     "source-map-support": "^0.5.13",
