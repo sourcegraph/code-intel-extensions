@@ -916,13 +916,14 @@
   resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-types/-/extension-api-types-2.1.0.tgz#dcc81eba70371c9aabc7333361f5e1ed63e7c91e"
   integrity sha512-KWxkyphmlwam8kfYPSmoitKQRMGQCsr1ZRmNZgijT7ABKaVyk/+I5ezt2J213tM04Hi0vyg4L7iH1VCkNvm2Jw==
 
-"@sourcegraph/lightstep-tracer-webworker@^0.20.14-fork.3":
-  version "0.20.14-fork.3"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/lightstep-tracer-webworker/-/lightstep-tracer-webworker-0.20.14-fork.3.tgz#b7bd235af1214da9d206731e5f4271dfd267dd57"
-  integrity sha512-gODwBdCRcLu9wpO8id3FXEvwt3dBYVXNins8dhMc3mRbBDEn27TlRDj7YzAuYO7XQKw25Tx56mtF/jHSZKtLww==
+"@sourcegraph/lightstep-tracer-webworker@^0.20.14-webworker.2":
+  version "0.20.14-webworker.2"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/lightstep-tracer-webworker/-/lightstep-tracer-webworker-0.20.14-webworker.2.tgz#2fe8cdfd6ab76015bd20b60094e1b033babd55e2"
+  integrity sha512-C2cH/NfYulWNvBglrzBeuw3GViDLEjp84SfYrtrWJt3kePmFrWe6jnEXmGRxlhAG4Bbp2rXySV5a5VcdyKl+fg==
   dependencies:
     async "1.5.0"
     eventemitter3 "1.1.1"
+    google-protobuf "3.6.1"
     hex2dec "1.0.1"
     source-map-support "0.3.3"
     thrift "0.10.0"
@@ -3373,6 +3374,11 @@ globby@^6.1.0:
     object-assign "^4.0.1"
     pify "^2.0.0"
     pinkie-promise "^2.0.0"
+
+google-protobuf@3.6.1:
+  version "3.6.1"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.6.1.tgz#7ef58e2bea137a93cdaf5cfd5afa5f6abdd92025"
+  integrity sha512-SJYemeX5GjDLPnadcmCNQePQHCS4Hl5fOcI/JawqDIYFhCmrtYAjcx/oTQx/Wi8UuCuZQhfvftbmPePPAYHFtA==
 
 graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.2.0:
   version "4.2.3"
