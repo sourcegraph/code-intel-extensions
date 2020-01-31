@@ -299,7 +299,7 @@ export class Handler {
  */
 const DEFAULT_IDENT_CHAR_PATTERN = /[A-Za-z0-9_]/
 
-function findSearchToken({
+export function findSearchToken({
     text,
     position,
     lineRegex,
@@ -345,7 +345,7 @@ function findSearchToken({
     }
 }
 
-function definitionQueries({
+export function definitionQueries({
     searchToken,
     doc,
     fileExts,
@@ -370,7 +370,7 @@ function definitionQueries({
     ]
 }
 
-function referencesQueries({
+export function referencesQueries({
     searchToken,
     doc,
     fileExts,
@@ -515,7 +515,7 @@ function resultToLocation({
     }
 }
 
-function findDocstring({
+export function findDocstring({
     definitionLine,
     fileText,
     commentStyle,
@@ -640,7 +640,7 @@ function findDocstring({
     return docLines && unmungeLines(docLines).join('\n')
 }
 
-function wrapIndentationInCodeBlocks({
+export function wrapIndentationInCodeBlocks({
     languageID,
     docstring,
 }: {
