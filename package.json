@@ -1,15 +1,77 @@
 {
+  "$schema": "https://raw.githubusercontent.com/sourcegraph/sourcegraph/master/shared/src/schema/extension.schema.json",
+  "name": "sourcegraph-code-intel-extensions",
+  "description": "Sourcegraph code intelligence extensions",
+  "private": true,
+  "sideEffects": false,
+  "publisher": "sourcegraph",
+  "version": "0.0.0-DEVELOPMENT",
   "license": "MIT",
-  "scripts": {
-    "prettier": "prettier '{package,template,generator}/**/*.{js?(on),ts,yml,md}' languages.ts --write --list-different",
-    "prettier-check": "yarn run prettier --write=false"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
   },
-  "devDependencies": {
-    "@sourcegraph/prettierrc": "^3.0.2",
-    "prettier": "^1.19.1",
-    "typescript": "^3.7.2"
+  "scripts": {
+    "prettier": "prettier --write --list-different '**/*.{ts,js?(on),md,yml}'",
+    "prettier-check": "yarn run prettier --write=false",
+    "tslint": "tslint -p tsconfig.json --format stylish",
+    "eslint": "eslint --cache '**/*.ts?(x)'",
+    "test": "nyc --reporter=text mocha '**/*.test.ts'",
+    "deduplicate": "yarn-deduplicate -s fewer",
+    "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./dev/scripts/generate.ts",
+    "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts"
   },
   "dependencies": {
-    "path-browserify": "^1.0.0"
+    "@sourcegraph/lightstep-tracer-webworker": "^0.20.14-fork.3",
+    "@sourcegraph/typescript-language-server": "^0.3.7-fork",
+    "@sourcegraph/vscode-ws-jsonrpc": "0.0.3-fork",
+    "delay": "^4.3.0",
+    "fs-extra": "^8.1.0",
+    "ix": "^2.5.3",
+    "lodash": "^4.17.15",
+    "mz": "^2.7.0",
+    "opentracing": "^0.14.4",
+    "path-browserify": "^1.0.0",
+    "rxjs": "^6.5.3",
+    "semver": "^6.3.0",
+    "sourcegraph": "^23.1.0",
+    "tagged-template-noop": "^2.1.1",
+    "typescript": "^3.7.2",
+    "vscode-languageserver-types": "^3.14.0",
+    "whatwg-url": "^8.0.0",
+    "yargs": "^15.1.0",
+    "yarn": "^1.19.1"
+  },
+  "devDependencies": {
+    "@sourcegraph/eslint-config": "^0.5.3",
+    "@sourcegraph/extension-api-stubs": "^0.2.3",
+    "@sourcegraph/prettierrc": "^3.0.1",
+    "@sourcegraph/tsconfig": "^4.0.0",
+    "@sourcegraph/tslint-config": "^13.4.0",
+    "@types/fs-extra": "^8.0.1",
+    "@types/lodash": "4.14.149",
+    "@types/mocha": "5.2.7",
+    "@types/mz": "^2.7.0",
+    "@types/node": "^13.5.2",
+    "@types/semver": "^6.2.0",
+    "@types/whatwg-url": "^6.4.0",
+    "@types/yargs": "^15.0.2",
+    "dot-json": "^1.1.0",
+    "eslint": "^6.8.0",
+    "json-schema-to-typescript": "^8.0.1",
+    "lnfs-cli": "^2.1.0",
+    "mkdirp": "^0.5.1",
+    "mocha": "^6.2.0",
+    "nyc": "^15.0.0",
+    "parcel": "1.x",
+    "parcel-bundler": "^1.12.4",
+    "prettier": "^1.19.1",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.2",
+    "yarn-deduplicate": "^1.1.1"
+  },
+  "resolutions": {
+    "vscode-languageserver-protocol": "3.14.1"
   }
 }

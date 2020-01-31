@@ -1,8 +1,8 @@
 {
   "files.exclude": {
-    ".cache/": true,
-    "dist/": true,
-    "lib/": true
+    "**/.cache/": true,
+    "**/dist/": true,
+    "**/node_modules/": true
   },
   "typescript.tsdk": "node_modules/typescript/lib"
 }

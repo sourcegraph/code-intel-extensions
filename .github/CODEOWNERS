@@ -1,9 +1,14 @@
 # Lines starting with '#' are comments.
 # Each line is a file pattern followed by one or more owners.
 # https://help.github.com/articles/about-codeowners/
+#
+# Order is important; the last matching pattern takes the most
+# precedence.
 
 * @sourcegraph/code-intel
 
-# Configured through Renovate
-package.json
-yarn.lock
+# These are configured through Renovate config.
+# See ../renovate.json and https://github.com/sourcegraph/renovate-config/blob/master/renovate.json
+# This is so that automerged PRs do not trigger email notification spam.
+**/package.json
+**/yarn.lock

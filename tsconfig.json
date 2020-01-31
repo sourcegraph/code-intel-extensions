@@ -1,0 +1,19 @@
+{
+  "extends": "@sourcegraph/tsconfig",
+  "references": [
+    { "path": "shared" },
+    { "path": "extensions/go" },
+    { "path": "extensions/template" },
+    { "path": "extensions/typescript" }
+  ],
+  "compilerOptions": {
+    "target": "es2019",
+    "module": "commonjs",
+    "allowJs": false,
+    "moduleResolution": "node",
+    "lib": ["esnext", "webworker"],
+    "composite": true,
+    "rootDir": ".",
+    "allowSyntheticDefaultImports": true
+  }
+}

@@ -1,8 +1,6 @@
-.cache/
-.nyc_output/
-coverage/
-dist/
-node_modules/
-temp/
-lib/
-yarn-error.log
+temp
+dist
+node_modules
+.cache
+samples
+.nyc_output
