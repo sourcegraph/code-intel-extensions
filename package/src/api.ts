@@ -103,11 +103,34 @@ export class API {
           }`
         const graphqlVars = { query }
 
-        const respObj = await queryGraphQL({
+        type SearchResults =
+            | {
+                  data: {
+                      search?: {
+                          results: {
+                              results: any
+                          }
+                      }
+                  }
+              }
+            | {
+                  errors: { message: string }[]
+              }
+
+        const respObj: SearchResults = await queryGraphQL({
             query: graphqlQuery,
             vars: graphqlVars,
             sourcegraph: this.sourcegraph,
         })
+
+        if ('errors' in respObj) {
+            throw new Error(JSON.stringify(respObj.errors))
+        }
+        if (!respObj.data.search) {
+            throw new Error(
+                `Expected search field in GraphQL results. Search query was: ${query}`
+            )
+        }
         const results = []
         for (const result of respObj.data.search.results.results) {
             if (result.symbols) {
