@@ -1,11 +1,103 @@
-import { HandlerArgs, CommentStyle } from '../index'
-const path = require('path-browserify')
+import * as path from 'path'
+import * as sourcegraph from 'sourcegraph'
 
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+export interface LanguageSpec {
+    /**
+     * Used to label markdown code blocks.
+     */
+    languageID: string
 
-export type LanguageSpec = {
-    handlerArgs: Omit<HandlerArgs, 'sourcegraph'>
     stylized: string
+
+    /**
+     * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`).
+     */
+    fileExts: string[]
+
+    /**
+     * Regex that matches lines between a definition and the docstring that
+     * should be ignored. Java example: `/^\s*@/` for annotations.
+     */
+    docstringIgnore?: RegExp
+    commentStyle?: CommentStyle
+
+    /**
+     * Regex that matches characters in an identifier.
+     */
+    identCharPattern?: RegExp
+
+    /**
+     * Callback that filters the given symbol search results (e.g. to drop
+     * results from non-imported files).
+     */
+    filterDefinitions?: FilterDefinitions
+}
+
+export type FilterDefinitions = (args: {
+    repo: string
+    rev: string
+    filePath: string
+    fileContent: string
+    pos: sourcegraph.Position
+    results: Result[]
+}) => Result[]
+
+/**
+ * Result represents a search result returned from the Sourcegraph API.
+ */
+export interface Result {
+    repo: string
+    rev: string
+    file: string
+    start: {
+        line: number
+        character: number
+    }
+    end: {
+        line: number
+        character: number
+    }
+    preview?: string // only for text search results
+    symbolName?: string
+    symbolKind?: string
+    containerName?: string
+    fileLocal?: boolean
+}
+
+export type DocPlacement = 'above the definition' | 'below the definition'
+
+export interface CommentStyle {
+    /**
+     * Specifies where documentation is placed relative to the definition.
+     * Defaults to `'above the definition'`. In Python, documentation is placed
+     * `'below the definition'`.
+     */
+    docPlacement?: DocPlacement
+
+    /**
+     * Captures the content of a line comment. Also prevents jump-to-definition
+     * (except when the token appears to refer to code). Python example:
+     * `/#\s?(.*)/`
+     */
+    lineRegex?: RegExp
+    block?: BlockCommentStyle
+}
+
+export interface BlockCommentStyle {
+    /**
+     * Matches the start of a block comment. C++ example: `/\/\*\*?/`
+     */
+    startRegex: RegExp
+    /**
+     * Matches the noise at the beginning of each line in a block comment after
+     * the start, end, and leading indentation have been stripped. C++ example:
+     * `/(\s\*\s?)?/`
+     */
+    lineNoiseRegex?: RegExp
+    /**
+     * Matches the end of a block comment. C++ example: `/\*\//`
+     */
+    endRegex: RegExp
 }
 
 const cStyleBlock: any = {
@@ -51,7 +143,7 @@ const lispStyle: CommentStyle = {
  * back to the raw (unfiltered) results so that the user doesn't get an empty
  * response unless there really is nothing.
  */
-const cppFilterDefinitions: HandlerArgs['filterDefinitions'] = ({
+const cppFilterDefinitions: LanguageSpec['filterDefinitions'] = ({
     filePath,
     fileContent,
     results,
@@ -91,515 +183,451 @@ const cppFilterDefinitions: HandlerArgs['filterDefinitions'] = ({
 // The extensions come from shared/src/languages.ts
 export const languageSpecs: LanguageSpec[] = [
     {
-        handlerArgs: {
-            languageID: 'typescript',
-            fileExts: ['ts', 'tsx', 'js', 'jsx'],
-            commentStyle: cStyle,
-            filterDefinitions: ({ filePath, fileContent, results }) => {
-                const imports = fileContent
-                    .split(/\r?\n/)
-                    .map(line => {
-                        // Matches the import at index 1
-                        const match =
-                            /\bfrom ['"](.*)['"];?$/.exec(line) ||
-                            /\brequire\(['"](.*)['"]\)/.exec(line)
-                        return match ? match[1] : undefined
-                    })
-                    .filter((x): x is string => Boolean(x))
-
-                const filteredResults = results.filter(result => {
-                    return imports.some(
-                        i =>
-                            path.join(path.dirname(filePath), i) ===
-                            result.file.replace(/\.[^/.]+$/, '')
-                    )
-                })
-
-                return filteredResults.length === 0 ? results : filteredResults
-            },
-        },
+        languageID: 'typescript',
         stylized: 'TypeScript',
+        fileExts: ['ts', 'tsx', 'js', 'jsx'],
+        commentStyle: cStyle,
+        filterDefinitions: ({ filePath, fileContent, results }) => {
+            const imports = fileContent
+                .split('\n')
+                .map(line => {
+                    // Matches the import at index 1
+                    const match =
+                        /\bfrom ['"](.*)['"];?$/.exec(line) ||
+                        /\brequire\(['"](.*)['"]\)/.exec(line)
+                    return match ? match[1] : undefined
+                })
+                .filter((x): x is string => Boolean(x))
+
+            const filteredResults = results.filter(result =>
+                imports.some(
+                    i =>
+                        path.join(path.dirname(filePath), i) ===
+                        result.file.replace(/\.[^/.]+$/, '')
+                )
+            )
+
+            return filteredResults.length === 0 ? results : filteredResults
+        },
     },
     {
-        handlerArgs: {
-            languageID: 'python',
-            fileExts: ['py'],
-            commentStyle: {
-                docPlacement: 'below the definition',
-                lineRegex: /#\s?/,
-                block: {
-                    startRegex: /"""/,
-                    endRegex: /"""/,
-                },
-            },
-            filterDefinitions: ({ filePath, fileContent, results }) => {
-                const imports = fileContent
-                    .split(/\r?\n/)
-                    .map(line => {
-                        // Matches the import at index 1
-                        const match =
-                            /^import ([\.\w]*)/.exec(line) ||
-                            /^from ([\.\w]*)/.exec(line)
-                        return match ? match[1] : undefined
-                    })
-                    .filter((x): x is string => Boolean(x))
-
-                /**
-                 * Converts a relative import to a relative path, or undefined
-                 * if the import is not relative.
-                 */
-                function relativeImportToPath(i: string): string | undefined {
-                    const match = /^(\.)(\.*)(.*)/.exec(i)
-                    if (!match) {
-                        return undefined
-                    }
-                    const parentDots = match[2]
-                    const pkg = match[3]
-                    return (
-                        parentDots.replace(/\./g, '../') +
-                        pkg.replace(/\./g, '/')
-                    )
-                }
-
-                const filteredResults = results.filter(result => {
-                    return imports.some(i =>
-                        relativeImportToPath(i)
-                            ? path.join(
-                                  path.dirname(filePath),
-                                  relativeImportToPath(i)
-                              ) === result.file.replace(/\.[^/.]+$/, '')
-                            : result.file.includes(i.replace(/\./g, '/'))
-                    )
-                })
-
-                return filteredResults.length === 0 ? results : filteredResults
-            },
-        },
+        languageID: 'python',
         stylized: 'Python',
-    },
-    {
-        handlerArgs: {
-            languageID: 'java',
-            fileExts: ['java'],
-            docstringIgnore: /^\s*@/,
-            commentStyle: cStyle,
-            filterDefinitions: ({ fileContent, results }) => {
-                const currentFileImports = fileContent
-                    .split(/\r?\n/)
-                    .map(line => {
-                        // Matches the import at index 1
-                        //
-                        // - Non-static imports have the form: package.class
-                        // - Static imports have the form: package.class+.symbol
-                        //
-                        // In practice, packages are lowercase and and classes
-                        // are uppercase. Take advantage of that to determine
-                        // the package in static imports (otherwise it would be
-                        // ambiguous).
-                        const match =
-                            /^import static ([a-z_0-9\.]+)\.[A-Z][\w\.]+;$/.exec(
-                                line
-                            ) || /^import ([\w\.]+);$/.exec(line)
-                        return match ? match[1] : undefined
-                    })
-                    .filter((x): x is string => Boolean(x))
+        fileExts: ['py'],
+        commentStyle: {
+            docPlacement: 'below the definition',
+            lineRegex: /#\s?/,
+            block: {
+                startRegex: /"""/,
+                endRegex: /"""/,
+            },
+        },
+        filterDefinitions: ({ filePath, fileContent, results }) => {
+            const imports = fileContent
+                .split(/\r?\n/)
+                .map(line => {
+                    // Matches the import at index 1
+                    const match =
+                        /^import ([\.\w]*)/.exec(line) ||
+                        /^from ([\.\w]*)/.exec(line)
+                    return match ? match[1] : undefined
+                })
+                .filter((x): x is string => Boolean(x))
 
-                const currentPackage: string | undefined = fileContent
-                    .split(/\r?\n/)
-                    .map(line => {
-                        // Matches the package name at index 1
-                        const match = /^package ([\w\.]+);$/.exec(line)
-                        return match ? match[1] : undefined
-                    })
-                    .find(x => Boolean(x))
-
-                if (!currentPackage) {
-                    return results
+            /**
+             * Converts a relative import to a relative path, or undefined
+             * if the import is not relative.
+             */
+            function relativeImportToPath(i: string): string | undefined {
+                const match = /^(\.)(\.*)(.*)/.exec(i)
+                if (!match) {
+                    return undefined
                 }
+                const parentDots = match[2]
+                const pkg = match[3]
+                return (
+                    parentDots.replace(/\./g, '../') + pkg.replace(/\./g, '/')
+                )
+            }
 
-                const filteredResults = results.filter(result => {
-                    // Check if the result's file in any of the imported packages or the current package
-                    return [...currentFileImports, currentPackage].some(i =>
-                        path
-                            .dirname(result.file)
-                            .replace(/\//g, '.')
-                            .endsWith(i)
-                    )
-                })
+            const filteredResults = results.filter(result =>
+                imports.some(i =>
+                    relativeImportToPath(i)
+                        ? path.join(
+                              path.dirname(filePath),
+                              relativeImportToPath(i) || ''
+                          ) === result.file.replace(/\.[^/.]+$/, '')
+                        : result.file.includes(i.replace(/\./g, '/'))
+                )
+            )
 
-                return filteredResults.length === 0 ? results : filteredResults
-            },
+            return filteredResults.length === 0 ? results : filteredResults
         },
+    },
+    {
+        languageID: 'java',
         stylized: 'Java',
-    },
-    {
-        handlerArgs: {
-            languageID: 'go',
-            fileExts: ['go'],
-            commentStyle: {
-                lineRegex: /\/\/\s?/,
-            },
-            filterDefinitions: ({ repo, filePath, fileContent, results }) => {
-                const currentFileImportedPaths = fileContent
-                    .split(/\r?\n/)
-                    .map(line => {
-                        // Matches the import at index 3
-                        const match = /^(import |\t)(\w+ |\. )?"(.*)"$/.exec(
+        fileExts: ['java'],
+        docstringIgnore: /^\s*@/,
+        commentStyle: cStyle,
+        filterDefinitions: ({ fileContent, results }) => {
+            const currentFileImports = fileContent
+                .split(/\r?\n/)
+                .map(line => {
+                    // Matches the import at index 1
+                    //
+                    // - Non-static imports have the form: package.class
+                    // - Static imports have the form: package.class+.symbol
+                    //
+                    // In practice, packages are lowercase and and classes
+                    // are uppercase. Take advantage of that to determine
+                    // the package in static imports (otherwise it would be
+                    // ambiguous).
+                    const match =
+                        /^import static ([a-z_0-9\.]+)\.[A-Z][\w\.]+;$/.exec(
                             line
-                        )
-                        return match ? match[3] : undefined
-                    })
-                    .filter((x): x is string => Boolean(x))
-
-                const currentFileImportPath =
-                    repo + '/' + path.dirname(filePath)
-
-                const filteredResults = results.filter(result => {
-                    const resultImportPath =
-                        result.repo + '/' + path.dirname(result.file)
-                    return [
-                        ...currentFileImportedPaths,
-                        currentFileImportPath,
-                    ].some(i => resultImportPath === i)
+                        ) || /^import ([\w\.]+);$/.exec(line)
+                    return match ? match[1] : undefined
                 })
+                .filter((x): x is string => Boolean(x))
 
-                return filteredResults.length === 0 ? results : filteredResults
-            },
+            const currentPackage: string | undefined = fileContent
+                .split(/\r?\n/)
+                .map(line => {
+                    // Matches the package name at index 1
+                    const match = /^package ([\w\.]+);$/.exec(line)
+                    return match ? match[1] : undefined
+                })
+                .find(x => Boolean(x))
+
+            if (!currentPackage) {
+                return results
+            }
+
+            // Check if the result's file in any of the imported packages or the current package
+            const filteredResults = results.filter(result =>
+                [...currentFileImports, currentPackage].some(i =>
+                    path
+                        .dirname(result.file)
+                        .replace(/\//g, '.')
+                        .endsWith(i)
+                )
+            )
+
+            return filteredResults.length === 0 ? results : filteredResults
         },
+    },
+    {
+        languageID: 'go',
         stylized: 'Go',
-    },
-    {
-        handlerArgs: {
-            languageID: 'cpp',
-            fileExts: [
-                'c',
-                'cc',
-                'cpp',
-                'cxx',
-                'hh',
-                'h',
-                'hpp',
-                /* Arduino */ 'ino',
-                /* Objective C */ 'm',
-            ],
-            commentStyle: cStyle,
-            filterDefinitions: cppFilterDefinitions,
-        },
-        stylized: 'C++',
-    },
-    {
-        handlerArgs: {
-            languageID: 'cuda',
-            fileExts: ['cu', 'cuh'],
-            commentStyle: cStyle,
-            filterDefinitions: cppFilterDefinitions,
-        },
-        stylized: 'CUDA',
-    },
-    {
-        handlerArgs: {
-            languageID: 'ruby',
-            fileExts: [
-                'rb',
-                'builder',
-                'eye',
-                'fcgi',
-                'gemspec',
-                'god',
-                'jbuilder',
-                'mspec',
-                'pluginspec',
-                'podspec',
-                'rabl',
-                'rake',
-                'rbuild',
-                'rbw',
-                'rbx',
-                'ru',
-                'ruby',
-                'spec',
-                'thor',
-                'watchr',
-            ],
-            commentStyle: shellStyle,
-            identCharPattern: /[A-Za-z0-9_!?]/,
-        },
-        stylized: 'Ruby',
-    },
-    {
-        handlerArgs: {
-            languageID: 'php',
-            fileExts: [
-                'php',
-                'phtml',
-                'php3',
-                'php4',
-                'php5',
-                'php6',
-                'php7',
-                'phps',
-            ],
-            commentStyle: cStyle,
-        },
-        stylized: 'PHP',
-    },
-    {
-        handlerArgs: {
-            languageID: 'csharp',
-            fileExts: ['cs', 'csx'],
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
-        },
-        stylized: 'C#',
-    },
-    {
-        handlerArgs: {
-            languageID: 'shell',
-            fileExts: ['sh', 'bash', 'zsh'],
-            commentStyle: shellStyle,
-        },
-        stylized: 'Shell',
-    },
-    {
-        handlerArgs: {
-            languageID: 'scala',
-            docstringIgnore: /^\s*@/,
-            fileExts: ['sbt', 'sc', 'scala'],
-            commentStyle: cStyle,
-        },
-        stylized: 'Scala',
-    },
-    {
-        handlerArgs: {
-            languageID: 'swift',
-            fileExts: ['swift'],
-            docstringIgnore: /^\s*@/,
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
-        },
-        stylized: 'Swift',
-    },
-    {
-        handlerArgs: {
-            languageID: 'rust',
-            fileExts: ['rs', 'rs.in'],
-            docstringIgnore: /^#/,
-            commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?/ },
-        },
-        stylized: 'Rust',
-    },
-    {
-        handlerArgs: {
-            languageID: 'kotlin',
-            fileExts: ['kt', 'ktm', 'kts'],
-            commentStyle: cStyle,
-        },
-        stylized: 'Kotlin',
-    },
-    {
-        handlerArgs: {
-            languageID: 'elixir',
-            fileExts: ['ex', 'exs'],
-            docstringIgnore: /^\s*@/,
-            commentStyle: {
-                ...pythonStyle,
-                docPlacement: 'above the definition',
-            },
-            identCharPattern: /[A-Za-z0-9_!?]/,
-        },
-        stylized: 'Elixir',
-    },
-    {
-        handlerArgs: {
-            languageID: 'perl',
-            fileExts: [
-                'pl',
-                'al',
-                'cgi',
-                'fcgi',
-                'perl',
-                'ph',
-                'plx',
-                'pm',
-                'pod',
-                'psgi',
-                't',
-            ],
-            commentStyle: { lineRegex: /#\s?/ },
-        },
-        stylized: 'Perl',
-    },
-    {
-        handlerArgs: {
-            languageID: 'lua',
-            fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
-            commentStyle: {
-                lineRegex: /---?\s?/,
-                block: {
-                    startRegex: /--\[\[/,
-                    endRegex: /\]\]/,
-                },
-            },
-        },
-        stylized: 'Lua',
-    },
-    {
-        handlerArgs: {
-            languageID: 'clojure',
-            fileExts: ['clj', 'cljs', 'cljx'],
-            commentStyle: lispStyle,
-            identCharPattern: /[A-Za-z0-9_\-!?+*<>=]/,
-        },
-        stylized: 'Clojure',
-    },
-    {
-        handlerArgs: {
-            languageID: 'haskell',
-            fileExts: ['hs', 'hsc'],
-            docstringIgnore: /INLINE|^#/,
-            commentStyle: {
-                lineRegex: /--\s?\|?\s?/,
-                block: {
-                    startRegex: /{-/,
-                    endRegex: /-}/,
-                },
-            },
-            identCharPattern: /[A-Za-z0-9_']/,
-        },
-        stylized: 'Haskell',
-    },
-    {
-        handlerArgs: {
-            languageID: 'powershell',
-            fileExts: ['ps1', 'psd1', 'psm1'],
-            docstringIgnore: /\{/,
-            commentStyle: {
-                docPlacement: 'below the definition',
-                block: {
-                    startRegex: /<#/,
-                    endRegex: /#>/,
-                },
-            },
-            identCharPattern: /[A-Za-z0-9_?]/,
-        },
-        stylized: 'PowerShell',
-    },
-    {
-        handlerArgs: {
-            languageID: 'lisp',
-            fileExts: [
-                'lisp',
-                'asd',
-                'cl',
-                'lsp',
-                'l',
-                'ny',
-                'podsl',
-                'sexp',
-                'el',
-            ],
-            commentStyle: lispStyle,
-            identCharPattern: /[A-Za-z0-9_!?]/,
-        },
-        stylized: 'Lisp',
-    },
-    {
-        handlerArgs: {
-            languageID: 'erlang',
-            fileExts: ['erl'],
-            docstringIgnore: /-spec/,
-            commentStyle: {
-                lineRegex: /%%\s?/,
-            },
-        },
-        stylized: 'Erlang',
-    },
-    {
-        handlerArgs: {
-            languageID: 'dart',
-            fileExts: ['dart'],
-            commentStyle: { lineRegex: /\/\/\/\s?/ },
-        },
-        stylized: 'Dart',
-    },
-    {
-        handlerArgs: {
-            languageID: 'ocaml',
-            fileExts: [
-                'ml',
-                'eliom',
-                'eliomi',
-                'ml4',
-                'mli',
-                'mll',
-                'mly',
-                're',
-            ],
-            commentStyle: {
-                block: {
-                    startRegex: /\(\*\*?/,
-                    lineNoiseRegex: cStyleBlock.lineNoiseRegex,
-                    endRegex: /\*\)/,
-                },
-            },
-        },
-        stylized: 'OCaml',
-    },
-    {
-        handlerArgs: {
-            languageID: 'r',
-            fileExts: ['r', 'R', 'rd', 'rsx'],
-            commentStyle: { lineRegex: /#'?\s?/ },
-            identCharPattern: /[A-Za-z0-9_\.]/,
-        },
-        stylized: 'R',
-    },
-    {
-        handlerArgs: {
-            languageID: 'pascal',
-            fileExts: ['p', 'pas', 'pp'],
-            commentStyle: {
-                // Traditional: (* this is a comment *)
-                // Customary:   { this is also a comment }
-                block: {
-                    startRegex: /(\{|\(\*)\s?/,
-                    endRegex: /(\}|\*\))/,
-                },
+        fileExts: ['go'],
+        filterDefinitions: ({ repo, filePath, pos, fileContent, results }) => {
+            const currentFileImportedPaths = fileContent
+                .split('\n')
+                .map(line => {
+                    // Matches the import at index 3
+                    const match = /^(import |\t)(\w+ |\. )?"(.*)"$/.exec(line)
+                    return match ? match[3] : undefined
+                })
+                .filter((x): x is string => Boolean(x))
 
-                // TODO: Some Pascal implementations support //-comments too.
-                // Is that common enough to support here?
+            const currentFileImportPath = repo + '/' + path.dirname(filePath)
+
+            const filteredResults = results.filter(result => {
+                const resultImportPath =
+                    result.repo + '/' + path.dirname(result.file)
+                return (
+                    currentFileImportedPaths.some(i =>
+                        resultImportPath.includes(i)
+                    ) || resultImportPath === currentFileImportPath
+                )
+            })
+
+            return filteredResults.length === 0 ? results : filteredResults
+        },
+        commentStyle: {
+            lineRegex: /\/\/\s?/,
+        },
+    },
+    {
+        languageID: 'cpp',
+        stylized: 'C++',
+        fileExts: [
+            'c',
+            'cc',
+            'cpp',
+            'cxx',
+            'hh',
+            'h',
+            'hpp',
+            /* Arduino */ 'ino',
+            /* Objective C */ 'm',
+        ],
+        commentStyle: cStyle,
+        filterDefinitions: cppFilterDefinitions,
+    },
+    {
+        languageID: 'cuda',
+        stylized: 'CUDA',
+        fileExts: ['cu', 'cuh'],
+        commentStyle: cStyle,
+        filterDefinitions: cppFilterDefinitions,
+    },
+    {
+        languageID: 'ruby',
+        stylized: 'Ruby',
+        fileExts: [
+            'rb',
+            'builder',
+            'eye',
+            'fcgi',
+            'gemspec',
+            'god',
+            'jbuilder',
+            'mspec',
+            'pluginspec',
+            'podspec',
+            'rabl',
+            'rake',
+            'rbuild',
+            'rbw',
+            'rbx',
+            'ru',
+            'ruby',
+            'spec',
+            'thor',
+            'watchr',
+        ],
+        commentStyle: shellStyle,
+        identCharPattern: /[A-Za-z0-9_!?]/,
+    },
+    {
+        languageID: 'php',
+        stylized: 'PHP',
+        fileExts: [
+            'php',
+            'phtml',
+            'php3',
+            'php4',
+            'php5',
+            'php6',
+            'php7',
+            'phps',
+        ],
+        commentStyle: cStyle,
+    },
+    {
+        languageID: 'csharp',
+        stylized: 'C#',
+        fileExts: ['cs', 'csx'],
+        commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
+    },
+    {
+        languageID: 'shell',
+        stylized: 'Shell',
+        fileExts: ['sh', 'bash', 'zsh'],
+        commentStyle: shellStyle,
+    },
+    {
+        languageID: 'scala',
+        stylized: 'Scala',
+        docstringIgnore: /^\s*@/,
+        fileExts: ['sbt', 'sc', 'scala'],
+        commentStyle: cStyle,
+    },
+    {
+        languageID: 'swift',
+        stylized: 'Swift',
+        fileExts: ['swift'],
+        docstringIgnore: /^\s*@/,
+        commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
+    },
+    {
+        languageID: 'rust',
+        stylized: 'Rust',
+        fileExts: ['rs', 'rs.in'],
+        docstringIgnore: /^#/,
+        commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?/ },
+    },
+    {
+        languageID: 'kotlin',
+        stylized: 'Kotlin',
+        fileExts: ['kt', 'ktm', 'kts'],
+        commentStyle: cStyle,
+    },
+    {
+        languageID: 'elixir',
+        stylized: 'Elixir',
+        fileExts: ['ex', 'exs'],
+        docstringIgnore: /^\s*@/,
+        commentStyle: {
+            ...pythonStyle,
+            docPlacement: 'above the definition',
+        },
+        identCharPattern: /[A-Za-z0-9_!?]/,
+    },
+    {
+        languageID: 'perl',
+        stylized: 'Perl',
+        fileExts: [
+            'pl',
+            'al',
+            'cgi',
+            'fcgi',
+            'perl',
+            'ph',
+            'plx',
+            'pm',
+            'pod',
+            'psgi',
+            't',
+        ],
+        commentStyle: { lineRegex: /#\s?/ },
+    },
+    {
+        languageID: 'lua',
+        stylized: 'Lua',
+        fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
+        commentStyle: {
+            lineRegex: /---?\s?/,
+            block: {
+                startRegex: /--\[\[/,
+                endRegex: /\]\]/,
             },
         },
+    },
+    {
+        languageID: 'clojure',
+        stylized: 'Clojure',
+        fileExts: ['clj', 'cljs', 'cljx'],
+        commentStyle: lispStyle,
+        identCharPattern: /[A-Za-z0-9_\-!?+*<>=]/,
+    },
+    {
+        languageID: 'haskell',
+        stylized: 'Haskell',
+        fileExts: ['hs', 'hsc'],
+        docstringIgnore: /INLINE|^#/,
+        commentStyle: {
+            lineRegex: /--\s?\|?\s?/,
+            block: {
+                startRegex: /{-/,
+                endRegex: /-}/,
+            },
+        },
+        identCharPattern: /[A-Za-z0-9_']/,
+    },
+    {
+        languageID: 'powershell',
+        stylized: 'PowerShell',
+        fileExts: ['ps1', 'psd1', 'psm1'],
+        docstringIgnore: /\{/,
+        commentStyle: {
+            docPlacement: 'below the definition',
+            block: {
+                startRegex: /<#/,
+                endRegex: /#>/,
+            },
+        },
+        identCharPattern: /[A-Za-z0-9_?]/,
+    },
+    {
+        languageID: 'lisp',
+        stylized: 'Lisp',
+        fileExts: [
+            'lisp',
+            'asd',
+            'cl',
+            'lsp',
+            'l',
+            'ny',
+            'podsl',
+            'sexp',
+            'el',
+        ],
+        commentStyle: lispStyle,
+        identCharPattern: /[A-Za-z0-9_!?]/,
+    },
+    {
+        languageID: 'erlang',
+        stylized: 'Erlang',
+        fileExts: ['erl'],
+        docstringIgnore: /-spec/,
+        commentStyle: {
+            lineRegex: /%%\s?/,
+        },
+    },
+    {
+        languageID: 'dart',
+        stylized: 'Dart',
+        fileExts: ['dart'],
+        commentStyle: { lineRegex: /\/\/\/\s?/ },
+    },
+    {
+        languageID: 'ocaml',
+        stylized: 'OCaml',
+        fileExts: ['ml', 'eliom', 'eliomi', 'ml4', 'mli', 'mll', 'mly', 're'],
+        commentStyle: {
+            block: {
+                startRegex: /\(\*\*?/,
+                lineNoiseRegex: cStyleBlock.lineNoiseRegex,
+                endRegex: /\*\)/,
+            },
+        },
+    },
+    {
+        languageID: 'r',
+        stylized: 'R',
+        fileExts: ['r', 'R', 'rd', 'rsx'],
+        commentStyle: { lineRegex: /#'?\s?/ },
+        identCharPattern: /[A-Za-z0-9_\.]/,
+    },
+    {
+        languageID: 'pascal',
         stylized: 'Pascal',
+        fileExts: ['p', 'pas', 'pp'],
+        commentStyle: {
+            // Traditional: (* this is a comment *)
+            // Customary:   { this is also a comment }
+            block: {
+                startRegex: /(\{|\(\*)\s?/,
+                endRegex: /(\}|\*\))/,
+            },
+
+            // TODO: Some Pascal implementations support //-comments too.
+            // Is that common enough to support here?
+        },
     },
     {
-        handlerArgs: {
-            languageID: 'verilog',
-            fileExts: ['sv', 'svh', 'svi', 'v'],
-            commentStyle: cStyle,
-        },
+        languageID: 'verilog',
         stylized: 'Verilog',
+        fileExts: ['sv', 'svh', 'svi', 'v'],
+        commentStyle: cStyle,
     },
     {
-        handlerArgs: {
-            languageID: 'vhdl',
-            fileExts: ['vhd', 'vhdl'],
-            commentStyle: { lineRegex: /--+\s?/ },
-        },
+        languageID: 'vhdl',
         stylized: 'VHDL',
+        fileExts: ['vhd', 'vhdl'],
+        commentStyle: { lineRegex: /--+\s?/ },
     },
     {
-        handlerArgs: {
-            languageID: 'graphql',
-            fileExts: ['graphql'],
-            commentStyle: shellStyle,
-        },
+        languageID: 'graphql',
         stylized: 'GraphQL',
+        fileExts: ['graphql'],
+        commentStyle: shellStyle,
     },
     {
-        handlerArgs: {
-            languageID: 'groovy',
-            fileExts: ['groovy'],
-            commentStyle: cStyle,
-        },
+        languageID: 'groovy',
         stylized: 'Groovy',
+        fileExts: ['groovy'],
+        commentStyle: cStyle,
     },
 ]
+
+export function findLanguageSpec(languageID: string): LanguageSpec {
+    const languageSpec = languageSpecs.find(s => s.languageID === languageID)
+    if (!languageSpec) {
+        throw new Error(`${languageID} is not defined`)
+    }
+    return languageSpec
+}

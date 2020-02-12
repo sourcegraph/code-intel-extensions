@@ -1,31 +1,43 @@
 import * as sourcegraph from 'sourcegraph'
-import { LSIFProviders } from './providers'
-import { convertHover, convertLocations } from './lsp-conversion'
-import { pathFromDoc, repositoryFromDoc, commitFromDoc } from './util'
-import * as LSP from 'vscode-languageserver-types'
-import { queryGraphQL } from '../graphql'
+import * as lsp from 'vscode-languageserver-protocol'
+import { convertHover, convertLocations } from '../lsp/conversion'
+import { Providers } from '../providers'
+import { getUser } from '../util/api'
+import { asyncGeneratorFromPromise } from '../util/ix'
+import { parseGitURI, withHash } from '../util/uri'
+import { mapArrayish } from '../util/util'
 
-export function initHTTP(): LSIFProviders {
-    const isLSIFAvailable = createLSIFAvailablilityCheck()
+/**
+ * Creates providers powered by LSIF-based code intelligence. This particular
+ * set of providers will use the legacy LSIF HTTP API.
+ */
+export function createProviders(): Providers {
+    const lsifDocs = new Map<string, Promise<boolean>>()
 
     const ensureExists = <T>(
-        f: (
+        fn: (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
-        ) => Promise<T | undefined>
+        ) => Promise<T>
     ): ((
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
-    ) => Promise<T | undefined>) => {
-        return async (
-            doc: sourcegraph.TextDocument,
-            pos: sourcegraph.Position
-        ) => ((await isLSIFAvailable(doc)) ? await f(doc, pos) : undefined)
-    }
+    ) => AsyncGenerator<T | null, void, undefined>) =>
+        asyncGeneratorFromPromise(async (doc, pos) => {
+            let hasLSIFPromise = lsifDocs.get(doc.uri)
+            if (!hasLSIFPromise) {
+                hasLSIFPromise = exists(parseGitURI(new URL(doc.uri)))
+                lsifDocs.set(doc.uri, hasLSIFPromise)
+            }
+
+            if (await hasLSIFPromise) {
+                return fn(doc, pos)
+            }
+
+            return null
+        })
 
     return {
-        // You can read this as "only send a hover request when LSIF data is
-        // available for the given doc".
         definition: ensureExists(definition),
         references: ensureExists(references),
         hover: ensureExists(hover),
@@ -33,144 +45,148 @@ export function initHTTP(): LSIFProviders {
 }
 
 /**
- * Creates an asynchronous predicate on a doc that checks for the existence of
- * LSIF data for the given doc. It's a constructor because it creates an
- * internal cache to reduce network traffic.
+ * Determines if there is LSIF data for a repo, commit, and path.
+ *
+ * @param args Parameter bag.
  */
-const createLSIFAvailablilityCheck = () => {
-    const lsifDocs = new Map<string, Promise<boolean>>()
-    return (doc: sourcegraph.TextDocument): Promise<boolean> => {
-        if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
-            console.log('LSIF is not enabled in global settings')
-            return Promise.resolve(false)
-        }
-
-        if (lsifDocs.has(doc.uri)) {
-            return lsifDocs.get(doc.uri)!
-        }
-
-        const repository = repositoryFromDoc(doc)
-        const commit = commitFromDoc(doc)
-        const file = pathFromDoc(doc)
-
-        const url = new URL(
-            '.api/lsif/exists',
-            sourcegraph.internal.sourcegraphURL
-        )
-        url.searchParams.set('repository', repository)
-        url.searchParams.set('commit', commit)
-        url.searchParams.set('file', file)
-
-        const hasLSIFPromise = (async () => {
-            try {
-                // Prevent leaking the name of a private repository to
-                // Sourcegraph.com by relying on the Sourcegraph extension host's
-                // private repository detection, which will throw an error when
-                // making a GraphQL request.
-                await queryGraphQL({
-                    query: `query { currentUser { id } }`,
-                    vars: {},
-                    sourcegraph,
-                })
-            } catch (e) {
-                return false
-            }
-            const response = await fetch(url.href, {
-                method: 'POST',
-                headers: new Headers({
-                    'x-requested-with': 'Basic code intel',
-                }),
-            })
-            if (!response.ok) {
-                return false
-            }
-            return response.json()
-        })()
-
-        lsifDocs.set(doc.uri, hasLSIFPromise)
-        return hasLSIFPromise
+async function exists({
+    repo,
+    commit,
+    path,
+}: {
+    /** The repository name. */
+    repo: string
+    /** The commit. */
+    commit: string
+    /** The path of the file. */
+    path: string
+}): Promise<boolean> {
+    try {
+        // Make ANY GraphQL request and rely on the Sourcegraph extension
+        // host to throw an error when in the context of a private repository.
+        // We want to do this to prevent leaking the name of a private repo.
+        await getUser()
+    } catch (e) {
+        return false
     }
+
+    const url = new URL('.api/lsif/exists', sourcegraph.internal.sourcegraphURL)
+    url.searchParams.set('repository', repo)
+    url.searchParams.set('commit', commit)
+    url.searchParams.set('file', path)
+
+    const response = await fetch(url.href, {
+        method: 'POST',
+        headers: new Headers({
+            'x-requested-with': 'Basic code intel',
+        }),
+    })
+    if (!response.ok) {
+        return false
+    }
+    return response.json()
 }
 
+/**
+ * Retrieve a definition for the current hover position.
+ *
+ * @param doc The current text document.
+ * @param position The current hover position.
+ */
 async function definition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Definition | undefined> {
-    const body: LSP.Location | LSP.Location[] | null = await queryLSIF({
-        doc,
-        method: 'definitions',
-        path: pathFromDoc(doc),
-        position,
-    })
-    if (!body) {
-        return undefined
-    }
-    const locations = Array.isArray(body) ? body : [body]
-    if (locations.length === 0) {
-        return undefined
-    }
+): Promise<sourcegraph.Definition> {
+    const { path } = parseGitURI(new URL(doc.uri))
+
     return convertLocations(
-        sourcegraph,
-        locations.map(d => ({ ...d, uri: setPath(doc, d.uri) }))
+        mapArrayish(
+            await queryLSIF<lsp.Location | lsp.Location[] | null>({
+                doc,
+                position,
+                path,
+                method: 'definitions',
+            }),
+            d => ({ ...d, uri: setPath(doc, d.uri) })
+        )
     )
 }
 
+/**
+ * Retrieve references for the current hover position.
+ *
+ * @param doc The current text document.
+ * @param position The current hover position.
+ */
 async function references(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Location[]> {
-    const body: LSP.Location[] | null = await queryLSIF({
-        doc,
-        method: 'references',
-        path: pathFromDoc(doc),
-        position,
-    })
-    if (!body) {
-        return []
-    }
-    const locations = Array.isArray(body) ? body : [body]
-    if (locations.length === 0) {
-        return []
-    }
+): Promise<sourcegraph.Location[] | null> {
+    const { path } = parseGitURI(new URL(doc.uri))
+
     return convertLocations(
-        sourcegraph,
-        locations.map(r => ({ ...r, uri: setPath(doc, r.uri) }))
+        mapArrayish(
+            await queryLSIF<lsp.Location[] | null>({
+                doc,
+                position,
+                path,
+                method: 'references',
+            }),
+            r => ({ ...r, uri: setPath(doc, r.uri) })
+        )
     )
 }
 
+/**
+ * Retrieve hover text for the current hover position.
+ *
+ * @param doc The current text document.
+ * @param position The current hover position.
+ */
 async function hover(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Hover | undefined> {
-    const hover: LSP.Hover | null = await queryLSIF({
-        doc,
-        method: 'hover',
-        path: pathFromDoc(doc),
-        position,
-    })
-    if (!hover) {
-        return undefined
-    }
-    return convertHover(sourcegraph, hover)
+): Promise<sourcegraph.Hover | null> {
+    const { path } = parseGitURI(new URL(doc.uri))
+
+    return convertHover(
+        await queryLSIF<lsp.Hover | null>({
+            doc,
+            position,
+            path,
+            method: 'hover',
+        })
+    )
 }
 
-async function queryLSIF({
+/**
+ * Perform a request to the LSIF HTTP API.
+ *
+ * @param args Parameter bag.
+ */
+async function queryLSIF<T>({
     doc,
-    method,
-    path,
     position,
+    path,
+    method,
 }: {
+    /** The current text document. */
     doc: sourcegraph.TextDocument
-    method: string
+    /** The current hover position. */
+    position: lsp.Position
+    /** The path of the file. */
     path: string
-    position: LSP.Position
-}): Promise<any> {
+    /** The LSIF method type. */
+    method: string
+}): Promise<T> {
+    const { repo, commit } = parseGitURI(new URL(doc.uri))
+
     const url = new URL(
         '.api/lsif/request',
         sourcegraph.internal.sourcegraphURL
     )
-    url.searchParams.set('repository', repositoryFromDoc(doc))
-    url.searchParams.set('commit', commitFromDoc(doc))
+    url.searchParams.set('repository', repo)
+    url.searchParams.set('commit', commit)
 
     const response = await fetch(url.href, {
         method: 'POST',
@@ -187,15 +203,19 @@ async function queryLSIF({
     if (!response.ok) {
         throw new Error(`LSIF /request returned ${response.statusText}`)
     }
-    return await response.json()
+    return response.json()
 }
 
+/**
+ * If the path is a remote file, return it unchanged. Otherwise, create a
+ * new path from the current text document URI and the given file path. This
+ * is used to create paths to another file in the same repository and commit.
+ *
+ * @param doc The current text document.
+ * @param path The path of the file.
+ */
 function setPath(doc: sourcegraph.TextDocument, path: string): string {
-    if (path.startsWith('git://')) {
-        return path
-    }
-
-    const url = new URL(doc.uri)
-    url.hash = path
-    return url.href
+    return path.startsWith('git://')
+        ? path
+        : withHash(new URL(doc.uri), path).href
 }

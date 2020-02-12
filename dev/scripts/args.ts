@@ -14,7 +14,7 @@ export function findLanguageSpecs(): LanguageSpec[] {
         .strict().argv as { language?: string }
 
     const candidates = languageSpecs.filter(
-        s => !blacklist.includes(s.handlerArgs.languageID)
+        s => !blacklist.includes(s.languageID)
     )
 
     if (!args.language) {
@@ -22,9 +22,7 @@ export function findLanguageSpecs(): LanguageSpec[] {
     }
 
     return args.language.split(',').map(languageID => {
-        const spec = candidates.find(
-            spec => spec.handlerArgs.languageID === languageID
-        )
+        const spec = candidates.find(spec => spec.languageID === languageID)
         if (!spec) {
             throw new Error(`Unknown language ${languageID}.`)
         }
