@@ -41,7 +41,7 @@
   ],
   "scripts": {
     "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts && dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-typescript@$(git rev-parse HEAD)/-/raw/extension/src/",
-    "config-types": "dot-json package.json contributes.configuration | json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/common/config.ts",
+    "config-types": "dot-json package.json contributes.configuration | json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/settings.ts",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
@@ -104,7 +104,7 @@
       ]
     },
     "configuration": {
-      "title": "LangTypescriptConfiguration",
+      "title": "Settings",
       "type": "object",
       "additionalProperties": false,
       "properties": {

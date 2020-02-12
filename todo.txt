@@ -1,0 +1,10 @@
+To refactor:
+- shared/language-specs/languages.ts
+
+To test:
+- shared/lsif/graphql.ts
+- shared/lsif/http.ts
+- shared/lsif/providers.ts
+- shared/search/providers.ts
+- shared/util/graphql.ts
+- shared/language-specs/languages.ts

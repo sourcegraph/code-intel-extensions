@@ -4,9 +4,7 @@ import * as path from 'path'
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {
-    const languageIDs = findLanguageSpecs().map(
-        ({ handlerArgs: { languageID } }) => languageID
-    )
+    const languageIDs = findLanguageSpecs().map(({ languageID }) => languageID)
 
     await Promise.all(
         languageIDs.map(async languageID => {
@@ -27,6 +25,6 @@ async function publish(languageID: string): Promise<void> {
 }
 
 main().catch(err => {
-    console.error(err && err.message)
+    console.error(err?.message)
     process.exit(1)
 })

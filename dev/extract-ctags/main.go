@@ -26,16 +26,14 @@ import (
 
 // This block should express a LanguageSpec, see the languageSpecs const in
 // languages.ts for the expected format of the output.
-const templateSrc = `    {
-      handlerArgs: {
-        languageID: {{quoted .ID}},
-        fileExts: [{{range .Extensions}}
-          {{quoted .}},{{end}}
-        ],
-        commentStyle: cStyle,
-      },
-      stylized: {{quoted .Name}},
-    },
+const templateSrc = `{
+    languageID: {{quoted .ID}},
+    stylized: {{quoted .Name}},
+    fileExts: [{{range .Extensions}}
+        {{quoted .}},{{end}}
+    ],
+    commentStyle: cStyle,
+},
 `
 
 var (

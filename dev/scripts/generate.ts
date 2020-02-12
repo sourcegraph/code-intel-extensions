@@ -11,10 +11,7 @@ async function main(): Promise<void> {
 
 const templateDir = path.join('extensions', 'template')
 
-async function generate({
-    stylized,
-    handlerArgs: { languageID },
-}: LanguageSpec): Promise<void> {
+async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     console.log(`Generating ${languageID} extension`)
 
     const langDir = path.join('temp', languageID)
@@ -64,6 +61,6 @@ async function generate({
 }
 
 main().catch(err => {
-    console.error(err && err.message)
+    console.error(err?.message)
     process.exit(1)
 })
