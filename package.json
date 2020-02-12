@@ -27,7 +27,7 @@
     "@sourcegraph/vscode-ws-jsonrpc": "0.0.3-fork",
     "delay": "^4.3.0",
     "fs-extra": "^8.1.0",
-    "ix": "^2.5.3",
+    "ix": "^3.0.0",
     "lodash": "^4.17.15",
     "mz": "^2.7.0",
     "opentracing": "^0.14.4",
