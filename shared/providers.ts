@@ -143,23 +143,28 @@ export function createDefinitionProvider(
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
-            let hasLsifResult = false
+            let lastLsifResult: sourcegraph.Definition | undefined
             for await (const lsifResult of lsifProvider(doc, pos)) {
                 if (lsifResult) {
-                    hasLsifResult = true
                     yield lsifResult
+                    lastLsifResult = lsifResult
                 }
             }
-            if (hasLsifResult) {
+            if (lastLsifResult) {
+                // Found the best precise definition we'll get. Stop.
                 return
             }
 
             if (lspProvider) {
+                // Delegate to LSP if it's available. Do not try to supplement
+                // with additional search results as we have all the context we
+                // need for complete and precise results here.
                 yield* lspProvider(doc, pos)
                 return
             }
 
             for await (const searchResult of searchProvider(doc, pos)) {
+                // No results so far, fall back to search. Mark result as imprecise.
                 yield mapArrayish(searchResult, location => ({
                     ...location,
                     badge: impreciseBadge,
@@ -192,27 +197,56 @@ export function createReferencesProvider(
             pos: sourcegraph.Position,
             ctx: sourcegraph.ReferenceContext
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-            const lsifFiles = new Set()
+            let lsifResults: sourcegraph.Location[] = []
             for await (const lsifResult of lsifProvider(doc, pos, ctx)) {
-                for (const filename of asArray(lsifResult).map(file)) {
-                    lsifFiles.add(filename)
+                if (lsifResult) {
+                    yield lsifResult
+                    lsifResults = lsifResult
                 }
-
-                yield lsifResult
             }
 
             if (lspProvider) {
-                yield* lspProvider(doc, pos, ctx)
+                for await (const lspResult of lspProvider(doc, pos, ctx)) {
+                    // TODO - reduce duplicates between LSIF and LSP
+                    const filteredResults = asArray(lspResult)
+                    if (filteredResults.length === 0) {
+                        continue
+                    }
+
+                    // Re-emit the last results from the previous provider
+                    // so we do not overwrite what was emitted previously.
+                    yield lsifResults.concat(filteredResults)
+                }
+
+                // Do not try to supplement with additional search results
+                // as we have all the context we need for complete and precise
+                // results here.
                 return
             }
 
-            // Unconditionally get search references and append them with
-            // precise results because LSIF data might be sparse. Remove any
-            // search-based result that occurs in a file with an LSIF result.
-            for await (const fuzzyRef of searchProvider(doc, pos, ctx)) {
-                yield asArray(fuzzyRef)
-                    .filter(location => !lsifFiles.has(file(location)))
-                    .map(location => ({ ...location, badge: impreciseBadge }))
+            const lsifFiles = new Set(lsifResults.map(file))
+
+            for await (const searchResult of searchProvider(doc, pos, ctx)) {
+                // Filter out any search results that occur in the same file
+                // as LSIF results. These results are definitely incorrect and
+                // will pollute the ordering of precise and fuzzy results in
+                // the references pane.
+                const filteredResults = asArray(searchResult).filter(
+                    l => !lsifFiles.has(file(l))
+                )
+                if (filteredResults.length === 0) {
+                    continue
+                }
+
+                // Re-emit the last results from the previous provider so we
+                // do not overwrite what was emitted previously. Mark new results
+                // as imprecise.
+                yield lsifResults.concat(
+                    filteredResults.map(location => ({
+                        ...location,
+                        badge: impreciseBadge,
+                    }))
+                )
             }
         }),
     }
@@ -239,23 +273,28 @@ export function createHoverProvider(
             void,
             undefined
         > {
-            let hasLsifResult = false
+            let lastLsifResult: sourcegraph.Hover | null | undefined
             for await (const lsifResult of lsifProvider(doc, pos)) {
                 if (lsifResult) {
-                    hasLsifResult = true
                     yield lsifResult
+                    lastLsifResult = lsifResult
                 }
             }
-            if (hasLsifResult) {
+            if (lastLsifResult) {
+                // Found the best precise hover text we'll get. Stop.
                 return
             }
 
             if (lspProvider) {
+                // Delegate to LSP if it's available. Do not try to supplement
+                // with additional search results as we have all the context we
+                // need for complete and precise results here.
                 yield* lspProvider(doc, pos)
                 return
             }
 
             for await (const searchResult of searchProvider(doc, pos)) {
+                // No results so far, fall back to search. Mark result as imprecise.
                 if (searchResult) {
                     yield { ...searchResult, badge: impreciseBadge }
                 }

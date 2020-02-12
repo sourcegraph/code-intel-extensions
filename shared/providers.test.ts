@@ -71,7 +71,11 @@ describe('createDefinitionProvider', () => {
 describe('createReferencesProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createReferencesProvider(
-            () => asyncGeneratorFromValues([[loc1, loc2], [loc3]]),
+            () =>
+                asyncGeneratorFromValues([
+                    [loc1, loc2],
+                    [loc1, loc2, loc3],
+                ]),
             () => asyncGeneratorFromValues([])
         ).provideReferences(doc, pos, {
             includeDeclaration: false,
@@ -79,7 +83,7 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [loc1, loc2],
-            [loc3],
+            [loc1, loc2, loc3],
         ])
     })
 
@@ -87,20 +91,28 @@ describe('createReferencesProvider', () => {
         const result = createReferencesProvider(
             () => asyncGeneratorFromValues([]),
             () => asyncGeneratorFromValues([]),
-            () => asyncGeneratorFromValues([[loc1, loc2], [loc3]])
+            () =>
+                asyncGeneratorFromValues([
+                    [loc1, loc2],
+                    [loc1, loc2, loc3],
+                ])
         ).provideReferences(doc, pos, {
             includeDeclaration: false,
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
             [loc1, loc2],
-            [loc3],
+            [loc1, loc2, loc3],
         ])
     })
 
     it('supplements LSIF results with LSP results', async () => {
         const result = createReferencesProvider(
-            () => asyncGeneratorFromValues([[loc1, loc2], [loc3]]),
+            () =>
+                asyncGeneratorFromValues([
+                    [loc1, loc2],
+                    [loc1, loc2, loc3],
+                ]),
             () => asyncGeneratorFromValues([[loc6]]),
             () => asyncGeneratorFromValues([[loc4, loc5]])
         ).provideReferences(doc, pos, {
@@ -109,14 +121,18 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [loc1, loc2],
-            [loc3],
-            [loc4, loc5],
+            [loc1, loc2, loc3],
+            [loc1, loc2, loc3, loc4, loc5],
         ])
     })
 
     it('supplements LSIF results with search results', async () => {
         const result = createReferencesProvider(
-            () => asyncGeneratorFromValues([[loc1, loc2], [loc3]]),
+            () =>
+                asyncGeneratorFromValues([
+                    [loc1, loc2],
+                    [loc1, loc2, loc3],
+                ]),
             () => asyncGeneratorFromValues([[loc4]])
         ).provideReferences(doc, pos, {
             includeDeclaration: false,
@@ -124,24 +140,34 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [loc1, loc2],
-            [loc3],
-            [{ ...loc4, badge: impreciseBadge }],
+            [loc1, loc2, loc3],
+            [loc1, loc2, loc3, { ...loc4, badge: impreciseBadge }],
         ])
     })
 
     it('supplements LSIF results with non-overlapping search results', async () => {
         const result = createReferencesProvider(
-            () => asyncGeneratorFromValues([[loc1, loc2], [loc3]]),
-            () => asyncGeneratorFromValues([[loc4], [loc7, loc8, loc9]])
+            () =>
+                asyncGeneratorFromValues([
+                    [loc1, loc2],
+                    [loc1, loc2, loc3],
+                ]),
+            () => asyncGeneratorFromValues([[loc4], [loc4, loc7, loc8, loc9]])
         ).provideReferences(doc, pos, {
             includeDeclaration: false,
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
             [loc1, loc2],
-            [loc3],
-            [{ ...loc4, badge: impreciseBadge }],
-            [{ ...loc9, badge: impreciseBadge }],
+            [loc1, loc2, loc3],
+            [loc1, loc2, loc3, { ...loc4, badge: impreciseBadge }],
+            [
+                loc1,
+                loc2,
+                loc3,
+                { ...loc4, badge: impreciseBadge },
+                { ...loc9, badge: impreciseBadge },
+            ],
         ])
     })
 })
