@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { pythonSpec, relativeImportPath } from './python'
-import { nilFilterArgs, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec'
 
 const fileContent = `
 import .bar
@@ -26,11 +26,10 @@ describe('pythonSpec', () => {
 
         const filtered =
             pythonSpec.filterDefinitions &&
-            pythonSpec.filterDefinitions({
-                ...nilFilterArgs,
+            pythonSpec.filterDefinitions(results, {
+                ...nilFilterContext,
                 filePath: 'a/b/c/foo.py',
                 fileContent,
-                results,
             })
 
         assert.deepStrictEqual(filtered, [

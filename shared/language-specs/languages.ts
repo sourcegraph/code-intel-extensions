@@ -12,11 +12,12 @@ import { javaSpec } from './java'
 import { pythonSpec } from './python'
 import { typescriptSpec } from './typescript'
 
-// The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4
-// The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers
-
 /**
- * TODO
+ * The specification of languages for which search-based code intelligence
+ * is supported.
+ *
+ * The set of languages come from https://madnight.github.io/githut/#/pull_requests/2018/4.
+ * The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers.
  */
 export const languageSpecs: LanguageSpec[] = [
     cppSpec,
@@ -239,6 +240,8 @@ export const languageSpecs: LanguageSpec[] = [
         languageID: 'pascal',
         stylized: 'Pascal',
         fileExts: ['p', 'pas', 'pp'],
+        // TODO: Some Pascal implementations support //-comments too.
+        // Is that common enough to support here?
         commentStyle: {
             // Traditional: (* this is a comment *)
             // Customary:   { this is also a comment }
@@ -246,9 +249,6 @@ export const languageSpecs: LanguageSpec[] = [
                 startRegex: /(\{|\(\*)\s?/,
                 endRegex: /(\}|\*\))/,
             },
-
-            // TODO: Some Pascal implementations support //-comments too.
-            // Is that common enough to support here?
         },
     },
     {
@@ -277,10 +277,17 @@ export const languageSpecs: LanguageSpec[] = [
     },
 ]
 
+/**
+ * Returns the language spec with teh given language identifier. If no language
+ * matches is configured with the given identifier an error is thrown.
+ *
+ * @param languageID The language ID.
+ */
 export function findLanguageSpec(languageID: string): LanguageSpec {
     const languageSpec = languageSpecs.find(s => s.languageID === languageID)
-    if (!languageSpec) {
-        throw new Error(`${languageID} is not defined`)
+    if (languageSpec) {
+        return languageSpec
     }
-    return languageSpec
+
+    throw new Error(`${languageID} is not defined`)
 }

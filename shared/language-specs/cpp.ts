@@ -1,10 +1,10 @@
 import { cStyle } from './common'
-import { FilterArgs, LanguageSpec, Result } from './spec'
+import { FilterContext, LanguageSpec, Result } from './spec'
 import {
+    dotToSlash,
     extractFromLines,
     filterResultsByImports,
     removeExtension,
-    dotToSlash,
 } from './util'
 
 /**
@@ -18,7 +18,10 @@ import {
  * back to the raw (unfiltered) results so that the user doesn't get an empty
  * response unless there really is nothing.
  */
-function filterDefinitions({ fileContent, results }: FilterArgs): Result[] {
+function filterDefinitions<T extends Result>(
+    results: T[],
+    { fileContent }: FilterContext
+): T[] {
     // Capture user paths from #include and #import directives. Do not capture
     // system paths (e.g. <stdio.h>).
     const importPaths = extractFromLines(

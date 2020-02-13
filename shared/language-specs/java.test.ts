@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { javaSpec } from './java'
-import { nilFilterArgs, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec'
 
 const fileContent = `
 package com.sourcegraph.test.codeintel;
@@ -29,10 +29,9 @@ describe('javaSpec', () => {
 
         const filtered =
             javaSpec.filterDefinitions &&
-            javaSpec.filterDefinitions({
-                ...nilFilterArgs,
+            javaSpec.filterDefinitions(results, {
+                ...nilFilterContext,
                 fileContent,
-                results,
             })
 
         assert.deepStrictEqual(filtered, [

@@ -257,6 +257,10 @@ export async function getFileContent(
     return data.repository.commit?.file?.content
 }
 
+/**
+ * A search result. Each result is for a particular repository and commit, but
+ * may have many symbol or indexed/un-indexed search results.
+ */
 export interface SearchResult {
     file: {
         path: string
@@ -269,23 +273,23 @@ export interface SearchResult {
     lineMatches: LineMatch[]
 }
 
+/**
+ * A symbol search result.
+ */
 export interface SearchSymbol {
     name: string
-    containerName?: string
     fileLocal: boolean
     kind: string
-    location: SearchLocation
-}
-
-export interface SearchLocation {
-    resource: {
-        path: string
+    location: {
+        resource: { path: string }
+        range?: sourcegraph.Range
     }
-    range?: sourcegraph.Range
 }
 
+/**
+ * An indexed or un-indexed search result.
+ */
 export interface LineMatch {
-    preview: string
     lineNumber: number
     offsetAndLengths: [number, number][]
 }
@@ -319,7 +323,6 @@ export async function search(
                                 }
                                 symbols {
                                     name
-                                    containerName
                                     ${fileLocal ? 'fileLocal' : ''}
                                     kind
                                     location {
@@ -339,7 +342,6 @@ export async function search(
                                     }
                                 }
                                 lineMatches {
-                                    preview
                                     lineNumber
                                     offsetAndLengths
                                 }

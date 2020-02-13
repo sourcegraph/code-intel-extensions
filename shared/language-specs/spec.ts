@@ -1,7 +1,8 @@
-import * as sourcegraph from 'sourcegraph'
-
 /**
- * TODO
+ * The specification used to provide search-based code intelligence for a
+ * particular language. This includes things like file extensions, comment
+ * patterns and delimiters, and logic for filtering out obviously wrong
+ * search results for definitions.
  */
 export interface LanguageSpec {
     /**
@@ -43,32 +44,36 @@ export interface LanguageSpec {
 }
 
 /**
- * TODO
+ * Comment patterns and delimiters for a particular language.
  */
 export interface CommentStyle {
-    /**
-     * Specifies where documentation is placed relative to the definition.
-     * Defaults to `'above the definition'`. In Python, documentation is placed
-     * `'below the definition'`.
-     */
-    docPlacement?: DocPlacement
-
     /**
      * Captures the content of a line comment. Also prevents jump-to-definition
      * (except when the token appears to refer to code). Python example:
      * `/#\s?(.*)/`
      */
     lineRegex?: RegExp
+
+    /**
+     * The style of block comments.
+     */
     block?: BlockCommentStyle
+
+    /**
+     * Specifies where documentation is placed relative to the definition.
+     * Defaults to `'above the definition'`. In Python, documentation is placed
+     * `'below the definition'`.
+     */
+    docPlacement?: DocPlacement
 }
 
 /**
- * TODO
+ * Where a docstring is located relative to a definition.
  */
 export type DocPlacement = 'above the definition' | 'below the definition'
 
 /**
- * TODO
+ * Block comment delimiter patterns for a particular language.
  */
 export interface BlockCommentStyle {
     /**
@@ -77,84 +82,74 @@ export interface BlockCommentStyle {
     startRegex: RegExp
 
     /**
+     * Matches the end of a block comment. C++ example: `/\*\//`
+     */
+    endRegex: RegExp
+
+    /**
      * Matches the noise at the beginning of each line in a block comment after
      * the start, end, and leading indentation have been stripped. C++ example:
      * `/(\s\*\s?)?/`
      */
     lineNoiseRegex?: RegExp
+}
+
+/**
+ * A filter function that prunes imprecise definitions from search results.
+ */
+export type FilterDefinitions = <T extends Result>(
+    results: T[],
+    context: FilterContext
+) => T[]
+
+/**
+ * Additional context supplied when filtering search results.
+ */
+export interface FilterContext {
+    /**
+     * The name of the repository containing of the current file.
+     */
+    repo: string
 
     /**
-     * Matches the end of a block comment. C++ example: `/\*\//`
+     * The path to the current file relative to the repository root.
      */
-    endRegex: RegExp
-}
-
-/**
- * TODO
- */
-export interface FilterArgs {
-    // TODO - see what args are unused
-    repo: string
-    rev: string
     filePath: string
-    fileContent: string
-    pos: sourcegraph.Position
-    results: Result[]
-}
 
-/**
- * TODO
- */
-export type FilterDefinitions = (args: FilterArgs) => Result[]
+    /**
+     * The full text content of the current file.
+     */
+    fileContent: string
+}
 
 /**
  * Result represents a search result returned from the Sourcegraph API.
  */
 export interface Result {
-    // TODO - see what can be expressed more cleanly
+    /**
+     * The name of the repository containing the result.
+     */
     repo: string
-    rev: string
+
+    /**
+     * The path to the result file relative to the repository root.
+     */
     file: string
-    start: {
-        line: number
-        character: number
-    }
-    end: {
-        line: number
-        character: number
-    }
-    preview?: string // only for text search results
-    symbolName?: string
-    symbolKind?: string
-    containerName?: string
-    fileLocal?: boolean
 }
 
 /**
- * TODO
+ * A zero-value filter context used for testing.
  */
-export const nilFilterArgs = {
+export const nilFilterContext: FilterContext = {
     repo: '',
-    rev: '',
     filePath: '',
     fileContent: '',
-    pos: new sourcegraph.Position(0, 0),
-    results: [],
 }
 
 /**
- * TODO
+ * A zero-valued search result used for testing.
  */
-export const nilResult = {
+export const nilResult: Result = {
     repo: '',
-    rev: '',
     file: '',
-    start: {
-        line: 0,
-        character: 0,
-    },
-    end: {
-        line: 0,
-        character: 0,
-    },
 }

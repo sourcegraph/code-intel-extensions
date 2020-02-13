@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { goSpec } from './go'
-import { nilFilterArgs, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec'
 
 const fileContent = `
 package main
@@ -36,12 +36,11 @@ describe('goSpec', () => {
 
         const filtered =
             goSpec.filterDefinitions &&
-            goSpec.filterDefinitions({
-                ...nilFilterArgs,
+            goSpec.filterDefinitions(results, {
+                ...nilFilterContext,
                 repo: 'github.com/foo/test',
                 filePath: 'x/y/z.go',
                 fileContent,
-                results,
             })
 
         assert.deepStrictEqual(filtered, [
@@ -63,12 +62,11 @@ describe('goSpec', () => {
 
         const filtered =
             goSpec.filterDefinitions &&
-            goSpec.filterDefinitions({
-                ...nilFilterArgs,
+            goSpec.filterDefinitions(results, {
+                ...nilFilterContext,
                 repo: 'github.com/foo/test',
                 filePath: 'main.go',
                 fileContent,
-                results,
             })
 
         assert.deepStrictEqual(filtered, [results[0]])

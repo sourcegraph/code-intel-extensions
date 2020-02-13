@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { cppSpec } from './cpp'
-import { nilFilterArgs, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec'
 
 const fileContent = `
 @import a.b.c;
@@ -23,10 +23,9 @@ describe('cppSpec', () => {
 
         const filtered =
             cppSpec.filterDefinitions &&
-            cppSpec.filterDefinitions({
-                ...nilFilterArgs,
+            cppSpec.filterDefinitions(results, {
+                ...nilFilterContext,
                 fileContent,
-                results,
             })
 
         assert.deepStrictEqual(filtered, [

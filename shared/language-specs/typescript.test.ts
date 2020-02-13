@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { nilFilterArgs, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec'
 import { typescriptSpec } from './typescript'
 
 const fileContent = `
@@ -24,11 +24,10 @@ describe('typescriptSpec', () => {
 
         const filtered =
             typescriptSpec.filterDefinitions &&
-            typescriptSpec.filterDefinitions({
-                ...nilFilterArgs,
+            typescriptSpec.filterDefinitions(results, {
+                ...nilFilterContext,
                 filePath: 'a/b/c/foo.ts',
                 fileContent,
-                results,
             })
 
         assert.deepStrictEqual(filtered, [

@@ -1,6 +1,6 @@
 import { flatten, sortBy } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
-import { LanguageSpec, Result } from '../language-specs/spec'
+import { LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
 import {
     getFileContent as getFileContentFromApi,
@@ -9,7 +9,7 @@ import {
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { asArray, isDefined } from '../util/util'
-import { resultToLocation, searchResultToResults } from './conversion'
+import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQueries, referencesQueries } from './queries'
@@ -27,7 +27,7 @@ export function createProviders({
     commentStyle,
     identCharPattern,
     docstringIgnore,
-    filterDefinitions: filterDefinitions = ({ results }) => results,
+    filterDefinitions: filterDefinitions = results => results,
 }: LanguageSpec): Providers {
     /**
      * Return the text document content adn the search token found under the
@@ -76,12 +76,10 @@ export function createProviders({
         const { text, searchToken } = contentAndToken
 
         // Construct common args to the filterDefinitions function
-        const { repo, commit, path } = parseGitURI(new URL(doc.uri))
-        const filterParams = {
+        const { repo, path } = parseGitURI(new URL(doc.uri))
+        const filterContext = {
             repo,
-            rev: commit,
             filePath: path,
-            pos,
             fileContent: text,
         }
 
@@ -122,10 +120,10 @@ export function createProviders({
             const preFilteredResults = searchResults.filter(isSymbolVisible)
 
             // Filter results based on language spec
-            const filteredResults = filterDefinitions({
-                ...filterParams,
-                results: preFilteredResults,
-            }).map(resultToLocation)
+            const filteredResults = filterDefinitions(
+                preFilteredResults,
+                filterContext
+            ).map(resultToLocation)
 
             if (filteredResults.length > 0) {
                 // Return first set of results found. There is generally exactly

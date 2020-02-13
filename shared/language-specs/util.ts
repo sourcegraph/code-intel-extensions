@@ -31,31 +31,36 @@ export function extractFromLines(
 }
 
 /**
- * TODO
+ * Filter the given results by calling the given function on each result
+ * and importPath pairs. Remove any filters that do not pass the filter
+ * for any import path. If the filtered result is empty, this function
+ * returns the original input unchanged.
  *
- * @param results
- * @param fn
+ * @param results A list of results to filter.
+ * @param importPaths A list of import paths.
+ * @param fn The filter function.
  */
-export function filterResultsByImports(
-    results: Result[],
+export function filterResultsByImports<T extends Result>(
+    results: T[],
     importPaths: string[],
-    fn: (result: Result, importPath: string) => boolean
-): Result[] {
+    fn: (result: T, importPath: string) => boolean
+): T[] {
     return filterResults(results, result =>
         importPaths.some(importPath => fn(result, importPath))
     )
 }
 
 /**
- * TODO
+ * Filter the given results. If the filtered result is empty, this
+ * function returns the original input unchanged.
  *
- * @param results
- * @param fn
+ * @param results A list of results to filter.
+ * @param fn The filter function.
  */
-export function filterResults(
-    results: Result[],
-    fn: (result: Result) => boolean
-): Result[] {
+export function filterResults<T extends Result>(
+    results: T[],
+    fn: (result: T) => boolean
+): T[] {
     const filteredResults = results.filter(result => fn(result))
 
     // If we filtered out all results, fall back to whatever fuzzy

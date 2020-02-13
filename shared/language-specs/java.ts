@@ -1,9 +1,21 @@
 import * as path from 'path'
 import { cStyle } from './common'
-import { FilterArgs, LanguageSpec, Result } from './spec'
+import { FilterContext, LanguageSpec, Result } from './spec'
 import { extractFromLines, filterResultsByImports, slashToDot } from './util'
 
-function filterDefinitions({ fileContent, results }: FilterArgs): Result[] {
+/**
+ * Filter a list of candidate definitions to select those likely to be valid
+ * cross-references for a definition in this file. Accept candidates located
+ * in the same package or in a directory that includes one of the imported
+ * paths.
+ *
+ * If no candidates match, fall back to the raw (unfiltered) results so that
+ * the user doesn't get an empty response unless there really is nothing.
+ */
+function filterDefinitions<T extends Result>(
+    results: T[],
+    { fileContent }: FilterContext
+): T[] {
     const importPaths = extractFromLines(
         fileContent,
         // TODO - support wildcard static imports
