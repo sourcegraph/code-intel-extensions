@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import { LanguageSpec } from './language-specs/languages'
+import { LanguageSpec } from './language-specs/spec'
 import { createProviderWrapper, ProviderWrapper } from './providers'
 
 /**

@@ -1,7 +1,7 @@
 import { copy, emptyDir, ensureDir } from 'fs-extra'
 import * as fs from 'mz/fs'
 import * as path from 'path'
-import { LanguageSpec } from '../../shared/language-specs/languages'
+import { LanguageSpec } from '../../shared/language-specs/spec'
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {

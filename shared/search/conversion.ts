@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import { Result } from '../language-specs/languages'
+import { Result } from '../language-specs/spec'
 import { LineMatch, SearchResult, SearchSymbol } from '../util/api'
 import { isDefined } from '../util/util'
 

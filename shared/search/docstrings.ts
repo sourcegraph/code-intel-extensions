@@ -3,7 +3,7 @@ import {
     BlockCommentStyle,
     CommentStyle,
     DocPlacement,
-} from '../language-specs/languages'
+} from '../language-specs/spec'
 
 /**
  * Extract a docstring near the given definition.

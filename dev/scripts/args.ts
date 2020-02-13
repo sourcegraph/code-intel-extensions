@@ -1,8 +1,6 @@
 import * as yargs from 'yargs'
-import {
-    LanguageSpec,
-    languageSpecs,
-} from '../../shared/language-specs/languages'
+import { languageSpecs } from '../../shared/language-specs/languages'
+import { LanguageSpec } from '../../shared/language-specs/spec'
 
 const blacklist = ['go', 'typescript']
 
