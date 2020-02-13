@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { pythonStyle } from './common'
+import { pythonStyle } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import {
     extractFromLines,

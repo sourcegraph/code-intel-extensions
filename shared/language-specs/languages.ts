@@ -5,7 +5,7 @@ import {
     lispStyle,
     pythonStyle,
     shellStyle,
-} from './common'
+} from './comments'
 import { cppSpec, cudaSpec } from './cpp'
 import { goSpec } from './go'
 import { javaSpec } from './java'
@@ -278,10 +278,8 @@ export const languageSpecs: LanguageSpec[] = [
 ]
 
 /**
- * Returns the language spec with teh given language identifier. If no language
+ * Returns the language spec with the given language identifier. If no language
  * matches is configured with the given identifier an error is thrown.
- *
- * @param languageID The language ID.
  */
 export function findLanguageSpec(languageID: string): LanguageSpec {
     const languageSpec = languageSpecs.find(s => s.languageID === languageID)

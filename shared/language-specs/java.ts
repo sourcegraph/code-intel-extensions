@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { cStyle } from './common'
+import { cStyle } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import { extractFromLines, filterResultsByImports, slashToDot } from './util'
 

@@ -1,4 +1,4 @@
-import { cStyle } from './common'
+import { cStyle } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import {
     dotToSlash,

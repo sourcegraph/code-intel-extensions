@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { goSpec } from './go'
-import { nilFilterContext, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec.test'
 
 const fileContent = `
 package main

@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { nilFilterContext, nilResult } from './spec'
+import { nilFilterContext, nilResult } from './spec.test'
 import { typescriptSpec } from './typescript'
 
 const fileContent = `

@@ -7,29 +7,19 @@ import { isDefined } from '../util/util'
  * search result becomes a single instance of this interface.
  */
 export interface Result {
-    /**
-     * The name of the repository containing the result.
-     */
+    /** The name of the repository containing the result. */
     repo: string
 
-    /**
-     * The commit containing the result.
-     */
+    /** The commit containing the result. */
     rev: string
 
-    /**
-     * The path to the result file relative to the repository root.
-     */
+    /** The path to the result file relative to the repository root. */
     file: string
 
-    /**
-     * The range of the match.
-     */
+    /** The range of the match. */
     range: sourcegraph.Range
 
-    /**
-     * The type of symbol, if the reuslt came from a symbol search.
-     */
+    /** The type of symbol, if the result came from a symbol search. */
     symbolKind?: string
 
     /**
