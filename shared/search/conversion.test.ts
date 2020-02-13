@@ -8,8 +8,7 @@ describe('resultToLocation', () => {
             repo: 'github.com/foo/bar',
             rev: '84bf4aea50d542be71e0e6339ff8e096b35c84e6',
             file: 'bonk/quux.ts',
-            start: { line: 10, character: 20 },
-            end: { line: 15, character: 25 },
+            range: new sourcegraph.Range(10, 20, 15, 25),
         })
 
         assert.deepStrictEqual(location, {
@@ -25,8 +24,7 @@ describe('resultToLocation', () => {
             repo: 'github.com/foo/bar',
             rev: '',
             file: 'bonk/quux.ts',
-            start: { line: 10, character: 20 },
-            end: { line: 15, character: 25 },
+            range: new sourcegraph.Range(10, 20, 15, 25),
         })
 
         assert.deepStrictEqual(location, {
@@ -65,7 +63,6 @@ describe('searchResultToResults', () => {
                 },
                 {
                     name: 'sym3',
-                    containerName: 'container',
                     fileLocal: true,
                     kind: 'method',
                     location: {
@@ -76,17 +73,15 @@ describe('searchResultToResults', () => {
             ],
             lineMatches: [
                 {
-                    preview: 'lets all go to the movies',
                     lineNumber: 20,
-                    offsetAndLengths: [[3, 5]],
+                    offsetAndLengths: [[3, 5]] as [number, number][],
                 },
                 {
-                    preview: 'and get ourselves some snacks',
                     lineNumber: 40,
                     offsetAndLengths: [
                         [1, 3],
                         [4, 6],
-                    ],
+                    ] as [number, number][],
                 },
             ],
         })
@@ -100,51 +95,36 @@ describe('searchResultToResults', () => {
         assert.deepStrictEqual(results, [
             {
                 ...common,
-                symbolName: 'sym1',
                 symbolKind: 'class',
                 file: 'honk.ts',
                 fileLocal: true,
-                containerName: undefined,
-                start: { line: 1, character: 2 },
-                end: { line: 3, character: 4 },
+                range: new sourcegraph.Range(1, 2, 3, 4),
             },
             {
                 ...common,
-                symbolName: 'sym2',
                 symbolKind: 'class',
                 file: 'ronk.ts',
                 fileLocal: false,
-                containerName: undefined,
-                start: { line: 4, character: 5 },
-                end: { line: 6, character: 7 },
+                range: new sourcegraph.Range(4, 5, 6, 7),
             },
             {
                 ...common,
-                symbolName: 'sym3',
                 symbolKind: 'method',
                 file: 'zonk.ts',
                 fileLocal: true,
-                containerName: 'container',
-                start: { line: 6, character: 7 },
-                end: { line: 8, character: 9 },
+                range: new sourcegraph.Range(6, 7, 8, 9),
             },
             {
                 ...common,
-                preview: 'lets all go to the movies',
-                start: { line: 20, character: 3 },
-                end: { line: 20, character: 8 },
+                range: new sourcegraph.Range(20, 3, 20, 8),
             },
             {
                 ...common,
-                preview: 'and get ourselves some snacks',
-                start: { line: 40, character: 1 },
-                end: { line: 40, character: 4 },
+                range: new sourcegraph.Range(40, 1, 40, 4),
             },
             {
                 ...common,
-                preview: 'and get ourselves some snacks',
-                start: { line: 40, character: 4 },
-                end: { line: 40, character: 10 },
+                range: new sourcegraph.Range(40, 4, 40, 10),
             },
         ])
     })

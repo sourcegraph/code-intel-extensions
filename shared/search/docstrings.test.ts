@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { cStyle, pythonStyle } from '../language-specs/languages'
+import { cStyle, pythonStyle } from '../language-specs/comments'
 import { findDocstring } from './docstrings'
 
 describe('docstrings', () => {

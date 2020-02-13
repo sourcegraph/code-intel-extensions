@@ -1,25 +1,32 @@
 import * as sourcegraph from 'sourcegraph'
-import { Result } from '../language-specs/languages'
 import { LineMatch, SearchResult, SearchSymbol } from '../util/api'
 import { isDefined } from '../util/util'
 
 /**
- * Convert an internal result into a Sourcegraph location.
- *
- * @param result The search result.
+ * The exploded version of a search result. Each symbol and indexed/un-indexed
+ * search result becomes a single instance of this interface.
  */
-export function resultToLocation(result: Result): sourcegraph.Location {
-    return {
-        uri: new URL(
-            `git://${result.repo}?${result.rev || 'HEAD'}#${result.file}`
-        ),
-        range: new sourcegraph.Range(
-            result.start.line,
-            result.start.character,
-            result.end.line,
-            result.end.character
-        ),
-    }
+export interface Result {
+    /** The name of the repository containing the result. */
+    repo: string
+
+    /** The commit containing the result. */
+    rev: string
+
+    /** The path to the result file relative to the repository root. */
+    file: string
+
+    /** The range of the match. */
+    range: sourcegraph.Range
+
+    /** The type of symbol, if the result came from a symbol search. */
+    symbolKind?: string
+
+    /**
+     * Whether or not the symbol is local to the containing file, if
+     * the result came from a symbol search.
+     */
+    fileLocal?: boolean
 }
 
 /**
@@ -53,9 +60,7 @@ function searchResultSymbolToResults(
         },
     }: SearchResult,
     {
-        name: symbolName,
         kind: symbolKind,
-        containerName,
         fileLocal,
         location: {
             resource: { path: file },
@@ -63,25 +68,16 @@ function searchResultSymbolToResults(
         },
     }: SearchSymbol
 ): Result | undefined {
-    if (!range) {
-        return undefined
-    }
-    const {
-        start: { line: startLine, character: startCharacter },
-        end: { line: endLine, character: endCharacter },
-    } = range
-
-    return {
-        repo,
-        rev,
-        file,
-        start: { line: startLine, character: startCharacter },
-        end: { line: endLine, character: endCharacter },
-        symbolName,
-        symbolKind,
-        containerName,
-        fileLocal,
-    }
+    return (
+        range && {
+            repo,
+            rev,
+            file,
+            range,
+            symbolKind,
+            fileLocal,
+        }
+    )
 }
 
 /**
@@ -98,32 +94,31 @@ function lineMatchesToResults(
             commit: { oid: rev },
         },
     }: SearchResult,
-    { lineNumber, preview, offsetAndLengths }: LineMatch
+    { lineNumber, offsetAndLengths }: LineMatch
 ): Result[] {
-    return offsetAndLengths.map(offsetAndLength => ({
+    return offsetAndLengths.map(([offset, length]) => ({
         repo,
         rev,
         file,
-        preview,
-        ...offsetAndLengthToRange(lineNumber, offsetAndLength),
+        range: new sourcegraph.Range(
+            lineNumber,
+            offset,
+            lineNumber,
+            offset + length
+        ),
     }))
 }
 
 /**
- * Convert an offset/length pair into start and end positions.
+ * Convert an internal result into a Sourcegraph location.
  *
- * @param line The line number.
- * @param offsetAndLength An offset, length pair.
+ * @param result The search result.
  */
-function offsetAndLengthToRange(
-    line: number,
-    [offset, length]: [number, number]
-): {
-    start: { line: number; character: number }
-    end: { line: number; character: number }
-} {
-    return {
-        start: { line, character: offset },
-        end: { line, character: offset + length },
-    }
+export function resultToLocation({
+    repo,
+    rev,
+    file,
+    range,
+}: Result): sourcegraph.Location {
+    return { uri: new URL(`git://${repo}?${rev || 'HEAD'}#${file}`), range }
 }
