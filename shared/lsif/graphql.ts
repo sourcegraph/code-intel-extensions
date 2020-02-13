@@ -7,6 +7,14 @@ import { parseGitURI } from '../util/uri'
 import { LocationConnectionNode, nodeToLocation } from './conversion'
 
 /**
+ * The maximum number of chained GraphQL requests to make for a single
+ * requests query. The page count for a result set should generally be
+ * relatively low unless it's a VERY popular library and LSIF data is
+ * ubiquitous (which is our goal).
+ */
+const MAX_REFERENCE_PAGE_REQUESTS = 20
+
+/**
  * Creates providers powered by LSIF-based code intelligence. This particular
  * set of providers will use the GraphQL API.
  */
@@ -131,8 +139,13 @@ async function* references(
     }
 
     const queryPage = async function*(
+        requestsRemaining: number,
         after?: string
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if (requestsRemaining === 0) {
+            return
+        }
+
         // Make the request for the page starting at the after cursor
         const lsifObj: Response | null = await queryLSIF({
             doc,
@@ -156,11 +169,11 @@ async function* references(
 
         if (endCursor) {
             // Recursively yield the remaining pages
-            yield* queryPage(endCursor)
+            yield* queryPage(requestsRemaining - 1, endCursor)
         }
     }
 
-    yield* concat(queryPage())
+    yield* concat(queryPage(MAX_REFERENCE_PAGE_REQUESTS))
 }
 
 /**
