@@ -56,7 +56,7 @@ function absoluteImportPath(importPath: string): string {
  * function returns undefined.
  *
  * @param sourcePath The source file.
- * @param importPath The relative or absolute Python import path.
+ * @param importPath The relative or absolute Python import path (`.a.b`, `a.b.c`).
  */
 export function relativeImportPath(
     sourcePath: string,
