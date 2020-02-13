@@ -28,11 +28,21 @@ function filterDefinitions<T extends Result>(
     return filterResultsByImports(
         results,
         importPaths,
+        // Match results with a basename suffix of an import candidate
         ({ file }, importPath) =>
-            // Match results with a basename suffix of an import path
-            path.join(path.dirname(filePath), importPath) ===
-            removeExtension(file)
+            candidates(filePath, importPath).includes(removeExtension(file))
     )
+}
+
+/**
+ * Construct a list of candidate paths that serve the given import path
+ * relative to the given source path.
+ */
+function candidates(sourcePath: string, importPath: string): string[] {
+    return [
+        path.join(path.dirname(sourcePath), importPath),
+        path.join(path.dirname(sourcePath), importPath, 'index'),
+    ]
 }
 
 export const typescriptSpec: LanguageSpec = {

@@ -13,7 +13,7 @@ describe('typescriptSpec', () => {
             { ...nilResult, file: 'a/b/c/bar.ts' },
             { ...nilResult, file: 'a/b/c/bar.js' },
             { ...nilResult, file: 'a/shared/baz.ts' },
-            // { ...nilResult, file: 'a/shared/baz/index.ts' }, // TODO - support this
+            { ...nilResult, file: 'a/shared/baz/index.ts' },
 
             // incorrect file
             { ...nilResult, file: 'a/b/c/baz.ts' },
@@ -34,7 +34,7 @@ describe('typescriptSpec', () => {
             results[0],
             results[1],
             results[2],
-            // results[3],
+            results[3],
         ])
     })
 })

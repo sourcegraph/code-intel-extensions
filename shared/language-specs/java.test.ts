@@ -7,7 +7,8 @@ package com.sourcegraph.test.codeintel;
 
 import com.sourcegraph.test.foo;
 import com.sourcegraph.test.sub.bar;
-import static com.sourcegraph.test.sub.sub.baz.Ident;
+import static com.sourcegraph.test.sub.sub.baz.ident;
+import static com.sourcegraph.test.sub.sub.bonk.*;
 `
 
 const prefix = 'src/java/com/sourcegraph/test'
@@ -17,8 +18,11 @@ describe('javaSpec', () => {
         const results = [
             { ...nilResult, file: `${prefix}/foo/file.java` },
             { ...nilResult, file: `${prefix}/sub/bar/file.java` },
-            { ...nilResult, file: `${prefix}/sub/sub/baz/file.java` },
+            // same package
             { ...nilResult, file: `${prefix}/codeintel/baz.java` },
+            // static imports
+            { ...nilResult, file: `${prefix}/sub/sub/baz/file.java` },
+            { ...nilResult, file: `${prefix}/sub/sub/bonk/file.java` },
 
             // incorrect file
             { ...nilResult, file: `${prefix}/bonk/file.java` },
@@ -39,6 +43,7 @@ describe('javaSpec', () => {
             results[1],
             results[2],
             results[3],
+            results[4],
         ])
     })
 })

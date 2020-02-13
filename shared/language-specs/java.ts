@@ -18,10 +18,8 @@ function filterDefinitions<T extends Result>(
 ): T[] {
     const importPaths = extractFromLines(
         fileContent,
-        // TODO - support wildcard static imports
-        // TODO - ident doesn't need to be upper case
-        /^import static ([a-z_0-9.]+)\.[A-Z][\w.]+;$/,
-        /^import ([\w.]+);$/
+        /^import ([\w.]+);$/,
+        /^import static ([a-z_0-9.]+)\.([a-z_0-9]+|\*);$/
     )
 
     const currentPackage = extractFromLines(fileContent, /^package ([\w.]+);$/)
