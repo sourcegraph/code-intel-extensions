@@ -1,5 +1,6 @@
-import { AsyncIterableX, flatMap, share } from 'ix/asynciterable'
+import { AsyncIterableX, from, of } from 'ix/asynciterable'
 import { MergeAsyncIterable } from 'ix/asynciterable/merge'
+import { flatMap, share } from 'ix/asynciterable/operators'
 import { Observable, Observer } from 'rxjs'
 
 /**
@@ -100,10 +101,10 @@ export function flatMapConcurrent<T, R>(
 ): AsyncIterableX<R> {
     return new MergeAsyncIterable(
         new Array<AsyncIterable<R>>(concurrency).fill(
-            share(
-                flatMap(
-                    AsyncIterableX.of(...source),
-                    asyncGeneratorFromPromise(fn)
+            from(
+                of(...source).pipe(
+                    flatMap(asyncGeneratorFromPromise(fn)),
+                    share()
                 )
             )
         )

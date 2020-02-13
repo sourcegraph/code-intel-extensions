@@ -1019,10 +1019,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.7.0.tgz#b417deda18cf8400f278733499ad5547ed1abec4"
   integrity sha512-GnZbirvmqZUzMgkFn70c74OQpTTUcCzlhQliTzYjQMqg+hVKcDnxdL19Ne3UdYzdMA/+W3eb646FWn/ZaT1NfQ==
 
-"@types/node@^11.11.6":
-  version "11.15.5"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.15.5.tgz#a8fe0c37e7db0099015baf8adafef60e71f568d5"
-  integrity sha512-rqXbkoHWqRWdw9ncT3GqKL7OSm77QGOf4/cJPinoeLEzpErdKQZlpwJApETuDtecW55UDJpugnSMkbffh68geA==
+"@types/node@^12.0.4":
+  version "12.12.27"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.27.tgz#d7506f73160ad30fcebbcf5b8b7d2d976e649e42"
+  integrity sha512-odQFl/+B9idbdS0e8IxDl2ia/LP8KZLXhV3BUeI98TrZp0uoIzQPhGd+5EtzHmT0SMOIaPd7jfz6pOHLWTtl7A==
 
 "@types/prettier@^1.16.1":
   version "1.19.0"
@@ -4174,12 +4174,12 @@ istanbul-reports@^3.0.0:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
 
-ix@^2.5.3:
-  version "2.5.3"
-  resolved "https://registry.yarnpkg.com/ix/-/ix-2.5.3.tgz#b62899723297b2805343d1c77756b8568ed8dbec"
-  integrity sha512-Syz3oYUx5+P0T9F3BZOE2DzvWYF31Mbha1VqDbJsr4e4A+twhxTAf2c1BO8TMlwon12oAvvxAtQ+NJm9P8ISYQ==
+ix@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/ix/-/ix-3.0.0.tgz#5971ee637727492693b518079731458f09d4bb75"
+  integrity sha512-It0CLXQfbVtquJ7HBf9pmTlbhM7YQZSbrjh2LGU/v9+S/3ngE+18edHWXvh34+AUaQLmROUxcNDDzP8heS+uSQ==
   dependencies:
-    "@types/node" "^11.11.6"
+    "@types/node" "^12.0.4"
     tslib "^1.9.3"
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
