@@ -1,5 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 
+// Polyfill
 const g: any = global
 g.btoa = g.btoa || ((s: string) => Buffer.from(s, 'binary').toString('base64'))
 
