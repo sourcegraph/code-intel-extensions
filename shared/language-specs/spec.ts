@@ -30,8 +30,6 @@ export interface LanguageSpec {
      */
     commentStyle?: CommentStyle
 
-    // TODO - move this guy above
-
     /**
      * Regex that matches lines between a definition and the docstring that
      * should be ignored. Java example: `/^\s*@/` for annotations.
