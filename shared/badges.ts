@@ -1,3 +1,5 @@
+import * as sourcegraph from 'sourcegraph'
+
 const g: any = global
 g.btoa = g.btoa || ((s: string) => Buffer.from(s, 'binary').toString('base64'))
 
@@ -58,7 +60,7 @@ function makeInfoIcon(color: string): string {
 /**
  * The badge to send back on all results that come from searched-based data.
  */
-export const impreciseBadge = {
+export const impreciseBadge: sourcegraph.BadgeAttachmentRenderOptions = {
     icon: makeInfoIcon('#ffffff'),
     light: { icon: makeInfoIcon('#000000') },
     hoverMessage:
