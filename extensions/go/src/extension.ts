@@ -1,3 +1,4 @@
+import { CancellationTokenSource } from '@sourcegraph/vscode-ws-jsonrpc'
 import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
 import { distinctUntilChanged, map } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
@@ -164,9 +165,13 @@ async function registerClient(
     client: LSPClient
     featureOptionsSubject: Subject<FeatureOptions>
 }> {
+    const cancellationTokenSource = new CancellationTokenSource()
+    const cancellationToken = cancellationTokenSource.token
+
     const transport = webSocketTransport({
         serverUrl: serverURL,
         logger: new NoopLogger(),
+        cancellationToken,
     })
 
     // Returns a URL template to the raw API (e.g. 'https://%s@localhost:3080/%s@%s/-/raw')
@@ -184,9 +189,11 @@ async function registerClient(
         featureOptions,
         documentSelector,
         providerWrapper,
+        cancellationToken,
     })
 
     ctx.subscriptions.add(client)
+    ctx.subscriptions.add(() => cancellationTokenSource.cancel())
     return { client, featureOptionsSubject: featureOptions }
 }
 
