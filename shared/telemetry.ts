@@ -22,7 +22,7 @@ export class TelemetryEmitter {
      * same action has not yet emitted for this instance.
      */
     public emitOnce(action: string, args: object = {}): Promise<void> {
-        if (!this.emitted.has(action)) {
+        if (this.emitted.has(action)) {
             return Promise.resolve()
         }
 
