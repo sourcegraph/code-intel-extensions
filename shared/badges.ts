@@ -1,3 +1,11 @@
+const g: any = global
+g.btoa = g.btoa || ((s: string) => Buffer.from(s, 'binary').toString('base64'))
+
+/**
+ * Creates a base64-encoded image URI.
+ *
+ * @param svg The raw SVG data.
+ */
 function makeIcon(svg: string): string {
     return `data:image/svg+xml;base64,${btoa(
         svg.replace(/^\s+/g, '').replace('\n', '')

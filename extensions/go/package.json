@@ -37,6 +37,7 @@
   ],
   "scripts": {
     "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts && dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-go@$(git rev-parse HEAD)/-/raw/extension/src/",
+    "config-types": "dot-json package.json contributes.configuration | json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/settings.ts",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
@@ -104,6 +105,9 @@
       ]
     },
     "configuration": {
+      "title": "Settings",
+      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "go.serverUrl": {
           "description": "The WebSocket language server to connect to",
@@ -127,7 +131,7 @@
           "description": "The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.",
           "type": "string"
         },
-        "go.externalReferences": {
+        "go.showExternalReferences": {
           "description": "Whether or not a second references provider for external references will be registered (defaults to false).",
           "type": "boolean"
         },
@@ -137,6 +141,10 @@
         },
         "go.gddoURL": {
           "description": "The address to Go Doc Dot Org or a proxy that speaks the same API (only used on Sourcegraph.com).",
+          "type": "string"
+        },
+        "go.corsAnywhereURL": {
+          "description": "Address of a cors-anywhere service. This will cause the extension to send GDDO requests to this service instead of directly to api.godoc.org. For example: https://cors-anywhere.sourcegraph.com/https://api.godoc.org/importersgithub.com/sourcegraph/go-lsp. This would not be necessary if godoc.org set CORS headers.",
           "type": "string"
         },
         "codeIntel.lsif": {

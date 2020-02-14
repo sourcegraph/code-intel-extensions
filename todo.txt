@@ -1,0 +1,6 @@
+To test:
+- shared/lsif/graphql.ts
+- shared/lsif/http.ts
+- shared/lsif/providers.ts
+- shared/search/providers.ts
+- shared/util/graphql.ts

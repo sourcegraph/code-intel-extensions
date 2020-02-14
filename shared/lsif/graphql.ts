@@ -1,50 +1,41 @@
 import * as sourcegraph from 'sourcegraph'
-import { LSIFProviders } from './providers'
-import * as LSP from 'vscode-languageserver-types'
-import { queryGraphQL } from '../graphql'
-import { repositoryFromDoc, commitFromDoc, pathFromDoc } from './util'
-import { LocationConnectionNode, nodeToLocation } from './lsif-conversion'
+import * as lsp from 'vscode-languageserver-protocol'
+import { Providers } from '../providers'
+import { queryGraphQL } from '../util/graphql'
+import { asyncGeneratorFromPromise, concat } from '../util/ix'
+import { parseGitURI } from '../util/uri'
+import { LocationConnectionNode, nodeToLocation } from './conversion'
 
-export function initGraphQL(): LSIFProviders {
-    const noLSIFData = new Set<string>()
+/**
+ * The maximum number of chained GraphQL requests to make for a single
+ * requests query. The page count for a result set should generally be
+ * relatively low unless it's a VERY popular library and LSIF data is
+ * ubiquitous (which is our goal).
+ */
+const MAX_REFERENCE_PAGE_REQUESTS = 20
 
-    const cacheUndefined = <T>(
-        f: (
-            doc: sourcegraph.TextDocument,
-            pos: sourcegraph.Position
-        ) => Promise<T | undefined>
-    ) => async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<T | undefined> => {
-        if (!sourcegraph.configuration.get().get('codeIntel.lsif')) {
-            console.log('LSIF is not enabled in global settings')
-            return undefined
-        }
-
-        if (noLSIFData.has(doc.uri)) {
-            return undefined
-        }
-
-        const result = await f(doc, pos)
-        if (result === undefined) {
-            noLSIFData.add(doc.uri)
-        }
-
-        return result
-    }
-
+/**
+ * Creates providers powered by LSIF-based code intelligence. This particular
+ * set of providers will use the GraphQL API.
+ */
+export function createProviders(): Providers {
     return {
-        definition: cacheUndefined(definitionGraphQL),
-        references: cacheUndefined(referencesGraphQL),
-        hover: cacheUndefined(hoverGraphQL),
+        definition: asyncGeneratorFromPromise(definition),
+        references,
+        hover: asyncGeneratorFromPromise(hover),
     }
 }
 
-async function definitionGraphQL(
+/**
+ * Retrieve a definition for the current hover position.
+ *
+ * @param doc The current text document.
+ * @param position The current hover position.
+ */
+async function definition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Definition | undefined> {
+): Promise<sourcegraph.Definition> {
     const query = `
         query Definitions($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
             repository(name: $repository) {
@@ -81,28 +72,31 @@ async function definitionGraphQL(
         }
     `
 
-    const lsifObj = await queryLSIFGraphQL<{
+    interface Response {
         definitions: { nodes: LocationConnectionNode[] }
-    }>({ doc, query, position })
-
-    if (!lsifObj) {
-        return undefined
     }
 
-    return lsifObj.definitions.nodes.map(nodeToLocation)
+    const lsifObj: Response | null = await queryLSIF({ doc, position, query })
+    return lsifObj?.definitions.nodes.map(nodeToLocation) || null
 }
 
-async function referencesGraphQL(
+/**
+ * Retrieve references for the current hover position.
+ *
+ * @param doc The current text document.
+ * @param position The current hover position.
+ */
+async function* references(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Location[] | undefined> {
+): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
     const query = `
-        query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!, $after: String) {
             repository(name: $repository) {
                 commit(rev: $commit) {
                     blob(path: $path) {
                         lsif {
-                            references(line: $line, character: $character) {
+                            references(line: $line, character: $character, after: $after) {
                                 nodes {
                                     resource {
                                         path
@@ -124,6 +118,9 @@ async function referencesGraphQL(
                                         }
                                     }
                                 }
+                                pageInfo {
+                                    endCursor
+                                }
                             }
                         }
                     }
@@ -132,21 +129,63 @@ async function referencesGraphQL(
         }
     `
 
-    const lsifObj = await queryLSIFGraphQL<{
-        references: { nodes: LocationConnectionNode[] }
-    }>({ doc, query, position })
-
-    if (!lsifObj) {
-        return undefined
+    interface Response {
+        references: {
+            nodes: LocationConnectionNode[]
+            pageInfo: {
+                endCursor: string
+            }
+        }
     }
 
-    return lsifObj.references.nodes.map(nodeToLocation)
+    const queryPage = async function*(
+        requestsRemaining: number,
+        after?: string
+    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if (requestsRemaining === 0) {
+            return
+        }
+
+        // Make the request for the page starting at the after cursor
+        const lsifObj: Response | null = await queryLSIF({
+            doc,
+            position,
+            query,
+            after,
+        })
+        if (!lsifObj) {
+            return
+        }
+
+        const {
+            references: {
+                nodes,
+                pageInfo: { endCursor },
+            },
+        } = lsifObj
+
+        // Yield this page's set of results
+        yield nodes.map(nodeToLocation)
+
+        if (endCursor) {
+            // Recursively yield the remaining pages
+            yield* queryPage(requestsRemaining - 1, endCursor)
+        }
+    }
+
+    yield* concat(queryPage(MAX_REFERENCE_PAGE_REQUESTS))
 }
 
-async function hoverGraphQL(
+/**
+ * Retrieve hover text for the current hover position.
+ *
+ * @param doc The current text document.
+ * @param position The current hover position.
+ */
+async function hover(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Hover | undefined> {
+): Promise<sourcegraph.Hover | null> {
     const query = `
         query Hover($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
             repository(name: $repository) {
@@ -175,16 +214,18 @@ async function hoverGraphQL(
         }
     `
 
-    const lsifObj = await queryLSIFGraphQL<{
+    interface Response {
         hover: { markdown: { text: string }; range: sourcegraph.Range }
-    }>({
+    }
+
+    const lsifObj: Response | null = await queryLSIF({
         doc,
-        query,
         position,
+        query,
     })
 
     if (!lsifObj) {
-        return undefined
+        return null
     }
 
     return {
@@ -196,59 +237,48 @@ async function hoverGraphQL(
     }
 }
 
-async function queryLSIFGraphQL<T>({
+/**
+ * Perform an LSIF request to the GraphQL API.
+ *
+ * @param args Parameter bag.
+ */
+async function queryLSIF<
+    P extends {
+        doc: sourcegraph.TextDocument
+        position: lsp.Position
+        query: string
+    },
+    R
+>({
+    /** The current text document. */
     doc,
-    query,
+    /** The current hover position. */
     position,
-}: {
-    doc: sourcegraph.TextDocument
-    query: string
-    position: LSP.Position
-}): Promise<T | undefined> {
-    repositoryFromDoc(doc)
-    commitFromDoc(doc)
-
-    const vars = {
-        repository: repositoryFromDoc(doc),
-        commit: commitFromDoc(doc),
-        path: pathFromDoc(doc),
-        line: position.line,
-        character: position.character,
-    }
-
-    const respObj: {
-        data: {
-            repository: {
-                commit: {
-                    blob: {
-                        lsif: T
-                    }
+    /** The GraphQL request query. */
+    query,
+    /** Additional query parameters. */
+    ...rest
+}: P): Promise<R | null> {
+    interface Response {
+        repository: {
+            commit: {
+                blob: {
+                    lsif: R | null
                 }
             }
         }
-        errors: Error[]
-    } = await queryGraphQL({
-        query,
-        vars,
-        sourcegraph,
-    })
-
-    if (respObj.errors) {
-        const asError = (err: { message: string }): Error =>
-            Object.assign(new Error(err.message), err)
-
-        if (respObj.errors.length === 1) {
-            throw asError(respObj.errors[0])
-        }
-
-        throw Object.assign(
-            new Error(respObj.errors.map(e => e.message).join('\n')),
-            {
-                name: 'AggregateError',
-                errors: respObj.errors.map(asError),
-            }
-        )
     }
 
-    return respObj.data.repository.commit.blob.lsif
+    const { repo, commit, path } = parseGitURI(new URL(doc.uri))
+
+    const data = await queryGraphQL<Response>(query, {
+        repository: repo,
+        commit,
+        path,
+        line: position.line,
+        character: position.character,
+        ...rest,
+    })
+
+    return data.repository.commit.blob.lsif
 }

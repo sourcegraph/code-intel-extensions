@@ -1,0 +1,178 @@
+import * as sourcegraph from 'sourcegraph'
+import * as lsp from 'vscode-languageserver-protocol'
+import { LSPClient } from '../../../shared/lsp/client'
+import { convertLocation, toLocation } from '../../../shared/lsp/conversion'
+import { ReferencesProvider } from '../../../shared/providers'
+import {
+    findReposViaSearch,
+    getExtensionManifests,
+    resolveRev,
+} from '../../../shared/util/api'
+import { concat, flatMapConcurrent } from '../../../shared/util/ix'
+import {
+    gitToRawApiUri,
+    rawApiToGitUri,
+    removeHash,
+} from '../../../shared/util/uri'
+import { asArray, isDefined } from '../../../shared/util/util'
+import { findPackageName, resolvePackageRepo } from './package'
+
+const EXTERNAL_REFS_CONCURRENCY = 7
+
+// We use this type alias that rewrites the `Location[] | LocationLink[]` portion
+// of the DefinitionRequest result type into an type that is accepted by Array.map.
+type DefinitionResult =
+    | lsp.Location
+    | (lsp.Location | lsp.LocationLink)[]
+    | null
+
+/**
+ * Return external references to the symbol at the given position.
+ *
+ * @param client The LSP client.
+ * @param sourcegraphServerURL A URL of the Sourcegraph API reachable from the language server.
+ * @param sourcegraphClientURL A URL of the Sourcegraph API reachable from the browser.
+ * @param accessToken The access token.
+ */
+export function createExternalReferencesProvider(
+    client: LSPClient,
+    sourcegraphServerURL: URL,
+    sourcegraphClientURL: URL,
+    accessToken: string
+): ReferencesProvider {
+    const findDependents = async (packageName: string): Promise<string[]> => {
+        // If the package name is "sourcegraph", we are looking for references to
+        // a symbol in the Sourcegraph extension API. Extensions are not published
+        // to npm, so search the extension registry.
+        if (packageName === 'sourcegraph') {
+            return (
+                await Promise.all(
+                    (await getExtensionManifests()).map(rawManifest =>
+                        resolvePackageRepo(rawManifest)
+                    )
+                )
+            ).filter(isDefined)
+        }
+
+        return findReposViaSearch(`file:package.json$ ${packageName} max:1000`)
+    }
+
+    return async function*(
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        // Get the symbol and package at the current position
+        const definitions = await getDefinition(
+            client,
+            sourcegraphServerURL,
+            accessToken,
+            textDocument,
+            position
+        )
+        if (definitions.length === 0) {
+            console.error('No definitions')
+            return
+        }
+        const definition = definitions[0]
+
+        const definitionClientUri = new URL(definition.uri)
+        definitionClientUri.protocol = sourcegraphClientURL.protocol
+        definitionClientUri.host = sourcegraphClientURL.host
+
+        // Find dependent repositories.
+        const dependents = await findDependents(
+            await findPackageName(definitionClientUri)
+        )
+
+        yield* concat(
+            flatMapConcurrent(dependents, EXTERNAL_REFS_CONCURRENCY, repoName =>
+                // Call references for the target symbol in each dependent workspace
+                findExternalRefsInDependent(
+                    client,
+                    sourcegraphServerURL,
+                    accessToken,
+                    repoName,
+                    definition
+                )
+            )
+        )
+    }
+}
+
+async function getDefinition(
+    client: LSPClient,
+    sourcegraphServerURL: URL,
+    accessToken: string,
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<lsp.Location[]> {
+    const workspaceRoot = removeHash(new URL(textDocument.uri))
+
+    const params = {
+        textDocument: {
+            uri: gitToRawApiUri(
+                sourcegraphServerURL,
+                accessToken,
+                new URL(textDocument.uri)
+            ).href,
+        },
+        position,
+    }
+
+    const result = await client.withConnection(
+        workspaceRoot,
+        async connection =>
+            (await connection.sendRequest<any, DefinitionResult>(
+                lsp.DefinitionRequest.type,
+                params
+            )) || []
+    )
+
+    return asArray(result).map(toLocation)
+}
+
+async function findExternalRefsInDependent(
+    client: LSPClient,
+    sourcegraphServerURL: URL,
+    accessToken: string,
+    repoName: string,
+    definition: lsp.Location
+): Promise<sourcegraph.Location[]> {
+    const commit = await resolveRev(repoName, 'HEAD')
+    const rootUri = new URL(
+        `${repoName}@${commit}/-/raw/`,
+        sourcegraphServerURL
+    )
+    if (accessToken) {
+        rootUri.username = accessToken
+    }
+
+    const workspaceRoot = rawApiToGitUri(rootUri)
+
+    const params = {
+        textDocument: { uri: definition.uri },
+        position: definition.range.start,
+        context: { includeDeclaration: false },
+    }
+
+    const results = await client.withConnection(
+        workspaceRoot,
+        async connection =>
+            (await connection.sendRequest<any, lsp.Location[] | null>(
+                lsp.ReferencesRequest.type,
+                params
+            )) || []
+    )
+
+    return (
+        results
+            // Filter out results that weren't in the workspace
+            .filter(location => location.uri.startsWith(rootUri.href))
+            .map(location =>
+                convertLocation({
+                    ...location,
+                    uri: rawApiToGitUri(new URL(location.uri)).href,
+                })
+            )
+    )
+}

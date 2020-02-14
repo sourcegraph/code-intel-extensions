@@ -1,7 +1,7 @@
 import { copy, emptyDir, ensureDir } from 'fs-extra'
 import * as fs from 'mz/fs'
 import * as path from 'path'
-import { LanguageSpec } from '../../shared/language-specs/languages'
+import { LanguageSpec } from '../../shared/language-specs/spec'
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {
@@ -11,10 +11,7 @@ async function main(): Promise<void> {
 
 const templateDir = path.join('extensions', 'template')
 
-async function generate({
-    stylized,
-    handlerArgs: { languageID },
-}: LanguageSpec): Promise<void> {
+async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     console.log(`Generating ${languageID} extension`)
 
     const langDir = path.join('temp', languageID)
@@ -64,6 +61,6 @@ async function generate({
 }
 
 main().catch(err => {
-    console.error(err && err.message)
+    console.error(err?.message)
     process.exit(1)
 })
