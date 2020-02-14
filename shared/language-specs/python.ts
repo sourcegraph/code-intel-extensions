@@ -79,6 +79,6 @@ export const pythonSpec: LanguageSpec = {
     languageID: 'python',
     stylized: 'Python',
     fileExts: ['py'],
-    commentStyle: pythonStyleComment,
+    commentStyles: [pythonStyleComment],
     filterDefinitions,
 }

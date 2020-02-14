@@ -24,9 +24,8 @@ import { findSearchToken } from './tokens'
 export function createProviders({
     languageID,
     fileExts = [],
-    commentStyle,
+    commentStyles,
     identCharPattern,
-    docstringIgnore,
     filterDefinitions: filterDefinitions = results => results,
 }: LanguageSpec): Providers {
     /**
@@ -49,7 +48,9 @@ export function createProviders({
         const tokenResult = findSearchToken({
             text,
             position: pos,
-            lineRegex: commentStyle?.lineRegex,
+            lineRegexes: commentStyles
+                .map(style => style.lineRegex)
+                .filter(isDefined),
             identCharPattern,
         })
         if (!tokenResult || tokenResult.isComment) {
@@ -209,8 +210,7 @@ export function createProviders({
         const docstring = findDocstring({
             definitionLine: def.range.start.line,
             fileText: text,
-            commentStyle,
-            docstringIgnore,
+            commentStyles,
         })
 
         const docstringMarkdown =

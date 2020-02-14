@@ -1,10 +1,9 @@
 import {
-    cStyleBlockComment,
     cStyleComment,
     dashPattern,
-    hashPattern,
-    leadingAsteriskPattern,
+    javaStyleComment,
     leadingAtSymbolPattern,
+    leadingHashPattern,
     lispStyleComment,
     pythonStyleComment,
     shellStyleComment,
@@ -23,22 +22,22 @@ const clojureSpec: LanguageSpec = {
     languageID: 'clojure',
     stylized: 'Clojure',
     fileExts: ['clj', 'cljs', 'cljx'],
-    identCharPattern: createIdentCharPattern('-!?+*<>='),
-    commentStyle: lispStyleComment,
+    identCharPattern: createIdentCharPattern('\\-!?+*<>='),
+    commentStyles: [lispStyleComment],
 }
 
 const csharpSpec: LanguageSpec = {
     languageID: 'csharp',
     stylized: 'C#',
     fileExts: ['cs', 'csx'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
 }
 
 const dartSpec: LanguageSpec = {
     languageID: 'dart',
     stylized: 'Dart',
     fileExts: ['dart'],
-    commentStyle: { lineRegex: tripleSlashPattern },
+    commentStyles: [{ lineRegex: tripleSlashPattern }],
 }
 
 const elixirSpec: LanguageSpec = {
@@ -46,105 +45,126 @@ const elixirSpec: LanguageSpec = {
     stylized: 'Elixir',
     fileExts: ['ex', 'exs'],
     identCharPattern: rubyIdentCharPattern,
-    commentStyle: {
-        ...pythonStyleComment,
-        docPlacement: 'above the definition',
-    },
-    docstringIgnore: leadingAtSymbolPattern,
+    commentStyles: [
+        {
+            ...pythonStyleComment,
+            docPlacement: 'above the definition',
+            docstringIgnore: leadingAtSymbolPattern,
+        },
+    ],
 }
 
 const erlangSpec: LanguageSpec = {
     languageID: 'erlang',
     stylized: 'Erlang',
     fileExts: ['erl'],
-    commentStyle: {
-        // %% comment
-        lineRegex: /%%\s?/,
-    },
-    docstringIgnore: /-spec/,
+    commentStyles: [
+        {
+            // %% comment
+            lineRegex: /%%\s?/,
+            // -spec id(X) -> X.
+            docstringIgnore: /^\s*-spec/,
+        },
+    ],
 }
 
 const graphqlSpec: LanguageSpec = {
     languageID: 'graphql',
     stylized: 'GraphQL',
     fileExts: ['graphql'],
-    commentStyle: shellStyleComment,
+    commentStyles: [shellStyleComment],
 }
 
 const groovySpec: LanguageSpec = {
     languageID: 'groovy',
     stylized: 'Groovy',
     fileExts: ['groovy'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
 }
+
+// {-# PRAGMA args #-}
+const haskellPragma = /^\s*{-#\s*[A-Z]+.*#-}$/
 
 const haskellSpec: LanguageSpec = {
     languageID: 'haskell',
     stylized: 'Haskell',
     fileExts: ['hs', 'hsc'],
     identCharPattern: createIdentCharPattern("'"),
-    commentStyle: {
-        // -- comment
-        // -- | doc comment
-        // {- block comment -}
-        // TODO - (support -- ^ doc comment)
-        lineRegex: /--\s?\|?\s?/,
-        block: { startRegex: /{-/, endRegex: /-}/ },
-    },
-    docstringIgnore: /INLINE|^#/,
+    commentStyles: [
+        {
+            // -- comment
+            // -- | doc comment
+            // {- block comment -}
+            lineRegex: /--\s?\|?\s?/,
+            block: { startRegex: /{-/, endRegex: /-}/ },
+            docstringIgnore: haskellPragma,
+        },
+        {
+            // -- ^ doc comment
+            lineRegex: /--\s?\^?\s?/,
+            docPlacement: 'above the definition',
+            docstringIgnore: haskellPragma,
+        },
+    ],
 }
 
 const kotlinSpec: LanguageSpec = {
     languageID: 'kotlin',
     stylized: 'Kotlin',
     fileExts: ['kt', 'ktm', 'kts'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
 }
 
 const lispSpec: LanguageSpec = {
     languageID: 'lisp',
     stylized: 'Lisp',
     fileExts: ['lisp', 'asd', 'cl', 'lsp', 'l', 'ny', 'podsl', 'sexp', 'el'],
-    identCharPattern: createIdentCharPattern('-!?'),
-    commentStyle: lispStyleComment,
+    identCharPattern: createIdentCharPattern('\\-!?'),
+    commentStyles: [lispStyleComment],
 }
 
 const luaSpec: LanguageSpec = {
     languageID: 'lua',
     stylized: 'Lua',
     fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
-    commentStyle: {
-        // --[[ block comment ]]
-        lineRegex: dashPattern,
-        block: { startRegex: /--\[\[/, endRegex: /\]\]/ },
-    },
+    commentStyles: [
+        {
+            // --[[ block comment ]]
+            lineRegex: dashPattern,
+            block: { startRegex: /--\[\[/, endRegex: /\]\]/ },
+        },
+    ],
 }
 
 const ocamlSpec: LanguageSpec = {
     languageID: 'ocaml',
     stylized: 'OCaml',
     fileExts: ['ml', 'eliom', 'eliomi', 'ml4', 'mli', 'mll', 'mly', 're'],
-    commentStyle: {
-        // (* block comment *)
-        // (** block comment *)
-        block: {
-            startRegex: /\(\*\*?/,
-            endRegex: /\*\)/,
-            lineNoiseRegex: leadingAsteriskPattern,
+    commentStyles: [
+        {
+            // (* block comment *)
+            // (** block comment *)
+            block: {
+                startRegex: /\(\*\*?/,
+                endRegex: /\*\)/,
+                lineNoiseRegex: /\s*\*\s?/,
+            },
         },
-    },
+    ],
 }
 
 const pascalSpec: LanguageSpec = {
     languageID: 'pascal',
     stylized: 'Pascal',
     fileExts: ['p', 'pas', 'pp'],
-    commentStyle: {
-        // (* block comment *)
-        // { turbo pascal block comment }
-        lineRegex: slashPattern,
-        block: { startRegex: /(\{|\(\*)\s?/, endRegex: /(\}|\*\))/ },
-    },
+    commentStyles: [
+        {
+            // (* block comment *)
+            // { turbo pascal block comment }
+            lineRegex: slashPattern,
+            block: { startRegex: /(\{|\(\*)\s?/, endRegex: /(\}|\*\))/ },
+        },
+    ],
 }
 
 const perlSpec: LanguageSpec = {
@@ -163,14 +183,14 @@ const perlSpec: LanguageSpec = {
         'psgi',
         't',
     ],
-    commentStyle: { lineRegex: hashPattern },
+    commentStyles: [shellStyleComment],
 }
 
 const phpSpec: LanguageSpec = {
     languageID: 'php',
     stylized: 'PHP',
     fileExts: ['php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'phps'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
 }
 
 const powershellSpec: LanguageSpec = {
@@ -178,12 +198,15 @@ const powershellSpec: LanguageSpec = {
     stylized: 'PowerShell',
     fileExts: ['ps1', 'psd1', 'psm1'],
     identCharPattern: createIdentCharPattern('?'),
-    commentStyle: {
-        // <# doc comment #>
-        block: { startRegex: /<#/, endRegex: /#>/ },
-        docPlacement: 'below the definition',
-    },
-    docstringIgnore: /\{/,
+    commentStyles: [
+        {
+            // <# doc comment #>
+            block: { startRegex: /<#/, endRegex: /#>/ },
+            docPlacement: 'below the definition',
+            // any line with braces
+            docstringIgnore: /\{/,
+        },
+    ],
 }
 
 const rSpec: LanguageSpec = {
@@ -193,7 +216,7 @@ const rSpec: LanguageSpec = {
     identCharPattern: createIdentCharPattern('.'),
     // # comment
     // #' comment
-    commentStyle: { lineRegex: /#'?\s?/ },
+    commentStyles: [{ lineRegex: /#'?\s?/ }],
 }
 
 const rubySpec: LanguageSpec = {
@@ -221,7 +244,7 @@ const rubySpec: LanguageSpec = {
         'thor',
         'watchr',
     ],
-    commentStyle: shellStyleComment,
+    commentStyles: [shellStyleComment],
     identCharPattern: rubyIdentCharPattern,
 }
 
@@ -229,50 +252,52 @@ const rustSpec: LanguageSpec = {
     languageID: 'rust',
     stylized: 'Rust',
     fileExts: ['rs', 'rs.in'],
-    commentStyle: {
-        // TODO - (support above/below)
-        // //! doc comment
-        lineRegex: /\/\/\/?!?\s?/,
-        block: cStyleBlockComment,
-    },
-    docstringIgnore: /^#/,
+    commentStyles: [
+        {
+            ...cStyleComment,
+            docstringIgnore: leadingHashPattern,
+        },
+        {
+            lineRegex: /\/\/?!\s?/,
+            docstringIgnore: leadingHashPattern,
+            docPlacement: 'below the definition',
+        },
+    ],
 }
 
 const scalaSpec: LanguageSpec = {
     languageID: 'scala',
     stylized: 'Scala',
     fileExts: ['sbt', 'sc', 'scala'],
-    commentStyle: cStyleComment,
-    docstringIgnore: leadingAtSymbolPattern,
+    commentStyles: [javaStyleComment],
 }
 
 const shellSpec: LanguageSpec = {
     languageID: 'shell',
     stylized: 'Shell',
     fileExts: ['sh', 'bash', 'zsh'],
-    commentStyle: shellStyleComment,
+    commentStyles: [shellStyleComment],
 }
 
 const swiftSpec: LanguageSpec = {
     languageID: 'swift',
     stylized: 'Swift',
     fileExts: ['swift'],
-    commentStyle: cStyleComment,
-    docstringIgnore: leadingAtSymbolPattern,
+    commentStyles: [javaStyleComment],
 }
 
 const verilogSpec: LanguageSpec = {
     languageID: 'verilog',
     stylized: 'Verilog',
     fileExts: ['sv', 'svh', 'svi', 'v'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
 }
 
 const vhdlSpec: LanguageSpec = {
     languageID: 'vhdl',
     stylized: 'VHDL',
     fileExts: ['vhd', 'vhdl'],
-    commentStyle: { lineRegex: dashPattern },
+    commentStyles: [{ lineRegex: dashPattern }],
 }
 
 /**
