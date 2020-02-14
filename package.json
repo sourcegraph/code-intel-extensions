@@ -55,7 +55,7 @@
     "@types/mocha": "7.0.1",
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.0",
-    "@types/node": "13.7.0",
+    "@types/node": "13.7.1",
     "@types/semver": "7.1.0",
     "@types/uuid": "3.4.7",
     "@types/whatwg-url": "6.4.0",
