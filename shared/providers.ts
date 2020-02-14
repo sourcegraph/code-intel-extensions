@@ -337,11 +337,7 @@ export function badgeValues<T extends object>(
     value: T | T[] | null,
     badge: sourcegraph.BadgeAttachmentRenderOptions
 ): sourcegraph.Badged<T> | sourcegraph.Badged<T>[] | null {
-    return Array.isArray(value)
-        ? value.map(v => ({ ...v, badge }))
-        : value
-        ? { ...value, badge }
-        : null
+    return mapArrayish(value, v => ({ ...v, badge }))
 }
 
 /**
