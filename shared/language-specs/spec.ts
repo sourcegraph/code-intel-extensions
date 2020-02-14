@@ -21,20 +21,22 @@ export interface LanguageSpec {
     fileExts: string[]
 
     /**
-     * Regex that matches lines between a definition and the docstring that
-     * should be ignored. Java example: `/^\s*@/` for annotations.
+     * Regex that matches individual characters in an identifier.
      */
-    docstringIgnore?: RegExp
+    identCharPattern?: RegExp
 
     /**
      * Instruction on how to parse comments in order to extract docstrings.
      */
     commentStyle?: CommentStyle
 
+    // TODO - move this guy above
+
     /**
-     * Regex that matches characters in an identifier.
+     * Regex that matches lines between a definition and the docstring that
+     * should be ignored. Java example: `/^\s*@/` for annotations.
      */
-    identCharPattern?: RegExp
+    docstringIgnore?: RegExp
 
     /**
      * Callback that filters the given symbol search results (e.g. to drop

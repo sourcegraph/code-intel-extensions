@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { cStyle } from './comments'
+import { cStyleComment } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import {
     extractFromLines,
@@ -49,6 +49,6 @@ export const typescriptSpec: LanguageSpec = {
     languageID: 'typescript',
     stylized: 'TypeScript',
     fileExts: ['ts', 'tsx', 'js', 'jsx'],
-    commentStyle: cStyle,
+    commentStyle: cStyleComment,
     filterDefinitions,
 }

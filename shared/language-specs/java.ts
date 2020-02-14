@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { cStyle } from './comments'
+import { cStyleComment, leadingAtSymbolPattern } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import { extractFromLines, filterResultsByImports, slashToDot } from './util'
 
@@ -37,7 +37,7 @@ export const javaSpec: LanguageSpec = {
     languageID: 'java',
     stylized: 'Java',
     fileExts: ['java'],
-    docstringIgnore: /^\s*@/,
-    commentStyle: cStyle,
+    commentStyle: cStyleComment,
+    docstringIgnore: leadingAtSymbolPattern,
     filterDefinitions,
 }
