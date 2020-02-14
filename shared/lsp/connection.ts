@@ -3,7 +3,7 @@ import { attempt } from 'lodash'
 import { fromEvent, merge, Subject } from 'rxjs'
 import { filter, map, mapTo, take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
-import { Logger } from './logging'
+import { Logger } from '../logging'
 
 export interface LSPConnection extends sourcegraph.Unsubscribable {
     closed: boolean
