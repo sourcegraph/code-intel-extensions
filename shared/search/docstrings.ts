@@ -59,9 +59,9 @@ export function findDocstring({
             docPlacement === 'below the definition'
                 ? block
                 : {
-                      lineNoiseRegex: block.lineNoiseRegex,
                       startRegex: block.endRegex,
                       endRegex: block.startRegex,
+                      lineNoiseRegex: block.lineNoiseRegex,
                   }
 
         const blockCommentDocstring = findDocstringInBlockComment({

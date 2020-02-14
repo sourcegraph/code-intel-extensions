@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { pythonStyle } from './comments'
+import { pythonStyleComment } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import {
     extractFromLines,
@@ -79,6 +79,6 @@ export const pythonSpec: LanguageSpec = {
     languageID: 'python',
     stylized: 'Python',
     fileExts: ['py'],
-    commentStyle: pythonStyle,
+    commentStyle: pythonStyleComment,
     filterDefinitions,
 }

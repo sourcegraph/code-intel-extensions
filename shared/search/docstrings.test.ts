@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { cStyle, pythonStyle } from '../language-specs/comments'
+import { cStyleComment, pythonStyleComment } from '../language-specs/comments'
 import { findDocstring } from './docstrings'
 
 describe('docstrings', () => {
@@ -26,7 +26,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyle: pythonStyleComment,
             }),
             'docstring'
         )
@@ -42,7 +42,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyle: pythonStyleComment,
             }),
             'docstring1\ndocstring2'
         )
@@ -59,7 +59,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyle: pythonStyleComment,
             }),
             'docstring1\ndocstring2\n'
         )
@@ -77,7 +77,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyle: pythonStyleComment,
             }),
             '\ndocstring1\ndocstring2\n'
         )
@@ -91,7 +91,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 2,
-                commentStyle: cStyle,
+                commentStyle: cStyleComment,
             }),
             'docstring'
         )
@@ -106,7 +106,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 3,
-                commentStyle: cStyle,
+                commentStyle: cStyleComment,
             }),
             'docstring1\ndocstring2'
         )
@@ -122,7 +122,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 4,
-                commentStyle: cStyle,
+                commentStyle: cStyleComment,
             }),
             'docstring1\ndocstring2\n'
         )
@@ -137,7 +137,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 3,
-                commentStyle: cStyle,
+                commentStyle: cStyleComment,
             }),
             'docstring1\ndocstring2 '
         )
@@ -152,7 +152,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 3,
-                commentStyle: cStyle,
+                commentStyle: cStyleComment,
             }),
             ' docstring1\ndocstring2'
         )
@@ -169,7 +169,7 @@ describe('docstrings', () => {
         public void FizzBuzz()
         `,
                 definitionLine: 5,
-                commentStyle: cStyle,
+                commentStyle: cStyleComment,
                 docstringIgnore: /^\s*@/,
             }),
             '\ndocstring\n'
