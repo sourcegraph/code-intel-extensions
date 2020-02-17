@@ -12,22 +12,27 @@ export const hashPattern = /#\s?/
 /** Matches two or more dashes followed by one optional space. */
 export const dashPattern = /---*\s?/
 
-// TODO - does not need to be optional?
-/** Matches whitespace followed by a asterisk at the beginning of a line. */
-export const leadingAsteriskPattern = /(^\s*\*\s?)?/
-
 /** Matches whitespace followed by an at-symbol at beginning of a line. */
 export const leadingAtSymbolPattern = /^\s*@/
+
+/** Matches whitespace followed by a hash symbol at beginning of a line. */
+export const leadingHashPattern = /^\s*#/
 
 export const cStyleBlockComment: BlockCommentStyle = {
     startRegex: /\/\*\*?/,
     endRegex: /\*\//,
-    lineNoiseRegex: leadingAsteriskPattern,
+    lineNoiseRegex: /\s*\*\s?/,
 }
 
 export const cStyleComment: CommentStyle = {
     lineRegex: slashPattern,
     block: cStyleBlockComment,
+}
+
+/** C-style comments that ignore lines with @annotations. */
+export const javaStyleComment: CommentStyle = {
+    ...cStyleComment,
+    docstringIgnore: leadingAtSymbolPattern,
 }
 
 export const shellStyleComment: CommentStyle = {
