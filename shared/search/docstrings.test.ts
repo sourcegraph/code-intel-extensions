@@ -2,11 +2,11 @@ import * as assert from 'assert'
 import {
     cStyleComment,
     javaStyleComment,
-    pythonStyleComment,
     leadingHashPattern,
+    pythonStyleComment,
 } from '../language-specs/comments'
-import { findDocstring } from './docstrings'
 import { CommentStyle } from '../language-specs/spec'
+import { findDocstring } from './docstrings'
 
 describe('docstrings', () => {
     it('finds nothing when no comment style is specified', () => {

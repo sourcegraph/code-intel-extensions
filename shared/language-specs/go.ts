@@ -1,7 +1,7 @@
 import * as path from 'path'
+import { slashPattern } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import { extractFromLines, filterResults } from './util'
-import { slashPattern } from './comments'
 
 /**
  * Filter a list of candidate definitions to select those likely to be valid

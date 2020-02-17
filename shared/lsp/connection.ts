@@ -3,8 +3,7 @@ import { attempt } from 'lodash'
 import { fromEvent, merge, Subject } from 'rxjs'
 import { filter, map, mapTo, take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
-import { Logger } from './logging'
-import { CancellationToken } from '@sourcegraph/vscode-ws-jsonrpc'
+import { Logger } from '../logging'
 
 export interface LSPConnection extends sourcegraph.Unsubscribable {
     closed: boolean
@@ -30,7 +29,7 @@ export const webSocketTransport = ({
 }: {
     serverUrl: string | URL
     logger: Logger
-    cancellationToken: CancellationToken
+    cancellationToken: jsonrpc.CancellationToken
 }) => async (): Promise<LSPConnection> => {
     const socket = new WebSocket(serverUrl.toString())
     const event = await merge(
