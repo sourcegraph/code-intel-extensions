@@ -10,13 +10,13 @@ import {
     slashPattern,
     tripleSlashPattern,
 } from './comments'
-import { LanguageSpec } from './spec'
 import { cppSpec, cudaSpec } from './cpp'
 import { goSpec } from './go'
+import { createIdentCharPattern, rubyIdentCharPattern } from './identifiers'
 import { javaSpec } from './java'
 import { pythonSpec } from './python'
+import { LanguageSpec } from './spec'
 import { typescriptSpec } from './typescript'
-import { rubyIdentCharPattern, createIdentCharPattern } from './identifiers'
 
 const clojureSpec: LanguageSpec = {
     languageID: 'clojure',

@@ -29,7 +29,7 @@ export const webSocketTransport = ({
 }: {
     serverUrl: string | URL
     logger: Logger
-    cancellationToken: CancellationToken
+    cancellationToken: jsonrpc.CancellationToken
 }) => async (): Promise<LSPConnection> => {
     const socket = new WebSocket(serverUrl.toString())
     const event = await merge(

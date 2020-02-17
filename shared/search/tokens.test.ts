@@ -1,6 +1,6 @@
 import * as assert from 'assert'
-import { findSearchToken } from './tokens'
 import { slashPattern } from '../language-specs/comments'
+import { findSearchToken } from './tokens'
 
 describe('findSearchToken', () => {
     it('custom identCharPattern', () => {
