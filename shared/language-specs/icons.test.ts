@@ -28,7 +28,11 @@ describe('all defined languages', () => {
             .map(({ languageID }) => languageID)
 
         if (languageIDs.length > 0) {
-            assert.fail(`Each LANG must have a corresponding icons/LANG.png file. Icons missing for ${languageIDs.join(', ')}.`)
+            assert.fail(
+                `Each LANG must have a corresponding icons/LANG.png file. Icons missing for ${languageIDs.join(
+                    ', '
+                )}.`
+            )
         }
     })
 })
