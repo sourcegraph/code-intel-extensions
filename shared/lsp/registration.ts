@@ -86,6 +86,7 @@ export interface RegisterOptions {
     initializationOptions?: any
     providerWrapper: ProviderWrapper
     featureOptions?: Observable<FeatureOptions>
+    cancellationToken?: lsp.CancellationToken
 }
 
 export async function register({
@@ -100,8 +101,15 @@ export async function register({
     initializationOptions,
     providerWrapper,
     featureOptions,
+    cancellationToken,
 }: RegisterOptions): Promise<LSPClient> {
     const subscriptions = new Subscription()
+
+    if (cancellationToken) {
+        cancellationToken.onCancellationRequested(() =>
+            subscriptions.unsubscribe()
+        )
+    }
 
     function syncTextDocuments(connection: LSPConnection): void {
         for (const textDocument of sourcegraph.workspace.textDocuments) {

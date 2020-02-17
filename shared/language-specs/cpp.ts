@@ -60,7 +60,7 @@ export const cppSpec: LanguageSpec = {
         'ino', // Arduino
         'm', // Objective-C
     ],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
     filterDefinitions,
 }
 
@@ -68,6 +68,6 @@ export const cudaSpec: LanguageSpec = {
     languageID: 'cuda',
     stylized: 'CUDA',
     fileExts: ['cu', 'cuh'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
     filterDefinitions,
 }

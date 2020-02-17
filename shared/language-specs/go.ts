@@ -47,6 +47,6 @@ export const goSpec: LanguageSpec = {
     languageID: 'go',
     stylized: 'Go',
     fileExts: ['go'],
-    commentStyle: { lineRegex: slashPattern },
+    commentStyles: [{ lineRegex: slashPattern }],
     filterDefinitions,
 }
