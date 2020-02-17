@@ -1,3 +1,4 @@
+import { CancellationTokenSource } from '@sourcegraph/vscode-ws-jsonrpc'
 import { Subject } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
 import { activateCodeIntel } from '../../../shared/activate'
@@ -140,9 +141,13 @@ async function registerClient(
     client: LSPClient
     featureOptionsSubject: Subject<FeatureOptions>
 }> {
+    const cancellationTokenSource = new CancellationTokenSource()
+    const cancellationToken = cancellationTokenSource.token
+
     const transport = webSocketTransport({
         serverUrl: serverURL,
         logger: new NoopLogger(),
+        cancellationToken,
     })
 
     const initializationOptions = { configuration: settings }
@@ -161,9 +166,11 @@ async function registerClient(
         documentSelector,
         providerWrapper,
         featureOptions,
+        cancellationToken,
     })
 
     ctx.subscriptions.add(client)
+    ctx.subscriptions.add(() => cancellationTokenSource.cancel())
     return { client, featureOptionsSubject: featureOptions }
 }
 
