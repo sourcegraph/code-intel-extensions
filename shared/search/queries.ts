@@ -2,14 +2,6 @@ import { extname } from 'path'
 import * as sourcegraph from 'sourcegraph'
 import { parseGitURI } from '../util/uri'
 
-type Scope =
-    | 'current file'
-    | 'current repository'
-    | 'all repositories'
-    | 'other repositories'
-
-type SearchType = 'symbol' | 'file'
-
 /**
  * Create a search query to find definitions of a symbol.
  *
@@ -30,19 +22,23 @@ export function definitionQueries({
     /** True to disable searching in other repositories. */
     isSourcegraphDotCom: boolean
 }): string[] {
-    const queryIn = (scope: Scope): string =>
-        makeQuery({
-            searchToken: `^${searchToken}$`,
-            searchType: 'symbol',
-            currentFileUri: new URL(doc.uri),
-            scope,
-            fileExts,
-        })
+    const { repo, commit, path } = parseGitURI(new URL(doc.uri))
 
-    return [
-        queryIn('current repository'),
-        ...(isSourcegraphDotCom ? [] : [queryIn('all repositories')]),
+    const searchTerms = [
+        `^${searchToken}$`,
+        `type:symbol`,
+        `patternType:regexp`,
+        'case:yes',
+        fileExtensionTerm(path, fileExts),
     ]
+
+    return makeQueries(
+        isSourcegraphDotCom,
+        // Always test same repo
+        [...searchTerms, `repo:^${repo}$@${commit}`],
+        // Search globally if not on dotcom
+        [...searchTerms]
+    )
 }
 
 /**
@@ -65,69 +61,47 @@ export function referencesQueries({
     /** True to disable searching in other repositories. */
     isSourcegraphDotCom: boolean
 }): string[] {
-    const queryIn = (scope: Scope): string =>
-        makeQuery({
-            searchToken: `\\b${searchToken}\\b`,
-            searchType: 'file',
-            currentFileUri: new URL(doc.uri),
-            scope,
-            fileExts,
-        })
+    const { repo, commit, path } = parseGitURI(new URL(doc.uri))
 
-    return [
-        queryIn('current repository'),
-        ...(isSourcegraphDotCom ? [] : [queryIn('other repositories')]),
-    ]
-}
-
-/**
- * Create a search query.
- *
- * @param args Parameter bag.
- */
-function makeQuery({
-    searchToken,
-    searchType,
-    currentFileUri,
-    scope,
-    fileExts,
-}: {
-    /** The search term. */
-    searchToken: string
-    /** The type of search to perform. */
-    searchType: SearchType
-    /** The URI of the current file. */
-    currentFileUri: URL
-    /** Where to search. */
-    scope: Scope
-    /** File extensions in which to limit the search. */
-    fileExts: string[]
-}): string {
-    const { repo, commit, path } = parseGitURI(currentFileUri)
-
-    const scopeThings = {
-        'current file': [`repo:^${repo}$@${commit}`, `file:^${path}$`],
-        'current repository': [`repo:^${repo}$@${commit}`],
-        'all repositories': [],
-        'other repositories': [`-repo:^${repo}$`],
-    }
-
-    const terms = [
-        searchToken,
+    const searchTerms = [
+        `\\b${searchToken}\\b`,
+        `type:file`,
+        `patternType:regexp`,
         'case:yes',
-        `type:${searchType}`,
-        ...scopeThings[scope],
         fileExtensionTerm(path, fileExts),
     ]
 
-    return terms.filter(x => !!x).join(' ')
+    return makeQueries(
+        isSourcegraphDotCom,
+        // Always look in same commit
+        [...searchTerms, `repo:^${repo}$@${commit}`],
+        // Look in other repos when not on dotcom
+        [...searchTerms, `-repo:^${repo}$`]
+    )
+}
+
+/**
+ * Builds a set of queries based on the current instance environment.
+ *
+ * @param isSourcegraphDotCom True if the current instance is dotcom.
+ * @param standardQueryTerms The terms to search on all instances.
+ * @param instanceQueryTerms The terms to search on non-dotcom instances.
+ */
+function makeQueries(
+    isSourcegraphDotCom: boolean,
+    standardQueryTerms: string[],
+    instanceQueryTerms: string[]
+): string[] {
+    return isSourcegraphDotCom
+        ? [standardQueryTerms.join(' ')]
+        : [standardQueryTerms.join(' '), instanceQueryTerms.join(' ')]
 }
 
 const blacklist = ['thrift', 'proto', 'graphql']
 
 /**
  * Constructs a file extension term (or an empty string) if the current file end
- * in one of the extensions for the current langauge and does NOT end in one of
+ * in one of the extensions for the current language and does NOT end in one of
  * the blacklisted files defined above.
  *
  * @param path The path of the current text file.

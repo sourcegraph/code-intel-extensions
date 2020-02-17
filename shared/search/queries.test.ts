@@ -18,9 +18,9 @@ describe('search requests', () => {
                 }),
                 expectedSearchQueries: [
                     // current repo symbols
-                    '^token$ case:yes type:symbol repo:^github.com/foo/bar$@rev file:\\.(cpp)$',
+                    '^token$ type:symbol patternType:regexp case:yes file:\\.(cpp)$ repo:^github.com/foo/bar$@rev',
                     // all repo symbols
-                    '^token$ case:yes type:symbol file:\\.(cpp)$',
+                    '^token$ type:symbol patternType:regexp case:yes file:\\.(cpp)$',
                 ],
             },
         ]
@@ -51,8 +51,8 @@ describe('search requests', () => {
                     text: 'token',
                 }),
                 expectedSearchQueries: [
-                    '\\btoken\\b case:yes type:file repo:^github.com/foo/bar$@rev file:\\.(cpp)$',
-                    '\\btoken\\b case:yes type:file -repo:^github.com/foo/bar$ file:\\.(cpp)$',
+                    '\\btoken\\b type:file patternType:regexp case:yes file:\\.(cpp)$ repo:^github.com/foo/bar$@rev',
+                    '\\btoken\\b type:file patternType:regexp case:yes file:\\.(cpp)$ -repo:^github.com/foo/bar$',
                 ],
             },
         ]

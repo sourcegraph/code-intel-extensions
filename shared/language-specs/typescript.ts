@@ -49,6 +49,6 @@ export const typescriptSpec: LanguageSpec = {
     languageID: 'typescript',
     stylized: 'TypeScript',
     fileExts: ['ts', 'tsx', 'js', 'jsx'],
-    commentStyle: cStyleComment,
+    commentStyles: [cStyleComment],
     filterDefinitions,
 }

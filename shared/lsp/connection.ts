@@ -4,6 +4,7 @@ import { fromEvent, merge, Subject } from 'rxjs'
 import { filter, map, mapTo, take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { Logger } from './logging'
+import { CancellationToken } from '@sourcegraph/vscode-ws-jsonrpc'
 
 export interface LSPConnection extends sourcegraph.Unsubscribable {
     closed: boolean
@@ -25,9 +26,11 @@ export interface LSPConnection extends sourcegraph.Unsubscribable {
 export const webSocketTransport = ({
     serverUrl,
     logger,
+    cancellationToken,
 }: {
     serverUrl: string | URL
     logger: Logger
+    cancellationToken: CancellationToken
 }) => async (): Promise<LSPConnection> => {
     const socket = new WebSocket(serverUrl.toString())
     const event = await merge(
@@ -71,7 +74,7 @@ export const webSocketTransport = ({
             take(1)
         ),
         sendRequest: async (type, params) =>
-            connection.sendRequest(type, params),
+            connection.sendRequest(type, params, cancellationToken),
         sendNotification: async (type, params) =>
             connection.sendNotification(type, params),
         setRequestHandler: (type, handler) =>
