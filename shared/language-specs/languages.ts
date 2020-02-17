@@ -102,7 +102,7 @@ const haskellSpec: LanguageSpec = {
         {
             // -- ^ doc comment
             lineRegex: /--\s?\^?\s?/,
-            docPlacement: 'above the definition',
+            docPlacement: 'below the definition',
             docstringIgnore: haskellPragma,
         },
     ],
