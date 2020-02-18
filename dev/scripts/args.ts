@@ -23,9 +23,9 @@ export function findLanguageSpecs(): LanguageSpec[] {
     // candidates to only those selected.
     const ids = args.languages.split(',')
     ids.map(id => {
-	if (!candidates.find(spec => spec.languageID == id)) {
-	    throw new Error(`Unknown language ${id}.`)
-	}
+        if (!candidates.find(spec => spec.languageID === id)) {
+            throw new Error(`Unknown language ${id}.`)
+        }
     })
-    return candidates.filter(spec => ids.includes(spec.languageID));
+    return candidates.filter(spec => ids.includes(spec.languageID))
 }
