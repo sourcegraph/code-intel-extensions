@@ -55,12 +55,17 @@ export function findSearchToken({
 
     const searchToken = line.substring(start, end)
 
-    if (
-        !lineRegexes.some(
-            // comment on this line occurring before the token
-            lineRegex => (line.match(lineRegex)?.index || 0) < start
-        )
-    ) {
+    // Determine if the token occurs after a comment on the same line
+    const insideComment = lineRegexes.some(lineRegex => {
+        const match = line.match(lineRegex)
+        if (!match) {
+            return false
+        }
+
+        return match?.index !== undefined && match.index < start
+    })
+
+    if (!insideComment) {
         return { searchToken, isComment: false }
     }
 
