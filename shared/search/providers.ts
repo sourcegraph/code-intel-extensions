@@ -1,6 +1,6 @@
 import { flatten, sortBy } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
-import { LanguageSpec } from '../language-specs/spec'
+import { LanguageSpec, FilterDefinitions } from '../language-specs/spec'
 import { Providers } from '../providers'
 import {
     getFileContent as getFileContentFromApi,
@@ -12,7 +12,8 @@ import { asArray, isDefined } from '../util/util'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
-import { definitionQueries, referencesQueries } from './queries'
+import { getFirst } from './promises'
+import { definitionQuery, referencesQuery } from './queries'
 import { Settings } from './settings'
 import { findSearchToken } from './tokens'
 
@@ -26,7 +27,7 @@ export function createProviders({
     fileExts = [],
     commentStyles,
     identCharPattern,
-    filterDefinitions: filterDefinitions = results => results,
+    filterDefinitions = results => results,
 }: LanguageSpec): Providers {
     /**
      * Return the text document content adn the search token found under the
@@ -75,66 +76,40 @@ export function createProviders({
             return null
         }
         const { text, searchToken } = contentAndToken
+        const { repo, commit, path } = parseGitURI(new URL(doc.uri))
 
-        // Construct common args to the filterDefinitions function
-        const { repo, path } = parseGitURI(new URL(doc.uri))
-        const filterContext = {
-            repo,
-            filePath: path,
-            fileContent: text,
-        }
+        // Construct base definition query without scoping terms
+        const query = definitionQuery({ searchToken, doc, fileExts })
 
-        const queries = definitionQueries({
-            searchToken,
+        // Perform a indexed or un-indexed search in the tree.
+        const sameRepoDefinitions = searchAndFilterDefinitions(
             doc,
-            fileExts,
-            isSourcegraphDotCom: isSourcegraphDotCom(),
-        })
+            repo,
+            path,
+            text,
+            filterDefinitions,
+            // TODO - too slow for monorepos
+            `${query} repo:^${repo}$@${commit}`
+        )
 
-        /**
-         * Filter search results before passing them to the language spec filter function.
-         * This removes all results that are either public symbols or they belong to the
-         * current text document.
-         *
-         * @param result The search result.
-         */
-        const isSymbolVisible = ({
-            fileLocal,
-            file,
-            symbolKind,
-        }: Result): boolean => {
-            // Enum members are always public, but there's an open ctags bug that
-            // doesn't let us treat that way.
-            // See https://github.com/universal-ctags/ctags/issues/1844
+        // Perform an indexed search over all repositories. Do not do this
+        // on the DotCom instance as we are unlikely to have indexed the
+        // relevant definition and we'd end up jumping to what would seem
+        // like a random line of code.
+        const anyRepoDefinitions = isSourcegraphDotCom()
+            ? Promise.resolve([])
+            : searchAndFilterDefinitions(
+                  doc,
+                  repo,
+                  path,
+                  text,
+                  filterDefinitions,
+                  query
+              )
 
-            if (doc.languageId === 'java' && symbolKind === 'ENUMMEMBER') {
-                return true
-            }
-
-            return !fileLocal || file === path
-        }
-
-        for (const query of queries) {
-            // Perform search and perform pre-filtering before passing it
-            // off to the language spec for the proper filtering pass.
-            const searchResults = await search(query)
-            const preFilteredResults = searchResults.filter(isSymbolVisible)
-
-            // Filter results based on language spec
-            const filteredResults = filterDefinitions(
-                preFilteredResults,
-                filterContext
-            ).map(resultToLocation)
-
-            if (filteredResults.length > 0) {
-                // Return first set of results found. There is generally exactly
-                // one so there is little utility in merging results from the other
-                // queries here as well.
-                return sortByProximity(filteredResults, new URL(doc.uri))
-            }
-        }
-
-        return []
+        // Return any location definitions first, then fallback to
+        // definitions found in any other repository.
+        return getFirst(sameRepoDefinitions, anyRepoDefinitions)
     }
 
     /**
@@ -152,23 +127,33 @@ export function createProviders({
             return []
         }
         const { searchToken } = contentAndToken
+        const { repo, commit } = parseGitURI(new URL(doc.uri))
 
-        const queries = referencesQueries({
-            searchToken,
-            doc,
-            fileExts,
-            isSourcegraphDotCom: isSourcegraphDotCom(),
-        })
+        // Construct base references query without scoping terms
+        const query = referencesQuery({ searchToken, doc, fileExts })
 
-        // Perform all search queries concurrently, then merge and sort
-        // the results based on the proximity to the current file.
-        const searchResults = await Promise.all(queries.map(search))
-        const mergedResults = flatten(searchResults).map(resultToLocation)
-        return sortByProximity(mergedResults, new URL(doc.uri))
+        // Perform a indexed or un-indexed search in the tree.
+        const sameRepoReferences = searchReferences(
+            // TODO - too slow for monorepos
+            `${query} repo:^${repo}$@${commit}`
+        )
+
+        // Perform an indexed search over all _other_ repositories. This
+        // query is ineffective on DotCom as we do not keep repositories
+        // in the index permanently.
+        const otherRepoReferences = isSourcegraphDotCom()
+            ? Promise.resolve([])
+            : searchReferences(`${query} -repo:^${repo}$`)
+
+        // Resolve then merge all references and sort them by proximity
+        // to the current text document path.
+        const referenceChunk = [sameRepoReferences, otherRepoReferences]
+        const mergedReferences = flatten(await Promise.all(referenceChunk))
+        return sortByProximity(mergedReferences, new URL(doc.uri))
     }
 
     /**
-     * Retrieve hover tex for the current hover position.
+     * Retrieve hover text for the current hover position.
      *
      * @param doc The current text document.
      * @param position The current hover position.
@@ -250,6 +235,59 @@ function getFileContent(
 }
 
 /**
+ * Perform a search query for definitions. Returns results converted to locations,
+ * filtered by the language's definition filter, and sorted by proximity to the
+ * current text document path.
+ *
+ * @param doc The current text document.
+ * @param repo The repository containing the current text document.
+ * @param path The path of the current text document.
+ * @param text The content of the current text document
+ * @param filterDefinitions The function used to filter definitions.
+ * @param query The search query.
+ */
+async function searchAndFilterDefinitions(
+    doc: sourcegraph.TextDocument,
+    repo: string,
+    path: string,
+    text: string,
+    filterDefinitions: FilterDefinitions,
+    query: string
+): Promise<sourcegraph.Location[]> {
+    // Perform search and perform pre-filtering before passing it
+    // off to the language spec for the proper filtering pass.
+    const searchResults = await search(query)
+    const preFilteredResults = searchResults.filter(result =>
+        isSymbolVisible(doc, path, result)
+    )
+
+    // Filter results based on language spec
+    const filteredResults = filterDefinitions(preFilteredResults, {
+        repo,
+        filePath: path,
+        fileContent: text,
+    })
+
+    return sortByProximity(
+        filteredResults.map(resultToLocation),
+        new URL(doc.uri)
+    )
+}
+
+/**
+ * Perform a search query for references. Returns results converted to locations.
+ * Results are not sorted in any meaningful way as these results are meant to be
+ * merged with other search query results.
+ *
+ * @param query The search query.
+ */
+async function searchReferences(
+    query: string
+): Promise<sourcegraph.Location[]> {
+    return (await search(query)).map(resultToLocation)
+}
+
+/**
  * Perform a search query.
  *
  * @param query The search query.
@@ -264,6 +302,31 @@ async function search(query: string): Promise<Result[]> {
     return (await searchViaApi(query, shouldRequestFileLocal())).flatMap(
         searchResultToResults
     )
+}
+
+/**
+ * Filter search results before passing them to the language spec filter function.
+ * This removes all results that are either public symbols or they belong to the
+ * current text document.
+ *
+ * @param doc The current text document.
+ * @param path The path of the document.
+ * @param result The search result.
+ */
+function isSymbolVisible(
+    doc: sourcegraph.TextDocument,
+    path: string,
+    { fileLocal, file, symbolKind }: Result
+): boolean {
+    // Enum members are always public, but there's an open ctags bug that
+    // doesn't let us treat that way.
+    // See https://github.com/universal-ctags/ctags/issues/1844
+
+    if (doc.languageId === 'java' && symbolKind === 'ENUMMEMBER') {
+        return true
+    }
+
+    return !fileLocal || file === path
 }
 
 /**
