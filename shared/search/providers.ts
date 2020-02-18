@@ -14,7 +14,7 @@ import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { getFirst, raceWithDelayOffset } from './promises'
 import { definitionQuery, referencesQuery } from './queries'
-import { Settings } from './settings'
+import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
 
 /**
@@ -322,21 +322,25 @@ export function searchWithFallback<
     R
 >(search: (args: P) => Promise<R>, args: P): Promise<R> {
     const { repo, commit, query } = args
+    const unindexedQuery = `${query} repo:^${repo}$@${commit}`
+    const indexedQuery = `${query} repo:^${repo}$ index:only`
 
-    // TODO - add config value to always require indexed search
-    // TODO - make timeout configurable
+    if (getConfig('basicCodeIntel.indexOnly', false)) {
+        return search({
+            ...args,
+            query: indexedQuery,
+        })
+    }
 
-    console.log(`launching:: ${query} repo:^${repo}$@${commit}`)
-    return raceWithDelayOffset(
-        search({ ...args, query: `${query} repo:^${repo}$@${commit}` }),
-        () => {
-            console.log(`launching:: ${query} repo:^${repo}$@ index:only`)
-            return search({
-                ...args,
-                query: `${query} repo:^${repo}$ index:only`,
-            })
-        },
+    const timeout = getConfig<number>(
+        'basicCodeIntel.unindexedSearchTimeout',
         5000
+    )
+
+    return raceWithDelayOffset(
+        search({ ...args, query: unindexedQuery }),
+        () => search({ ...args, query: indexedQuery }),
+        timeout
     )
 }
 
@@ -346,13 +350,13 @@ export function searchWithFallback<
  * @param query The search query.
  */
 async function search(query: string): Promise<Result[]> {
-    if (shouldTraceSearch()) {
+    if (getConfig('basicCodeIntel.debug.traceSearch', false)) {
         console.log('%cSearch', 'font-weight:bold;', {
             query,
         })
     }
 
-    return (await searchViaApi(query, shouldRequestFileLocal())).flatMap(
+    return (await searchViaApi(query, getConfig('fileLocal', false))).flatMap(
         searchResultToResults
     )
 }
@@ -429,18 +433,11 @@ function isSourcegraphDotCom(): boolean {
     )
 }
 
-/**
- * Return true if searches should be traced in the console.
- */
-function shouldTraceSearch(): boolean {
-    return !!sourcegraph.configuration
-        .get<Settings>()
-        .get('basicCodeIntel.debug.traceSearch')
-}
+/** Retrieves a config value by key. */
+function getConfig<T>(key: string, defaultValue: T): T {
+    const configuredValue = sourcegraph.configuration
+        .get<BasicCodeIntelligenceSettings>()
+        .get(key)
 
-/**
- * Return true if `fileLocal` is configured in the settings.
- */
-function shouldRequestFileLocal(): boolean {
-    return sourcegraph.configuration.get<Settings>().get('fileLocal') || false
+    return configuredValue || defaultValue
 }
