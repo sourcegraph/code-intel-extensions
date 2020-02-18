@@ -12,7 +12,7 @@ import { asArray, isDefined } from '../util/util'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
-import { getFirst } from './promises'
+import { getFirst, raceWithDelayOffset } from './promises'
 import { definitionQuery, referencesQuery } from './queries'
 import { Settings } from './settings'
 import { findSearchToken } from './tokens'
@@ -81,15 +81,18 @@ export function createProviders({
         // Construct base definition query without scoping terms
         const query = definitionQuery({ searchToken, doc, fileExts })
 
-        // Perform a indexed or un-indexed search in the tree.
-        const sameRepoDefinitions = searchAndFilterDefinitions(
-            doc,
-            repo,
-            path,
-            text,
-            filterDefinitions,
-            // TODO - too slow for monorepos
-            `${query} repo:^${repo}$@${commit}`
+        // Perform a search in the current git tree
+        const sameRepoDefinitions = searchWithFallback(
+            searchAndFilterDefinitions,
+            {
+                doc,
+                repo,
+                commit,
+                path,
+                text,
+                filterDefinitions,
+                query,
+            }
         )
 
         // Perform an indexed search over all repositories. Do not do this
@@ -98,14 +101,14 @@ export function createProviders({
         // like a random line of code.
         const anyRepoDefinitions = isSourcegraphDotCom()
             ? Promise.resolve([])
-            : searchAndFilterDefinitions(
+            : searchAndFilterDefinitions({
                   doc,
                   repo,
                   path,
                   text,
                   filterDefinitions,
-                  query
-              )
+                  query,
+              })
 
         // Return any location definitions first, then fallback to
         // definitions found in any other repository.
@@ -132,18 +135,19 @@ export function createProviders({
         // Construct base references query without scoping terms
         const query = referencesQuery({ searchToken, doc, fileExts })
 
-        // Perform a indexed or un-indexed search in the tree.
-        const sameRepoReferences = searchReferences(
-            // TODO - too slow for monorepos
-            `${query} repo:^${repo}$@${commit}`
-        )
+        // Perform a search in the current git tree
+        const sameRepoReferences = searchWithFallback(searchReferences, {
+            repo,
+            commit,
+            query,
+        })
 
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
         const otherRepoReferences = isSourcegraphDotCom()
             ? Promise.resolve([])
-            : searchReferences(`${query} -repo:^${repo}$`)
+            : searchReferences({ query: `${query} -repo:^${repo}$` })
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
@@ -239,21 +243,29 @@ function getFileContent(
  * filtered by the language's definition filter, and sorted by proximity to the
  * current text document path.
  *
- * @param doc The current text document.
- * @param repo The repository containing the current text document.
- * @param path The path of the current text document.
- * @param text The content of the current text document
- * @param filterDefinitions The function used to filter definitions.
- * @param query The search query.
+ * @param args Parameter bag.
  */
-async function searchAndFilterDefinitions(
-    doc: sourcegraph.TextDocument,
-    repo: string,
-    path: string,
-    text: string,
-    filterDefinitions: FilterDefinitions,
+async function searchAndFilterDefinitions({
+    doc,
+    repo,
+    path,
+    text,
+    filterDefinitions,
+    query,
+}: {
+    /** The current text document. */
+    doc: sourcegraph.TextDocument
+    /** The repository containing the current text document. */
+    repo: string
+    /** The path of the current text document. */
+    path: string
+    /** The content of the current text document */
+    text: string
+    /** The function used to filter definitions. */
+    filterDefinitions: FilterDefinitions
+    /** The search query. */
     query: string
-): Promise<sourcegraph.Location[]> {
+}): Promise<sourcegraph.Location[]> {
     // Perform search and perform pre-filtering before passing it
     // off to the language spec for the proper filtering pass.
     const searchResults = await search(query)
@@ -279,12 +291,53 @@ async function searchAndFilterDefinitions(
  * Results are not sorted in any meaningful way as these results are meant to be
  * merged with other search query results.
  *
- * @param query The search query.
+ * @param args Parameter bag.
  */
-async function searchReferences(
+async function searchReferences({
+    query,
+}: {
+    /** The search query. */
     query: string
-): Promise<sourcegraph.Location[]> {
+}): Promise<sourcegraph.Location[]> {
     return (await search(query)).map(resultToLocation)
+}
+
+/**
+ * Invoke the given search function by modifying the query with a term that will
+ * only look in the current git tree by appending a repo filter with the repo name
+ * and the current commit.
+ *
+ * This is likely to timeout on large repos or organizations with monorepos if the
+ * current commit is not an indexed commit. Instead of waiting for a timeout, we
+ * will start a second index-only search of the HEAD commit for the same repo after
+ * a short delay.
+ *
+ * This function returns the set of results that resolve first.
+ *
+ * @param search The search function.
+ * @param args The arguments to the search function.
+ */
+export function searchWithFallback<
+    P extends { repo: string; commit: string; query: string },
+    R
+>(search: (args: P) => Promise<R>, args: P): Promise<R> {
+    const { repo, commit, query } = args
+
+    // TODO - add config value to always require indexed search
+    // TODO - make timeout configurable
+
+    console.log(`launching:: ${query} repo:^${repo}$@${commit}`)
+    return raceWithDelayOffset(
+        search({ ...args, query: `${query} repo:^${repo}$@${commit}` }),
+        () => {
+            console.log(`launching:: ${query} repo:^${repo}$@ index:only`)
+            return search({
+                ...args,
+                query: `${query} repo:^${repo}$ index:only`,
+            })
+        },
+        5000
+    )
 }
 
 /**
