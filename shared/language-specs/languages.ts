@@ -18,6 +18,8 @@ import { pythonSpec } from './python'
 import { LanguageSpec } from './spec'
 import { typescriptSpec } from './typescript'
 
+// Please keep the specs below in lexicographic order.
+
 const clojureSpec: LanguageSpec = {
     languageID: 'clojure',
     stylized: 'Clojure',
@@ -209,6 +211,13 @@ const powershellSpec: LanguageSpec = {
     ],
 }
 
+const protobufSpec: LanguageSpec = {
+    languageID: 'protobuf',
+    stylized: 'Protocol Buffers',
+    fileExts: ['proto'],
+    commentStyles: [cStyleComment],
+}
+
 const rSpec: LanguageSpec = {
     languageID: 'r',
     stylized: 'R',
@@ -328,6 +337,7 @@ export const languageSpecs: LanguageSpec[] = [
     perlSpec,
     phpSpec,
     powershellSpec,
+    protobufSpec,
     pythonSpec,
     rSpec,
     rubySpec,
