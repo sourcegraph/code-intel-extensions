@@ -1,6 +1,6 @@
 import { flatten, sortBy } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
-import { LanguageSpec, FilterDefinitions } from '../language-specs/spec'
+import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
 import {
     getFileContent as getFileContentFromApi,
