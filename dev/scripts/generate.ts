@@ -30,8 +30,8 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
         pkgFilename,
         JSON.stringify(
             {
-		// N.B. This needs to be first so we can overwrite default
-		// fields for this extension (notably "name").
+                // N.B. This needs to be first so we can overwrite default
+                // fields for this extension (notably "name").
                 ...JSON.parse(packageContents),
 
                 name: languageID,
