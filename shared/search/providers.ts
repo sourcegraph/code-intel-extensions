@@ -362,9 +362,8 @@ async function search(query: string): Promise<Result[]> {
 }
 
 /**
- * Filter search results before passing them to the language spec filter function.
- * This removes all results that are either public symbols or they belong to the
- * current text document.
+ * Filter out search results that are a non-public symbol that does not belong
+ * to the current text document.
  *
  * @param doc The current text document.
  * @param path The path of the document.
