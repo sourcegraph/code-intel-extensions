@@ -30,6 +30,10 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
         pkgFilename,
         JSON.stringify(
             {
+                // N.B. This needs to be first so we can overwrite default
+                // fields for this extension (notably "name").
+                ...JSON.parse(packageContents),
+
                 name: languageID,
                 title: `${stylized} code intelligence`,
                 description: `Provides basic code intelligence for ${stylized} using the Sourcegraph search API`,
@@ -37,7 +41,6 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
                 icon: `data:image/png;base64,${(
                     await fs.readFile(iconFilename)
                 ).toString('base64')}`,
-                ...JSON.parse(packageContents),
             },
             null,
             2
