@@ -35,6 +35,7 @@
   ],
   "scripts": {
     "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts",
+    "config-types": "dot-json package.json contributes.configuration | json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o ../../shared/search/settings.ts",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
@@ -84,13 +85,21 @@
     "configuration": {
       "title": "Basic code intelligence settings",
       "properties": {
-        "basicCodeIntel.debug.traceSearch": {
-          "type": "boolean",
-          "description": "Trace Sourcegraph search API requests in the console."
-        },
         "codeIntel.lsif": {
           "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.",
           "type": "boolean"
+        },
+        "basicCodeIntel.debug.traceSearch": {
+          "description": "Trace Sourcegraph search API requests in the console.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.indexOnly": {
+          "description": "Whether to use only indexed requests to the search API.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.unindexedSearchTimeout": {
+          "description": "The timeout (in ms) for un-indexed search requests.",
+          "type": "number"
         }
       }
     }

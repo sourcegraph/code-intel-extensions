@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
-import { queryGraphQL, rawQueryGraphQL } from './graphql'
+import { rawQueryGraphQL } from './graphql'
 import { isDefined, sortUnique } from './util'
 
 /**
@@ -361,6 +361,6 @@ export async function search(
         }
     }
 
-    const data = await queryGraphQL<Response>(query, { query: searchQuery })
+    const data = await rawQueryGraphQL<Response>(query, { query: searchQuery })
     return data.search.results.results.filter(isDefined)
 }

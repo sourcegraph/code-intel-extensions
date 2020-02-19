@@ -108,6 +108,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "codeIntel.lsif": {
+          "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.debug.traceSearch": {
+          "description": "Trace Sourcegraph search API requests in the console.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.indexOnly": {
+          "description": "Whether to use only indexed requests to the search API.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.unindexedSearchTimeout": {
+          "description": "The timeout (in ms) for un-indexed search requests.",
+          "type": "number"
+        },
         "lightstep.token": {
           "description": "The LightStep project token to use for tracing.",
           "oneOf": [
@@ -172,10 +188,6 @@
             "requestTime",
             "verbose"
           ]
-        },
-        "codeIntel.lsif": {
-          "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.",
-          "type": "boolean"
         }
       }
     }
