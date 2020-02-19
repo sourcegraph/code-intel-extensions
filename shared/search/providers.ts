@@ -269,8 +269,8 @@ async function searchAndFilterDefinitions({
     // Perform search and perform pre-filtering before passing it
     // off to the language spec for the proper filtering pass.
     const searchResults = await search(query)
-    const preFilteredResults = searchResults.filter(result =>
-        !isExternalPrivateSymbol(doc, path, result)
+    const preFilteredResults = searchResults.filter(
+        result => !isExternalPrivateSymbol(doc, path, result)
     )
 
     // Filter results based on language spec
