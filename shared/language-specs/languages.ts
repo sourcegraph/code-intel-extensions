@@ -1,16 +1,304 @@
-import { LanguageSpec } from './spec'
 import {
-    cStyle,
-    cStyleLineNoiseRegex,
-    lispStyle,
-    pythonStyle,
-    shellStyle,
+    cStyleComment,
+    dashPattern,
+    javaStyleComment,
+    leadingAtSymbolPattern,
+    leadingHashPattern,
+    lispStyleComment,
+    pythonStyleComment,
+    shellStyleComment,
+    slashPattern,
+    tripleSlashPattern,
 } from './comments'
 import { cppSpec, cudaSpec } from './cpp'
 import { goSpec } from './go'
+import { createIdentCharPattern, rubyIdentCharPattern } from './identifiers'
 import { javaSpec } from './java'
 import { pythonSpec } from './python'
+import { LanguageSpec } from './spec'
 import { typescriptSpec } from './typescript'
+
+const clojureSpec: LanguageSpec = {
+    languageID: 'clojure',
+    stylized: 'Clojure',
+    fileExts: ['clj', 'cljs', 'cljx'],
+    identCharPattern: createIdentCharPattern('\\-!?+*<>='),
+    commentStyles: [lispStyleComment],
+}
+
+const csharpSpec: LanguageSpec = {
+    languageID: 'csharp',
+    stylized: 'C#',
+    fileExts: ['cs', 'csx'],
+    commentStyles: [cStyleComment],
+}
+
+const dartSpec: LanguageSpec = {
+    languageID: 'dart',
+    stylized: 'Dart',
+    fileExts: ['dart'],
+    commentStyles: [{ lineRegex: tripleSlashPattern }],
+}
+
+const elixirSpec: LanguageSpec = {
+    languageID: 'elixir',
+    stylized: 'Elixir',
+    fileExts: ['ex', 'exs'],
+    identCharPattern: rubyIdentCharPattern,
+    commentStyles: [
+        {
+            ...pythonStyleComment,
+            docPlacement: 'above the definition',
+            docstringIgnore: leadingAtSymbolPattern,
+        },
+    ],
+}
+
+const erlangSpec: LanguageSpec = {
+    languageID: 'erlang',
+    stylized: 'Erlang',
+    fileExts: ['erl'],
+    commentStyles: [
+        {
+            // %% comment
+            lineRegex: /%%\s?/,
+            // -spec id(X) -> X.
+            docstringIgnore: /^\s*-spec/,
+        },
+    ],
+}
+
+const graphqlSpec: LanguageSpec = {
+    languageID: 'graphql',
+    stylized: 'GraphQL',
+    fileExts: ['graphql'],
+    commentStyles: [shellStyleComment],
+}
+
+const groovySpec: LanguageSpec = {
+    languageID: 'groovy',
+    stylized: 'Groovy',
+    fileExts: ['groovy'],
+    commentStyles: [cStyleComment],
+}
+
+// {-# PRAGMA args #-}
+const haskellPragma = /^\s*{-#\s*[A-Z]+.*#-}$/
+
+const haskellSpec: LanguageSpec = {
+    languageID: 'haskell',
+    stylized: 'Haskell',
+    fileExts: ['hs', 'hsc'],
+    identCharPattern: createIdentCharPattern("'"),
+    commentStyles: [
+        {
+            // -- comment
+            // -- | doc comment
+            // {- block comment -}
+            lineRegex: /--\s?\|?\s?/,
+            block: { startRegex: /{-/, endRegex: /-}/ },
+            docstringIgnore: haskellPragma,
+        },
+        {
+            // -- ^ doc comment
+            lineRegex: /--\s?\^?\s?/,
+            docPlacement: 'below the definition',
+            docstringIgnore: haskellPragma,
+        },
+    ],
+}
+
+const kotlinSpec: LanguageSpec = {
+    languageID: 'kotlin',
+    stylized: 'Kotlin',
+    fileExts: ['kt', 'ktm', 'kts'],
+    commentStyles: [cStyleComment],
+}
+
+const lispSpec: LanguageSpec = {
+    languageID: 'lisp',
+    stylized: 'Lisp',
+    fileExts: ['lisp', 'asd', 'cl', 'lsp', 'l', 'ny', 'podsl', 'sexp', 'el'],
+    identCharPattern: createIdentCharPattern('\\-!?'),
+    commentStyles: [lispStyleComment],
+}
+
+const luaSpec: LanguageSpec = {
+    languageID: 'lua',
+    stylized: 'Lua',
+    fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
+    commentStyles: [
+        {
+            // --[[ block comment ]]
+            lineRegex: dashPattern,
+            block: { startRegex: /--\[\[/, endRegex: /\]\]/ },
+        },
+    ],
+}
+
+const ocamlSpec: LanguageSpec = {
+    languageID: 'ocaml',
+    stylized: 'OCaml',
+    fileExts: ['ml', 'eliom', 'eliomi', 'ml4', 'mli', 'mll', 'mly', 're'],
+    commentStyles: [
+        {
+            // (* block comment *)
+            // (** block comment *)
+            block: {
+                startRegex: /\(\*\*?/,
+                endRegex: /\*\)/,
+                lineNoiseRegex: /\s*\*\s?/,
+            },
+        },
+    ],
+}
+
+const pascalSpec: LanguageSpec = {
+    languageID: 'pascal',
+    stylized: 'Pascal',
+    fileExts: ['p', 'pas', 'pp'],
+    commentStyles: [
+        {
+            // (* block comment *)
+            // { turbo pascal block comment }
+            lineRegex: slashPattern,
+            block: { startRegex: /(\{|\(\*)\s?/, endRegex: /(\}|\*\))/ },
+        },
+    ],
+}
+
+const perlSpec: LanguageSpec = {
+    languageID: 'perl',
+    stylized: 'Perl',
+    fileExts: [
+        'pl',
+        'al',
+        'cgi',
+        'fcgi',
+        'perl',
+        'ph',
+        'plx',
+        'pm',
+        'pod',
+        'psgi',
+        't',
+    ],
+    commentStyles: [shellStyleComment],
+}
+
+const phpSpec: LanguageSpec = {
+    languageID: 'php',
+    stylized: 'PHP',
+    fileExts: ['php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'phps'],
+    commentStyles: [cStyleComment],
+}
+
+const powershellSpec: LanguageSpec = {
+    languageID: 'powershell',
+    stylized: 'PowerShell',
+    fileExts: ['ps1', 'psd1', 'psm1'],
+    identCharPattern: createIdentCharPattern('?'),
+    commentStyles: [
+        {
+            // <# doc comment #>
+            block: { startRegex: /<#/, endRegex: /#>/ },
+            docPlacement: 'below the definition',
+            // any line with braces
+            docstringIgnore: /\{/,
+        },
+    ],
+}
+
+const rSpec: LanguageSpec = {
+    languageID: 'r',
+    stylized: 'R',
+    fileExts: ['r', 'R', 'rd', 'rsx'],
+    identCharPattern: createIdentCharPattern('.'),
+    // # comment
+    // #' comment
+    commentStyles: [{ lineRegex: /#'?\s?/ }],
+}
+
+const rubySpec: LanguageSpec = {
+    languageID: 'ruby',
+    stylized: 'Ruby',
+    fileExts: [
+        'rb',
+        'builder',
+        'eye',
+        'fcgi',
+        'gemspec',
+        'god',
+        'jbuilder',
+        'mspec',
+        'pluginspec',
+        'podspec',
+        'rabl',
+        'rake',
+        'rbuild',
+        'rbw',
+        'rbx',
+        'ru',
+        'ruby',
+        'spec',
+        'thor',
+        'watchr',
+    ],
+    commentStyles: [shellStyleComment],
+    identCharPattern: rubyIdentCharPattern,
+}
+
+const rustSpec: LanguageSpec = {
+    languageID: 'rust',
+    stylized: 'Rust',
+    fileExts: ['rs', 'rs.in'],
+    commentStyles: [
+        {
+            ...cStyleComment,
+            docstringIgnore: leadingHashPattern,
+        },
+        {
+            lineRegex: /\/\/?!\s?/,
+            docstringIgnore: leadingHashPattern,
+            docPlacement: 'below the definition',
+        },
+    ],
+}
+
+const scalaSpec: LanguageSpec = {
+    languageID: 'scala',
+    stylized: 'Scala',
+    fileExts: ['sbt', 'sc', 'scala'],
+    commentStyles: [javaStyleComment],
+}
+
+const shellSpec: LanguageSpec = {
+    languageID: 'shell',
+    stylized: 'Shell',
+    fileExts: ['sh', 'bash', 'zsh'],
+    commentStyles: [shellStyleComment],
+}
+
+const swiftSpec: LanguageSpec = {
+    languageID: 'swift',
+    stylized: 'Swift',
+    fileExts: ['swift'],
+    commentStyles: [javaStyleComment],
+}
+
+const verilogSpec: LanguageSpec = {
+    languageID: 'verilog',
+    stylized: 'Verilog',
+    fileExts: ['sv', 'svh', 'svi', 'v'],
+    commentStyles: [cStyleComment],
+}
+
+const vhdlSpec: LanguageSpec = {
+    languageID: 'vhdl',
+    stylized: 'VHDL',
+    fileExts: ['vhd', 'vhdl'],
+    commentStyles: [{ lineRegex: dashPattern }],
+}
 
 /**
  * The specification of languages for which search-based code intelligence
@@ -20,261 +308,36 @@ import { typescriptSpec } from './typescript'
  * The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers.
  */
 export const languageSpecs: LanguageSpec[] = [
+    clojureSpec,
     cppSpec,
+    csharpSpec,
     cudaSpec,
+    dartSpec,
+    elixirSpec,
+    erlangSpec,
     goSpec,
+    graphqlSpec,
+    groovySpec,
+    haskellSpec,
     javaSpec,
+    kotlinSpec,
+    lispSpec,
+    luaSpec,
+    ocamlSpec,
+    pascalSpec,
+    perlSpec,
+    phpSpec,
+    powershellSpec,
     pythonSpec,
+    rSpec,
+    rubySpec,
+    rustSpec,
+    scalaSpec,
+    shellSpec,
+    swiftSpec,
     typescriptSpec,
-
-    {
-        languageID: 'ruby',
-        stylized: 'Ruby',
-        fileExts: [
-            'rb',
-            'builder',
-            'eye',
-            'fcgi',
-            'gemspec',
-            'god',
-            'jbuilder',
-            'mspec',
-            'pluginspec',
-            'podspec',
-            'rabl',
-            'rake',
-            'rbuild',
-            'rbw',
-            'rbx',
-            'ru',
-            'ruby',
-            'spec',
-            'thor',
-            'watchr',
-        ],
-        commentStyle: shellStyle,
-        identCharPattern: /[A-Za-z0-9_!?]/,
-    },
-    {
-        languageID: 'php',
-        stylized: 'PHP',
-        fileExts: [
-            'php',
-            'phtml',
-            'php3',
-            'php4',
-            'php5',
-            'php6',
-            'php7',
-            'phps',
-        ],
-        commentStyle: cStyle,
-    },
-    {
-        languageID: 'csharp',
-        stylized: 'C#',
-        fileExts: ['cs', 'csx'],
-        commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
-    },
-    {
-        languageID: 'shell',
-        stylized: 'Shell',
-        fileExts: ['sh', 'bash', 'zsh'],
-        commentStyle: shellStyle,
-    },
-    {
-        languageID: 'scala',
-        stylized: 'Scala',
-        docstringIgnore: /^\s*@/,
-        fileExts: ['sbt', 'sc', 'scala'],
-        commentStyle: cStyle,
-    },
-    {
-        languageID: 'swift',
-        stylized: 'Swift',
-        fileExts: ['swift'],
-        docstringIgnore: /^\s*@/,
-        commentStyle: { ...cStyle, lineRegex: /\/\/\/?\s?/ },
-    },
-    {
-        languageID: 'rust',
-        stylized: 'Rust',
-        fileExts: ['rs', 'rs.in'],
-        docstringIgnore: /^#/,
-        commentStyle: { ...cStyle, lineRegex: /\/\/\/?!?\s?/ },
-    },
-    {
-        languageID: 'kotlin',
-        stylized: 'Kotlin',
-        fileExts: ['kt', 'ktm', 'kts'],
-        commentStyle: cStyle,
-    },
-    {
-        languageID: 'elixir',
-        stylized: 'Elixir',
-        fileExts: ['ex', 'exs'],
-        docstringIgnore: /^\s*@/,
-        commentStyle: {
-            ...pythonStyle,
-            docPlacement: 'above the definition',
-        },
-        identCharPattern: /[A-Za-z0-9_!?]/,
-    },
-    {
-        languageID: 'perl',
-        stylized: 'Perl',
-        fileExts: [
-            'pl',
-            'al',
-            'cgi',
-            'fcgi',
-            'perl',
-            'ph',
-            'plx',
-            'pm',
-            'pod',
-            'psgi',
-            't',
-        ],
-        commentStyle: { lineRegex: /#\s?/ },
-    },
-    {
-        languageID: 'lua',
-        stylized: 'Lua',
-        fileExts: ['lua', 'fcgi', 'nse', 'pd_lua', 'rbxs', 'wlua'],
-        commentStyle: {
-            lineRegex: /---?\s?/,
-            block: {
-                startRegex: /--\[\[/,
-                endRegex: /\]\]/,
-            },
-        },
-    },
-    {
-        languageID: 'clojure',
-        stylized: 'Clojure',
-        fileExts: ['clj', 'cljs', 'cljx'],
-        commentStyle: lispStyle,
-        identCharPattern: /[A-Za-z0-9_\-!?+*<>=]/,
-    },
-    {
-        languageID: 'haskell',
-        stylized: 'Haskell',
-        fileExts: ['hs', 'hsc'],
-        docstringIgnore: /INLINE|^#/,
-        commentStyle: {
-            lineRegex: /--\s?\|?\s?/,
-            block: {
-                startRegex: /{-/,
-                endRegex: /-}/,
-            },
-        },
-        identCharPattern: /[A-Za-z0-9_']/,
-    },
-    {
-        languageID: 'powershell',
-        stylized: 'PowerShell',
-        fileExts: ['ps1', 'psd1', 'psm1'],
-        docstringIgnore: /\{/,
-        commentStyle: {
-            docPlacement: 'below the definition',
-            block: {
-                startRegex: /<#/,
-                endRegex: /#>/,
-            },
-        },
-        identCharPattern: /[A-Za-z0-9_?]/,
-    },
-    {
-        languageID: 'lisp',
-        stylized: 'Lisp',
-        fileExts: [
-            'lisp',
-            'asd',
-            'cl',
-            'lsp',
-            'l',
-            'ny',
-            'podsl',
-            'sexp',
-            'el',
-        ],
-        commentStyle: lispStyle,
-        identCharPattern: /[A-Za-z0-9_!?]/,
-    },
-    {
-        languageID: 'erlang',
-        stylized: 'Erlang',
-        fileExts: ['erl'],
-        docstringIgnore: /-spec/,
-        commentStyle: {
-            lineRegex: /%%\s?/,
-        },
-    },
-    {
-        languageID: 'dart',
-        stylized: 'Dart',
-        fileExts: ['dart'],
-        commentStyle: { lineRegex: /\/\/\/\s?/ },
-    },
-    {
-        languageID: 'ocaml',
-        stylized: 'OCaml',
-        fileExts: ['ml', 'eliom', 'eliomi', 'ml4', 'mli', 'mll', 'mly', 're'],
-        commentStyle: {
-            block: {
-                startRegex: /\(\*\*?/,
-                lineNoiseRegex: cStyleLineNoiseRegex,
-                endRegex: /\*\)/,
-            },
-        },
-    },
-    {
-        languageID: 'r',
-        stylized: 'R',
-        fileExts: ['r', 'R', 'rd', 'rsx'],
-        commentStyle: { lineRegex: /#'?\s?/ },
-        identCharPattern: /[A-Za-z0-9_\.]/,
-    },
-    {
-        languageID: 'pascal',
-        stylized: 'Pascal',
-        fileExts: ['p', 'pas', 'pp'],
-        // TODO: Some Pascal implementations support //-comments too.
-        // Is that common enough to support here?
-        commentStyle: {
-            // Traditional: (* this is a comment *)
-            // Customary:   { this is also a comment }
-            block: {
-                startRegex: /(\{|\(\*)\s?/,
-                endRegex: /(\}|\*\))/,
-            },
-        },
-    },
-    {
-        languageID: 'verilog',
-        stylized: 'Verilog',
-        fileExts: ['sv', 'svh', 'svi', 'v'],
-        commentStyle: cStyle,
-    },
-    {
-        languageID: 'vhdl',
-        stylized: 'VHDL',
-        fileExts: ['vhd', 'vhdl'],
-        commentStyle: { lineRegex: /--+\s?/ },
-    },
-    {
-        languageID: 'graphql',
-        stylized: 'GraphQL',
-        fileExts: ['graphql'],
-        commentStyle: shellStyle,
-    },
-    {
-        languageID: 'groovy',
-        stylized: 'Groovy',
-        fileExts: ['groovy'],
-        commentStyle: cStyle,
-    },
+    verilogSpec,
+    vhdlSpec,
 ]
 
 /**

@@ -15,7 +15,7 @@ const DEFAULT_IDENT_CHAR_PATTERN = /[A-Za-z0-9_]/
 export function findSearchToken({
     text,
     position,
-    lineRegex,
+    lineRegexes,
     identCharPattern = DEFAULT_IDENT_CHAR_PATTERN,
 }: {
     /** The text of the current document. */
@@ -23,7 +23,7 @@ export function findSearchToken({
     /** The current hover position. */
     position: { line: number; character: number }
     /** The pattern that identifies a line comment. */
-    lineRegex?: RegExp
+    lineRegexes: RegExp[]
     /** The pattern that identifies identifiers in this language. */
     identCharPattern?: RegExp
 }): { searchToken: string; isComment: boolean } | undefined {
@@ -55,14 +55,17 @@ export function findSearchToken({
 
     const searchToken = line.substring(start, end)
 
-    if (!lineRegex) {
-        // No comment to check for
-        return { searchToken, isComment: false }
-    }
+    // Determine if the token occurs after a comment on the same line
+    const insideComment = lineRegexes.some(lineRegex => {
+        const match = line.match(lineRegex)
+        if (!match) {
+            return false
+        }
 
-    const match = line.match(lineRegex)
-    if (!match || match.index === undefined || match.index > start) {
-        // No comment on this line, or it occurs after the token
+        return match?.index !== undefined && match.index < start
+    })
+
+    if (!insideComment) {
         return { searchToken, isComment: false }
     }
 

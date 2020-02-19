@@ -1,5 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
+import { Logger } from './logging'
 import { createProviderWrapper, ProviderWrapper } from './providers'
 
 /**
@@ -38,9 +39,10 @@ export async function activateCodeIntel(
     ctx: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
-    lspFactory?: LSPFactory
+    lspFactory?: LSPFactory,
+    logger: Logger = console
 ): Promise<void> {
-    const wrapper = createProviderWrapper(languageSpec)
+    const wrapper = createProviderWrapper(languageSpec, logger)
     const activated = lspFactory && (await lspFactory(ctx, wrapper))
     if (!activated) {
         activateWithoutLSP(ctx, selector, wrapper)

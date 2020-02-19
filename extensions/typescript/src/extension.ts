@@ -1,11 +1,12 @@
+import { CancellationTokenSource } from '@sourcegraph/vscode-ws-jsonrpc'
 import { Subject } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
 import { activateCodeIntel } from '../../../shared/activate'
 import { findLanguageSpec } from '../../../shared/language-specs/languages'
+import { NoopLogger } from '../../../shared/logging'
 import { getOrCreateAccessToken } from '../../../shared/lsp/auth'
 import { LSPClient } from '../../../shared/lsp/client'
 import { webSocketTransport } from '../../../shared/lsp/connection'
-import { NoopLogger } from '../../../shared/lsp/logging'
 import { FeatureOptions, register } from '../../../shared/lsp/registration'
 import { ProviderWrapper } from '../../../shared/providers'
 import { gitToRawApiUri, rawApiToGitUri } from '../../../shared/util/uri'
@@ -140,9 +141,13 @@ async function registerClient(
     client: LSPClient
     featureOptionsSubject: Subject<FeatureOptions>
 }> {
+    const cancellationTokenSource = new CancellationTokenSource()
+    const cancellationToken = cancellationTokenSource.token
+
     const transport = webSocketTransport({
         serverUrl: serverURL,
         logger: new NoopLogger(),
+        cancellationToken,
     })
 
     const initializationOptions = { configuration: settings }
@@ -161,9 +166,11 @@ async function registerClient(
         documentSelector,
         providerWrapper,
         featureOptions,
+        cancellationToken,
     })
 
     ctx.subscriptions.add(client)
+    ctx.subscriptions.add(() => cancellationTokenSource.cancel())
     return { client, featureOptionsSubject: featureOptions }
 }
 

@@ -7,6 +7,22 @@
 
 export interface Settings {
     /**
+     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
+     */
+    'codeIntel.lsif'?: boolean
+    /**
+     * Trace Sourcegraph search API requests in the console.
+     */
+    'basicCodeIntel.debug.traceSearch'?: boolean
+    /**
+     * Whether to use only indexed requests to the search API.
+     */
+    'basicCodeIntel.indexOnly'?: boolean
+    /**
+     * The timeout (in ms) for un-indexed search requests.
+     */
+    'basicCodeIntel.unindexedSearchTimeout'?: number
+    /**
      * The WebSocket language server to connect to
      */
     'go.serverUrl'?: string
@@ -34,8 +50,4 @@ export interface Settings {
      * Address of a cors-anywhere service. This will cause the extension to send GDDO requests to this service instead of directly to api.godoc.org. For example: https://cors-anywhere.sourcegraph.com/https://api.godoc.org/importersgithub.com/sourcegraph/go-lsp. This would not be necessary if godoc.org set CORS headers.
      */
     'go.corsAnywhereURL'?: string
-    /**
-     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
-     */
-    'codeIntel.lsif'?: boolean
 }

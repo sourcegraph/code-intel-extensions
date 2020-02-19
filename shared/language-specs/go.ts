@@ -1,4 +1,5 @@
 import * as path from 'path'
+import { slashPattern } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import { extractFromLines, filterResults } from './util'
 
@@ -46,6 +47,6 @@ export const goSpec: LanguageSpec = {
     languageID: 'go',
     stylized: 'Go',
     fileExts: ['go'],
-    commentStyle: { lineRegex: /\/\/\s?/ },
+    commentStyles: [{ lineRegex: slashPattern }],
     filterDefinitions,
 }

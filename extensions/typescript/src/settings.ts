@@ -7,6 +7,22 @@
 
 export interface Settings {
     /**
+     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
+     */
+    'codeIntel.lsif'?: boolean
+    /**
+     * Trace Sourcegraph search API requests in the console.
+     */
+    'basicCodeIntel.debug.traceSearch'?: boolean
+    /**
+     * Whether to use only indexed requests to the search API.
+     */
+    'basicCodeIntel.indexOnly'?: boolean
+    /**
+     * The timeout (in ms) for un-indexed search requests.
+     */
+    'basicCodeIntel.unindexedSearchTimeout'?: number
+    /**
      * The LightStep project token to use for tracing.
      */
     'lightstep.token'?: string | null
@@ -57,8 +73,4 @@ export interface Settings {
         | 'normal'
         | 'requestTime'
         | 'verbose'
-    /**
-     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
-     */
-    'codeIntel.lsif'?: boolean
 }

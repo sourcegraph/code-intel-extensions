@@ -1,12 +1,13 @@
+import { CancellationTokenSource } from '@sourcegraph/vscode-ws-jsonrpc'
 import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
 import { distinctUntilChanged, map } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { activateCodeIntel } from '../../../shared/activate'
 import { findLanguageSpec } from '../../../shared/language-specs/languages'
+import { NoopLogger } from '../../../shared/logging'
 import { getOrCreateAccessToken } from '../../../shared/lsp/auth'
 import { LSPClient } from '../../../shared/lsp/client'
 import { webSocketTransport } from '../../../shared/lsp/connection'
-import { NoopLogger } from '../../../shared/lsp/logging'
 import { FeatureOptions, register } from '../../../shared/lsp/registration'
 import { ProviderWrapper } from '../../../shared/providers'
 import { Settings } from './settings'
@@ -164,9 +165,13 @@ async function registerClient(
     client: LSPClient
     featureOptionsSubject: Subject<FeatureOptions>
 }> {
+    const cancellationTokenSource = new CancellationTokenSource()
+    const cancellationToken = cancellationTokenSource.token
+
     const transport = webSocketTransport({
         serverUrl: serverURL,
         logger: new NoopLogger(),
+        cancellationToken,
     })
 
     // Returns a URL template to the raw API (e.g. 'https://%s@localhost:3080/%s@%s/-/raw')
@@ -184,9 +189,11 @@ async function registerClient(
         featureOptions,
         documentSelector,
         providerWrapper,
+        cancellationToken,
     })
 
     ctx.subscriptions.add(client)
+    ctx.subscriptions.add(() => cancellationTokenSource.cancel())
     return { client, featureOptionsSubject: featureOptions }
 }
 

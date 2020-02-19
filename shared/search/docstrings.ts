@@ -13,64 +13,67 @@ import {
 export function findDocstring({
     definitionLine,
     fileText,
-    commentStyle,
-    docstringIgnore,
+    commentStyles,
 }: {
     /** The index of the definition. */
     definitionLine: number
     /** The source of the file. */
     fileText: string
     /** The comment style of the current language. */
-    commentStyle?: CommentStyle
-    /** An optional pattern to ignore before the docstring. */
-    docstringIgnore?: RegExp
+    commentStyles: CommentStyle[]
 }): string | undefined {
-    if (!commentStyle) {
-        return undefined
-    }
-    const { lineRegex, block, docPlacement } = commentStyle
-
     const allLines = fileText.split('\n')
 
-    const sameLineDocstring = findDocstringOnDefinitionLine(
-        allLines[definitionLine],
-        { lineRegex, block }
-    )
-    if (sameLineDocstring) {
-        return sameLineDocstring
-    }
-
-    if (lineRegex) {
-        const lineCommentDocstring = findDocstringInLineComments({
-            lineRegex,
-            lines: mungeLines(allLines, docPlacement, definitionLine),
-            docstringIgnore,
-        })
-        if (lineCommentDocstring) {
-            return unmungeLines(lineCommentDocstring, docPlacement).join('\n')
+    for (const {
+        lineRegex,
+        block,
+        docstringIgnore,
+        docPlacement,
+    } of commentStyles) {
+        const sameLineDocstring = findDocstringOnDefinitionLine(
+            allLines[definitionLine],
+            { lineRegex, block }
+        )
+        if (sameLineDocstring) {
+            return sameLineDocstring
         }
-    }
 
-    if (block) {
-        // If we've reversed the lines we also need to reverse the
-        // block delimiter patterns.
+        if (lineRegex) {
+            const lineCommentDocstring = findDocstringInLineComments({
+                lineRegex,
+                lines: mungeLines(allLines, docPlacement, definitionLine),
+                docstringIgnore,
+            })
+            if (lineCommentDocstring) {
+                return unmungeLines(lineCommentDocstring, docPlacement).join(
+                    '\n'
+                )
+            }
+        }
 
-        const modifiedBlock =
-            docPlacement === 'below the definition'
-                ? block
-                : {
-                      lineNoiseRegex: block.lineNoiseRegex,
-                      startRegex: block.endRegex,
-                      endRegex: block.startRegex,
-                  }
+        if (block) {
+            // If we've reversed the lines we also need to reverse the
+            // block delimiter patterns.
 
-        const blockCommentDocstring = findDocstringInBlockComment({
-            block: modifiedBlock,
-            lines: mungeLines(allLines, docPlacement, definitionLine),
-            docstringIgnore,
-        })
-        if (blockCommentDocstring) {
-            return unmungeLines(blockCommentDocstring, docPlacement).join('\n')
+            const modifiedBlock =
+                docPlacement === 'below the definition'
+                    ? block
+                    : {
+                          startRegex: block.endRegex,
+                          endRegex: block.startRegex,
+                          lineNoiseRegex: block.lineNoiseRegex,
+                      }
+
+            const blockCommentDocstring = findDocstringInBlockComment({
+                block: modifiedBlock,
+                lines: mungeLines(allLines, docPlacement, definitionLine),
+                docstringIgnore,
+            })
+            if (blockCommentDocstring) {
+                return unmungeLines(blockCommentDocstring, docPlacement).join(
+                    '\n'
+                )
+            }
         }
     }
 
@@ -225,7 +228,7 @@ function findDocstringInBlockComment({
 
     // Eat all comment lines until we find the end delimiter. Notice that we've
     // already removed the opening delimiter. The ordering of these operations
-    // are necessary for doc blocks in langauges like Python that have identical
+    // are necessary for doc blocks in languages like Python that have identical
     // open and closing delimiters.
 
     const docLines = takeWhileInclusive(

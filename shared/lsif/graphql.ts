@@ -2,9 +2,17 @@ import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { Providers } from '../providers'
 import { queryGraphQL } from '../util/graphql'
-import { asyncGeneratorFromPromise } from '../util/ix'
+import { asyncGeneratorFromPromise, concat } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { LocationConnectionNode, nodeToLocation } from './conversion'
+
+/**
+ * The maximum number of chained GraphQL requests to make for a single
+ * requests query. The page count for a result set should generally be
+ * relatively low unless it's a VERY popular library and LSIF data is
+ * ubiquitous (which is our goal).
+ */
+const MAX_REFERENCE_PAGE_REQUESTS = 20
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
@@ -13,7 +21,7 @@ import { LocationConnectionNode, nodeToLocation } from './conversion'
 export function createProviders(): Providers {
     return {
         definition: asyncGeneratorFromPromise(definition),
-        references: asyncGeneratorFromPromise(references),
+        references,
         hover: asyncGeneratorFromPromise(hover),
     }
 }
@@ -68,7 +76,7 @@ async function definition(
         definitions: { nodes: LocationConnectionNode[] }
     }
 
-    const lsifObj = await queryLSIF<Response>({ doc, position, query })
+    const lsifObj: Response | null = await queryLSIF({ doc, position, query })
     return lsifObj?.definitions.nodes.map(nodeToLocation) || null
 }
 
@@ -78,17 +86,17 @@ async function definition(
  * @param doc The current text document.
  * @param position The current hover position.
  */
-async function references(
+async function* references(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<sourcegraph.Location[] | null> {
+): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
     const query = `
-        query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!, $after: String) {
             repository(name: $repository) {
                 commit(rev: $commit) {
                     blob(path: $path) {
                         lsif {
-                            references(line: $line, character: $character) {
+                            references(line: $line, character: $character, after: $after) {
                                 nodes {
                                     resource {
                                         path
@@ -110,6 +118,9 @@ async function references(
                                         }
                                     }
                                 }
+                                pageInfo {
+                                    endCursor
+                                }
                             }
                         }
                     }
@@ -119,11 +130,50 @@ async function references(
     `
 
     interface Response {
-        references: { nodes: LocationConnectionNode[] }
+        references: {
+            nodes: LocationConnectionNode[]
+            pageInfo: {
+                endCursor: string
+            }
+        }
     }
 
-    const lsifObj = await queryLSIF<Response>({ doc, position, query })
-    return lsifObj?.references.nodes.map(nodeToLocation) || null
+    const queryPage = async function*(
+        requestsRemaining: number,
+        after?: string
+    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if (requestsRemaining === 0) {
+            return
+        }
+
+        // Make the request for the page starting at the after cursor
+        const lsifObj: Response | null = await queryLSIF({
+            doc,
+            position,
+            query,
+            after,
+        })
+        if (!lsifObj) {
+            return
+        }
+
+        const {
+            references: {
+                nodes,
+                pageInfo: { endCursor },
+            },
+        } = lsifObj
+
+        // Yield this page's set of results
+        yield nodes.map(nodeToLocation)
+
+        if (endCursor) {
+            // Recursively yield the remaining pages
+            yield* queryPage(requestsRemaining - 1, endCursor)
+        }
+    }
+
+    yield* concat(queryPage(MAX_REFERENCE_PAGE_REQUESTS))
 }
 
 /**
@@ -168,7 +218,7 @@ async function hover(
         hover: { markdown: { text: string }; range: sourcegraph.Range }
     }
 
-    const lsifObj = await queryLSIF<Response>({
+    const lsifObj: Response | null = await queryLSIF({
         doc,
         position,
         query,
@@ -192,23 +242,28 @@ async function hover(
  *
  * @param args Parameter bag.
  */
-async function queryLSIF<T>({
-    doc,
-    position,
-    query,
-}: {
+async function queryLSIF<
+    P extends {
+        doc: sourcegraph.TextDocument
+        position: lsp.Position
+        query: string
+    },
+    R
+>({
     /** The current text document. */
-    doc: sourcegraph.TextDocument
+    doc,
     /** The current hover position. */
-    position: lsp.Position
+    position,
     /** The GraphQL request query. */
-    query: string
-}): Promise<T | null> {
+    query,
+    /** Additional query parameters. */
+    ...rest
+}: P): Promise<R | null> {
     interface Response {
         repository: {
             commit: {
                 blob: {
-                    lsif: T | null
+                    lsif: R | null
                 }
             }
         }
@@ -222,6 +277,7 @@ async function queryLSIF<T>({
         path,
         line: position.line,
         character: position.character,
+        ...rest,
     })
 
     return data.repository.commit.blob.lsif

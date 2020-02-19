@@ -12,8 +12,8 @@ import { Observable, of, Subject } from 'rxjs'
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
+import { NoopLogger } from '../logging'
 import { NoopProviderWrapper } from '../providers'
-import { NoopLogger } from './logging'
 import { register } from './registration'
 
 const logger = new NoopLogger()

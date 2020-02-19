@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+import { slashPattern } from '../language-specs/comments'
 import { findSearchToken } from './tokens'
 
 describe('findSearchToken', () => {
@@ -7,6 +8,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: '(defn skip-ws! []',
                 position: { line: 0, character: 6 },
+                lineRegexes: [],
                 identCharPattern: /[A-Za-z0-9_\-!?]/,
             }),
             {
@@ -21,7 +23,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: 'foo bar // baz',
                 position: { line: 0, character: 5 },
-                lineRegex: /\/\//,
+                lineRegexes: [slashPattern],
             }),
             {
                 searchToken: 'bar',
@@ -35,7 +37,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: 'foo // bar baz',
                 position: { line: 0, character: 8 },
-                lineRegex: /\/\//,
+                lineRegexes: [slashPattern],
             }),
             {
                 searchToken: 'bar',
@@ -49,7 +51,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: 'foo // bar(baz)',
                 position: { line: 0, character: 8 },
-                lineRegex: /\/\//,
+                lineRegexes: [slashPattern],
             }),
             {
                 searchToken: 'bar',
@@ -63,7 +65,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: 'foo // .bar baz',
                 position: { line: 0, character: 9 },
-                lineRegex: /\/\//,
+                lineRegexes: [slashPattern],
             }),
             {
                 searchToken: 'bar',
@@ -77,7 +79,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: 'foo // "bar" baz',
                 position: { line: 0, character: 9 },
-                lineRegex: /\/\//,
+                lineRegexes: [slashPattern],
             }),
             {
                 searchToken: 'bar',
@@ -91,7 +93,7 @@ describe('findSearchToken', () => {
             findSearchToken({
                 text: 'foo // "bar baz"',
                 position: { line: 0, character: 9 },
-                lineRegex: /\/\//,
+                lineRegexes: [slashPattern],
             }),
             {
                 searchToken: 'bar',

@@ -1,4 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
+import { Logger } from '../logging'
 import { noopProviders, Providers } from '../providers'
 import { productVersion } from '../util/api'
 import { compareVersion } from '../util/versions'
@@ -22,14 +23,14 @@ const GRAPHQL_API_MINIMUM_VERSION = '3.12.0'
 /**
  * Creates providers powered by LSIF-based code intelligence.
  */
-export function createProviders(): Providers {
+export function createProviders(logger: Logger): Providers {
     const enabled = !!sourcegraph.configuration.get().get('codeIntel.lsif')
     if (!enabled) {
-        console.log('LSIF is not enabled in global settings')
+        logger.log('LSIF is not enabled in global settings')
         return noopProviders
     }
 
-    const provider = selectProvider()
+    const provider = selectProvider(logger)
 
     async function* definition(
         doc: sourcegraph.TextDocument,
@@ -64,7 +65,7 @@ export function createProviders(): Providers {
  * Return the GraphQL LSIF providers if the Sourcegraph instance supports it.
  * Otherwise, use the HTTP API providers.
  */
-async function selectProvider(): Promise<Providers> {
+async function selectProvider(logger: Logger): Promise<Providers> {
     const supportsGraphQL = compareVersion({
         productVersion: await productVersion(),
         minimumVersion: GRAPHQL_API_MINIMUM_VERSION,
@@ -72,11 +73,11 @@ async function selectProvider(): Promise<Providers> {
     })
 
     if (supportsGraphQL) {
-        console.log('Sourcegraph instance supports LSIF GraphQL API')
+        logger.log('Sourcegraph instance supports LSIF GraphQL API')
         return createGraphQLProviders()
     }
 
-    console.log(
+    logger.log(
         'Sourcegraph instance does not support LSIF GraphQL API, falling back to HTTP API'
     )
     return createHTTPProviders()
