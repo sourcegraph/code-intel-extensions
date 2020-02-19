@@ -109,7 +109,7 @@ export function createProviders({
                   query,
               })
 
-        // Return any location definitions first
+        // Return any local location definitions first
         const results = await sameRepoDefinitions
         if (results.length > 0) {
             return results
