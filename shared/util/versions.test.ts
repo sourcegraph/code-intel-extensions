@@ -75,6 +75,18 @@ describe('compareVersions', () => {
                 productVersion: '1.2.2-rc.1',
                 enabled: false,
             },
+            {
+                productVersion: '1.2.3+rc.1',
+                enabled: true,
+            },
+            {
+                productVersion: '1.2.4+rc.1',
+                enabled: true,
+            },
+            {
+                productVersion: '1.2.2+rc.1',
+                enabled: false,
+            },
         ]
 
         for (const test of tests) {

@@ -34,7 +34,7 @@ export function compareVersion({
     }
 
     // Split any -rc.x tags from the end of the product version
-    const semanticVersion = productVersion.split('-')[0]
+    const semanticVersion = productVersion.split(/[^\d.]/)[0]
     if (semver.valid(semanticVersion)) {
         return semver.satisfies(semanticVersion, `>=${minimumVersion}`)
     }
