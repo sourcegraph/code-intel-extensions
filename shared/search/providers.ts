@@ -270,7 +270,7 @@ async function searchAndFilterDefinitions({
     // off to the language spec for the proper filtering pass.
     const searchResults = await search(query)
     const preFilteredResults = searchResults.filter(result =>
-        isSymbolVisible(doc, path, result)
+        !isExternalPrivateSymbol(doc, path, result)
     )
 
     // Filter results based on language spec
@@ -362,14 +362,14 @@ async function search(query: string): Promise<Result[]> {
 }
 
 /**
- * Filter out search results that are a non-public symbol that does not belong
- * to the current text document.
+ * Report whether the given symbol is both private and does not belong to
+ * the current text document.
  *
  * @param doc The current text document.
  * @param path The path of the document.
  * @param result The search result.
  */
-function isSymbolVisible(
+function isExternalPrivateSymbol(
     doc: sourcegraph.TextDocument,
     path: string,
     { fileLocal, file, symbolKind }: Result
@@ -379,10 +379,10 @@ function isSymbolVisible(
     // See https://github.com/universal-ctags/ctags/issues/1844
 
     if (doc.languageId === 'java' && symbolKind === 'ENUMMEMBER') {
-        return true
+        return false
     }
 
-    return !fileLocal || file === path
+    return !!fileLocal && file !== path
 }
 
 /**
