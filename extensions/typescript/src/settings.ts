@@ -23,7 +23,7 @@ export interface Settings {
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
     /**
-     * The address of the WebSocket language server to connect to.
+     * The address of the WebSocket language server to connect to (e.g. ws://host:8080).
      */
     'typescript.serverUrl'?: string
     /**

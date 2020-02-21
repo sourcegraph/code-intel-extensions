@@ -96,7 +96,7 @@
           "type": "number"
         },
         "typescript.serverUrl": {
-          "description": "The address of the WebSocket language server to connect to.",
+          "description": "The address of the WebSocket language server to connect to (e.g. ws://host:8080).",
           "type": "string",
           "format": "url"
         },

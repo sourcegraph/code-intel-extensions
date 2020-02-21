@@ -28,7 +28,7 @@ This extension adds the same features to code files and diffs on your code host 
 
 ## Basic code intelligence
 
-This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results may not be precise:
+This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
 -   "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
 -   "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
@@ -37,13 +37,13 @@ These heuristics work well for tokens with unique names, such as `render_to_view
 
 ### Large repositories
 
-Heuristic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings:
+Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
 
     ```json
     "basicCodeIntel.unindexedSearchTimeout": 1000
     ````
 
-For organizations that organize code in a monorepo, it may never be useful to perform an un-indexed search. Index-only search queries can be forced by adding the following to your Sourcgraph global settings.
+For organizations that organize code in a monorepo, it may never be useful to perform an un-indexed search. To force only indexed search queries, add the following to your Sourcgraph global settings:
 
     ```json
     "basicCodeIntel.indexOnly": true
@@ -59,7 +59,8 @@ To enable [LSIF support](https://docs.sourcegraph.com/user/code_intelligence/lsi
 
 ## Language server
 
-This extension is configured to talk to a language server over WebSockets. On Sourcegraph.com, this extension is already configured. If you are running a private Sourcegraph instance, you should run your own language server. The server is available as a Docker image `sourcegraph/lang-typescript` from Docker Hub.
+This extension communicates with a language server over WebSockets. On Sourcegraph.com, this extension is already configured. If you are running a
+private Sourcegraph instance, you should run your own language server. The server is available as a Docker image `sourcegraph/lang-typescript` from Docker Hub.
 
 ### 🔐 Secure deployment 🔐
 
@@ -193,7 +194,7 @@ that end users use.
 
 ### Using Kubernetes
 
-If you want to deploy the language server with Kubernetes, your deployment should look like this:
+To deploy the language server with Kubernetes, use a deployment like this:
 
 ```yaml
 apiVersion: apps/v1
@@ -263,7 +264,7 @@ spec:
 
 #### TLS
 
-TLS is optional but recommended for production deployments. It is used if `TLS_KEY` and `TLS_CERT` environment variables are set.
+To enable TLS, set the `TLS_KEY` and `TLS_CERT` environment variables. TLS optional but **strongly recommended** for production deployments.
 
 #### Enabling Prometheus metrics
 
