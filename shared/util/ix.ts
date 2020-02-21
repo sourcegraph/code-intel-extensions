@@ -103,8 +103,8 @@ export function flatMapConcurrent<T, R>(
         new Array<AsyncIterable<R>>(concurrency).fill(
             from(
                 of(...source).pipe(
+                    share(),
                     flatMap(asyncGeneratorFromPromise(fn)),
-                    share()
                 )
             )
         )
