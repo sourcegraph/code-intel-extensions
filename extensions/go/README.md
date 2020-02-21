@@ -2,7 +2,7 @@
 
 This extension provides Go code intelligence on Sourcegraph.
 
-[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/extensions/go)
+[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/tree/master/extensions/go)
 
 ![Go code intelligence](https://user-images.githubusercontent.com/1387653/49856504-ce281f80-fda4-11e8-933b-f8fc67c98daf.png)
 
@@ -39,15 +39,15 @@ These heuristics work well for tokens with unique names, such as `render_to_view
 
 Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
 
-    ```json
-    "basicCodeIntel.unindexedSearchTimeout": 1000
-    ````
+```json
+  "basicCodeIntel.unindexedSearchTimeout": 1000
+```
 
 For organizations that organize code in a monorepo, it may never be useful to perform an un-indexed search. To force only indexed search queries, add the following to your Sourcgraph global settings:
 
-    ```json
-    "basicCodeIntel.indexOnly": true
-    ```
+```json
+  "basicCodeIntel.indexOnly": true
+```
 
 ## LSIF
 

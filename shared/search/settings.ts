@@ -19,7 +19,7 @@ export interface BasicCodeIntelligenceSettings {
      */
     'basicCodeIntel.indexOnly'?: boolean
     /**
-     * The timeout (in ms) for un-indexed search requests.
+     * The timeout (in milliseconds) for un-indexed search requests.
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
     [k: string]: any
