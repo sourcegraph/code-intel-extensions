@@ -23,13 +23,13 @@ export type LSPFactory = (
 ) => Promise<boolean>
 
 /**
- * A function that creates an LSP client. This function returns the client and
- * the a features option subject that can be passed feature options at runtime
- * to change the behavior of the registered providers.
+ * A factory function that creates an LSP client. This function returns the
+ * client and the a features option subject that can be passed feature
+ * options at runtime to change the behavior of the registered providers.
  *
  * @param args Parameter bag.
  */
-export type RegisterClient<S> = (args: {
+export type ClientFactory<S> = (args: {
     /** The extension context. */
     ctx: sourcegraph.ExtensionContext
     /** The URL of the LSP server. */
@@ -109,12 +109,12 @@ export async function activateCodeIntel(
  * This function returns true if providers are registered and false otherwise.
  *
  * @param languageID The language identifier
- * @param registerClient A function that initializes an LSP client.
+ * @param clientFactory A factory that initializes an LSP client.
  * @param createExternalReferenceProvider A factory that creates an external reference provider.
  */
 export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
-    registerClient: RegisterClient<S>,
+    clientFactory: ClientFactory<S>,
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>
 ): (
     ctx: sourcegraph.ExtensionContext,
@@ -144,7 +144,7 @@ export function initLSP<S extends { [key: string]: any }>(
             languageID
         )
 
-        const { client, featureOptionsSubject } = await registerClient({
+        const { client, featureOptionsSubject } = await clientFactory({
             ctx,
             serverURL,
             sourcegraphURL: sgUrl,
@@ -257,7 +257,7 @@ function sourcegraphURL(setting: string | undefined, languageID: string): URL {
 /**
  * When the current settings change, determine if we need to supply/revoke the
  * externalReferencesProvider to the LSP client. This will cause the LSP client
- * features to re-register a the references via the extension context.
+ * features to re-register the references provider via the extension context.
  *
  * @param ctx The extension context.
  * @param implementationId The identifier of the registered locations provider.
