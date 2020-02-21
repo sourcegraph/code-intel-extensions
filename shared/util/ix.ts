@@ -104,7 +104,7 @@ export function flatMapConcurrent<T, R>(
             from(
                 of(...source).pipe(
                     share(),
-                    flatMap(asyncGeneratorFromPromise(fn)),
+                    flatMap(asyncGeneratorFromPromise(fn))
                 )
             )
         )
