@@ -29,7 +29,7 @@ export function compareVersion({
     /** Whether to return true in development. */
     enableForDev?: boolean
 }): boolean {
-    if (productVersion.endsWith('dev')) {
+    if (productVersion.includes('dev')) {
         return enableForDev
     }
 
