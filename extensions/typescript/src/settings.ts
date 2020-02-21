@@ -23,17 +23,25 @@ export interface Settings {
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
     /**
-     * The LightStep project token to use for tracing.
+     * The address of the WebSocket language server to connect to.
      */
-    'lightstep.token'?: string | null
+    'typescript.serverUrl'?: string
     /**
-     * The Sourcegraph endpoint the TypeScript server should use
+     * The address of the Sourcegraph instance from the perspective of the TypeScript language server.
      */
     'typescript.sourcegraphUrl'?: string
     /**
-     * Whether to enable TypeScript code intelligence. (Default: true)
+     * The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.
      */
-    'typescript.enable'?: boolean
+    'typescript.accessToken'?: string
+    /**
+     * Whether or not a second references provider for external references will be registered (defaults to false).
+     */
+    'typescript.showExternalReferences'?: boolean
+    /**
+     * The maximum number of dependent packages to look in when searching for external references for a symbol (defaults to 20).
+     */
+    'typescript.maxExternalReferenceRepos'?: number
     /**
      * Whether to report progress while fetching sources, installing dependencies etc. (Default: true)
      */
@@ -52,14 +60,6 @@ export interface Settings {
      * Whether to restart the language server after dependencies were installed (default true)
      */
     'typescript.restartAfterDependencyInstallation'?: boolean
-    /**
-     * The WebSocket language server to connect to
-     */
-    'typescript.serverUrl'?: string
-    /**
-     * The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.
-     */
-    'typescript.accessToken'?: string
     /**
      * The log level to pass to the TypeScript language server. Logs will be forwarded to the browser console with the prefix [langserver].
      */
