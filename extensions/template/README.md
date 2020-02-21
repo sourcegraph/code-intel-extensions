@@ -2,7 +2,7 @@
 
 This extension provides LANG code intelligence on Sourcegraph.
 
-[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/extensions/template)
+[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/tree/master/extensions/template)
 
 ![Python code intelligence](https://user-images.githubusercontent.com/1976/50882679-68768580-139a-11e9-8e58-a756c5bf4fb0.png)
 
@@ -41,15 +41,15 @@ These heuristics work well for tokens with unique names, such as `render_to_view
 
 Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
 
-    ```json
-    "basicCodeIntel.unindexedSearchTimeout": 1000
-    ````
+```json
+  "basicCodeIntel.unindexedSearchTimeout": 1000
+```
 
 For organizations that organize code in a monorepo, it may never be useful to perform an un-indexed search. To force only indexed search queries, add the following to your Sourcgraph global settings:
 
-    ```json
-    "basicCodeIntel.indexOnly": true
-    ```
+```json
+  "basicCodeIntel.indexOnly": true
+```
 
 ## LSIF
 
