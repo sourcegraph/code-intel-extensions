@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import { LineMatch, SearchResult, SearchSymbol } from '../util/api'
-import { isDefined } from '../util/util'
+import { isDefined } from '../util/helpers'
 
 /**
  * The exploded version of a search result. Each symbol and indexed/un-indexed

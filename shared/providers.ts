@@ -6,8 +6,8 @@ import { LanguageSpec } from './language-specs/spec'
 import { Logger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
+import { asArray, mapArrayish } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
-import { asArray, mapArrayish } from './util/util'
 
 export interface Providers {
     definition: DefinitionProvider

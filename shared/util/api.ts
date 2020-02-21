@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 import { rawQueryGraphQL } from './graphql'
-import { isDefined, sortUnique } from './util'
+import { isDefined, sortUnique } from './helpers'
 
 /**
  * Retrieves the name of a repository. Throws an error if the repository
