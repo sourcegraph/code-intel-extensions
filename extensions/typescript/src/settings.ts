@@ -74,7 +74,6 @@ export interface Settings {
         | 'requestTime'
         | 'verbose'
 
-
     /**
      * The maximum number of dependent packages to look in when searching for external references for a symbol (defaults to 20).
      */
