@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
+    "url": "https://github.com/sourcegraph/code-intel-extensions/extensions/go"
   },
   "categories": [
     "Programming languages"
@@ -44,6 +44,14 @@
     "publish": "yarn -s && src ext publish"
   },
   "contributes": {
+    "menus": {
+      "panel/toolbar": [
+        {
+          "action": "externalReferences.toggle",
+          "when": "panel.activeView.id == 'references'"
+        }
+      ]
+    },
     "actions": [
       {
         "id": "externalReferences.toggle",
@@ -60,50 +68,8 @@
         "actionItem": {
           "label": "${config.go.showExternalReferences && \"Hide references from other repositories\" || \"Show references from other repositories\"}"
         }
-      },
-      {
-        "id": "impreciseResults",
-        "title": "References: Search mode",
-        "command": "open",
-        "commandArguments": [
-          "https://sourcegraph.com/extensions/sourcegraph/go"
-        ],
-        "actionItem": {
-          "label": "References: Search mode",
-          "description": "Results come from text search and heuristics. To use a language server for precise results, click to go to the README and follow the deployment instructions."
-        }
-      },
-      {
-        "id": "feedback",
-        "command": "open",
-        "title": "Submit code intel feedback",
-        "commandArguments": [
-          "${get(context, `codeIntel.feedbackLink`)}"
-        ],
-        "actionItem": {
-          "description": "Submit code intel feedback",
-          "iconURL": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTExLjk5IDJDNi40NyAyIDIgNi40OCAyIDEyczQuNDcgMTAgOS45OSAxMEMxNy41MiAyMiAyMiAxNy41MiAyMiAxMlMxNy41MiAyIDExLjk5IDJ6TTEyIDIwYy00LjQyIDAtOC0zLjU4LTgtOHMzLjU4LTggOC04IDggMy41OCA4IDgtMy41OCA4LTggOHptMy41LTljLjgzIDAgMS41LS42NyAxLjUtMS41UzE2LjMzIDggMTUuNSA4IDE0IDguNjcgMTQgOS41cy42NyAxLjUgMS41IDEuNXptLTcgMGMuODMgMCAxLjUtLjY3IDEuNS0xLjVTOS4zMyA4IDguNSA4IDcgOC42NyA3IDkuNSA3LjY3IDExIDguNSAxMXptMy41IDYuNWMyLjMzIDAgNC4zMS0xLjQ2IDUuMTEtMy41SDYuODljLjggMi4wNCAyLjc4IDMuNSA1LjExIDMuNXoiLz48L3N2Zz4="
-        }
       }
     ],
-    "menus": {
-      "editor/title": [
-        {
-          "action": "feedback",
-          "when": "showFeedback"
-        }
-      ],
-      "panel/toolbar": [
-        {
-          "action": "externalReferences.toggle",
-          "when": "panel.activeView.id == 'references'"
-        },
-        {
-          "action": "impreciseResults",
-          "when": "isImprecise && panel.activeView.hasLocations"
-        }
-      ]
-    },
     "configuration": {
       "title": "Settings",
       "type": "object",
@@ -126,22 +92,14 @@
           "type": "number"
         },
         "go.serverUrl": {
-          "description": "The WebSocket language server to connect to",
+          "description": "The address of the WebSocket language server to connect to.",
           "type": "string",
-          "format": "url",
-          "not": {
-            "type": "string",
-            "pattern": "example\\.host\\.docker\\.internal"
-          }
+          "format": "url"
         },
         "go.sourcegraphUrl": {
-          "description": "the address of the Sourcegraph instance from the perspective of the Go language server",
+          "description": "The address of the Sourcegraph instance from the perspective of the Go language server.",
           "type": "string",
-          "format": "url",
-          "not": {
-            "type": "string",
-            "pattern": "example\\.host\\.docker\\.internal"
-          }
+          "format": "url"
         },
         "go.accessToken": {
           "description": "The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.",
@@ -152,7 +110,7 @@
           "type": "boolean"
         },
         "go.maxExternalReferenceRepos": {
-          "description": "The maximum number of repositories to look in when searching for external references for a symbol (defaults to 50).",
+          "description": "The maximum number of repositories to look in when searching for external references for a symbol (defaults to 20).",
           "type": "number"
         },
         "go.gddoURL": {
