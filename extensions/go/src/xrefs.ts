@@ -5,9 +5,9 @@ import { LSPClient } from '../../../shared/lsp/client'
 import { convertRange } from '../../../shared/lsp/conversion'
 import { ReferencesProvider } from '../../../shared/providers'
 import { findReposViaSearch } from '../../../shared/util/api'
+import { notIn } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
 import { removeHash, withHash } from '../../../shared/util/uri'
-import { notIn } from '../../../shared/util/util'
 import { findReposViaGDDO } from './gddo'
 import { Settings } from './settings'
 
@@ -41,13 +41,17 @@ const xdefinitionWorkspaceRequestType = new lsp.RequestType<
 /**
  * Return external references to the symbol at the given position.
  *
- * @param client The LSP client.
- * @param settings The current settings.
+ * @param args Parameter bag.
  */
-export function createExternalReferencesProvider(
-    client: LSPClient,
+export function createExternalReferencesProvider({
+    client,
+    settings,
+}: {
+    /** The LSP client. */
+    client: LSPClient
+    /** The current settings. */
     settings: Settings
-): ReferencesProvider {
+}): ReferencesProvider {
     const gddoURL = settings['go.gddoURL']
     const corsAnywhereURL = settings['go.corsAnywhereURL']
     const limit = settings['go.maxExternalReferenceRepos'] || 20

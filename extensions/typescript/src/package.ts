@@ -1,6 +1,6 @@
 import { resolveRepo } from '../../../shared/util/api'
 import { fetch } from '../../../shared/util/fetch'
-import { safePromise } from '../../../shared/util/util'
+import { safePromise } from '../../../shared/util/helpers'
 
 export interface PackageJson {
     name: string

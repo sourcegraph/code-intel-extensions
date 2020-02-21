@@ -1,6 +1,10 @@
 import { resolveRepo } from '../../../shared/util/api'
 import { fetch } from '../../../shared/util/fetch'
-import { isDefined, safePromise, sortUnique } from '../../../shared/util/util'
+import {
+    isDefined,
+    safePromise,
+    sortUnique,
+} from '../../../shared/util/helpers'
 
 export interface Response {
     results: {
