@@ -23,11 +23,11 @@ export interface Settings {
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
     /**
-     * The WebSocket language server to connect to
+     * The address of the WebSocket language server to connect to (e.g. ws://host:4389).
      */
     'go.serverUrl'?: string
     /**
-     * the address of the Sourcegraph instance from the perspective of the Go language server
+     * The address of the Sourcegraph instance from the perspective of the Go language server.
      */
     'go.sourcegraphUrl'?: string
     /**
@@ -39,7 +39,7 @@ export interface Settings {
      */
     'go.showExternalReferences'?: boolean
     /**
-     * The maximum number of repositories to look in when searching for external references for a symbol (defaults to 50).
+     * The maximum number of repositories to look in when searching for external references for a symbol (defaults to 20).
      */
     'go.maxExternalReferenceRepos'?: number
     /**

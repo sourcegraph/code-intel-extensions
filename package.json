@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/sourcegraph/sourcegraph/master/shared/src/schema/extension.schema.json",
-  "name": "sourcegraph-code-intel-extensions",
+  "name": "code-intel-extensions",
   "description": "Sourcegraph code intelligence extensions",
   "private": true,
   "sideEffects": false,
@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
+    "url": "https://github.com/sourcegraph/code-intel-extensions"
   },
   "scripts": {
     "prettier": "prettier --write --list-different '**/*.{ts,js?(on),md,yml}'",

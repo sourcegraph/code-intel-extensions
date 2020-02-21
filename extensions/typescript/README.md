@@ -1,14 +1,66 @@
 # Code intelligence for TypeScript/JavaScript
 
+This extension provides TypeScript/JavaScript code intelligence on Sourcegraph.
+
+[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/extensions/typescript)
+
 ![TypeScript code intelligence](https://user-images.githubusercontent.com/133014/63376874-a92c7900-c343-11e9-98bb-631016f1eff7.gif)
 
-A Sourcegraph extension that provides code intelligence for TypeScript/JavaScript.
+## Usage
 
-## Usage with private Sourcegraph instances
+1. Enable the `sourcegraph/typescript` extension:
+    - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/typescript) to enable it.
+    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/typescript`, and enable it.
+1. Visit any TypeScript code file on Sourcegraph.
+1. Hover over a token in the code file.
+    - See a description of the token.
+    - Click **Go to definition** (if available) to go to the token's definition.
+    - Click **Find references** to see all references to the token.
 
-This extension is configured to talk to a language server over WebSockets. If you are running a
-private Sourcegraph instance, you should run your own language server. The server is available as a
-Docker image `sourcegraph/lang-typescript` from Docker Hub.
+### On your code host
+
+This extension adds the same features to code files and diffs on your code host if you're using the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension). To use it on your code host:
+
+1. Follow the [usage steps](#usage) above to enable this extension.
+1. Install the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
+    - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
+1. Visit any file on your code host and hover over a token to see a description of the token, a **Go to definition** action (if available), and a **Find references** action.
+
+## Basic code intelligence
+
+This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
+
+-   "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
+-   "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
+
+These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
+
+### Large repositories
+
+Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
+
+    ```json
+    "basicCodeIntel.unindexedSearchTimeout": 1000
+    ````
+
+For organizations that organize code in a monorepo, it may never be useful to perform an un-indexed search. To force only indexed search queries, add the following to your Sourcgraph global settings:
+
+    ```json
+    "basicCodeIntel.indexOnly": true
+    ```
+
+## LSIF
+
+To enable [LSIF support](https://docs.sourcegraph.com/user/code_intelligence/lsif), add these to your Sourcegraph global settings:
+
+```json
+  "codeIntel.lsif": true
+```
+
+## Language server
+
+This extension communicates with a language server over WebSockets. On Sourcegraph.com, this extension is already configured. If you are running a
+private Sourcegraph instance, you should run your own language server. The server is available as a Docker image `sourcegraph/lang-typescript` from Docker Hub.
 
 ### 🔐 Secure deployment 🔐
 
@@ -60,10 +112,10 @@ http {
 
 Add these to your Sourcegraph global settings:
 
-```
-  "typescript.serverUrl": "ws://langserveruser:PASSWORD@host.docker.internal:7080/typescript",
-  "typescript.sourcegraphUrl": "http://host.docker.internal:7080",
-```
+    ```json
+    "typescript.serverUrl": "ws://langserveruser:PASSWORD@host.docker.internal:7080/typescript",
+    "typescript.sourcegraphUrl": "http://host.docker.internal:7080",
+    ```
 
 Fill in the `PASSWORD` that you created above.
 
@@ -80,32 +132,36 @@ You can always revoke the `PASSWORD` by deleting the `.htpasswd` file and restar
 
 ### Using Docker
 
-1.  Run the server listening on `ws://localhost:8080`:
+1. Run the Go language server:
 
     ```sh
     docker run -p 8080:8080 sourcegraph/lang-typescript
     ```
 
-1.  In your Sourcegraph settings, set `typescript.serverUrl` to tell the extension where to connect to the server:
+    You can verify it's up and running with [`ws`](https://github.com/hashrocket/ws) (run this from the same machine your browser is running on):
+
+    ```sh
+    $ go get -u github.com/hashrocket/ws
+    $ ws ws://localhost:8080
+    >
+    ```
+
+1. Enable this extension on your Sourcegraph https://sourcegraph.example.com/extensions/sourcegraph/typescript
+
+1. Add these to your Sourcegraph settings in https://sourcegraph.example.com/site-admin/global-settings and make sure the port matches either the Docker command or your Kubernetes config:
 
     ```json
     "typescript.serverUrl": "ws://localhost:8080"
-    ```
-
-1.  If the URL the server should use to connect to Sourcegraph is different from the end-user URL, set `typescript.sourcegraphUrl`:
-
-    ```json
     "typescript.sourcegraphUrl": "http://host.docker.internal:7080",
     ```
 
-    The above value works for macOS when running the server in a local Docker container. If you're
-    running locally on Linux, use the value emitted by this command:
+    If you're running on Linux, change `go.sourcegraphUrl` to the IP given by:
 
     ```bash
     ip addr show docker0 | grep -Po 'inet \K[\d.]+'
     ```
 
-    The port should match that of the `docker run` command running Sourcegraph.
+Now visit a TypeScript file and you should see code intelligence!
 
 #### TLS in Docker
 
@@ -138,7 +194,7 @@ that end users use.
 
 ### Using Kubernetes
 
-If you want to deploy the language server with Kubernetes, your deployment should look like this:
+To deploy the language server with Kubernetes, use a deployment like this:
 
 ```yaml
 apiVersion: apps/v1
@@ -208,19 +264,7 @@ spec:
 
 #### TLS
 
-TLS is optional but recommended for production deployments. It is used if `TLS_KEY` and `TLS_CERT` environment variables are set.
-
-#### Enabling OpenTracing
-
-The server can report spans through OpenTracing to diagnose issues.
-If the environment variable `LIGHTSTEP_ACCESS_TOKEN` is set, the server will send tracing data to the given LightStep instance.
-Support for other OpenTracing implementations can easily added here.
-
-```diff
-  env:
-+   - name: LIGHTSTEP_ACCESS_TOKEN
-+     value: abcdefg
-```
+To enable TLS, set the `TLS_KEY` and `TLS_CERT` environment variables. TLS optional but **strongly recommended** for production deployments.
 
 #### Enabling Prometheus metrics
 
@@ -366,9 +410,7 @@ and mount it into the container:
 +       name: yarn-config
 ```
 
-## Configuration
-
-### Support for dependencies on private packages and git repositories
+## Support for dependencies on private packages and git repositories
 
 Dependencies on private npm packages and private registries is supported by setting the `typescript.npmrc` setting.
 It contains the same key/value settings as your `.npmrc` file in your home folder, and therefor supports the same scoping to registries and package scopes.
@@ -383,3 +425,9 @@ Example:
 ```
 
 For dependencies on private git repositories, mount an SSH key into `~/.ssh`.
+
+## Viewing communication between the browser and language server
+
+This extension communicates from your browser to the language server that you deployed over WebSockets. This means that when you're viewing a code file on Sourcegraph, you can open the browser developer tools and refresh the page to capture the WebSocket connection and view the messages being sent and received:
+
+![image](https://user-images.githubusercontent.com/1387653/53431623-c0e30000-39a5-11e9-963d-42260ca12de3.png)

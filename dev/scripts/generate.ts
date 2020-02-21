@@ -53,7 +53,7 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
         (await fs.readFile(readmeFilename))
             .toString()
             .replace(/LANG\b/g, stylized)
-            .replace(/LANGNAME\b/g, languageID)
+            .replace(/LANGID\b/g, languageID)
     )
 
     await fs.writeFile(
