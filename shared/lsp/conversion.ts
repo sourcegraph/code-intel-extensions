@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
-import { asArray } from '../util/util'
+import { asArray } from '../util/helpers'
 
 const DIAGNOSTIC_COLORS: Readonly<Record<lsp.DiagnosticSeverity, string>> = {
     [lsp.DiagnosticSeverity.Error]: 'var(--danger, #dc3545)',

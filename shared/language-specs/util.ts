@@ -1,4 +1,4 @@
-import { isDefined } from '../util/util'
+import { isDefined } from '../util/helpers'
 import { Result } from './spec'
 
 /**

@@ -6,9 +6,9 @@ import {
     getFileContent as getFileContentFromApi,
     search as searchViaApi,
 } from '../util/api'
+import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI } from '../util/uri'
-import { asArray, isDefined } from '../util/util'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
