@@ -1,9 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
 
-// Polyfill
-const g: any = global
-g.performance = g.performance || { now: () => 0 }
-
 /**
  * A wrapper around telemetry events. A new instance of this class
  * should be instantiated at the start of each action as it handles
@@ -14,7 +10,7 @@ export class TelemetryEmitter {
     private emitted = new Set<string>()
 
     constructor() {
-        this.started = performance.now()
+        this.started = Date.now()
     }
 
     /**
@@ -48,6 +44,6 @@ export class TelemetryEmitter {
     }
 
     private elapsed(): number {
-        return performance.now() - this.started
+        return Date.now() - this.started
     }
 }
