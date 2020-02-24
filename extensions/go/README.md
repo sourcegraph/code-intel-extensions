@@ -2,13 +2,65 @@
 
 This extension provides Go code intelligence on Sourcegraph.
 
-![image](https://user-images.githubusercontent.com/1387653/49856504-ce281f80-fda4-11e8-933b-f8fc67c98daf.png)
+[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/tree/master/extensions/go)
 
-## Usage with private Sourcegraph instances
+![Go code intelligence](https://user-images.githubusercontent.com/1387653/49856504-ce281f80-fda4-11e8-933b-f8fc67c98daf.png)
 
-This extension is configured to talk to a language server over WebSockets. If you are running a
-private Sourcegraph instance, you should run your own language server. The server is available as a
-Docker image `sourcegraph/lang-go` from Docker Hub.
+## Usage
+
+1. Enable the `sourcegraph/go` extension:
+    - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/go) to enable it.
+    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/go`, and enable it.
+1. Visit any Go code file on Sourcegraph.
+1. Hover over a token in the code file.
+    - See a description of the token.
+    - Click **Go to definition** (if available) to go to the token's definition.
+    - Click **Find references** to see all references to the token.
+
+### On your code host
+
+This extension adds the same features to code files and diffs on your code host if you're using the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension). To use it on your code host:
+
+1. Follow the [usage steps](#usage) above to enable this extension.
+1. Install the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
+    - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
+1. Visit any file on your code host and hover over a token to see a description of the token, a **Go to definition** action (if available), and a **Find references** action.
+
+## Basic code intelligence
+
+This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
+
+-   "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
+-   "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
+
+These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
+
+### Large repositories
+
+Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
+
+```json
+  "basicCodeIntel.unindexedSearchTimeout": 1000
+```
+
+For organizations that organize code in a monorepo, it may never be useful to perform an un-indexed search. To force only indexed search queries, add the following to your Sourcgraph global settings:
+
+```json
+  "basicCodeIntel.indexOnly": true
+```
+
+## LSIF
+
+To enable [LSIF support](https://docs.sourcegraph.com/user/code_intelligence/lsif), add these to your Sourcegraph global settings:
+
+```json
+  "codeIntel.lsif": true
+```
+
+## Language server
+
+This extension communicates with a language server over WebSockets. On Sourcegraph.com, this extension is already configured. If you are running a
+private Sourcegraph instance, you should run your own language server. The server is available as a Docker image `sourcegraph/lang-go` from Docker Hub.
 
 ### 🔐 Secure deployment 🔐
 
@@ -115,32 +167,7 @@ Now visit a Go file and you should see code intelligence!
 
 ### Using Kubernetes
 
-Here's a sample Kubernetes configuration:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-    annotations:
-        prometheus.io/port: '6060'
-        prometheus.io/scrape: 'true'
-    labels:
-        app: lang-go
-    name: lang-go
-    namespace: prod
-spec:
-    loadBalancerIP: your.static.ip.address
-    ports:
-        - name: debug
-          port: 6060
-          targetPort: debug
-        - name: lsp
-          port: 443
-          targetPort: lsp
-    selector:
-        app: lang-go
-    type: LoadBalancer
-```
+To deploy the language server with Kubernetes, use a deployment like this:
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -174,12 +201,6 @@ spec:
                       - -cachedir=$(CACHE_DIR)
                       - -freeosmemory=false
                   env:
-                      - name: LIGHTSTEP_ACCESS_TOKEN
-                        value: '???'
-                      - name: LIGHTSTEP_INCLUDE_SENSITIVE
-                        value: 'true'
-                      - name: LIGHTSTEP_PROJECT
-                        value: sourcegraph-prod
                       # TLS is optional
                       - name: TLS_CERT
                         valueFrom:
@@ -228,7 +249,50 @@ spec:
                   name: cache-ssd
 ```
 
-## Private dependencies
+With a corresponding service:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+    annotations:
+        prometheus.io/port: '6060'
+        prometheus.io/scrape: 'true'
+    labels:
+        app: lang-go
+    name: lang-go
+    namespace: prod
+spec:
+    loadBalancerIP: your.static.ip.address
+    ports:
+        - name: debug
+          port: 6060
+          targetPort: debug
+        - name: lsp
+          port: 443
+          targetPort: lsp
+    selector:
+        app: lang-go
+    type: LoadBalancer
+```
+
+#### TLS
+
+To enable TLS, set the `TLS_KEY` and `TLS_CERT` environment variables. TLS optional but **strongly recommended** for production deployments.
+
+#### Scaling out by increasing the replica count
+
+To run multiple instances of the go-langserver and distribute connections between them in Kubernetes, set `spec.replicas` in the deployment YAML:
+
+```diff
+ spec:
+   minReadySeconds: 10
+-  replicas: 1
++  replicas: 5
+   revisionHistoryLimit: 10
+```
+
+## Support for dependencies on private git repositories
 
 🚨 Before mounting your credentials into the language server, make sure the language server is hidden behind an auth proxy or firewall. 🚨
 
@@ -278,26 +342,6 @@ Verify cloning works:
 $ docker exec -ti lang-go sh
 # git clone https://github.com/you/your-private-repo
 Cloning into 'your-private-repo'...
-```
-
-## LSIF
-
-LSIF support can be enabled by setting:
-
-```json
-  "codeIntel.lsif": true
-```
-
-## Scaling out by increasing the replica count
-
-You can run multiple instances of the go-langserver and distribute connections between them in Kubernetes by setting `spec.replicas` in the deployment YAML:
-
-```diff
- spec:
-   minReadySeconds: 10
--  replicas: 1
-+  replicas: 5
-   revisionHistoryLimit: 10
 ```
 
 ## Viewing communication between the browser and language server

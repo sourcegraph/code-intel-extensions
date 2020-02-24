@@ -29,12 +29,14 @@ export function compareVersion({
     /** Whether to return true in development. */
     enableForDev?: boolean
 }): boolean {
-    if (productVersion.endsWith('dev')) {
+    if (productVersion.includes('dev')) {
         return enableForDev
     }
 
-    if (semver.valid(productVersion)) {
-        return semver.satisfies(productVersion, `>=${minimumVersion}`)
+    // Split any -rc.x tags from the end of the product version
+    const semanticVersion = productVersion.split(/[^\d.]/)[0]
+    if (semver.valid(semanticVersion)) {
+        return semver.satisfies(semanticVersion, `>=${minimumVersion}`)
     }
 
     const m = productVersion.match(/^\d+_(\d{4}-\d{2}-\d{2})_[a-z0-9]{7}$/)

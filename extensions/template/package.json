@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
+    "url": "https://github.com/sourcegraph/code-intel-extensions"
   },
   "categories": [
     "Programming languages"
@@ -35,62 +35,31 @@
   ],
   "scripts": {
     "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts",
+    "config-types": "dot-json package.json contributes.configuration | json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o ../../shared/search/settings.ts",
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
     "publish": "yarn -s && src ext publish"
   },
   "contributes": {
-    "actions": [
-      {
-        "id": "impreciseResults",
-        "title": "References: Search mode",
-        "command": "open",
-        "commandArguments": [
-          "https://github.com/sourcegraph/sourcegraph-basic-code-intel#limitations"
-        ],
-        "actionItem": {
-          "label": "References: Search mode",
-          "description": "Results come from text search and heuristics."
-        }
-      },
-      {
-        "id": "feedback",
-        "command": "open",
-        "title": "Submit code intel feedback",
-        "commandArguments": [
-          "${get(context, `codeIntel.feedbackLink`)}"
-        ],
-        "actionItem": {
-          "description": "Submit code intel feedback",
-          "iconURL": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTExLjk5IDJDNi40NyAyIDIgNi40OCAyIDEyczQuNDcgMTAgOS45OSAxMEMxNy41MiAyMiAyMiAxNy41MiAyMiAxMlMxNy41MiAyIDExLjk5IDJ6TTEyIDIwYy00LjQyIDAtOC0zLjU4LTgtOHMzLjU4LTggOC04IDggMy41OCA4IDgtMy41OCA4LTggOHptMy41LTljLjgzIDAgMS41LS42NyAxLjUtMS41UzE2LjMzIDggMTUuNSA4IDE0IDguNjcgMTQgOS41cy42NyAxLjUgMS41IDEuNXptLTcgMGMuODMgMCAxLjUtLjY3IDEuNS0xLjVTOS4zMyA4IDguNSA4IDcgOC42NyA3IDkuNSA3LjY3IDExIDguNSAxMXptMy41IDYuNWMyLjMzIDAgNC4zMS0xLjQ2IDUuMTEtMy41SDYuODljLjggMi4wNCAyLjc4IDMuNSA1LjExIDMuNXoiLz48L3N2Zz4="
-        }
-      }
-    ],
-    "menus": {
-      "editor/title": [
-        {
-          "action": "feedback",
-          "when": "showFeedback"
-        }
-      ],
-      "panel/toolbar": [
-        {
-          "action": "impreciseResults",
-          "when": "isImprecise"
-        }
-      ]
-    },
     "configuration": {
       "title": "Basic code intelligence settings",
       "properties": {
-        "basicCodeIntel.debug.traceSearch": {
-          "type": "boolean",
-          "description": "Trace Sourcegraph search API requests in the console."
-        },
         "codeIntel.lsif": {
           "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.",
           "type": "boolean"
+        },
+        "basicCodeIntel.debug.traceSearch": {
+          "description": "Trace Sourcegraph search API requests in the console.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.indexOnly": {
+          "description": "Whether to use only indexed requests to the search API.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.unindexedSearchTimeout": {
+          "description": "The timeout (in milliseconds) for un-indexed search requests.",
+          "type": "number"
         }
       }
     }

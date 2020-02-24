@@ -7,17 +7,41 @@
 
 export interface Settings {
     /**
-     * The LightStep project token to use for tracing.
+     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
      */
-    'lightstep.token'?: string | null
+    'codeIntel.lsif'?: boolean
     /**
-     * The Sourcegraph endpoint the TypeScript server should use
+     * Trace Sourcegraph search API requests in the console.
+     */
+    'basicCodeIntel.debug.traceSearch'?: boolean
+    /**
+     * Whether to use only indexed requests to the search API.
+     */
+    'basicCodeIntel.indexOnly'?: boolean
+    /**
+     * The timeout (in milliseconds) for un-indexed search requests.
+     */
+    'basicCodeIntel.unindexedSearchTimeout'?: number
+    /**
+     * The address of the WebSocket language server to connect to (e.g. ws://host:8080).
+     */
+    'typescript.serverUrl'?: string
+    /**
+     * The address of the Sourcegraph instance from the perspective of the TypeScript language server.
      */
     'typescript.sourcegraphUrl'?: string
     /**
-     * Whether to enable TypeScript code intelligence. (Default: true)
+     * The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.
      */
-    'typescript.enable'?: boolean
+    'typescript.accessToken'?: string
+    /**
+     * Whether or not a second references provider for external references will be registered (defaults to false).
+     */
+    'typescript.showExternalReferences'?: boolean
+    /**
+     * The maximum number of dependent packages to look in when searching for external references for a symbol (defaults to 20).
+     */
+    'typescript.maxExternalReferenceRepos'?: number
     /**
      * Whether to report progress while fetching sources, installing dependencies etc. (Default: true)
      */
@@ -37,14 +61,6 @@ export interface Settings {
      */
     'typescript.restartAfterDependencyInstallation'?: boolean
     /**
-     * The WebSocket language server to connect to
-     */
-    'typescript.serverUrl'?: string
-    /**
-     * The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.
-     */
-    'typescript.accessToken'?: string
-    /**
      * The log level to pass to the TypeScript language server. Logs will be forwarded to the browser console with the prefix [langserver].
      */
     'typescript.langserver.log'?: false | 'log' | 'info' | 'warn' | 'error'
@@ -57,8 +73,4 @@ export interface Settings {
         | 'normal'
         | 'requestTime'
         | 'verbose'
-    /**
-     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
-     */
-    'codeIntel.lsif'?: boolean
 }

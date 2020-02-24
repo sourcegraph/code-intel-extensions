@@ -3,9 +3,9 @@ import * as lsp from 'vscode-languageserver-protocol'
 import { convertHover, convertLocations } from '../lsp/conversion'
 import { Providers } from '../providers'
 import { getUser } from '../util/api'
+import { mapArrayish } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI, withHash } from '../util/uri'
-import { mapArrayish } from '../util/util'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular

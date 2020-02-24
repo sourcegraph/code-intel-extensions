@@ -7,11 +7,27 @@
 
 export interface Settings {
     /**
-     * The WebSocket language server to connect to
+     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
+     */
+    'codeIntel.lsif'?: boolean
+    /**
+     * Trace Sourcegraph search API requests in the console.
+     */
+    'basicCodeIntel.debug.traceSearch'?: boolean
+    /**
+     * Whether to use only indexed requests to the search API.
+     */
+    'basicCodeIntel.indexOnly'?: boolean
+    /**
+     * The timeout (in milliseconds) for un-indexed search requests.
+     */
+    'basicCodeIntel.unindexedSearchTimeout'?: number
+    /**
+     * The address of the WebSocket language server to connect to (e.g. ws://host:4389).
      */
     'go.serverUrl'?: string
     /**
-     * the address of the Sourcegraph instance from the perspective of the Go language server
+     * The address of the Sourcegraph instance from the perspective of the Go language server.
      */
     'go.sourcegraphUrl'?: string
     /**
@@ -23,7 +39,7 @@ export interface Settings {
      */
     'go.showExternalReferences'?: boolean
     /**
-     * The maximum number of repositories to look in when searching for external references for a symbol (defaults to 50).
+     * The maximum number of repositories to look in when searching for external references for a symbol (defaults to 20).
      */
     'go.maxExternalReferenceRepos'?: number
     /**
@@ -34,8 +50,4 @@ export interface Settings {
      * Address of a cors-anywhere service. This will cause the extension to send GDDO requests to this service instead of directly to api.godoc.org. For example: https://cors-anywhere.sourcegraph.com/https://api.godoc.org/importersgithub.com/sourcegraph/go-lsp. This would not be necessary if godoc.org set CORS headers.
      */
     'go.corsAnywhereURL'?: string
-    /**
-     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.
-     */
-    'codeIntel.lsif'?: boolean
 }

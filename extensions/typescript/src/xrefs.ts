@@ -8,14 +8,15 @@ import {
     getExtensionManifests,
     resolveRev,
 } from '../../../shared/util/api'
+import { asArray, isDefined } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
 import {
     gitToRawApiUri,
     rawApiToGitUri,
     removeHash,
 } from '../../../shared/util/uri'
-import { asArray, isDefined } from '../../../shared/util/util'
 import { findPackageName, resolvePackageRepo } from './package'
+import { Settings } from './settings'
 
 const EXTERNAL_REFS_CONCURRENCY = 7
 
@@ -29,17 +30,28 @@ type DefinitionResult =
 /**
  * Return external references to the symbol at the given position.
  *
- * @param client The LSP client.
- * @param sourcegraphServerURL A URL of the Sourcegraph API reachable from the language server.
- * @param sourcegraphClientURL A URL of the Sourcegraph API reachable from the browser.
- * @param accessToken The access token.
+ * @param args Parameter bag.
  */
-export function createExternalReferencesProvider(
-    client: LSPClient,
-    sourcegraphServerURL: URL,
-    sourcegraphClientURL: URL,
+export function createExternalReferencesProvider({
+    client,
+    settings,
+    sourcegraphServerURL,
+    sourcegraphClientURL,
+    accessToken,
+}: {
+    /** The LSP client. */
+    client: LSPClient
+    /** The current settings. */
+    settings: Settings
+    /** A URL of the Sourcegraph API reachable from the language server. */
+    sourcegraphServerURL: URL
+    /** A URL of the Sourcegraph API reachable from the browser. */
+    sourcegraphClientURL: URL
+    /** The access token. */
     accessToken: string
-): ReferencesProvider {
+}): ReferencesProvider {
+    const limit = settings['typescript.maxExternalReferenceRepos'] || 20
+
     const findDependents = async (packageName: string): Promise<string[]> => {
         // If the package name is "sourcegraph", we are looking for references to
         // a symbol in the Sourcegraph extension API. Extensions are not published
@@ -47,14 +59,16 @@ export function createExternalReferencesProvider(
         if (packageName === 'sourcegraph') {
             return (
                 await Promise.all(
-                    (await getExtensionManifests()).map(rawManifest =>
-                        resolvePackageRepo(rawManifest)
-                    )
+                    (await getExtensionManifests())
+                        .slice(0, limit)
+                        .map(rawManifest => resolvePackageRepo(rawManifest))
                 )
             ).filter(isDefined)
         }
 
-        return findReposViaSearch(`file:package.json$ ${packageName} max:1000`)
+        return findReposViaSearch(
+            `file:package.json$ ${packageName} max:${limit}`
+        )
     }
 
     return async function*(

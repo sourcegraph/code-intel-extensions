@@ -5,6 +5,7 @@ import { map, scan, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import * as uuid from 'uuid'
 import * as lsp from 'vscode-languageserver-protocol'
+import { Logger, LogLevel } from '../logging'
 import { ProviderWrapper } from '../providers'
 import { LSPClient } from './client'
 import { LSPConnection } from './connection'
@@ -25,13 +26,19 @@ import {
     referencesFeature,
     ReferencesFeatureOptions,
 } from './features/references'
-import { Logger, LSP_TO_LOG_LEVEL } from './logging'
 import {
     WindowProgressClientCapabilities,
     WindowProgressNotification,
 } from './protocol.progress.proposed'
 
 type SourcegraphAPI = typeof import('sourcegraph')
+
+export const LSP_TO_LOG_LEVEL: Record<lsp.MessageType, LogLevel> = {
+    [lsp.MessageType.Log]: 'log',
+    [lsp.MessageType.Info]: 'info',
+    [lsp.MessageType.Warning]: 'warn',
+    [lsp.MessageType.Error]: 'error',
+}
 
 export type FeatureOptions = DefinitionFeatureOptions &
     ReferencesFeatureOptions &
@@ -79,6 +86,7 @@ export interface RegisterOptions {
     initializationOptions?: any
     providerWrapper: ProviderWrapper
     featureOptions?: Observable<FeatureOptions>
+    cancellationToken?: lsp.CancellationToken
 }
 
 export async function register({
@@ -93,8 +101,15 @@ export async function register({
     initializationOptions,
     providerWrapper,
     featureOptions,
+    cancellationToken,
 }: RegisterOptions): Promise<LSPClient> {
     const subscriptions = new Subscription()
+
+    if (cancellationToken) {
+        cancellationToken.onCancellationRequested(() =>
+            subscriptions.unsubscribe()
+        )
+    }
 
     function syncTextDocuments(connection: LSPConnection): void {
         for (const textDocument of sourcegraph.workspace.textDocuments) {

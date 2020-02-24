@@ -1,13 +1,13 @@
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import * as assert from 'assert'
 import * as sourcegraph from 'sourcegraph'
-import { definitionQueries, referencesQueries } from './queries'
+import { definitionQuery, referencesQuery } from './queries'
 
 describe('search requests', () => {
     it('makes correct search requests for goto definition', () => {
         interface DefinitionTest {
             doc: sourcegraph.TextDocument
-            expectedSearchQueries: string[]
+            expectedSearchQuery: string
         }
         const tests: DefinitionTest[] = [
             {
@@ -16,24 +16,19 @@ describe('search requests', () => {
                     languageId: 'cpp',
                     text: 'token',
                 }),
-                expectedSearchQueries: [
-                    // current repo symbols
-                    '^token$ case:yes type:symbol repo:^github.com/foo/bar$@rev file:\\.(cpp)$',
-                    // all repo symbols
-                    '^token$ case:yes type:symbol file:\\.(cpp)$',
-                ],
+                expectedSearchQuery:
+                    '^token$ type:symbol patternType:regexp case:yes file:\\.(cpp)$',
             },
         ]
 
         for (const test of tests) {
             assert.deepStrictEqual(
-                definitionQueries({
+                definitionQuery({
                     searchToken: 'token',
                     doc: test.doc,
                     fileExts: ['cpp'],
-                    isSourcegraphDotCom: false,
                 }),
-                test.expectedSearchQueries
+                test.expectedSearchQuery
             )
         }
     })
@@ -41,7 +36,7 @@ describe('search requests', () => {
     it('makes correct search requests for references', () => {
         interface ReferencesTest {
             doc: sourcegraph.TextDocument
-            expectedSearchQueries: string[]
+            expectedSearchQuery: string
         }
         const tests: ReferencesTest[] = [
             {
@@ -50,22 +45,19 @@ describe('search requests', () => {
                     languageId: 'cpp',
                     text: 'token',
                 }),
-                expectedSearchQueries: [
-                    '\\btoken\\b case:yes type:file repo:^github.com/foo/bar$@rev file:\\.(cpp)$',
-                    '\\btoken\\b case:yes type:file -repo:^github.com/foo/bar$ file:\\.(cpp)$',
-                ],
+                expectedSearchQuery:
+                    '\\btoken\\b type:file patternType:regexp case:yes file:\\.(cpp)$',
             },
         ]
 
         for (const test of tests) {
             assert.deepStrictEqual(
-                referencesQueries({
+                referencesQuery({
                     searchToken: 'token',
                     doc: test.doc,
                     fileExts: ['cpp'],
-                    isSourcegraphDotCom: false,
                 }),
-                test.expectedSearchQueries
+                test.expectedSearchQuery
             )
         }
     })

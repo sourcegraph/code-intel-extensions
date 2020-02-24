@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/sourcegraph/sourcegraph/master/shared/src/schema/extension.schema.json",
-  "name": "sourcegraph-code-intel-extensions",
+  "name": "code-intel-extensions",
   "description": "Sourcegraph code intelligence extensions",
   "private": true,
   "sideEffects": false,
@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/sourcegraph-basic-code-intel"
+    "url": "https://github.com/sourcegraph/code-intel-extensions"
   },
   "scripts": {
     "prettier": "prettier --write --list-different '**/*.{ts,js?(on),md,yml}'",
@@ -33,7 +33,7 @@
     "opentracing": "^0.14.4",
     "path-browserify": "^1.0.0",
     "rxjs": "^6.5.4",
-    "semver": "^7.1.2",
+    "semver": "^7.1.3",
     "sourcegraph": "^23.1.0",
     "tagged-template-noop": "^2.1.1",
     "type-zoo": "^3.4.1",
@@ -50,12 +50,12 @@
     "@sourcegraph/prettierrc": "^3.0.2",
     "@sourcegraph/tsconfig": "^4.0.0",
     "@sourcegraph/tslint-config": "^13.4.0",
-    "@types/fs-extra": "8.0.1",
+    "@types/fs-extra": "8.1.0",
     "@types/lodash": "4.14.149",
     "@types/mocha": "7.0.1",
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.0",
-    "@types/node": "13.7.0",
+    "@types/node": "13.7.4",
     "@types/semver": "7.1.0",
     "@types/uuid": "3.4.7",
     "@types/whatwg-url": "6.4.0",

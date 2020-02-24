@@ -14,14 +14,15 @@ async function main(): Promise<void> {
         })
     )
 
-    await Promise.all(languageIDs.map(publish))
+    for (const languageID of languageIDs) {
+        await publish(languageID)
+    }
 }
 
 async function publish(languageID: string): Promise<void> {
     console.log(`Publishing ${languageID} extension`)
     const langDir = path.join('temp', languageID)
     await child_process.exec(`yarn --cwd ${langDir} run publish`)
-    console.log('publishing', languageID)
 }
 
 main().catch(err => {

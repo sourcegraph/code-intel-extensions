@@ -1,4 +1,4 @@
-import { cStyle } from './comments'
+import { cStyleComment } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import {
     dotToSlash,
@@ -60,7 +60,7 @@ export const cppSpec: LanguageSpec = {
         'ino', // Arduino
         'm', // Objective-C
     ],
-    commentStyle: cStyle,
+    commentStyles: [cStyleComment],
     filterDefinitions,
 }
 
@@ -68,6 +68,6 @@ export const cudaSpec: LanguageSpec = {
     languageID: 'cuda',
     stylized: 'CUDA',
     fileExts: ['cu', 'cuh'],
-    commentStyle: cStyle,
+    commentStyles: [cStyleComment],
     filterDefinitions,
 }

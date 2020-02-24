@@ -1,5 +1,11 @@
 import * as assert from 'assert'
-import { cStyle, pythonStyle } from '../language-specs/comments'
+import {
+    cStyleComment,
+    javaStyleComment,
+    leadingHashPattern,
+    pythonStyleComment,
+} from '../language-specs/comments'
+import { CommentStyle } from '../language-specs/spec'
 import { findDocstring } from './docstrings'
 
 describe('docstrings', () => {
@@ -12,6 +18,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
+                commentStyles: [],
             }),
             undefined
         )
@@ -26,7 +33,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyles: [pythonStyleComment],
             }),
             'docstring'
         )
@@ -42,7 +49,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyles: [pythonStyleComment],
             }),
             'docstring1\ndocstring2'
         )
@@ -59,7 +66,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyles: [pythonStyleComment],
             }),
             'docstring1\ndocstring2\n'
         )
@@ -77,7 +84,7 @@ describe('docstrings', () => {
             pass
         `,
                 definitionLine: 1,
-                commentStyle: pythonStyle,
+                commentStyles: [pythonStyleComment],
             }),
             '\ndocstring1\ndocstring2\n'
         )
@@ -91,7 +98,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 2,
-                commentStyle: cStyle,
+                commentStyles: [cStyleComment],
             }),
             'docstring'
         )
@@ -106,7 +113,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 3,
-                commentStyle: cStyle,
+                commentStyles: [cStyleComment],
             }),
             'docstring1\ndocstring2'
         )
@@ -122,7 +129,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 4,
-                commentStyle: cStyle,
+                commentStyles: [cStyleComment],
             }),
             'docstring1\ndocstring2\n'
         )
@@ -137,7 +144,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 3,
-                commentStyle: cStyle,
+                commentStyles: [cStyleComment],
             }),
             'docstring1\ndocstring2 '
         )
@@ -152,7 +159,7 @@ describe('docstrings', () => {
         const foo;
         `,
                 definitionLine: 3,
-                commentStyle: cStyle,
+                commentStyles: [cStyleComment],
             }),
             ' docstring1\ndocstring2'
         )
@@ -169,10 +176,41 @@ describe('docstrings', () => {
         public void FizzBuzz()
         `,
                 definitionLine: 5,
-                commentStyle: cStyle,
-                docstringIgnore: /^\s*@/,
+                commentStyles: [javaStyleComment],
             }),
             '\ndocstring\n'
+        )
+    })
+
+    it('searches multiple comment styles', () => {
+        const fileText = `
+        mod foo {
+            //! Comment below the def
+
+            /// Comment above the def
+            pub fn new(value: T) -> Rc<T> {
+        }
+        `
+
+        const commentStyles: CommentStyle[] = [
+            {
+                ...cStyleComment,
+                docstringIgnore: leadingHashPattern,
+            },
+            {
+                lineRegex: /\/\/\/?!?\s?/,
+                docstringIgnore: leadingHashPattern,
+                docPlacement: 'below the definition',
+            },
+        ]
+
+        assert.deepStrictEqual(
+            findDocstring({ fileText, definitionLine: 1, commentStyles }),
+            'Comment below the def'
+        )
+        assert.deepStrictEqual(
+            findDocstring({ fileText, definitionLine: 5, commentStyles }),
+            'Comment above the def'
         )
     })
 })

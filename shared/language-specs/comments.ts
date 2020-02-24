@@ -1,35 +1,51 @@
-import { CommentStyle } from './spec'
+import { BlockCommentStyle, CommentStyle } from './spec'
 
-export const cStyleLineNoiseRegex = /(^\s*\*\s?)?/
+/** Matches two or more slashes followed by one optional space. */
+export const slashPattern = /\/\/\/*\s?/
 
-export const cStyleBlock: any = {
+/** Matches three slashes followed by one optional space. */
+export const tripleSlashPattern = /\/\/\/\s?/
+
+/** Matches a hash followed by one optional space. */
+export const hashPattern = /#\s?/
+
+/** Matches two or more dashes followed by one optional space. */
+export const dashPattern = /---*\s?/
+
+/** Matches whitespace followed by an at-symbol at beginning of a line. */
+export const leadingAtSymbolPattern = /^\s*@/
+
+/** Matches whitespace followed by a hash symbol at beginning of a line. */
+export const leadingHashPattern = /^\s*#/
+
+export const cStyleBlockComment: BlockCommentStyle = {
     startRegex: /\/\*\*?/,
-    lineNoiseRegex: cStyleLineNoiseRegex,
     endRegex: /\*\//,
+    lineNoiseRegex: /\s*\*\s?/,
 }
 
-export const cStyle: CommentStyle = {
-    lineRegex: /\/\/\/?\s?/,
-    block: cStyleBlock,
+export const cStyleComment: CommentStyle = {
+    lineRegex: slashPattern,
+    block: cStyleBlockComment,
 }
 
-export const shellStyle: CommentStyle = {
-    lineRegex: /#\s?/,
+/** C-style comments that ignore lines with @annotations. */
+export const javaStyleComment: CommentStyle = {
+    ...cStyleComment,
+    docstringIgnore: leadingAtSymbolPattern,
 }
 
-export const pythonStyle: CommentStyle = {
+export const shellStyleComment: CommentStyle = {
+    lineRegex: hashPattern,
+}
+
+export const pythonStyleComment: CommentStyle = {
+    lineRegex: hashPattern,
+    block: { startRegex: /"""/, endRegex: /"""/ },
     docPlacement: 'below the definition',
-    lineRegex: /#\s?/,
-    block: {
-        startRegex: /"""/,
-        endRegex: /"""/,
-    },
 }
 
-export const lispStyle: CommentStyle = {
+export const lispStyleComment: CommentStyle = {
+    block: { startRegex: /"/, endRegex: /"/ },
     docPlacement: 'below the definition',
-    block: {
-        startRegex: /"/,
-        endRegex: /"/,
-    },
 }

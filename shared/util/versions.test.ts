@@ -58,6 +58,48 @@ describe('compareVersions', () => {
         }
     })
 
+    it('should compare semantic versions with rc tags', () => {
+        const tests: {
+            productVersion: string
+            enabled: boolean
+        }[] = [
+            {
+                productVersion: '1.2.3-rc.1',
+                enabled: true,
+            },
+            {
+                productVersion: '1.2.4-rc.1',
+                enabled: true,
+            },
+            {
+                productVersion: '1.2.2-rc.1',
+                enabled: false,
+            },
+            {
+                productVersion: '1.2.3+rc.1',
+                enabled: true,
+            },
+            {
+                productVersion: '1.2.4+rc.1',
+                enabled: true,
+            },
+            {
+                productVersion: '1.2.2+rc.1',
+                enabled: false,
+            },
+        ]
+
+        for (const test of tests) {
+            const enabled = compareVersion({
+                productVersion: test.productVersion,
+                minimumDate: '',
+                minimumVersion: '1.2.3',
+            })
+
+            assert.equal(enabled, test.enabled)
+        }
+    })
+
     it('should compare build strings', () => {
         const tests: {
             productVersion: string

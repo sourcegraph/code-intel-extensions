@@ -9,22 +9,23 @@ export function findLanguageSpecs(): LanguageSpec[] {
         .nargs('languages', 1)
         .describe('l', 'A list of (comma-separated) languages to generate')
         .alias('l', 'languages')
-        .strict().argv as { language?: string }
+        .strict().argv as { languages?: string }
 
     const candidates = languageSpecs.filter(
         s => !blacklist.includes(s.languageID)
     )
 
-    if (!args.language) {
+    if (!args.languages) {
         return candidates
     }
 
-    return args.language.split(',').map(languageID => {
-        const spec = candidates.find(spec => spec.languageID === languageID)
-        if (!spec) {
-            throw new Error(`Unknown language ${languageID}.`)
+    // Verify that each flagged language matches a candidate, and filter the
+    // candidates to only those selected.
+    const ids = args.languages.split(',')
+    for (const id of ids) {
+        if (!candidates.find(spec => spec.languageID === id)) {
+            throw new Error(`Unknown language ${id}.`)
         }
-
-        return spec
-    })
+    }
+    return candidates.filter(spec => ids.includes(spec.languageID))
 }

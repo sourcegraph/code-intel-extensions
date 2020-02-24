@@ -3,7 +3,7 @@ import { attempt } from 'lodash'
 import { fromEvent, merge, Subject } from 'rxjs'
 import { filter, map, mapTo, take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
-import { Logger } from './logging'
+import { Logger } from '../logging'
 
 export interface LSPConnection extends sourcegraph.Unsubscribable {
     closed: boolean
@@ -25,9 +25,11 @@ export interface LSPConnection extends sourcegraph.Unsubscribable {
 export const webSocketTransport = ({
     serverUrl,
     logger,
+    cancellationToken,
 }: {
     serverUrl: string | URL
     logger: Logger
+    cancellationToken: jsonrpc.CancellationToken
 }) => async (): Promise<LSPConnection> => {
     const socket = new WebSocket(serverUrl.toString())
     const event = await merge(
@@ -71,7 +73,7 @@ export const webSocketTransport = ({
             take(1)
         ),
         sendRequest: async (type, params) =>
-            connection.sendRequest(type, params),
+            connection.sendRequest(type, params, cancellationToken),
         sendNotification: async (type, params) =>
             connection.sendNotification(type, params),
         setRequestHandler: (type, handler) =>

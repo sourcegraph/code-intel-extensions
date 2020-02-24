@@ -3,11 +3,12 @@ import { shareReplay } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { impreciseBadge } from './badges'
 import { LanguageSpec } from './language-specs/spec'
+import { Logger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
+import { asArray, mapArrayish } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
-import { asArray, mapArrayish } from './util/util'
 
 export interface Providers {
     definition: DefinitionProvider
@@ -98,9 +99,10 @@ export class NoopProviderWrapper implements ProviderWrapper {
  * @param languageSpec The language spec used to provide search-based code intelligence.
  */
 export function createProviderWrapper(
-    languageSpec: LanguageSpec
+    languageSpec: LanguageSpec,
+    logger: Logger
 ): ProviderWrapper {
-    const lsifProviders = createLSIFProviders()
+    const lsifProviders = createLSIFProviders(logger)
     const searchProviders = createSearchProviders(languageSpec)
 
     return {
