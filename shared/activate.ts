@@ -105,7 +105,7 @@ export async function activateCodeIntel(
 }
 
 /**
- * Rn the LSP factory return true if successful. Return false if an error is thrown.
+ * Run the LSP factory return true if successful. Return false if an error is thrown.
  *
  * @param ctx  The extension context.
  * @param wrapper The provider wrapper.
