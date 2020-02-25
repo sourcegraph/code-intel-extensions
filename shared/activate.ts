@@ -112,10 +112,10 @@ export async function activateCodeIntel(
  * @param lspFactory An optional factory that registers an LSP client.
  */
 export async function tryInitLSP(
-    ctx: sourcegraph.ExtensionContext = DUMMY_CTX,
+    ctx: sourcegraph.ExtensionContext,
     wrapper: ProviderWrapper,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger
 ): Promise<boolean> {
     if (!lspFactory) {
         return false
