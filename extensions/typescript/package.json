@@ -45,7 +45,7 @@
     "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
-    "publish": "yarn -s && src ext publish"
+    "publish": "yarn -s && src -config \"${SRC_CONFIG}\" ext publish"
   },
   "contributes": {
     "menus": {
