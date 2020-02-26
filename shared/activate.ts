@@ -115,7 +115,7 @@ export async function tryInitLSP(
     ctx: sourcegraph.ExtensionContext,
     wrapper: ProviderWrapper,
     lspFactory?: LSPFactory,
-    logger: Logger
+    logger: Logger = console
 ): Promise<boolean> {
     if (!lspFactory) {
         return false
