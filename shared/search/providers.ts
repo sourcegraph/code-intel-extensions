@@ -238,7 +238,7 @@ function getFileContent({
 }: {
     /** The URI of the text document to fetch. */
     uri: string
-    /** Possibly cached text from a previous query */
+    /** Possibly cached text from a previous query. */
     text?: string
 }): Promise<string | undefined> {
     if (text) {
