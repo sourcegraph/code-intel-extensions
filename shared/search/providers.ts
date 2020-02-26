@@ -116,7 +116,7 @@ export function createProviders({
         }
 
         // Fallback to definitions found in any other repository
-        return await anyRepoDefinitions
+        return anyRepoDefinitions
     }
 
     /**
@@ -170,14 +170,14 @@ export function createProviders({
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
-        const text = await getFileContent(doc)
-        if (!text) {
-            return null
-        }
-
         // Get the first definition and ensure it has a range
         const def = asArray(await definition(doc, pos))[0]
         if (!def || !def.range) {
+            return null
+        }
+
+        const text = await getFileContent({ uri: def.uri.href })
+        if (!text) {
             return null
         }
 
@@ -230,15 +230,21 @@ export function createProviders({
  * Retrieve the text of the current text document. This may be cached on the text
  * document itself. If it's not, we fetch it from the Raw API.
  *
- * @param doc The current text document.
+ * @param args Parameter bag
  */
-function getFileContent(
-    doc: sourcegraph.TextDocument
-): Promise<string | undefined> {
-    if (doc.text) {
-        return Promise.resolve(doc.text)
+function getFileContent({
+    uri,
+    text,
+}: {
+    /** The URI of the text document to fetch. */
+    uri: string
+    /** Possibly cached text from a previous query */
+    text?: string
+}): Promise<string | undefined> {
+    if (text) {
+        return Promise.resolve(text)
     }
-    const { repo, commit, path } = parseGitURI(new URL(doc.uri))
+    const { repo, commit, path } = parseGitURI(new URL(uri))
     return getFileContentFromApi(repo, commit, path)
 }
 
