@@ -19,7 +19,9 @@
     "test": "nyc --reporter=text mocha '**/*.test.ts'",
     "deduplicate": "yarn-deduplicate -s fewer",
     "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./dev/scripts/generate.ts",
-    "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts"
+    "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts",
+    "publish:go": "yarn --cwd extensions/go run publish",
+    "publish:typescript": "yarn --cwd extensions/typescript run publish"
   },
   "dependencies": {
     "@sourcegraph/lightstep-tracer-webworker": "^0.20.14-webworker.2",
