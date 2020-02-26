@@ -1,0 +1,25 @@
+env:
+  FORCE_COLOR: '1'
+
+steps:
+  - command: ./.buildkite/check-all.sh
+    label: ':white_check_mark:'
+  - command: ./.buildkite/lint.sh
+    label: ':lipstick: :lint-roller:'
+  - command: ./.buildkite/test.sh
+    label: ':jest:'
+  - command: CWD=extensions/go ./.buildkite/yarn-run.sh build
+    label: ':go:'
+  - command: CWD=extensions/typescript ./.buildkite/yarn-run.sh build
+    label: ':typescript:'
+  - command: CWD=extensions/template ./.buildkite/yarn-run.sh build
+    label: ':question:'
+
+  - wait
+
+  - command: ./.buildkite/yarn-run-config.sh publish:go
+    label: ':go: :rocket:'
+    branches: master
+  - command: ./.buildkite/yarn-run-config.sh publish:typescript
+    label: ':typescript: :rocket:'
+    branches: master
