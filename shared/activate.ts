@@ -98,10 +98,39 @@ export async function activateCodeIntel(
     logger: Logger = console
 ): Promise<void> {
     const wrapper = createProviderWrapper(languageSpec, logger)
-    const activated = lspFactory && (await lspFactory(ctx, wrapper))
-    if (!activated) {
+
+    if (!(await tryInitLSP(ctx, wrapper, lspFactory, logger))) {
         activateWithoutLSP(ctx, selector, wrapper)
     }
+}
+
+/**
+ * Run the LSP factory return true if successful. Return false if an error is thrown.
+ *
+ * @param ctx  The extension context.
+ * @param wrapper The provider wrapper.
+ * @param lspFactory An optional factory that registers an LSP client.
+ */
+export async function tryInitLSP(
+    ctx: sourcegraph.ExtensionContext,
+    wrapper: ProviderWrapper,
+    lspFactory?: LSPFactory,
+    logger: Logger = console
+): Promise<boolean> {
+    if (!lspFactory) {
+        return false
+    }
+
+    try {
+        if (await lspFactory(ctx, wrapper)) {
+            return true
+        }
+    } catch (err) {
+        logger.error('Failed to initialize language server client', {
+            err,
+        })
+    }
+    return false
 }
 
 /**
@@ -110,7 +139,7 @@ export async function activateCodeIntel(
  *
  * @param languageID The language identifier
  * @param clientFactory A factory that initializes an LSP client.
- * @param createExternalReferenceProvider A factory that creates an external reference provider.
+ * @param externalReferencesProviderFactory A factory that creates an external reference provider.
  */
 export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
