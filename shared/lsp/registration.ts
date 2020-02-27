@@ -2,7 +2,7 @@ import { differenceBy, identity } from 'lodash'
 import * as path from 'path'
 import { EMPTY, from, Observable, Subscription, Unsubscribable } from 'rxjs'
 import { map, scan, startWith } from 'rxjs/operators'
-import * as sourcegraph from 'sourcegraph'
+import { DocumentSelector, ProgressReporter, WorkspaceRoot } from 'sourcegraph'
 import * as uuid from 'uuid'
 import * as lsp from 'vscode-languageserver-protocol'
 import { Logger, LogLevel } from '../logging'
@@ -82,7 +82,7 @@ export interface RegisterOptions {
     serverToClientURI?: (uri: URL) => URL
     logger?: Logger
     transport: () => Promise<LSPConnection> | LSPConnection
-    documentSelector: sourcegraph.DocumentSelector
+    documentSelector: DocumentSelector
     initializationOptions?: any
     providerWrapper: ProviderWrapper
     featureOptions?: Observable<FeatureOptions>
@@ -259,10 +259,7 @@ export async function register({
         )
 
         // Show progress reports
-        const progressReporters = new Map<
-            string,
-            Promise<sourcegraph.ProgressReporter>
-        >()
+        const progressReporters = new Map<string, Promise<ProgressReporter>>()
         subscriptions.add(() => {
             // Cleanup unfinished progress reports
             for (const reporterPromise of progressReporters.values()) {
@@ -425,10 +422,10 @@ export async function register({
                     startWith(null),
                     map(() => [...sourcegraph.workspace.roots]),
                     scan<
-                        sourcegraph.WorkspaceRoot[],
+                        WorkspaceRoot[],
                         {
-                            before: sourcegraph.WorkspaceRoot[]
-                            after: sourcegraph.WorkspaceRoot[]
+                            before: WorkspaceRoot[]
+                            after: WorkspaceRoot[]
                         }
                     >(({ before }, after) => ({
                         before,
@@ -482,9 +479,7 @@ export async function register({
                 connection.unsubscribe()
             }
         }
-        function addRoots(
-            added: ReadonlyArray<sourcegraph.WorkspaceRoot>
-        ): void {
+        function addRoots(added: ReadonlyArray<WorkspaceRoot>): void {
             for (const root of added) {
                 const connectionPromise = (async () => {
                     try {
@@ -575,7 +570,7 @@ function registrationId(staticOptions: any): string {
 
 function staticRegistrationsFromCapabilities(
     capabilities: lsp.ServerCapabilities,
-    defaultSelector: sourcegraph.DocumentSelector
+    defaultSelector: DocumentSelector
 ): lsp.Registration[] {
     const staticRegistrations: lsp.Registration[] = []
     for (const feature of Object.values(features)) {
