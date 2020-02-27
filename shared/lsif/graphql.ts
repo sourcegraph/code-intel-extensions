@@ -215,7 +215,7 @@ async function hover(
     `
 
     interface Response {
-        hover: { markdown: { text: string }; range: sourcegraph.Range }
+        hover?: { markdown: { text: string }; range: sourcegraph.Range }
     }
 
     const lsifObj: Response | null = await queryLSIF({
@@ -224,7 +224,7 @@ async function hover(
         query,
     })
 
-    if (!lsifObj) {
+    if (!lsifObj || !lsifObj.hover) {
         return null
     }
 
