@@ -5,14 +5,14 @@ describe('scopeDocumentSelectorToRoot()', () => {
     it('builds selectors from clientRootUri', () => {
         assert.deepStrictEqual(
             scopeDocumentSelectorToRoot(
-                ['l'],
+                ['lang'],
                 new URL(
                     'git://github.com/gorilla/mux?d83b6ffe499a29cc05fc977988d0392851779620'
                 )
             ),
             [
                 {
-                    language: 'l',
+                    language: 'lang',
                     pattern:
                         'git://github.com/gorilla/mux?d83b6ffe499a29cc05fc977988d0392851779620#**/**',
                 },
