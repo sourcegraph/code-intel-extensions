@@ -386,7 +386,6 @@ export async function register({
         try {
             return await fn(connection)
         } finally {
-            connectionsByRootUri.delete(workspaceFolder.href)
             connection.unsubscribe()
         }
     }
