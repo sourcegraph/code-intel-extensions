@@ -1,5 +1,5 @@
 import { differenceBy, identity } from 'lodash'
-import { EMPTY, from, Observable, Subscription, Unsubscribable } from 'rxjs'
+import { EMPTY, from, Observable, Subscription } from 'rxjs'
 import { map, scan, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import * as uuid from 'uuid'
