@@ -1,6 +1,5 @@
 import { differenceBy, identity } from 'lodash'
-import * as path from 'path'
-import { EMPTY, from, Observable, Subscription, Unsubscribable } from 'rxjs'
+import { EMPTY, from, Observable, Subscription } from 'rxjs'
 import { map, scan, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import * as uuid from 'uuid'
@@ -9,10 +8,7 @@ import { Logger, LogLevel } from '../logging'
 import { ProviderWrapper } from '../providers'
 import { LSPClient } from './client'
 import { LSPConnection } from './connection'
-import {
-    convertDiagnosticToDecoration,
-    toLSPWorkspaceFolder,
-} from './conversion'
+import { convertDiagnosticToDecoration } from './conversion'
 import {
     definitionFeature,
     DefinitionFeatureOptions,
@@ -77,7 +73,6 @@ const clientCapabilities = {
 export interface RegisterOptions {
     progressSuffix?: string
     sourcegraph: SourcegraphAPI
-    supportsWorkspaceFolders?: boolean
     clientToServerURI?: (uri: URL) => URL
     serverToClientURI?: (uri: URL) => URL
     logger?: Logger
@@ -95,7 +90,6 @@ export async function register({
     serverToClientURI = identity,
     logger = console,
     progressSuffix = '',
-    supportsWorkspaceFolders,
     transport: createConnection,
     documentSelector,
     initializationOptions,
@@ -138,7 +132,6 @@ export async function register({
         }
     }
 
-    const registrationSubscriptions = new Map<string, Unsubscribable>()
     /**
      * @param scopeRootUri A client workspace folder root URI to scope the providers to. If `null`, the provider is registered for all workspace folders.
      */
@@ -149,23 +142,28 @@ export async function register({
     ): void {
         for (const registration of registrations) {
             const feature = features[registration.method]
-            if (feature) {
-                registrationSubscriptions.set(
-                    registration.id,
-                    feature.register({
-                        connection,
-                        sourcegraph,
-                        serverToClientURI,
-                        clientToServerURI,
-                        scopedDocumentSelector: scopeDocumentSelectorToRoot(
-                            documentSelector as lsp.DocumentSelector,
-                            scopeRootUri
-                        ),
-                        providerWrapper,
-                        featureOptions: featureOptions || EMPTY,
-                    })
-                )
+            if (!feature) {
+                continue
             }
+
+            const featureSubscription = feature.register({
+                connection,
+                sourcegraph,
+                serverToClientURI,
+                clientToServerURI,
+                scopedDocumentSelector: scopeDocumentSelectorToRoot(
+                    documentSelector as lsp.DocumentSelector,
+                    scopeRootUri
+                ),
+                providerWrapper,
+                featureOptions: featureOptions || EMPTY,
+            })
+
+            subscriptions.add(
+                connection.closeEvent.subscribe(() =>
+                    featureSubscription.unsubscribe()
+                )
+            )
         }
     }
 
@@ -363,203 +361,105 @@ export async function register({
         fn: (connection: LSPConnection) => Promise<R>
     ) => Promise<R>
 
-    if (supportsWorkspaceFolders) {
-        const connection = await connect({
-            clientRootUri: null,
+    // Supports only one workspace root
+    // TODO this should store a refcount to avoid closing connections other consumers have a reference to
+    /** Map from client root URI to connection */
+    const connectionsByRootUri = new Map<string, Promise<LSPConnection>>()
+    withConnection = async (workspaceFolder, fn) => {
+        let connection = await connectionsByRootUri.get(workspaceFolder.href)
+        if (connection) {
+            return await fn(connection)
+        }
+        const serverRootUri = clientToServerURI(workspaceFolder)
+        connection = await connect({
+            clientRootUri: workspaceFolder,
             initParams: {
                 processId: null,
-                rootUri: null,
+                rootUri: serverRootUri.href,
                 capabilities: clientCapabilities,
-                workspaceFolders: sourcegraph.workspace.roots.map(
-                    toLSPWorkspaceFolder(clientToServerURI)
-                ),
+                workspaceFolders: null,
                 initializationOptions,
             },
-            registerProviders: true,
+            registerProviders: false,
         })
         subscriptions.add(connection)
-        withConnection = async (workspaceFolder, fn) => {
-            let tempWorkspaceFolder: lsp.WorkspaceFolder | undefined
-            // If workspace folder is not known yet, add it
-            if (
-                !sourcegraph.workspace.roots.some(
-                    root => root.uri.toString() === workspaceFolder.href
-                )
-            ) {
-                tempWorkspaceFolder = {
-                    uri: workspaceFolder.href,
-                    name: path.posix.basename(workspaceFolder.pathname),
-                }
-                connection.sendNotification(
-                    lsp.DidChangeWorkspaceFoldersNotification.type,
-                    {
-                        event: {
-                            added: [tempWorkspaceFolder],
-                            removed: [],
+        try {
+            return await fn(connection)
+        } finally {
+            connection.unsubscribe()
+        }
+    }
+    function addRoots(added: ReadonlyArray<sourcegraph.WorkspaceRoot>): void {
+        for (const root of added) {
+            const connectionPromise = (async () => {
+                try {
+                    const serverRootUri = clientToServerURI(
+                        new URL(root.uri.toString())
+                    )
+                    const connection = await connect({
+                        clientRootUri: new URL(root.uri.toString()),
+                        initParams: {
+                            processId: null,
+                            rootUri: serverRootUri.href,
+                            capabilities: clientCapabilities,
+                            workspaceFolders: null,
+                            initializationOptions,
                         },
-                    }
-                )
-            }
-            try {
-                return await fn(connection)
-            } finally {
-                // If workspace folder was added, remove it
-                if (tempWorkspaceFolder) {
-                    connection.sendNotification(
-                        lsp.DidChangeWorkspaceFoldersNotification.type,
-                        {
-                            event: {
-                                added: [],
-                                removed: [tempWorkspaceFolder],
-                            },
-                        }
-                    )
+                        registerProviders: true,
+                    })
+                    subscriptions.add(connection)
+                    return connection
+                } catch (err) {
+                    logger.error('Error creating connection', err)
+                    connectionsByRootUri.delete(root.uri.toString())
+                    throw err
                 }
-            }
+            })()
+            connectionsByRootUri.set(root.uri.toString(), connectionPromise)
         }
-
-        // Forward root changes
-        subscriptions.add(
-            from(sourcegraph.workspace.rootChanges)
-                .pipe(
-                    startWith(null),
-                    map(() => [...sourcegraph.workspace.roots]),
-                    scan<
-                        sourcegraph.WorkspaceRoot[],
-                        {
-                            before: sourcegraph.WorkspaceRoot[]
-                            after: sourcegraph.WorkspaceRoot[]
-                        }
-                    >(({ before }, after) => ({
-                        before,
-                        after,
-                    })),
-                    map(({ before, after }) => ({
-                        added: differenceBy(after, before, root =>
-                            root.uri.toString()
-                        ).map(toLSPWorkspaceFolder(clientToServerURI)),
-                        removed: differenceBy(before, after, root =>
-                            root.uri.toString()
-                        ).map(toLSPWorkspaceFolder(clientToServerURI)),
-                    }))
-                )
-                .subscribe(event => {
-                    connection.sendNotification(
-                        lsp.DidChangeWorkspaceFoldersNotification.type,
-                        { event }
+    }
+    subscriptions.add(
+        from(sourcegraph.workspace.rootChanges)
+            .pipe(
+                startWith(null),
+                map(() => [...sourcegraph.workspace.roots]),
+                scan((before, after) => {
+                    // Create new connections for added workspaces
+                    const added = differenceBy(after, before, root =>
+                        root.uri.toString()
                     )
-                })
-        )
-    } else {
-        // Supports only one workspace root
-        // TODO this should store a refcount to avoid closing connections other consumers have a reference to
-        /** Map from client root URI to connection */
-        const connectionsByRootUri = new Map<string, Promise<LSPConnection>>()
-        withConnection = async (workspaceFolder, fn) => {
-            let connection = await connectionsByRootUri.get(
-                workspaceFolder.href
-            )
-            if (connection) {
-                return await fn(connection)
-            }
-            const serverRootUri = clientToServerURI(workspaceFolder)
-            connection = await connect({
-                clientRootUri: workspaceFolder,
-                initParams: {
-                    processId: null,
-                    rootUri: serverRootUri.href,
-                    capabilities: clientCapabilities,
-                    workspaceFolders: null,
-                    initializationOptions,
-                },
-                registerProviders: false,
-            })
-            subscriptions.add(connection)
-            try {
-                return await fn(connection)
-            } finally {
-                connectionsByRootUri.delete(workspaceFolder.href)
-                connection.unsubscribe()
-            }
-        }
-        function addRoots(
-            added: ReadonlyArray<sourcegraph.WorkspaceRoot>
-        ): void {
-            for (const root of added) {
-                // Do not construct multiple root connections for the same workspace
-                if (connectionsByRootUri.has(root.uri.toString())) {
-                    continue
-                }
+                    addRoots(added)
 
-                const connectionPromise = (async () => {
-                    try {
-                        const serverRootUri = clientToServerURI(
-                            new URL(root.uri.toString())
-                        )
-                        const connection = await connect({
-                            clientRootUri: new URL(root.uri.toString()),
-                            initParams: {
-                                processId: null,
-                                rootUri: serverRootUri.href,
-                                capabilities: clientCapabilities,
-                                workspaceFolders: null,
-                                initializationOptions,
-                            },
-                            registerProviders: true,
-                        })
-                        subscriptions.add(connection)
-                        return connection
-                    } catch (err) {
-                        logger.error('Error creating connection', err)
-                        connectionsByRootUri.delete(root.uri.toString())
-                        throw err
-                    }
-                })()
-                connectionsByRootUri.set(root.uri.toString(), connectionPromise)
-            }
-        }
-        subscriptions.add(
-            from(sourcegraph.workspace.rootChanges)
-                .pipe(
-                    startWith(null),
-                    map(() => [...sourcegraph.workspace.roots]),
-                    scan((before, after) => {
-                        // Create new connections for added workspaces
-                        const added = differenceBy(after, before, root =>
-                            root.uri.toString()
-                        )
-                        addRoots(added)
+                    // Close connections for removed workspaces
+                    const removed = differenceBy(before, after, root =>
+                        root.uri.toString()
+                    )
+                    // tslint:disable-next-line no-floating-promises
+                    Promise.all(
+                        removed.map(async root => {
+                            try {
+                                const connection = await connectionsByRootUri.get(
+                                    root.uri.toString()
+                                )
 
-                        // Close connections for removed workspaces
-                        const removed = differenceBy(before, after, root =>
-                            root.uri.toString()
-                        )
-                        // tslint:disable-next-line no-floating-promises
-                        Promise.all(
-                            removed.map(async root => {
-                                try {
-                                    const connection = await connectionsByRootUri.get(
+                                if (connection) {
+                                    connectionsByRootUri.delete(
                                         root.uri.toString()
                                     )
-                                    if (connection) {
-                                        connection.unsubscribe()
-                                    }
-                                } catch (err) {
-                                    logger.error(
-                                        'Error disposing connection',
-                                        err
-                                    )
+                                    connection.unsubscribe()
                                 }
-                            })
-                        )
-                        return after
-                    })
-                )
-                .subscribe()
-        )
-        addRoots(sourcegraph.workspace.roots)
-        await Promise.all(connectionsByRootUri.values())
-    }
+                            } catch (err) {
+                                logger.error('Error disposing connection', err)
+                            }
+                        })
+                    )
+                    return after
+                })
+            )
+            .subscribe()
+    )
+    addRoots(sourcegraph.workspace.roots)
+    await Promise.all(connectionsByRootUri.values())
 
     return {
         withConnection,
