@@ -1,6 +1,7 @@
 temp
 dist
 node_modules
+coverage
 .cache
 .nyc_output/
 .eslintcache
