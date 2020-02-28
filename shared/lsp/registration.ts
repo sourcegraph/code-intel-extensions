@@ -486,6 +486,11 @@ export async function register({
             added: ReadonlyArray<sourcegraph.WorkspaceRoot>
         ): void {
             for (const root of added) {
+                // Do not construct multiple root connections for the same workspace
+                if (connectionsByRootUri.has(root.uri.toString())) {
+                    continue
+                }
+
                 const connectionPromise = (async () => {
                     try {
                         const serverRootUri = clientToServerURI(
