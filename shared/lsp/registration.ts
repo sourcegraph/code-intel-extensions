@@ -132,7 +132,6 @@ export async function register({
         }
     }
 
-    const registrationSubscriptions = new Map<string, Unsubscribable>()
     /**
      * @param scopeRootUri A client workspace folder root URI to scope the providers to. If `null`, the provider is registered for all workspace folders.
      */
@@ -143,23 +142,28 @@ export async function register({
     ): void {
         for (const registration of registrations) {
             const feature = features[registration.method]
-            if (feature) {
-                registrationSubscriptions.set(
-                    registration.id,
-                    feature.register({
-                        connection,
-                        sourcegraph,
-                        serverToClientURI,
-                        clientToServerURI,
-                        scopedDocumentSelector: scopeDocumentSelectorToRoot(
-                            documentSelector as lsp.DocumentSelector,
-                            scopeRootUri
-                        ),
-                        providerWrapper,
-                        featureOptions: featureOptions || EMPTY,
-                    })
-                )
+            if (!feature) {
+                continue
             }
+
+            const featureSubscription = feature.register({
+                connection,
+                sourcegraph,
+                serverToClientURI,
+                clientToServerURI,
+                scopedDocumentSelector: scopeDocumentSelectorToRoot(
+                    documentSelector as lsp.DocumentSelector,
+                    scopeRootUri
+                ),
+                providerWrapper,
+                featureOptions: featureOptions || EMPTY,
+            })
+
+            subscriptions.add(
+                connection.closeEvent.subscribe(() =>
+                    featureSubscription.unsubscribe()
+                )
+            )
         }
     }
 
@@ -388,11 +392,6 @@ export async function register({
     }
     function addRoots(added: ReadonlyArray<sourcegraph.WorkspaceRoot>): void {
         for (const root of added) {
-            // Do not construct multiple root connections for the same workspace
-            if (connectionsByRootUri.has(root.uri.toString())) {
-                continue
-            }
-
             const connectionPromise = (async () => {
                 try {
                     const serverRootUri = clientToServerURI(
