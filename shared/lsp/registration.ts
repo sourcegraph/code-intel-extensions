@@ -357,117 +357,107 @@ export async function register({
         fn: (connection: LSPConnection) => Promise<R>
     ) => Promise<R>
 
-    if (false) {
-    } else {
-        // Supports only one workspace root
-        // TODO this should store a refcount to avoid closing connections other consumers have a reference to
-        /** Map from client root URI to connection */
-        const connectionsByRootUri = new Map<string, Promise<LSPConnection>>()
-        withConnection = async (workspaceFolder, fn) => {
-            let connection = await connectionsByRootUri.get(
-                workspaceFolder.href
-            )
-            if (connection) {
-                return await fn(connection)
-            }
-            const serverRootUri = clientToServerURI(workspaceFolder)
-            connection = await connect({
-                clientRootUri: workspaceFolder,
-                initParams: {
-                    processId: null,
-                    rootUri: serverRootUri.href,
-                    capabilities: clientCapabilities,
-                    workspaceFolders: null,
-                    initializationOptions,
-                },
-                registerProviders: false,
-            })
-            subscriptions.add(connection)
-            try {
-                return await fn(connection)
-            } finally {
-                connectionsByRootUri.delete(workspaceFolder.href)
-                connection.unsubscribe()
-            }
+    // Supports only one workspace root
+    // TODO this should store a refcount to avoid closing connections other consumers have a reference to
+    /** Map from client root URI to connection */
+    const connectionsByRootUri = new Map<string, Promise<LSPConnection>>()
+    withConnection = async (workspaceFolder, fn) => {
+        let connection = await connectionsByRootUri.get(workspaceFolder.href)
+        if (connection) {
+            return await fn(connection)
         }
-        function addRoots(
-            added: ReadonlyArray<sourcegraph.WorkspaceRoot>
-        ): void {
-            for (const root of added) {
-                // Do not construct multiple root connections for the same workspace
-                if (connectionsByRootUri.has(root.uri.toString())) {
-                    continue
-                }
-
-                const connectionPromise = (async () => {
-                    try {
-                        const serverRootUri = clientToServerURI(
-                            new URL(root.uri.toString())
-                        )
-                        const connection = await connect({
-                            clientRootUri: new URL(root.uri.toString()),
-                            initParams: {
-                                processId: null,
-                                rootUri: serverRootUri.href,
-                                capabilities: clientCapabilities,
-                                workspaceFolders: null,
-                                initializationOptions,
-                            },
-                            registerProviders: true,
-                        })
-                        subscriptions.add(connection)
-                        return connection
-                    } catch (err) {
-                        logger.error('Error creating connection', err)
-                        connectionsByRootUri.delete(root.uri.toString())
-                        throw err
-                    }
-                })()
-                connectionsByRootUri.set(root.uri.toString(), connectionPromise)
-            }
+        const serverRootUri = clientToServerURI(workspaceFolder)
+        connection = await connect({
+            clientRootUri: workspaceFolder,
+            initParams: {
+                processId: null,
+                rootUri: serverRootUri.href,
+                capabilities: clientCapabilities,
+                workspaceFolders: null,
+                initializationOptions,
+            },
+            registerProviders: false,
+        })
+        subscriptions.add(connection)
+        try {
+            return await fn(connection)
+        } finally {
+            connectionsByRootUri.delete(workspaceFolder.href)
+            connection.unsubscribe()
         }
-        subscriptions.add(
-            from(sourcegraph.workspace.rootChanges)
-                .pipe(
-                    startWith(null),
-                    map(() => [...sourcegraph.workspace.roots]),
-                    scan((before, after) => {
-                        // Create new connections for added workspaces
-                        const added = differenceBy(after, before, root =>
-                            root.uri.toString()
-                        )
-                        addRoots(added)
-
-                        // Close connections for removed workspaces
-                        const removed = differenceBy(before, after, root =>
-                            root.uri.toString()
-                        )
-                        // tslint:disable-next-line no-floating-promises
-                        Promise.all(
-                            removed.map(async root => {
-                                try {
-                                    const connection = await connectionsByRootUri.get(
-                                        root.uri.toString()
-                                    )
-                                    if (connection) {
-                                        connection.unsubscribe()
-                                    }
-                                } catch (err) {
-                                    logger.error(
-                                        'Error disposing connection',
-                                        err
-                                    )
-                                }
-                            })
-                        )
-                        return after
-                    })
-                )
-                .subscribe()
-        )
-        addRoots(sourcegraph.workspace.roots)
-        await Promise.all(connectionsByRootUri.values())
     }
+    function addRoots(added: ReadonlyArray<sourcegraph.WorkspaceRoot>): void {
+        for (const root of added) {
+            // Do not construct multiple root connections for the same workspace
+            if (connectionsByRootUri.has(root.uri.toString())) {
+                continue
+            }
+
+            const connectionPromise = (async () => {
+                try {
+                    const serverRootUri = clientToServerURI(
+                        new URL(root.uri.toString())
+                    )
+                    const connection = await connect({
+                        clientRootUri: new URL(root.uri.toString()),
+                        initParams: {
+                            processId: null,
+                            rootUri: serverRootUri.href,
+                            capabilities: clientCapabilities,
+                            workspaceFolders: null,
+                            initializationOptions,
+                        },
+                        registerProviders: true,
+                    })
+                    subscriptions.add(connection)
+                    return connection
+                } catch (err) {
+                    logger.error('Error creating connection', err)
+                    connectionsByRootUri.delete(root.uri.toString())
+                    throw err
+                }
+            })()
+            connectionsByRootUri.set(root.uri.toString(), connectionPromise)
+        }
+    }
+    subscriptions.add(
+        from(sourcegraph.workspace.rootChanges)
+            .pipe(
+                startWith(null),
+                map(() => [...sourcegraph.workspace.roots]),
+                scan((before, after) => {
+                    // Create new connections for added workspaces
+                    const added = differenceBy(after, before, root =>
+                        root.uri.toString()
+                    )
+                    addRoots(added)
+
+                    // Close connections for removed workspaces
+                    const removed = differenceBy(before, after, root =>
+                        root.uri.toString()
+                    )
+                    // tslint:disable-next-line no-floating-promises
+                    Promise.all(
+                        removed.map(async root => {
+                            try {
+                                const connection = await connectionsByRootUri.get(
+                                    root.uri.toString()
+                                )
+                                if (connection) {
+                                    connection.unsubscribe()
+                                }
+                            } catch (err) {
+                                logger.error('Error disposing connection', err)
+                            }
+                        })
+                    )
+                    return after
+                })
+            )
+            .subscribe()
+    )
+    addRoots(sourcegraph.workspace.roots)
+    await Promise.all(connectionsByRootUri.values())
 
     return {
         withConnection,
