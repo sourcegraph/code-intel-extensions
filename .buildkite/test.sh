@@ -3,4 +3,4 @@
 set -ex
 cd $(dirname "${BASH_SOURCE[0]}")
 
-./yarn-run.sh "test" "coverage"
+./yarn-run.sh test coverage
