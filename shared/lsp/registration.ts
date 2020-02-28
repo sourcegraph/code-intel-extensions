@@ -1,5 +1,4 @@
 import { differenceBy, identity } from 'lodash'
-import * as path from 'path'
 import { EMPTY, from, Observable, Subscription, Unsubscribable } from 'rxjs'
 import { map, scan, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
@@ -9,10 +8,7 @@ import { Logger, LogLevel } from '../logging'
 import { ProviderWrapper } from '../providers'
 import { LSPClient } from './client'
 import { LSPConnection } from './connection'
-import {
-    convertDiagnosticToDecoration,
-    toLSPWorkspaceFolder,
-} from './conversion'
+import { convertDiagnosticToDecoration } from './conversion'
 import {
     definitionFeature,
     DefinitionFeatureOptions,
@@ -77,7 +73,6 @@ const clientCapabilities = {
 export interface RegisterOptions {
     progressSuffix?: string
     sourcegraph: SourcegraphAPI
-    supportsWorkspaceFolders?: boolean
     clientToServerURI?: (uri: URL) => URL
     serverToClientURI?: (uri: URL) => URL
     logger?: Logger
@@ -95,7 +90,6 @@ export async function register({
     serverToClientURI = identity,
     logger = console,
     progressSuffix = '',
-    supportsWorkspaceFolders,
     transport: createConnection,
     documentSelector,
     initializationOptions,
@@ -363,93 +357,7 @@ export async function register({
         fn: (connection: LSPConnection) => Promise<R>
     ) => Promise<R>
 
-    if (supportsWorkspaceFolders) {
-        const connection = await connect({
-            clientRootUri: null,
-            initParams: {
-                processId: null,
-                rootUri: null,
-                capabilities: clientCapabilities,
-                workspaceFolders: sourcegraph.workspace.roots.map(
-                    toLSPWorkspaceFolder(clientToServerURI)
-                ),
-                initializationOptions,
-            },
-            registerProviders: true,
-        })
-        subscriptions.add(connection)
-        withConnection = async (workspaceFolder, fn) => {
-            let tempWorkspaceFolder: lsp.WorkspaceFolder | undefined
-            // If workspace folder is not known yet, add it
-            if (
-                !sourcegraph.workspace.roots.some(
-                    root => root.uri.toString() === workspaceFolder.href
-                )
-            ) {
-                tempWorkspaceFolder = {
-                    uri: workspaceFolder.href,
-                    name: path.posix.basename(workspaceFolder.pathname),
-                }
-                connection.sendNotification(
-                    lsp.DidChangeWorkspaceFoldersNotification.type,
-                    {
-                        event: {
-                            added: [tempWorkspaceFolder],
-                            removed: [],
-                        },
-                    }
-                )
-            }
-            try {
-                return await fn(connection)
-            } finally {
-                // If workspace folder was added, remove it
-                if (tempWorkspaceFolder) {
-                    connection.sendNotification(
-                        lsp.DidChangeWorkspaceFoldersNotification.type,
-                        {
-                            event: {
-                                added: [],
-                                removed: [tempWorkspaceFolder],
-                            },
-                        }
-                    )
-                }
-            }
-        }
-
-        // Forward root changes
-        subscriptions.add(
-            from(sourcegraph.workspace.rootChanges)
-                .pipe(
-                    startWith(null),
-                    map(() => [...sourcegraph.workspace.roots]),
-                    scan<
-                        sourcegraph.WorkspaceRoot[],
-                        {
-                            before: sourcegraph.WorkspaceRoot[]
-                            after: sourcegraph.WorkspaceRoot[]
-                        }
-                    >(({ before }, after) => ({
-                        before,
-                        after,
-                    })),
-                    map(({ before, after }) => ({
-                        added: differenceBy(after, before, root =>
-                            root.uri.toString()
-                        ).map(toLSPWorkspaceFolder(clientToServerURI)),
-                        removed: differenceBy(before, after, root =>
-                            root.uri.toString()
-                        ).map(toLSPWorkspaceFolder(clientToServerURI)),
-                    }))
-                )
-                .subscribe(event => {
-                    connection.sendNotification(
-                        lsp.DidChangeWorkspaceFoldersNotification.type,
-                        { event }
-                    )
-                })
-        )
+    if (false) {
     } else {
         // Supports only one workspace root
         // TODO this should store a refcount to avoid closing connections other consumers have a reference to
