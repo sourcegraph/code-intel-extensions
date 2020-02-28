@@ -442,7 +442,11 @@ export async function register({
                                 const connection = await connectionsByRootUri.get(
                                     root.uri.toString()
                                 )
+
                                 if (connection) {
+                                    connectionsByRootUri.delete(
+                                        root.uri.toString()
+                                    )
                                     connection.unsubscribe()
                                 }
                             } catch (err) {
