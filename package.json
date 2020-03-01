@@ -67,7 +67,7 @@
     "json-schema-to-typescript": "^8.0.1",
     "lnfs-cli": "^2.1.0",
     "mkdirp": "^1.0.3",
-    "mocha": "^7.0.1",
+    "mocha": "^7.1.0",
     "mock-require": "^3.0.3",
     "nyc": "^15.0.0",
     "parcel": "1.x",
