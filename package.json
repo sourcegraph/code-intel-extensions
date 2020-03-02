@@ -40,7 +40,7 @@
     "sourcegraph": "^23.1.0",
     "tagged-template-noop": "^2.1.1",
     "type-zoo": "^3.4.1",
-    "typescript": "^3.7.5",
+    "typescript": "^3.8.3",
     "uuid": "^7.0.1",
     "vscode-languageserver-types": "^3.15.1",
     "whatwg-url": "^8.0.0",
@@ -77,7 +77,7 @@
     "prettier": "^1.19.1",
     "ts-node": "^8.6.2",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.5",
+    "typescript": "^3.8.3",
     "yarn-deduplicate": "^2.0.0"
   },
   "resolutions": {
