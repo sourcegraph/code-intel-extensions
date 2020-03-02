@@ -46,41 +46,6 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
     })
 
 describe('register()', () => {
-    it('should initialize one connection with each workspace folder if the server is multi-root capable', async () => {
-        const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [
-            { uri: new URL('git://repo1?rev') },
-            { uri: new URL('git://repo2?rev') },
-        ]
-        const server = {
-            initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
-                    capabilities: {},
-                })
-            ),
-        }
-        const createConnection = stubTransport(server)
-        await register({
-            sourcegraph: sourcegraph as any,
-            transport: createConnection,
-            supportsWorkspaceFolders: true,
-            documentSelector: [{ language: 'foo' }],
-            logger,
-            providerWrapper,
-        })
-        sinon.assert.calledOnce(createConnection)
-        sinon.assert.calledOnce(server.initialize)
-        sinon.assert.calledWith(
-            server.initialize,
-            sinon.match({
-                rootUri: null,
-                workspaceFolders: [
-                    { name: '', uri: 'git://repo1?rev' },
-                    { name: '', uri: 'git://repo2?rev' },
-                ],
-            })
-        )
-    })
     it('should initialize one connection for each workspace folder if the server is not multi-root capable', async () => {
         const sourcegraph = createStubSourcegraphAPI()
         sourcegraph.workspace.roots = [
@@ -98,7 +63,6 @@ describe('register()', () => {
         await register({
             sourcegraph: sourcegraph as any,
             transport: createConnection,
-            supportsWorkspaceFolders: false,
             documentSelector: [{ language: 'foo' }],
             logger,
             providerWrapper,
@@ -137,7 +101,6 @@ describe('register()', () => {
         await register({
             sourcegraph: sourcegraph as any,
             transport: createConnection,
-            supportsWorkspaceFolders: false,
             documentSelector: [{ language: 'foo' }],
             logger,
             providerWrapper,
