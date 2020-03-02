@@ -7,7 +7,7 @@ steps:
   - command: ./.buildkite/lint.sh
     label: ':lipstick: :lint-roller:'
   - command: ./.buildkite/test.sh
-    label: ':jest:'
+    label: ':jest: :codecov:'
   - command: CWD=extensions/go ./.buildkite/yarn-run.sh build
     label: ':go:'
   - command: CWD=extensions/typescript ./.buildkite/yarn-run.sh build
