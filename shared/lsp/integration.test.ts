@@ -112,7 +112,7 @@ describe('register()', () => {
         sinon.assert.calledOnce(createConnection.returnValues[0].unsubscribe)
     })
     it('should register a references provider if the server reports the references capability', async () => {
-        const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
+        const repoRoot = new URL('git://sourcegraph.test/repo?rev')
         const server = {
             initialize: sinon.spy(
                 (params: lsp.InitializeParams): lsp.InitializeResult => ({
@@ -179,7 +179,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/#**/**',
+                pattern: 'git://sourcegraph.test/repo?rev#**/**',
             },
         ])
         const result = await consume(
