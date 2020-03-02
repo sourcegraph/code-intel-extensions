@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@sourcegraph/eslint-config": "^0.7.2",
-    "@sourcegraph/extension-api-stubs": "^0.2.3",
+    "@sourcegraph/extension-api-stubs": "^0.2.4",
     "@sourcegraph/prettierrc": "^3.0.2",
     "@sourcegraph/tsconfig": "^4.0.0",
     "@sourcegraph/tslint-config": "^13.4.0",
