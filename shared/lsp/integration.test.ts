@@ -179,7 +179,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/#**/**',
+                pattern: 'git://sourcegraph.test/repo?rev#**/**',
             },
         ])
         const result = await consume(
