@@ -1,4 +1,5 @@
 import { flatten, sortBy } from 'lodash'
+import LRUCache from 'lru-cache'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
@@ -16,6 +17,12 @@ import { definitionQuery, referencesQuery } from './queries'
 import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
 
+/** The number of elements in the document LRU cache. */
+const DOCUMENT_CACHE_SIZE = 50
+
+/** The number of elements in the definition LRU cache. */
+const DEFINITION_CACHE_SIZE = 50
+
 /**
  * Creates providers powered by search-based code intelligence.
  *
@@ -28,6 +35,39 @@ export function createProviders({
     identCharPattern,
     filterDefinitions = results => results,
 }: LanguageSpec): Providers {
+    const documentCache = new LRUCache<string, Promise<string | undefined>>(
+        DOCUMENT_CACHE_SIZE
+    )
+
+    /**
+     * Retrieve the text of the current text document. This may be cached on the
+     * text document itself. If it's not, we fetch it from the Raw API. Keep the
+     * file content around in a small LRU cache. The cache does not need to be
+     * large as this method only fetches document contents for the current document
+     * and a definition document to resolve hover text.
+     *
+     * @param uri The URI of the text document to fetch.
+     */
+    const getFileContent = ({
+        uri,
+        text,
+    }: {
+        /** The URI of the text document to fetch. */
+        uri: string
+        /** Possibly cached text from a previous query. */
+        text?: string
+    }): Promise<string | undefined> => {
+        let promise = documentCache.get(uri)
+        if (!promise) {
+            const { repo, commit, path } = parseGitURI(new URL(uri))
+            promise = text
+                ? Promise.resolve(text)
+                : getFileContentFromApi(repo, commit, path)
+            documentCache.set(uri, promise)
+        }
+        return promise
+    }
+
     /**
      * Return the text document content adn the search token found under the
      * current hover position. Returns undefined if either piece of data could
@@ -66,7 +106,7 @@ export function createProviders({
      * @param doc The current text document.
      * @param position The current hover position.
      */
-    const definition = async (
+    const rawDefinition = async (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
@@ -117,6 +157,34 @@ export function createProviders({
 
         // Fallback to definitions found in any other repository
         return anyRepoDefinitions
+    }
+
+    const definitionCache = new LRUCache<
+        string,
+        Promise<sourcegraph.Definition>
+    >(DEFINITION_CACHE_SIZE)
+
+    /**
+     * Retrieve a definition for the current hover position. Keep the
+     * result around in a small LRU cache. The cache does not need to be
+     * large as we are only trying to stop two identical search requests
+     * being made at the same time (one for a def and one for hover).
+     *
+     * @param doc The current text document.
+     * @param position The current hover position.
+     */
+    const definition = async (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<sourcegraph.Definition> => {
+        const key = [doc.uri, pos.line, pos.character].join(':')
+
+        let promise = definitionCache.get(key)
+        if (!promise) {
+            promise = rawDefinition(doc, pos)
+            definitionCache.set(key, promise)
+        }
+        return promise
     }
 
     /**
@@ -224,28 +292,6 @@ export function createProviders({
         references: asyncGeneratorFromPromise(references),
         hover: asyncGeneratorFromPromise(hover),
     }
-}
-
-/**
- * Retrieve the text of the current text document. This may be cached on the text
- * document itself. If it's not, we fetch it from the Raw API.
- *
- * @param args Parameter bag
- */
-function getFileContent({
-    uri,
-    text,
-}: {
-    /** The URI of the text document to fetch. */
-    uri: string
-    /** Possibly cached text from a previous query. */
-    text?: string
-}): Promise<string | undefined> {
-    if (text) {
-        return Promise.resolve(text)
-    }
-    const { repo, commit, path } = parseGitURI(new URL(uri))
-    return getFileContentFromApi(repo, commit, path)
 }
 
 /**
