@@ -344,7 +344,7 @@ export function searchWithFallback<
 ): Promise<R> {
     const { repo, commit, query } = args
     const unindexedQuery = negateRepoFilter
-        ? `${query} -repo:^${repo}$`  // commit does not apply to a different repository
+        ? `${query} -repo:^${repo}$` // commit does not apply to a different repository
         : `${query} repo:^${repo}$@${commit}`
     const indexedQuery = negateRepoFilter
         ? `${query} -repo:^${repo}$ index:only`
