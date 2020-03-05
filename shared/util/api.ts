@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
-import { rawQueryGraphQL } from './graphql'
+import { queryGraphQL } from './graphql'
 import { isDefined, sortUnique } from './helpers'
 
 /**
@@ -22,7 +22,7 @@ export async function resolveRepo(cloneURL: string): Promise<string> {
         repository: { name: string }
     }
 
-    const data = await rawQueryGraphQL<Response>(query, { cloneURL })
+    const data = await queryGraphQL<Response>(query, { cloneURL })
     return data.repository.name
 }
 
@@ -56,7 +56,7 @@ export async function resolveRev(
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query, { repoName, rev })
+    const data = await queryGraphQL<Response>(query, { repoName, rev })
     return data.repository.commit?.oid
 }
 
@@ -96,7 +96,7 @@ export async function findReposViaSearch(
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query, { query: searchQuery })
+    const data = await queryGraphQL<Response>(query, { query: searchQuery })
     return sortUnique(
         data.search.results.results.map(r => r.repository?.name)
     ).filter(isDefined)
@@ -132,7 +132,7 @@ export async function getExtensionManifests(): Promise<string[]> {
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query)
+    const data = await queryGraphQL<Response>(query)
     return data.extensionRegistry.extensions.nodes
         .map(e => e.manifest?.raw)
         .filter(isDefined)
@@ -156,7 +156,7 @@ export async function productVersion(): Promise<string> {
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query)
+    const data = await queryGraphQL<Response>(query)
     return data.site.productVersion
 }
 
@@ -178,7 +178,7 @@ export async function getUser(): Promise<string | undefined> {
         currentUser?: { id: string }
     }
 
-    const data = await rawQueryGraphQL<Response>(query)
+    const data = await queryGraphQL<Response>(query)
     return data.currentUser?.id
 }
 
@@ -211,7 +211,7 @@ export async function createAccessToken(
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query, {
+    const data = await queryGraphQL<Response>(query, {
         user,
         note,
         scopes: ['user:all'],
@@ -253,7 +253,7 @@ export async function getFileContent(
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query, { repo, rev, path })
+    const data = await queryGraphQL<Response>(query, { repo, rev, path })
     return data.repository.commit?.file?.content
 }
 
@@ -361,6 +361,6 @@ export async function search(
         }
     }
 
-    const data = await rawQueryGraphQL<Response>(query, { query: searchQuery })
+    const data = await queryGraphQL<Response>(query, { query: searchQuery })
     return data.search.results.results.filter(isDefined)
 }

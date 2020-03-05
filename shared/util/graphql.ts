@@ -12,37 +12,13 @@ interface GraphQLResponseError {
     errors: Error[]
 }
 
-const cache = new Map<string, unknown>()
-
 /**
- * Perform a cached GraphQL query via the extension host.
+ * Perform a GraphQL query via the extension host.
  *
  * @param query The GraphQL query string.
  * @param vars The query variables.
  */
 export async function queryGraphQL<T>(
-    query: string,
-    vars: { [name: string]: unknown } = {}
-): Promise<T> {
-    const key = JSON.stringify({ query, vars })
-    const hit = cache.get(key) as T
-    if (hit) {
-        return hit
-    }
-
-    // TODO - use lru cache or something
-    const response = await rawQueryGraphQL<T>(query, vars)
-    cache.set(key, response)
-    return response
-}
-
-/**
- * Perform an uncached GraphQL query via the extension host.
- *
- * @param query The GraphQL query string.
- * @param vars The query variables.
- */
-export async function rawQueryGraphQL<T>(
     query: string,
     vars: { [name: string]: unknown } = {}
 ): Promise<T> {
