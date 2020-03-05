@@ -12,7 +12,7 @@ import { LocationConnectionNode, nodeToLocation } from './conversion'
  * relatively low unless it's a VERY popular library and LSIF data is
  * ubiquitous (which is our goal).
  */
-const MAX_REFERENCE_PAGE_REQUESTS = 20
+const MAX_REFERENCE_PAGE_REQUESTS = 5
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
