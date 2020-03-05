@@ -151,7 +151,7 @@ export function createProviders({
         // in the index permanently.
         const otherRepoReferences = isSourcegraphDotCom()
             ? Promise.resolve([])
-            : searchReferences({ query: `${query} -repo:^${repo}$` })
+            : searchReferences({ query: `${query} -repo:^${repo}$ index:only` })
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
