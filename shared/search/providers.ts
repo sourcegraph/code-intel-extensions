@@ -17,9 +17,6 @@ import { definitionQuery, referencesQuery } from './queries'
 import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
 
-/** The number of elements in the document LRU cache. */
-const DOCUMENT_CACHE_SIZE = 50
-
 /** The number of elements in the definition LRU cache. */
 const DEFINITION_CACHE_SIZE = 50
 
@@ -35,16 +32,9 @@ export function createProviders({
     identCharPattern,
     filterDefinitions = results => results,
 }: LanguageSpec): Providers {
-    const documentCache = new LRUCache<string, Promise<string | undefined>>(
-        DOCUMENT_CACHE_SIZE
-    )
-
     /**
      * Retrieve the text of the current text document. This may be cached on the
-     * text document itself. If it's not, we fetch it from the Raw API. Keep the
-     * file content around in a small LRU cache. The cache does not need to be
-     * large as this method only fetches document contents for the current document
-     * and a definition document to resolve hover text.
+     * text document itself. If it's not, we fetch it from the Raw API.
      *
      * @param uri The URI of the text document to fetch.
      */
@@ -57,15 +47,10 @@ export function createProviders({
         /** Possibly cached text from a previous query. */
         text?: string
     }): Promise<string | undefined> => {
-        let promise = documentCache.get(uri)
-        if (!promise) {
-            const { repo, commit, path } = parseGitURI(new URL(uri))
-            promise = text
-                ? Promise.resolve(text)
-                : getFileContentFromApi(repo, commit, path)
-            documentCache.set(uri, promise)
-        }
-        return promise
+        const { repo, commit, path } = parseGitURI(new URL(uri))
+        return text
+            ? Promise.resolve(text)
+            : getFileContentFromApi(repo, commit, path)
     }
 
     /**
