@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { Providers } from '../providers'
-import { queryGraphQL } from '../util/graphql'
+import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { asyncGeneratorFromPromise, concat } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { LocationConnectionNode, nodeToLocation } from './conversion'
@@ -13,12 +13,6 @@ import { LocationConnectionNode, nodeToLocation } from './conversion'
  * ubiquitous (which is our goal).
  */
 export const MAX_REFERENCE_PAGE_REQUESTS = 10
-
-/** The type of the mockable queryGraphQL function. */
-export type MockQueryGraphQL<T> = (
-    query: string,
-    vars?: { [name: string]: unknown }
-) => Promise<GenericLSIFResponse<T>>
 
 /** The response envelope for all LSIF queries. */
 export interface GenericLSIFResponse<R> {
@@ -35,15 +29,15 @@ export interface GenericLSIFResponse<R> {
  * Creates providers powered by LSIF-based code intelligence. This particular
  * set of providers will use the GraphQL API.
  *
- * @param mockQueryGraphQL A test version of queryGraphQL.
+ * @param queryGraphQL The function used to query the GraphQL API.
  */
 export function createProviders(
-    mockQueryGraphQL: MockQueryGraphQL<any> = queryGraphQL
+    queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL
 ): Providers {
     return {
-        definition: asyncGeneratorFromPromise(definition(mockQueryGraphQL)),
-        references: references(mockQueryGraphQL),
-        hover: asyncGeneratorFromPromise(hover(mockQueryGraphQL)),
+        definition: asyncGeneratorFromPromise(definition(queryGraphQL)),
+        references: references(queryGraphQL),
+        hover: asyncGeneratorFromPromise(hover(queryGraphQL)),
     }
 }
 
@@ -53,7 +47,7 @@ export interface DefinitionResponse {
 
 /** Retrieve a definition for the current hover position. */
 function definition(
-    mockQueryGraphQL: MockQueryGraphQL<DefinitionResponse | null> = queryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
 ): (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -100,7 +94,7 @@ function definition(
 
         const lsifObj: DefinitionResponse | null = await queryLSIF(
             { doc, position, query },
-            mockQueryGraphQL
+            queryGraphQL
         )
         return lsifObj?.definitions.nodes.map(nodeToLocation) || null
     }
@@ -117,7 +111,7 @@ export interface ReferencesResponse {
 
 /** Retrieve references for the current hover position. */
 function references(
-    mockQueryGraphQL: MockQueryGraphQL<ReferencesResponse | null> = queryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
 ): (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -181,7 +175,7 @@ function references(
                     query,
                     after,
                 },
-                mockQueryGraphQL
+                queryGraphQL
             )
             if (!lsifObj) {
                 return
@@ -213,7 +207,7 @@ export interface HoverResponse {
 
 /** Retrieve hover text for the current hover position. */
 function hover(
-    mockQueryGraphQL: MockQueryGraphQL<HoverResponse | null> = queryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>
 ): (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -256,7 +250,7 @@ function hover(
                 position,
                 query,
             },
-            mockQueryGraphQL
+            queryGraphQL
         )
 
         if (!lsifObj || !lsifObj.hover) {
@@ -277,7 +271,7 @@ function hover(
  * Perform an LSIF request to the GraphQL API.
  *
  * @param args Parameter bag.
- * @param mockQueryGraphQL A test version of queryGraphQL.
+ * @param queryGraphQL The function used to query the GraphQL API.
  */
 async function queryLSIF<
     P extends {
@@ -297,7 +291,7 @@ async function queryLSIF<
         /** Additional query parameters. */
         ...rest
     }: P,
-    mockQueryGraphQL: MockQueryGraphQL<R> = queryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<R>>
 ): Promise<R | null> {
     const { repo, commit, path } = parseGitURI(new URL(doc.uri))
     const queryArgs = {
@@ -309,6 +303,6 @@ async function queryLSIF<
         ...rest,
     }
 
-    const data = await mockQueryGraphQL(query, queryArgs)
+    const data = await queryGraphQL(query, queryArgs)
     return data.repository.commit.blob.lsif
 }

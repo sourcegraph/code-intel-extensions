@@ -12,6 +12,12 @@ interface GraphQLResponseError {
     errors: Error[]
 }
 
+/** The generic type of the queryGraphQL function. */
+export type QueryGraphQLFn<T> = (
+    query: string,
+    vars?: { [name: string]: unknown }
+) => Promise<T>
+
 /**
  * Perform a GraphQL query via the extension host.
  *

@@ -2,13 +2,13 @@ import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import * as assert from 'assert'
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+import { QueryGraphQLFn } from '../util/graphql'
 import {
     createProviders,
     DefinitionResponse,
     GenericLSIFResponse,
     HoverResponse,
     MAX_REFERENCE_PAGE_REQUESTS,
-    MockQueryGraphQL,
     ReferencesResponse,
 } from './graphql'
 
@@ -49,8 +49,8 @@ const makeEnvelope = <R>(
 describe('graphql providers', () => {
     describe('definition provider', () => {
         it('should correctly parse result', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<DefinitionResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
             >(() =>
                 makeEnvelope({
                     definitions: {
@@ -65,7 +65,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).definition(doc, pos)
+                    createProviders(queryGraphQLFn).definition(doc, pos)
                 ),
                 [
                     [
@@ -87,13 +87,13 @@ describe('graphql providers', () => {
         })
 
         it('should deal with empty payload', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<DefinitionResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
             >(() => makeEnvelope())
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).definition(doc, pos)
+                    createProviders(queryGraphQLFn).definition(doc, pos)
                 ),
                 [null]
             )
@@ -102,8 +102,8 @@ describe('graphql providers', () => {
 
     describe('references provider', () => {
         it('should correctly parse result', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<ReferencesResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
             >(() =>
                 makeEnvelope({
                     references: {
@@ -119,7 +119,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(doc, pos, {
                         includeDeclaration: false,
                     })
                 ),
@@ -143,13 +143,13 @@ describe('graphql providers', () => {
         })
 
         it('should deal with empty payload', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<ReferencesResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
             >(() => makeEnvelope())
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(doc, pos, {
                         includeDeclaration: false,
                     })
                 ),
@@ -159,11 +159,19 @@ describe('graphql providers', () => {
 
         it('should paginate results', async () => {
             const stub = sinon.stub<
-                Parameters<MockQueryGraphQL<ReferencesResponse | null>>,
-                ReturnType<MockQueryGraphQL<ReferencesResponse | null>>
+                Parameters<
+                    QueryGraphQLFn<
+                        GenericLSIFResponse<ReferencesResponse | null>
+                    >
+                >,
+                ReturnType<
+                    QueryGraphQLFn<
+                        GenericLSIFResponse<ReferencesResponse | null>
+                    >
+                >
             >()
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<ReferencesResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
             >(stub)
 
             stub.onCall(0).returns(
@@ -206,7 +214,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(doc, pos, {
                         includeDeclaration: false,
                     })
                 ),
@@ -217,14 +225,14 @@ describe('graphql providers', () => {
                 ]
             )
 
-            assert.equal(mockQueryGraphQL.getCall(0).args[1]?.after, undefined)
-            assert.equal(mockQueryGraphQL.getCall(1).args[1]?.after, 'page2')
-            assert.equal(mockQueryGraphQL.getCall(2).args[1]?.after, 'page3')
+            assert.equal(queryGraphQLFn.getCall(0).args[1]?.after, undefined)
+            assert.equal(queryGraphQLFn.getCall(1).args[1]?.after, 'page2')
+            assert.equal(queryGraphQLFn.getCall(2).args[1]?.after, 'page3')
         })
 
         it('should not page results indefinitely', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<ReferencesResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
             >(() =>
                 makeEnvelope({
                     references: {
@@ -248,24 +256,21 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(doc, pos, {
                         includeDeclaration: false,
                     })
                 ),
                 values
             )
 
-            assert.equal(
-                mockQueryGraphQL.callCount,
-                MAX_REFERENCE_PAGE_REQUESTS
-            )
+            assert.equal(queryGraphQLFn.callCount, MAX_REFERENCE_PAGE_REQUESTS)
         })
     })
 
     describe('hover provider', () => {
         it('should correctly parse result', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<HoverResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>
             >(() =>
                 makeEnvelope({
                     hover: {
@@ -277,7 +282,7 @@ describe('graphql providers', () => {
 
             assert.deepStrictEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).hover(doc, pos)
+                    createProviders(queryGraphQLFn).hover(doc, pos)
                 ),
                 [
                     {
@@ -292,13 +297,13 @@ describe('graphql providers', () => {
         })
 
         it('should deal with empty payload', async () => {
-            const mockQueryGraphQL = sinon.spy<
-                MockQueryGraphQL<HoverResponse | null>
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>
             >(() => makeEnvelope())
 
             assert.deepStrictEqual(
                 await gatherValues(
-                    createProviders(mockQueryGraphQL).hover(doc, pos)
+                    createProviders(queryGraphQLFn).hover(doc, pos)
                 ),
                 [null]
             )
