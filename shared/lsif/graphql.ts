@@ -1,7 +1,11 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { Providers } from '../providers'
-import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
+import {
+    gql,
+    queryGraphQL as sgQueryGraphQL,
+    QueryGraphQLFn,
+} from '../util/graphql'
 import { asyncGeneratorFromPromise, concat } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { LocationConnectionNode, nodeToLocation } from './conversion'
@@ -56,13 +60,22 @@ function definition(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
-        const query = `
-            query Definitions($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        const query = gql`
+            query Definitions(
+                $repository: String!
+                $commit: String!
+                $path: String!
+                $line: Int!
+                $character: Int!
+            ) {
                 repository(name: $repository) {
                     commit(rev: $commit) {
                         blob(path: $path) {
                             lsif {
-                                definitions(line: $line, character: $character) {
+                                definitions(
+                                    line: $line
+                                    character: $character
+                                ) {
                                     nodes {
                                         resource {
                                             path
@@ -120,13 +133,24 @@ function references(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-        const query = `
-            query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!, $after: String) {
+        const query = gql`
+            query References(
+                $repository: String!
+                $commit: String!
+                $path: String!
+                $line: Int!
+                $character: Int!
+                $after: String
+            ) {
                 repository(name: $repository) {
                     commit(rev: $commit) {
                         blob(path: $path) {
                             lsif {
-                                references(line: $line, character: $character, after: $after) {
+                                references(
+                                    line: $line
+                                    character: $character
+                                    after: $after
+                                ) {
                                     nodes {
                                         resource {
                                             path
@@ -216,8 +240,14 @@ function hover(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
-        const query = `
-            query Hover($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        const query = gql`
+            query Hover(
+                $repository: String!
+                $commit: String!
+                $path: String!
+                $line: Int!
+                $character: Int!
+            ) {
                 repository(name: $repository) {
                     commit(rev: $commit) {
                         blob(path: $path) {

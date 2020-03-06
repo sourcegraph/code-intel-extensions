@@ -49,3 +49,8 @@ function aggregateErrors(errors: Error[]): Error {
         errors,
     })
 }
+
+export const gql = (
+    template: TemplateStringsArray,
+    ...substitutions: any[]
+): string => String.raw(template, ...substitutions)
