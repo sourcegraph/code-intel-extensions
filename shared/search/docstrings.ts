@@ -210,10 +210,7 @@ function findDocstringInBlockComment({
     }
 
     // Drop any leading ignored content between the definition and the docstring
-    const cleanLines = dropWhile(
-        lines,
-        line => docstringIgnore?.test(line)
-    )
+    const cleanLines = dropWhile(lines, line => docstringIgnore?.test(line))
 
     // Check for starting delimiter
     if (!cleanLines[0] || !startRegex.test(cleanLines[0])) {
