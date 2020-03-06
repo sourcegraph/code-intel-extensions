@@ -514,6 +514,9 @@ export function scopeDocumentSelectorToRoot(
             ...filter,
             // TODO filter.pattern needs to be run resolved relative to server root URI before
             // mounting on clientRootUri
-            pattern: new URL(filter.pattern ?? '**', clientRootUri).href,
+
+            // Root URIs are of the form git://repo?commit-sha, so new URL(pattern, URI) would
+            // strip the query string, resulting in a pattern that matches any commit ID.
+            pattern: `${clientRootUri.href}#${filter.pattern ?? '**/**'}`,
         }))
 }

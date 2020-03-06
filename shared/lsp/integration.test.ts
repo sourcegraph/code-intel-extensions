@@ -46,7 +46,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
     })
 
 describe('register()', () => {
-    it('should initialize one connection for each workspace folder', async () => {
+    it('should initialize one connection for each workspace folder if the server is not multi-root capable', async () => {
         const sourcegraph = createStubSourcegraphAPI()
         sourcegraph.workspace.roots = [
             { uri: new URL('git://repo1?rev') },
@@ -112,7 +112,7 @@ describe('register()', () => {
         sinon.assert.calledOnce(createConnection.returnValues[0].unsubscribe)
     })
     it('should register a references provider if the server reports the references capability', async () => {
-        const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
+        const repoRoot = new URL('git://sourcegraph.test/repo?rev')
         const server = {
             initialize: sinon.spy(
                 (params: lsp.InitializeParams): lsp.InitializeResult => ({
@@ -179,7 +179,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                pattern: 'git://sourcegraph.test/repo?rev#**/**',
             },
         ])
         const result = await consume(
@@ -206,7 +206,7 @@ describe('register()', () => {
         ])
     })
     it('should register a definition provider if the server reports the definition capability', async () => {
-        const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
+        const repoRoot = new URL('git://host.name/author/repo?rev')
         const server = {
             initialize: sinon.spy(
                 (params: lsp.InitializeParams): lsp.InitializeResult => ({
@@ -267,7 +267,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                pattern: 'git://host.name/author/repo?rev#**/**',
             },
         ])
         const result = await consume(
@@ -292,7 +292,7 @@ describe('register()', () => {
         ])
     })
     it('should register a hover provider if the server reports the hover capability', async () => {
-        const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
+        const repoRoot = new URL('git://host.name/author/repo?rev')
         const server = {
             initialize: sinon.spy(
                 async (
@@ -358,10 +358,11 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                // IF we're in multi-connection mode, the document
+                // If the server is not multi-root capable and
+                // we're in multi-connection mode, the document
                 // selector should be scoped to the root URI
                 // of the connection that registered the provider
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                pattern: 'git://host.name/author/repo?rev#**/**',
             },
         ])
         const result = await consume(
@@ -382,7 +383,7 @@ describe('register()', () => {
     })
 
     it('should register a location provider if the server reports the implementation capability', async () => {
-        const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
+        const repoRoot = new URL('git://host.name/author/repo?rev')
         const server = {
             initialize: sinon.spy(
                 (params: lsp.InitializeParams): lsp.InitializeResult => ({
@@ -450,7 +451,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                pattern: 'git://host.name/author/repo?rev#**/**',
             },
         ])
         const result = await consume(
