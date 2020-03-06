@@ -14,8 +14,7 @@
   "scripts": {
     "prettier": "prettier --write --list-different '**/*.{ts,js?(on),md,yml}'",
     "prettier-check": "yarn run prettier --write=false",
-    "tslint": "tslint -p tsconfig.json --format stylish",
-    "eslint": "eslint --cache '**/*.ts?(x)'",
+    "eslint": "eslint '**/*.ts?(x)'",
     "test": "nyc --reporter=lcov mocha '**/*.test.ts'",
     "coverage": "codecov",
     "deduplicate": "yarn-deduplicate -s fewer",
@@ -78,7 +77,6 @@
     "parcel-bundler": "^1.12.4",
     "prettier": "^1.19.1",
     "ts-node": "^8.6.2",
-    "tslint": "^5.20.1",
     "typescript": "^3.8.3",
     "yarn-deduplicate": "^2.0.0"
   },

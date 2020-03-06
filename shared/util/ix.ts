@@ -48,6 +48,7 @@ export const observableFromAsyncIterator = <T>(
                     } else {
                         observer.next(result.value)
                         next()
+                        return
                     }
                 },
                 err => {

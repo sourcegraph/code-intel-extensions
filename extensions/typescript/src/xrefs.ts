@@ -133,10 +133,10 @@ async function getDefinition(
         position,
     }
 
-    const result = await client.withConnection(
+    const result: DefinitionResult = await client.withConnection(
         workspaceRoot,
         async connection =>
-            (await connection.sendRequest<any, DefinitionResult>(
+            (await connection.sendRequest(
                 lsp.DefinitionRequest.type,
                 params
             )) || []
@@ -153,7 +153,11 @@ async function findExternalRefsInDependent(
     definition: lsp.Location
 ): Promise<sourcegraph.Location[]> {
     const commit = await resolveRev(repoName, 'HEAD')
+    if (!commit) {
+        return []
+    }
     const rootUri = new URL(
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         `${repoName}@${commit}/-/raw/`,
         sourcegraphServerURL
     )
@@ -172,7 +176,7 @@ async function findExternalRefsInDependent(
     const results = await client.withConnection(
         workspaceRoot,
         async connection =>
-            (await connection.sendRequest<any, lsp.Location[] | null>(
+            (await connection.sendRequest(
                 lsp.ReferencesRequest.type,
                 params
             )) || []

@@ -89,7 +89,7 @@ export function createProviders({
      * Retrieve a definition for the current hover position.
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
     const rawDefinition = async (
         doc: sourcegraph.TextDocument,
@@ -156,7 +156,7 @@ export function createProviders({
      * being made at the same time (one for a def and one for hover).
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
     const definition = async (
         doc: sourcegraph.TextDocument,
@@ -176,7 +176,7 @@ export function createProviders({
      * Retrieve references for the current hover position.
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
     const references = async (
         doc: sourcegraph.TextDocument,
@@ -223,7 +223,7 @@ export function createProviders({
      * Retrieve hover text for the current hover position.
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
     const hover = async (
         doc: sourcegraph.TextDocument,
