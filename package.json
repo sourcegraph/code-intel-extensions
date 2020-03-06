@@ -60,7 +60,7 @@
     "@types/mocha": "7.0.2",
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.0",
-    "@types/node": "13.7.7",
+    "@types/node": "13.9.0",
     "@types/semver": "7.1.0",
     "@types/uuid": "7.0.0",
     "@types/whatwg-url": "6.4.0",
