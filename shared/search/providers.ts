@@ -522,7 +522,7 @@ export async function raceWithDelayOffset<T>(
         return results
     }
 
-    return await Promise.race([primary, fallback()])
+    return Promise.race([primary, fallback()])
 }
 
 /**

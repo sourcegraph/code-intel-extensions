@@ -177,7 +177,7 @@ export async function register({
         const subscriptions = new Subscription()
         const decorationType = sourcegraph.app.createDecorationType()
         const connection = await createConnection()
-        logger.log(`WebSocket connection to language server opened`)
+        logger.log('WebSocket connection to language server opened')
         subscriptions.add(
             connection
                 .observeNotification(lsp.LogMessageNotification.type)
@@ -366,7 +366,7 @@ export async function register({
     withConnection = async (workspaceFolder, fn) => {
         let connection = await connectionsByRootUri.get(workspaceFolder.href)
         if (connection) {
-            return await fn(connection)
+            return fn(connection)
         }
         const serverRootUri = clientToServerURI(workspaceFolder)
         connection = await connect({
@@ -387,7 +387,7 @@ export async function register({
             connection.unsubscribe()
         }
     }
-    function addRoots(added: ReadonlyArray<sourcegraph.WorkspaceRoot>): void {
+    function addRoots(added: readonly sourcegraph.WorkspaceRoot[]): void {
         for (const root of added) {
             const connectionPromise = (async () => {
                 try {

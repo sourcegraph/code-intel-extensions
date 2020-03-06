@@ -108,7 +108,7 @@ function kindOf(line: string): LineKind | undefined {
     if (/^[^\s]/.test(line)) {
         return 'prose'
     }
-    if (/^(  |>).*[^\s]/.test(line)) {
+    if (/^( {2}|>).*[^\s]/.test(line)) {
         return 'code'
     }
     return undefined
