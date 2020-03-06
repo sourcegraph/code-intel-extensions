@@ -157,6 +157,7 @@ async function findExternalRefsInDependent(
         return []
     }
     const rootUri = new URL(
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         `${repoName}@${commit}/-/raw/`,
         sourcegraphServerURL
     )
