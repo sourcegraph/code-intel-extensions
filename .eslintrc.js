@@ -5,7 +5,7 @@ module.exports = {
     node: true,
   },
   parserOptions: {
-    project: 'tsconfig.json',
+    project: ['extensions/**/tsconfig.json', 'shared/tsconfig.json'],
   },
   ignorePatterns: ['temp'],
   rules: {},

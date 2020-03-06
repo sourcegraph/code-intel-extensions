@@ -172,7 +172,7 @@ function findDocstringInLineComments({
 
     const docLines = takeWhile(
         // Drop any leading ignored content between the definition and the docstring
-        dropWhile(lines, line => docstringIgnore && docstringIgnore.test(line)),
+        dropWhile(lines, line => docstringIgnore?.test(line)),
         // Eat all comment lines following the definition
         line => pattern.test(line)
     )
@@ -212,7 +212,7 @@ function findDocstringInBlockComment({
     // Drop any leading ignored content between the definition and the docstring
     const cleanLines = dropWhile(
         lines,
-        line => docstringIgnore && docstringIgnore.test(line)
+        line => docstringIgnore?.test(line)
     )
 
     // Check for starting delimiter
