@@ -46,7 +46,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
     })
 
 describe('register()', () => {
-    it('should initialize one connection for each workspace folder if the server is not multi-root capable', async () => {
+    it('should initialize one connection for each workspace folder', async () => {
         const sourcegraph = createStubSourcegraphAPI()
         sourcegraph.workspace.roots = [
             { uri: new URL('git://repo1?rev') },
