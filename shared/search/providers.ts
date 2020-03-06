@@ -79,35 +79,35 @@ export function createProviders({
 
         // Construct base definition query without scoping terms
         const query = definitionQuery({ searchToken, doc, fileExts })
+        const queryArgs = {
+            doc,
+            repo,
+            commit,
+            path,
+            text,
+            filterDefinitions,
+            query,
+        }
+
+        const doSearch = (
+            negateRepoFilter: boolean
+        ): Promise<sourcegraph.Location[]> =>
+            searchWithFallback(
+                searchAndFilterDefinitions,
+                queryArgs,
+                negateRepoFilter
+            )
 
         // Perform a search in the current git tree
-        const sameRepoDefinitions = searchWithFallback(
-            searchAndFilterDefinitions,
-            {
-                doc,
-                repo,
-                commit,
-                path,
-                text,
-                filterDefinitions,
-                query,
-            }
-        )
+        const sameRepoDefinitions = doSearch(false)
 
         // Perform an indexed search over all repositories. Do not do this
         // on the DotCom instance as we are unlikely to have indexed the
         // relevant definition and we'd end up jumping to what would seem
         // like a random line of code.
-        const anyRepoDefinitions = isSourcegraphDotCom()
+        const remoteRepoDefinitions = isSourcegraphDotCom()
             ? Promise.resolve([])
-            : searchAndFilterDefinitions({
-                  doc,
-                  repo,
-                  path,
-                  text,
-                  filterDefinitions,
-                  query,
-              })
+            : doSearch(true)
 
         // Return any local location definitions first
         const results = await sameRepoDefinitions
@@ -116,7 +116,7 @@ export function createProviders({
         }
 
         // Fallback to definitions found in any other repository
-        return anyRepoDefinitions
+        return remoteRepoDefinitions
     }
 
     /**
@@ -138,24 +138,30 @@ export function createProviders({
 
         // Construct base references query without scoping terms
         const query = referencesQuery({ searchToken, doc, fileExts })
-
-        // Perform a search in the current git tree
-        const sameRepoReferences = searchWithFallback(searchReferences, {
+        const queryArgs = {
             repo,
             commit,
             query,
-        })
+        }
+
+        const doSearch = (
+            negateRepoFilter: boolean
+        ): Promise<sourcegraph.Location[]> =>
+            searchWithFallback(searchReferences, queryArgs, negateRepoFilter)
+
+        // Perform a search in the current git tree
+        const sameRepoReferences = doSearch(false)
 
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
-        const otherRepoReferences = isSourcegraphDotCom()
+        const remoteRepoReferences = isSourcegraphDotCom()
             ? Promise.resolve([])
-            : searchReferences({ query: `${query} -repo:^${repo}$` })
+            : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
-        const referenceChunk = [sameRepoReferences, otherRepoReferences]
+        const referenceChunk = [sameRepoReferences, remoteRepoReferences]
         const mergedReferences = flatten(await Promise.all(referenceChunk))
         return sortByProximity(mergedReferences, new URL(doc.uri))
     }
@@ -315,7 +321,8 @@ async function searchReferences({
 /**
  * Invoke the given search function by modifying the query with a term that will
  * only look in the current git tree by appending a repo filter with the repo name
- * and the current commit.
+ * and the current commit or, if `negateRepoFilter` is set, outside of current git
+ * tree.
  *
  * This is likely to timeout on large repos or organizations with monorepos if the
  * current commit is not an indexed commit. Instead of waiting for a timeout, we
@@ -330,10 +337,18 @@ async function searchReferences({
 export function searchWithFallback<
     P extends { repo: string; commit: string; query: string },
     R
->(search: (args: P) => Promise<R>, args: P): Promise<R> {
+>(
+    search: (args: P) => Promise<R>,
+    args: P,
+    negateRepoFilter = false
+): Promise<R> {
     const { repo, commit, query } = args
-    const unindexedQuery = `${query} repo:^${repo}$@${commit}`
-    const indexedQuery = `${query} repo:^${repo}$ index:only`
+    const unindexedQuery = negateRepoFilter
+        ? `${query} -repo:^${repo}$` // commit does not apply to a different repository
+        : `${query} repo:^${repo}$@${commit}`
+    const indexedQuery = negateRepoFilter
+        ? `${query} -repo:^${repo}$ index:only`
+        : `${query} repo:^${repo}$ index:only`
 
     if (getConfig('basicCodeIntel.indexOnly', false)) {
         return search({
