@@ -71,7 +71,7 @@ function categorize(
     const reducer = (
         last: LineKind | undefined,
         line: { line: string; kind: LineKind | undefined }
-    ) => {
+    ): LineKind | undefined => {
         line.kind = line.kind || (last === 'prose' ? 'prose' : undefined)
         return line.kind
     }

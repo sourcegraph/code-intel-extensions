@@ -12,13 +12,13 @@ export interface PackageJson {
  *
  * @param rawManifest The unparsed manifest.
  */
-export async function resolvePackageRepo(
+export function resolvePackageRepo(
     rawManifest: string,
     repoResolver: (cloneURL: string) => Promise<string> = resolveRepo
 ): Promise<string | undefined> {
     const packageJson: PackageJson = JSON.parse(rawManifest)
     if (!packageJson.repository) {
-        return undefined
+        return Promise.resolve(undefined)
     }
 
     return safePromise(repoResolver)(
@@ -96,5 +96,7 @@ export async function findPackageName(
         }
     }
 
-    throw new Error(`No package.json found for ${uri} under root ${rootUri}`)
+    throw new Error(
+        `No package.json found for ${uri.href} under root ${rootUri.href}`
+    )
 }

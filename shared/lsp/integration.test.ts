@@ -25,6 +25,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
         let closed = false
         return {
             sendNotification: sinon.spy(),
+            // eslint-disable-next-line @typescript-eslint/require-await
             sendRequest: sinon.spy(async ({ method }, params) => {
                 if (method in server) {
                     return (server as any)[method](params)
@@ -297,6 +298,7 @@ describe('register()', () => {
             initialize: sinon.spy(
                 async (
                     params: lsp.InitializeParams
+                    // eslint-disable-next-line @typescript-eslint/require-await
                 ): Promise<lsp.InitializeResult> => ({
                     capabilities: {
                         hoverProvider: true,
@@ -306,6 +308,7 @@ describe('register()', () => {
             'textDocument/hover': sinon.spy(
                 async (
                     params: lsp.TextDocumentPositionParams
+                    // eslint-disable-next-line @typescript-eslint/require-await
                 ): Promise<lsp.Hover> => ({
                     contents: {
                         kind: lsp.MarkupKind.Markdown,

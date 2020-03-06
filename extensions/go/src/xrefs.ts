@@ -27,13 +27,16 @@ interface Xreference {
     currentDocURI: string
 }
 
-const xdefinitionRequestType = new lsp.RequestType<any, any, any, void>(
-    'textDocument/xdefinition'
-)
+const xdefinitionRequestType = new lsp.RequestType<
+    lsp.TextDocumentPositionParams,
+    { symbol: SymbolDescriptor }[] | null,
+    any,
+    void
+>('textDocument/xdefinition')
 
 const xdefinitionWorkspaceRequestType = new lsp.RequestType<
-    any,
-    any,
+    { query: SymbolDescriptor; limit?: number },
+    Xreference[] | null,
     any,
     void
 >('workspace/xreferences')
@@ -67,7 +70,7 @@ export function createExternalReferencesProvider({
         }
 
         // TODO - support named imports
-        return findReposViaSearch(`file:\.go$ \t"${packageName}" max:${limit}`)
+        return findReposViaSearch(`file:\\.go$ \t"${packageName}" max:${limit}`)
     }
 
     return async function*(
@@ -120,10 +123,7 @@ function getDefinition(
     return client.withConnection(
         workspaceRoot,
         async conn =>
-            (await conn.sendRequest<any, { symbol: SymbolDescriptor }[] | null>(
-                xdefinitionRequestType,
-                params
-            )) || []
+            (await conn.sendRequest(xdefinitionRequestType, params)) || []
     )
 }
 
@@ -143,10 +143,8 @@ async function findExternalRefsInDependent(
     const results = await client.withConnection(
         workspaceRoot,
         async conn =>
-            (await conn.sendRequest<any, Xreference[] | null>(
-                xdefinitionWorkspaceRequestType,
-                params
-            )) || []
+            (await conn.sendRequest(xdefinitionWorkspaceRequestType, params)) ||
+            []
     )
 
     return results.map(

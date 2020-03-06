@@ -46,7 +46,7 @@ const features = {
     [implementationFeature.requestType.method]: implementationFeature,
 }
 
-// tslint:disable-next-line:no-object-literal-type-assertion
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const clientCapabilities = {
     textDocument: {
         hover: {
@@ -76,7 +76,7 @@ export interface RegisterOptions {
     logger?: Logger
     transport: () => Promise<LSPConnection> | LSPConnection
     documentSelector: sourcegraph.DocumentSelector
-    initializationOptions?: any
+    initializationOptions?: unknown
     providerWrapper: ProviderWrapper
     featureOptions?: Observable<FeatureOptions>
     cancellationToken?: lsp.CancellationToken
@@ -262,7 +262,7 @@ export async function register({
         subscriptions.add(() => {
             // Cleanup unfinished progress reports
             for (const reporterPromise of progressReporters.values()) {
-                // tslint:disable-next-line:no-floating-promises
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 reporterPromise.then(reporter => {
                     reporter.complete()
                 })
@@ -272,11 +272,13 @@ export async function register({
         subscriptions.add(
             connection
                 .observeNotification(WindowProgressNotification.type)
+                // Exceptions are handled in try/catch
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 .subscribe(async ({ id, title, message, percentage, done }) => {
                     try {
                         if (
-                            !sourcegraph.app.activeWindow ||
-                            !sourcegraph.app.activeWindow.showProgress
+                            typeof sourcegraph.app.activeWindow
+                                ?.showProgress !== 'function'
                         ) {
                             return
                         }
@@ -354,16 +356,15 @@ export async function register({
         }
     }
 
-    let withConnection: <R>(
-        workspaceFolder: URL,
-        fn: (connection: LSPConnection) => Promise<R>
-    ) => Promise<R>
-
     // Supports only one workspace root
     // TODO this should store a refcount to avoid closing connections other consumers have a reference to
     /** Map from client root URI to connection */
     const connectionsByRootUri = new Map<string, Promise<LSPConnection>>()
-    withConnection = async (workspaceFolder, fn) => {
+
+    const withConnection = async <R>(
+        workspaceFolder: URL,
+        fn: (connection: LSPConnection) => Promise<R>
+    ): Promise<R> => {
         let connection = await connectionsByRootUri.get(workspaceFolder.href)
         if (connection) {
             return fn(connection)
@@ -387,6 +388,7 @@ export async function register({
             connection.unsubscribe()
         }
     }
+
     function addRoots(added: readonly sourcegraph.WorkspaceRoot[]): void {
         for (const root of added) {
             const connectionPromise = (async () => {
@@ -432,7 +434,7 @@ export async function register({
                     const removed = differenceBy(before, after, root =>
                         root.uri.toString()
                     )
-                    // tslint:disable-next-line no-floating-promises
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.all(
                         removed.map(async root => {
                             try {
@@ -467,9 +469,12 @@ export async function register({
     }
 }
 
-function registrationId(staticOptions: any): string {
+function registrationId(
+    staticOptions: Partial<Pick<lsp.Registration, 'id'>> | boolean | undefined
+): string {
     return (
         (staticOptions &&
+            typeof staticOptions === 'object' &&
             typeof staticOptions.id === 'string' &&
             staticOptions.id) ||
         uuid.v1()
@@ -482,10 +487,11 @@ function staticRegistrationsFromCapabilities(
 ): lsp.Registration[] {
     const staticRegistrations: lsp.Registration[] = []
     for (const feature of Object.values(features)) {
-        if (capabilities[feature.capabilityName]) {
+        const capability = capabilities[feature.capabilityName]
+        if (capability) {
             staticRegistrations.push({
                 method: feature.requestType.method,
-                id: registrationId(capabilities[feature.capabilityName]),
+                id: registrationId(capability),
                 registerOptions: { documentSelector: defaultSelector },
             })
         }

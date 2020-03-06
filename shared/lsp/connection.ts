@@ -40,7 +40,7 @@ export const webSocketTransport = ({
         .toPromise()
     if (event.type === 'error') {
         throw new Error(
-            `The WebSocket to the language server at ${serverUrl} could not not be opened`
+            `The WebSocket to the language server at ${serverUrl.toString()} could not not be opened`
         )
     }
     const rpcWebSocket = jsonrpc.toSocket(socket)
@@ -74,7 +74,7 @@ export const webSocketTransport = ({
         ),
         sendRequest: async (type, params) =>
             connection.sendRequest(type, params, cancellationToken),
-        sendNotification: async (type, params) =>
+        sendNotification: (type, params) =>
             connection.sendNotification(type, params),
         setRequestHandler: (type, handler) =>
             connection.onRequest(type, handler),

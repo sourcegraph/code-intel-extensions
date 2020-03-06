@@ -258,7 +258,7 @@ function getSettings<S extends { [key: string]: any }>(
 /**
  * Return the Sourcegraph URL from the current configuration.
  *
- * @param settings The user configured sourcegraph URL.
+ * @param setting The user configured sourcegraph URL.
  * @param languageID The language identifier.
  */
 function sourcegraphURL(setting: string | undefined, languageID: string): URL {
