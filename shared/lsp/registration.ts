@@ -27,8 +27,6 @@ import {
     WindowProgressNotification,
 } from './protocol.progress.proposed'
 
-type SourcegraphAPI = typeof import('sourcegraph')
-
 export const LSP_TO_LOG_LEVEL: Record<lsp.MessageType, LogLevel> = {
     [lsp.MessageType.Log]: 'log',
     [lsp.MessageType.Info]: 'info',
@@ -72,7 +70,7 @@ const clientCapabilities = {
 
 export interface RegisterOptions {
     progressSuffix?: string
-    sourcegraph: SourcegraphAPI
+    sourcegraph: typeof sourcegraph
     clientToServerURI?: (uri: URL) => URL
     serverToClientURI?: (uri: URL) => URL
     logger?: Logger
