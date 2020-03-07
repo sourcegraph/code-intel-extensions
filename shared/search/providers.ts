@@ -1,12 +1,9 @@
 import { flatten, sortBy } from 'lodash'
-import LRUCache from 'lru-cache'
+// import LRUCache from 'lru-cache'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
-import {
-    getFileContent as getFileContentFromApi,
-    search as searchViaApi,
-} from '../util/api'
+import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI } from '../util/uri'
@@ -18,20 +15,23 @@ import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
 
 /** The number of elements in the definition LRU cache. */
-const DEFINITION_CACHE_SIZE = 50
+// const DEFINITION_CACHE_SIZE = 50
 
 /**
  * Creates providers powered by search-based code intelligence.
  *
  * @param spec The language spec.
  */
-export function createProviders({
-    languageID,
-    fileExts = [],
-    commentStyles,
-    identCharPattern,
-    filterDefinitions = results => results,
-}: LanguageSpec): Providers {
+export function createProviders(
+    {
+        languageID,
+        fileExts = [],
+        commentStyles,
+        identCharPattern,
+        filterDefinitions = results => results,
+    }: LanguageSpec,
+    api: API = new API()
+): Providers {
     /**
      * Retrieve the text of the current text document. This may be cached on the
      * text document itself. If it's not, we fetch it from the Raw API.
@@ -50,7 +50,7 @@ export function createProviders({
         const { repo, commit, path } = parseGitURI(new URL(uri))
         return text
             ? Promise.resolve(text)
-            : getFileContentFromApi(repo, commit, path)
+            : api.getFileContent(repo, commit, path)
     }
 
     /**
@@ -118,7 +118,7 @@ export function createProviders({
             negateRepoFilter: boolean
         ): Promise<sourcegraph.Location[]> =>
             searchWithFallback(
-                searchAndFilterDefinitions,
+                args => searchAndFilterDefinitions(api, args),
                 queryArgs,
                 negateRepoFilter
             )
@@ -144,10 +144,10 @@ export function createProviders({
         return remoteRepoDefinitions
     }
 
-    const definitionCache = new LRUCache<
-        string,
-        Promise<sourcegraph.Definition>
-    >(DEFINITION_CACHE_SIZE)
+    // const definitionCache = new LRUCache<
+    //     string,
+    //     Promise<sourcegraph.Definition>
+    // >(DEFINITION_CACHE_SIZE)
 
     /**
      * Retrieve a definition for the current hover position. Keep the
@@ -162,12 +162,12 @@ export function createProviders({
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
-        const key = [doc.uri, pos.line, pos.character].join(':')
+        // const key = [doc.uri, pos.line, pos.character].join(':')
 
-        let promise = definitionCache.get(key)
+        let promise:Promise<sourcegraph.Definition>|undefined = undefined // definitionCache.get(key)
         if (!promise) {
             promise = rawDefinition(doc, pos)
-            definitionCache.set(key, promise)
+            // definitionCache.set(key, promise)
         }
         return promise
     }
@@ -200,7 +200,11 @@ export function createProviders({
         const doSearch = (
             negateRepoFilter: boolean
         ): Promise<sourcegraph.Location[]> =>
-            searchWithFallback(searchReferences, queryArgs, negateRepoFilter)
+            searchWithFallback(
+                args => searchReferences(api, args),
+                queryArgs,
+                negateRepoFilter
+            )
 
         // Perform a search in the current git tree
         const sameRepoReferences = doSearch(false)
@@ -292,30 +296,33 @@ export function createProviders({
  *
  * @param args Parameter bag.
  */
-async function searchAndFilterDefinitions({
-    doc,
-    repo,
-    path,
-    text,
-    filterDefinitions,
-    query,
-}: {
-    /** The current text document. */
-    doc: sourcegraph.TextDocument
-    /** The repository containing the current text document. */
-    repo: string
-    /** The path of the current text document. */
-    path: string
-    /** The content of the current text document */
-    text: string
-    /** The function used to filter definitions. */
-    filterDefinitions: FilterDefinitions
-    /** The search query. */
-    query: string
-}): Promise<sourcegraph.Location[]> {
+async function searchAndFilterDefinitions(
+    api: API,
+    {
+        doc,
+        repo,
+        path,
+        text,
+        filterDefinitions,
+        query,
+    }: {
+        /** The current text document. */
+        doc: sourcegraph.TextDocument
+        /** The repository containing the current text document. */
+        repo: string
+        /** The path of the current text document. */
+        path: string
+        /** The content of the current text document */
+        text: string
+        /** The function used to filter definitions. */
+        filterDefinitions: FilterDefinitions
+        /** The search query. */
+        query: string
+    }
+): Promise<sourcegraph.Location[]> {
     // Perform search and perform pre-filtering before passing it
     // off to the language spec for the proper filtering pass.
-    const searchResults = await search(query)
+    const searchResults = await search(api, query)
     const preFilteredResults = searchResults.filter(
         result => !isExternalPrivateSymbol(doc, path, result)
     )
@@ -340,13 +347,16 @@ async function searchAndFilterDefinitions({
  *
  * @param args Parameter bag.
  */
-async function searchReferences({
-    query,
-}: {
-    /** The search query. */
-    query: string
-}): Promise<sourcegraph.Location[]> {
-    return (await search(query)).map(resultToLocation)
+async function searchReferences(
+    api: API,
+    {
+        query,
+    }: {
+        /** The search query. */
+        query: string
+    }
+): Promise<sourcegraph.Location[]> {
+    return (await search(api, query)).map(resultToLocation)
 }
 
 /**
@@ -405,14 +415,14 @@ export function searchWithFallback<
  *
  * @param query The search query.
  */
-async function search(query: string): Promise<Result[]> {
+async function search(api: API, query: string): Promise<Result[]> {
     if (getConfig('basicCodeIntel.debug.traceSearch', false)) {
         console.log('%cSearch', 'font-weight:bold;', {
             query,
         })
     }
 
-    return (await searchViaApi(query, getConfig('fileLocal', false))).flatMap(
+    return (await api.search(query, getConfig('fileLocal', false))).flatMap(
         searchResultToResults
     )
 }
