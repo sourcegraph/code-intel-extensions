@@ -48,7 +48,7 @@
     "yarn": "^1.22.0"
   },
   "devDependencies": {
-    "@sourcegraph/eslint-config": "^0.10.0",
+    "@sourcegraph/eslint-config": "^0.10.1",
     "@sourcegraph/extension-api-stubs": "^0.2.4",
     "@sourcegraph/prettierrc": "^3.0.2",
     "@sourcegraph/tsconfig": "^4.0.0",
