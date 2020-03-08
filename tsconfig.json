@@ -16,5 +16,6 @@
     "composite": true,
     "rootDir": ".",
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "include": []
 }

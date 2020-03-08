@@ -150,7 +150,7 @@ export async function register({
                 serverToClientURI,
                 clientToServerURI,
                 scopedDocumentSelector: scopeDocumentSelectorToRoot(
-                    documentSelector as lsp.DocumentSelector,
+                    documentSelector,
                     scopeRootUri
                 ),
                 providerWrapper,
@@ -500,9 +500,9 @@ function staticRegistrationsFromCapabilities(
 }
 
 export function scopeDocumentSelectorToRoot(
-    documentSelector: lsp.DocumentSelector | null,
+    documentSelector: sourcegraph.DocumentSelector | null,
     clientRootUri: URL | null
-): lsp.DocumentSelector {
+): sourcegraph.DocumentSelector {
     if (!documentSelector || documentSelector.length === 0) {
         documentSelector = [{ pattern: '**' }]
     }
@@ -511,13 +511,8 @@ export function scopeDocumentSelectorToRoot(
     }
     return documentSelector
         .map(
-            (filter): lsp.DocumentFilter =>
+            (filter): sourcegraph.DocumentFilter =>
                 typeof filter === 'string' ? { language: filter } : filter
         )
-        .map(filter => ({
-            ...filter,
-            // TODO filter.pattern needs to be run resolved relative to server root URI before
-            // mounting on clientRootUri
-            pattern: new URL(filter.pattern ?? '**', clientRootUri).href,
-        }))
+        .map(filter => ({ ...filter, baseUri: clientRootUri }))
 }

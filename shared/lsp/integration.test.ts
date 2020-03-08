@@ -180,7 +180,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(
@@ -268,7 +268,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(
@@ -364,7 +364,7 @@ describe('register()', () => {
                 // IF we're in multi-connection mode, the document
                 // selector should be scoped to the root URI
                 // of the connection that registered the provider
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(
@@ -453,7 +453,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(

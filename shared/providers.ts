@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs'
+import { NEVER, Observable } from 'rxjs'
 import { shareReplay } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { impreciseBadge } from './badges'
@@ -63,9 +63,7 @@ export class NoopProviderWrapper implements ProviderWrapper {
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ) =>
-            provider
-                ? observableFromAsyncIterator(provider(doc, pos))
-                : new Observable(),
+            provider ? observableFromAsyncIterator(provider(doc, pos)) : NEVER,
     })
 
     public references = (
@@ -78,7 +76,7 @@ export class NoopProviderWrapper implements ProviderWrapper {
         ) =>
             provider
                 ? observableFromAsyncIterator(provider(doc, pos, ctx))
-                : new Observable(),
+                : NEVER,
     })
 
     public hover = (provider?: HoverProvider): sourcegraph.HoverProvider => ({
@@ -86,9 +84,7 @@ export class NoopProviderWrapper implements ProviderWrapper {
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ) =>
-            provider
-                ? observableFromAsyncIterator(provider(doc, pos))
-                : new Observable(),
+            provider ? observableFromAsyncIterator(provider(doc, pos)) : NEVER,
     })
 }
 
