@@ -15,7 +15,7 @@ const spec: LanguageSpec = {
 }
 
 const doc = createStubTextDocument({
-    uri: 'https://sourcegraph.test/repo@rev/-/raw/foo.ts',
+    uri: 'git://sourcegraph.test/repo?rev#/foo.ts',
     languageId: 'typescript',
     text: undefined,
 })
@@ -27,11 +27,37 @@ const range1 = new sourcegraph.Range(1, 2, 3, 4)
 
 describe('search providers', () => {
     describe('definition provider', () => {
-        it('TODO', async () => {
+        it.only('TODO', async () => {
             const api = new API()
             const stub = sinon.stub()
-            api.search = stub
-            stub.returns([{ repo: '', rev: '', file: '', range: range1 }])
+            const spy = sinon.spy<API['search']>(stub)
+            api.search = spy
+
+            // TODO - also test non-repo
+
+            stub.returns([
+                {
+                    file: {
+                        path: '/a.ts',
+                        commit: {
+                            oid: 'rev',
+                        },
+                    },
+                    repository: { name: 'repo' },
+                    symbols: [
+                        {
+                            name: 'sym1',
+                            fileLocal: false,
+                            kind: 'class',
+                            location: {
+                                resource: { path: '/b.ts' },
+                                range: range1,
+                            },
+                        },
+                    ],
+                    lineMatches: [],
+                },
+            ])
 
             assert.deepEqual(
                 await gatherValues(
@@ -42,21 +68,23 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                    //     new sourcegraph.Location(
-                    //         new URL('git://repo1?deadbeef1#/a.ts'),
-                    //         range1
-                    //     ),
-                    //     new sourcegraph.Location(
-                    //         new URL('git://repo2?deadbeef2#/b.ts'),
-                    //         range2
-                    //     ),
-                    //     new sourcegraph.Location(
-                    //         new URL('git://repo3?deadbeef3#/c.ts'),
-                    //         range3
-                    //     ),
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#/b.ts'),
+                            range1
+                        ),
                     ],
                 ]
             )
+
+            const queryParts = spy.firstCall.args[0].split(' ').filter(p => !!p)
+            queryParts.sort()
+            assert.deepEqual(queryParts, [
+                '^foobar$',
+                'case:yes',
+                'patternType:regexp',
+                'repo:^sourcegraph.test/repo$@rev',
+                'type:symbol',
+            ])
         })
     })
 

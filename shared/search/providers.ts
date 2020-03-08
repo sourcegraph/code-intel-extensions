@@ -164,7 +164,7 @@ export function createProviders(
     ): Promise<sourcegraph.Definition> => {
         // const key = [doc.uri, pos.line, pos.character].join(':')
 
-        let promise:Promise<sourcegraph.Definition>|undefined = undefined // definitionCache.get(key)
+        let promise: Promise<sourcegraph.Definition> | undefined = undefined // definitionCache.get(key)
         if (!promise) {
             promise = rawDefinition(doc, pos)
             // definitionCache.set(key, promise)
