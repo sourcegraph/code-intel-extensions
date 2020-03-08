@@ -877,10 +877,10 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
-"@sourcegraph/eslint-config@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.10.0.tgz#1bdf37d1f081ae234bd43fccace7421500bcf09e"
-  integrity sha512-D1H1DGwUBdM4CeZeHV4Mv94LiqaHwXiSkrqRSFcUkf9CLihyK2Z45M0ye3YXWVhM9/zl+YgksE1HRfAmmCyM8w==
+"@sourcegraph/eslint-config@^0.10.1":
+  version "0.10.1"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.10.1.tgz#49e8dc5a1e0fe7f8dd1e1e2e3bac0fc12c44d831"
+  integrity sha512-uCd2pKVmjkV0p6ibor772JltFfj/mNiNp2+Z6gxeSXhVfF4X6Mbe50HudDKA4pQEyBYsdAL8rjdm3uxrGylmXw==
   dependencies:
     "@sourcegraph/prettierrc" "^3.0.2"
     "@typescript-eslint/eslint-plugin" "^2.22.0"
@@ -888,10 +888,10 @@
     eslint-config-prettier "^6.10.0"
     eslint-plugin-ban "^1.4.0"
     eslint-plugin-etc "^0.0.1-beta.24"
-    eslint-plugin-import "^2.19.1"
+    eslint-plugin-import "^2.20.1"
     eslint-plugin-jsdoc "^22.0.0"
     eslint-plugin-react "^7.19.0"
-    eslint-plugin-react-hooks "^2.3.0"
+    eslint-plugin-react-hooks "^2.5.0"
 
 "@sourcegraph/extension-api-classes@^1.0.3":
   version "1.0.3"
@@ -2870,10 +2870,10 @@ eslint-plugin-etc@^0.0.1-beta.24:
     tsutils "^3.0.0"
     tsutils-etc "^1.0.0"
 
-eslint-plugin-import@^2.19.1:
-  version "2.20.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-import/-/eslint-plugin-import-2.20.0.tgz#d749a7263fb6c29980def8e960d380a6aa6aecaa"
-  integrity sha512-NK42oA0mUc8Ngn4kONOPsPB1XhbUvNHqF+g307dPV28aknPoiNnKLFd9em4nkswwepdF5ouieqv5Th/63U7YJQ==
+eslint-plugin-import@^2.20.1:
+  version "2.20.1"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-import/-/eslint-plugin-import-2.20.1.tgz#802423196dcb11d9ce8435a5fc02a6d3b46939b3"
+  integrity sha512-qQHgFOTjguR+LnYRoToeZWT62XM55MBVXObHM6SKFd1VzDcX/vqT1kAz8ssqigh5eMj8qXcRoXXGZpPP6RfdCw==
   dependencies:
     array-includes "^3.0.3"
     array.prototype.flat "^1.2.1"
@@ -2901,10 +2901,10 @@ eslint-plugin-jsdoc@^22.0.0:
     semver "^6.3.0"
     spdx-expression-parse "^3.0.0"
 
-eslint-plugin-react-hooks@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-2.3.0.tgz#53e073961f1f5ccf8dd19558036c1fac8c29d99a"
-  integrity sha512-gLKCa52G4ee7uXzdLiorca7JIQZPPXRAQDXV83J4bUEeUuc5pIEyZYAZ45Xnxe5IuupxEqHS+hUhSLIimK1EMw==
+eslint-plugin-react-hooks@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-2.5.0.tgz#c50ab7ca5945ce6d1cf8248d9e185c80b54171b6"
+  integrity sha512-bzvdX47Jx847bgAYf0FPX3u1oxU+mKU8tqrpj4UX9A96SbAmj/HVEefEy6rJUog5u8QIlOPTKZcBpGn5kkKfAQ==
 
 eslint-plugin-react@^7.19.0:
   version "7.19.0"
