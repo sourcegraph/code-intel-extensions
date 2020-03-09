@@ -7,7 +7,10 @@ import { Base64 } from 'js-base64'
  */
 function makeIcon(svg: string): string {
     return `data:image/svg+xml;base64,${Base64.encode(
-        svg.replace(/^\s+/g, '').replace('\n', '')
+        svg
+            .split('\n')
+            .map(r => r.trimStart())
+            .join(' ')
     )}`
 }
 
