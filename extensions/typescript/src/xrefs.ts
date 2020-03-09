@@ -3,7 +3,7 @@ import * as lsp from 'vscode-languageserver-protocol'
 import { LSPClient } from '../../../shared/lsp/client'
 import { convertLocation, toLocation } from '../../../shared/lsp/conversion'
 import { ReferencesProvider } from '../../../shared/providers'
-import {    API} from '../../../shared/util/api'
+import { API } from '../../../shared/util/api'
 import { asArray, isDefined } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
 import {
@@ -27,27 +27,28 @@ type DefinitionResult =
  * Return external references to the symbol at the given position.
  *
  * @param args Parameter bag.
-* @param api The GraphQL API instance.
+ * @param api The GraphQL API instance.
  */
-export function createExternalReferencesProvider({
-    client,
-    settings,
-    sourcegraphServerURL,
-    sourcegraphClientURL,
-    accessToken,
-}: {
-    /** The LSP client. */
-    client: LSPClient
-    /** The current settings. */
-    settings: Settings
-    /** A URL of the Sourcegraph API reachable from the language server. */
-    sourcegraphServerURL: URL
-    /** A URL of the Sourcegraph API reachable from the browser. */
-    sourcegraphClientURL: URL
-    /** The access token. */
-    accessToken: string
-},
-api: API = new API()
+export function createExternalReferencesProvider(
+    {
+        client,
+        settings,
+        sourcegraphServerURL,
+        sourcegraphClientURL,
+        accessToken,
+    }: {
+        /** The LSP client. */
+        client: LSPClient
+        /** The current settings. */
+        settings: Settings
+        /** A URL of the Sourcegraph API reachable from the language server. */
+        sourcegraphServerURL: URL
+        /** A URL of the Sourcegraph API reachable from the browser. */
+        sourcegraphClientURL: URL
+        /** The access token. */
+        accessToken: string
+    },
+    api: API = new API()
 ): ReferencesProvider {
     const limit = settings['typescript.maxExternalReferenceRepos'] || 20
 
@@ -146,7 +147,7 @@ async function getDefinition(
 }
 
 async function findExternalRefsInDependent(
-    api:API,
+    api: API,
     client: LSPClient,
     sourcegraphServerURL: URL,
     accessToken: string,

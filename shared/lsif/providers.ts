@@ -68,7 +68,10 @@ export function createProviders(logger: Logger): Providers {
  * @param logger The logger instance.
  * @param api The GraphQL API instance.
  */
-async function selectProvider(logger: Logger, api:API = new API()): Promise<Providers> {
+async function selectProvider(
+    logger: Logger,
+    api: API = new API()
+): Promise<Providers> {
     const supportsGraphQL = compareVersion({
         productVersion: await api.productVersion(),
         minimumVersion: GRAPHQL_API_MINIMUM_VERSION,

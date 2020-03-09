@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import {  API } from '../util/api'
+import { API } from '../util/api'
 
 let accessTokenPromise: Promise<string | undefined> | undefined
 
