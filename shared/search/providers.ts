@@ -347,12 +347,7 @@ async function searchAndFilterDefinitions(
  */
 async function searchReferences(
     api: API,
-    {
-        query,
-    }: {
-        /** The search query. */
-        query: string
-    }
+    { query }: { /** The search query. */ query: string }
 ): Promise<sourcegraph.Location[]> {
     return (await search(api, query)).map(resultToLocation)
 }
