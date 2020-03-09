@@ -1,11 +1,8 @@
 import * as sourcegraph from 'sourcegraph'
+import gql from 'tagged-template-noop'
 import * as lsp from 'vscode-languageserver-protocol'
 import { Providers } from '../providers'
-import {
-    gql,
-    queryGraphQL as sgQueryGraphQL,
-    QueryGraphQLFn,
-} from '../util/graphql'
+import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { asyncGeneratorFromPromise, concat } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { LocationConnectionNode, nodeToLocation } from './conversion'

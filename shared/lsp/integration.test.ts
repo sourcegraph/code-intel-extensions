@@ -3,7 +3,7 @@ import {
     createStubSourcegraphAPI,
     createStubTextDocument,
 } from '@sourcegraph/extension-api-stubs'
-import * as mock from 'mock-require'
+import mock from 'mock-require'
 const stubAPI = createStubSourcegraphAPI()
 mock('sourcegraph', stubAPI)
 

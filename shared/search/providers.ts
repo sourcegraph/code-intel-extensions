@@ -1,5 +1,5 @@
 import { flatten, sortBy } from 'lodash'
-// import LRUCache from 'lru-cache'
+import LRUCache from 'lru-cache'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
@@ -15,7 +15,7 @@ import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
 
 /** The number of elements in the definition LRU cache. */
-// const DEFINITION_CACHE_SIZE = 50
+const DEFINITION_CACHE_SIZE = 50
 
 /**
  * Creates providers powered by search-based code intelligence.
@@ -126,28 +126,23 @@ export function createProviders(
         // Perform a search in the current git tree
         const sameRepoDefinitions = doSearch(false)
 
-        // Perform an indexed search over all repositories. Do not do this
-        // on the DotCom instance as we are unlikely to have indexed the
-        // relevant definition and we'd end up jumping to what would seem
-        // like a random line of code.
-        const remoteRepoDefinitions = isSourcegraphDotCom()
-            ? Promise.resolve([])
-            : doSearch(true)
-
         // Return any local location definitions first
         const results = await sameRepoDefinitions
         if (results.length > 0) {
             return results
         }
 
-        // Fallback to definitions found in any other repository
-        return remoteRepoDefinitions
+        // Fallback to definitions found in any other repository. This performs
+        // an indexed search over all repositories. Do not do this on the DotCom
+        // instance as we are unlikely to have indexed the relevant definition
+        // and we'd end up jumping to what would seem like a random line of code.
+        return isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
     }
 
-    // const definitionCache = new LRUCache<
-    //     string,
-    //     Promise<sourcegraph.Definition>
-    // >(DEFINITION_CACHE_SIZE)
+    const definitionCache = new LRUCache<
+        string,
+        Promise<sourcegraph.Definition>
+    >(DEFINITION_CACHE_SIZE)
 
     /**
      * Retrieve a definition for the current hover position. Keep the
@@ -162,12 +157,12 @@ export function createProviders(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
-        // const key = [doc.uri, pos.line, pos.character].join(':')
+        const key = [doc.uri, pos.line, pos.character].join(':')
 
-        let promise: Promise<sourcegraph.Definition> | undefined = undefined // definitionCache.get(key)
+        let promise = definitionCache.get(key)
         if (!promise) {
             promise = rawDefinition(doc, pos)
-            // definitionCache.set(key, promise)
+            definitionCache.set(key, promise)
         }
         return promise
     }
@@ -532,7 +527,7 @@ export async function raceWithDelayOffset<T>(
         return results
     }
 
-    return await Promise.race([primary, fallback()])
+    return Promise.race([primary, fallback()])
 }
 
 /**
