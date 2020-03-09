@@ -6,10 +6,18 @@ mock('sourcegraph', createStubSourcegraphAPI())
 import * as assert from 'assert'
 import * as sinon from 'sinon'
 import { findReposViaGDDO, Response } from './gddo'
+import { API } from '../../../shared/util/api'
 
 describe('findReposViaGDDO', () => {
     const trimGitHubPrefix = (url: string) =>
         Promise.resolve(url.substring('github.com/'.length))
+
+    const makeStubAPI = () => {
+        const api = new API()
+        const stub = sinon.stub(api, 'resolveRepo')
+        stub.callsFake(trimGitHubPrefix)
+        return api
+    }
 
     it('requests API', async () => {
         const fetcher = sinon.spy<(url: URL) => Promise<Response>>(() =>
@@ -28,7 +36,7 @@ describe('findReposViaGDDO', () => {
             'github.com/foo/bar',
             5,
             fetcher,
-            trimGitHubPrefix
+            makeStubAPI()
         )
 
         assert.deepStrictEqual(repos, ['foo/baz', 'foo/bonk', 'foo/quux'])
@@ -49,7 +57,7 @@ describe('findReposViaGDDO', () => {
             'github.com/foo/bar',
             5,
             fetcher,
-            trimGitHubPrefix
+            makeStubAPI()
         )
 
         sinon.assert.calledWith(
@@ -76,13 +84,21 @@ describe('findReposViaGDDO', () => {
                         { path: 'github.com/foo/quux' },
                     ],
                 }),
-            trimGitHubPrefix
+            makeStubAPI()
         )
 
         assert.deepStrictEqual(repos, ['foo/baz', 'foo/bonk', 'foo/quux'])
     })
 
     it('guards against unknown repos', async () => {
+        const api = new API()
+        const stub = sinon.stub(api, 'resolveRepo')
+        stub.callsFake(url =>
+            url === 'github.com/foo/bonk'
+                ? Promise.reject(new Error('unknown repo'))
+                : trimGitHubPrefix(url)
+        )
+
         const repos = await findReposViaGDDO(
             'http://gddo',
             'http://cors.anywhere/',
@@ -96,17 +112,16 @@ describe('findReposViaGDDO', () => {
                         { path: 'github.com/foo/quux' },
                     ],
                 }),
-            url =>
-                url === 'github.com/foo/bonk'
-                    ? Promise.reject(new Error('unknown repo'))
-                    : trimGitHubPrefix(url)
+            api
         )
 
         assert.deepStrictEqual(repos, ['foo/baz', 'foo/quux'])
     })
 
     it('limits calls to resolveRepo', async () => {
-        const resolver = sinon.spy(trimGitHubPrefix)
+        const api = new API()
+        const stub = sinon.stub(api, 'resolveRepo')
+        stub.callsFake(trimGitHubPrefix)
 
         const repos = await findReposViaGDDO(
             'http://gddo',
@@ -119,7 +134,7 @@ describe('findReposViaGDDO', () => {
                         path: `github.com/foo/${i}`,
                     })),
                 }),
-            resolver
+            api
         )
 
         assert.deepStrictEqual(repos, [
@@ -129,6 +144,6 @@ describe('findReposViaGDDO', () => {
             'foo/4',
             'foo/5',
         ])
-        sinon.assert.callCount(resolver, 5)
+        sinon.assert.callCount(stub, 5)
     })
 })

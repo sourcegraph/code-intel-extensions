@@ -3,11 +3,7 @@ import * as lsp from 'vscode-languageserver-protocol'
 import { LSPClient } from '../../../shared/lsp/client'
 import { convertLocation, toLocation } from '../../../shared/lsp/conversion'
 import { ReferencesProvider } from '../../../shared/providers'
-import {
-    findReposViaSearch,
-    getExtensionManifests,
-    resolveRev,
-} from '../../../shared/util/api'
+import {    API} from '../../../shared/util/api'
 import { asArray, isDefined } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
 import {
@@ -31,6 +27,7 @@ type DefinitionResult =
  * Return external references to the symbol at the given position.
  *
  * @param args Parameter bag.
+* @param api The GraphQL API instance.
  */
 export function createExternalReferencesProvider({
     client,
@@ -49,7 +46,9 @@ export function createExternalReferencesProvider({
     sourcegraphClientURL: URL
     /** The access token. */
     accessToken: string
-}): ReferencesProvider {
+},
+api: API = new API()
+): ReferencesProvider {
     const limit = settings['typescript.maxExternalReferenceRepos'] || 20
 
     const findDependents = async (packageName: string): Promise<string[]> => {
@@ -59,14 +58,14 @@ export function createExternalReferencesProvider({
         if (packageName === 'sourcegraph') {
             return (
                 await Promise.all(
-                    (await getExtensionManifests())
+                    (await api.getExtensionManifests())
                         .slice(0, limit)
                         .map(rawManifest => resolvePackageRepo(rawManifest))
                 )
             ).filter(isDefined)
         }
 
-        return findReposViaSearch(
+        return api.findReposViaSearch(
             `file:package.json$ ${packageName} max:${limit}`
         )
     }
@@ -102,6 +101,7 @@ export function createExternalReferencesProvider({
             flatMapConcurrent(dependents, EXTERNAL_REFS_CONCURRENCY, repoName =>
                 // Call references for the target symbol in each dependent workspace
                 findExternalRefsInDependent(
+                    api,
                     client,
                     sourcegraphServerURL,
                     accessToken,
@@ -146,13 +146,14 @@ async function getDefinition(
 }
 
 async function findExternalRefsInDependent(
+    api:API,
     client: LSPClient,
     sourcegraphServerURL: URL,
     accessToken: string,
     repoName: string,
     definition: lsp.Location
 ): Promise<sourcegraph.Location[]> {
-    const commit = await resolveRev(repoName, 'HEAD')
+    const commit = await api.resolveRev(repoName, 'HEAD')
     if (!commit) {
         return []
     }

@@ -366,14 +366,3 @@ export class API {
         return data.search.results.results.filter(isDefined)
     }
 }
-
-const api = new API()
-export const resolveRepo = api.resolveRepo.bind(api)
-export const resolveRev = api.resolveRev.bind(api)
-export const findReposViaSearch = api.findReposViaSearch.bind(api)
-export const getExtensionManifests = api.getExtensionManifests.bind(api)
-export const productVersion = api.productVersion.bind(api)
-export const getUser = api.getUser.bind(api)
-export const createAccessToken = api.createAccessToken.bind(api)
-export const getFileContent = api.getFileContent.bind(api)
-export const search = api.search.bind(api)

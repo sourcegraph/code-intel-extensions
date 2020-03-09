@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { Logger } from '../logging'
 import { noopProviders, Providers } from '../providers'
-import { productVersion } from '../util/api'
+import { API } from '../util/api'
 import { compareVersion } from '../util/versions'
 import { createProviders as createGraphQLProviders } from './graphql'
 import { createProviders as createHTTPProviders } from './http'
@@ -64,10 +64,13 @@ export function createProviders(logger: Logger): Providers {
 /**
  * Return the GraphQL LSIF providers if the Sourcegraph instance supports it.
  * Otherwise, use the HTTP API providers.
+ *
+ * @param logger The logger instance.
+ * @param api The GraphQL API instance.
  */
-async function selectProvider(logger: Logger): Promise<Providers> {
+async function selectProvider(logger: Logger, api:API = new API()): Promise<Providers> {
     const supportsGraphQL = compareVersion({
-        productVersion: await productVersion(),
+        productVersion: await api.productVersion(),
         minimumVersion: GRAPHQL_API_MINIMUM_VERSION,
         minimumDate: GRAPHQL_API_MINIMUM_DATE,
     })

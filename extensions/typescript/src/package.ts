@@ -1,4 +1,4 @@
-import { resolveRepo } from '../../../shared/util/api'
+import { API } from '../../../shared/util/api'
 import { fetch } from '../../../shared/util/fetch'
 import { safePromise } from '../../../shared/util/helpers'
 
@@ -11,17 +11,18 @@ export interface PackageJson {
  * Resolve a repository name from the repository in the manifest.
  *
  * @param rawManifest The unparsed manifest.
+ * @param api The GraphQL API instance.
  */
 export function resolvePackageRepo(
     rawManifest: string,
-    repoResolver: (cloneURL: string) => Promise<string> = resolveRepo
+    api: API = new API()
 ): Promise<string | undefined> {
     const packageJson: PackageJson = JSON.parse(rawManifest)
     if (!packageJson.repository) {
         return Promise.resolve(undefined)
     }
 
-    return safePromise(repoResolver)(
+    return safePromise(api.resolveRepo.bind(api))(
         typeof packageJson.repository === 'string'
             ? packageJson.repository
             : packageJson.repository.url

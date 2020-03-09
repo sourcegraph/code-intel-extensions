@@ -2,7 +2,7 @@ import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { convertHover, convertLocations } from '../lsp/conversion'
 import { Providers } from '../providers'
-import { getUser } from '../util/api'
+import { API } from '../util/api'
 import { mapArrayish } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI, withHash } from '../util/uri'
@@ -48,24 +48,28 @@ export function createProviders(): Providers {
  * Determines if there is LSIF data for a repo, commit, and path.
  *
  * @param args Parameter bag.
+ * @param api The GraphQL API instance.
  */
-async function exists({
-    repo,
-    commit,
-    path,
-}: {
-    /** The repository name. */
-    repo: string
-    /** The commit. */
-    commit: string
-    /** The path of the file. */
-    path: string
-}): Promise<boolean> {
+async function exists(
+    {
+        repo,
+        commit,
+        path,
+    }: {
+        /** The repository name. */
+        repo: string
+        /** The commit. */
+        commit: string
+        /** The path of the file. */
+        path: string
+    },
+    api: API = new API()
+): Promise<boolean> {
     try {
         // Make ANY GraphQL request and rely on the Sourcegraph extension
         // host to throw an error when in the context of a private repository.
         // We want to do this to prevent leaking the name of a private repo.
-        await getUser()
+        await api.getUser()
     } catch (e) {
         return false
     }

@@ -21,6 +21,7 @@ const DEFINITION_CACHE_SIZE = 50
  * Creates providers powered by search-based code intelligence.
  *
  * @param spec The language spec.
+ * @param api The GraphQL API instance.
  */
 export function createProviders(
     {
@@ -289,6 +290,7 @@ export function createProviders(
  * filtered by the language's definition filter, and sorted by proximity to the
  * current text document path.
  *
+ * @param api The GraphQL API instance.
  * @param args Parameter bag.
  */
 async function searchAndFilterDefinitions(
@@ -340,6 +342,7 @@ async function searchAndFilterDefinitions(
  * Results are not sorted in any meaningful way as these results are meant to be
  * merged with other search query results.
  *
+ * @param api The GraphQL API instance.
  * @param args Parameter bag.
  */
 async function searchReferences(
@@ -408,6 +411,8 @@ export function searchWithFallback<
 /**
  * Perform a search query.
  *
+ *
+ * @param api The GraphQL API instance.
  * @param query The search query.
  */
 async function search(api: API, query: string): Promise<Result[]> {
