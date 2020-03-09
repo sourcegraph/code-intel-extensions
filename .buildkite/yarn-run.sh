@@ -7,7 +7,7 @@ cd $(dirname "${BASH_SOURCE[0]}")/..
 yarn --mutex network --frozen-lockfile --network-timeout 60000
 
 # Need to build for project references
-yarn build-ts
+yarn build
 
 for cmd in "$@"; do
     yarn -s --cwd "${CWD:-.}" run ${cmd}

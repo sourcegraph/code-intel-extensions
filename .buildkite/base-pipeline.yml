@@ -8,12 +8,6 @@ steps:
     label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
     label: ':jest: :codecov:'
-  - command: CWD=extensions/go ./.buildkite/yarn-run.sh build
-    label: ':go:'
-  - command: CWD=extensions/typescript ./.buildkite/yarn-run.sh build
-    label: ':typescript:'
-  - command: CWD=extensions/template ./.buildkite/yarn-run.sh build
-    label: ':question:'
 
   - wait
 
