@@ -20,7 +20,9 @@ describe('observableFromAsyncIterator', () => {
         )
 
         const values: number[] = []
-        await new Promise(r => o.subscribe(v => values.push(v), undefined, r))
+        await new Promise(complete =>
+            o.subscribe({ next: v => values.push(v), complete })
+        )
         assert.deepStrictEqual(values, [1, 2, 3, 4, 5])
     })
 
@@ -35,7 +37,7 @@ describe('observableFromAsyncIterator', () => {
             })()
         )
 
-        const err = await new Promise(r => o.subscribe(undefined, r))
+        const err = await new Promise(error => o.subscribe({ error }))
         assert.deepStrictEqual(err, new Error('oops'))
     })
 })

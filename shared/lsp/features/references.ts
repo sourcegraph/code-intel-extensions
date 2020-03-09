@@ -52,6 +52,8 @@ export const referencesFeature: Feature<
         const references = (
             externalReferences: ReferencesProvider
         ): ReferencesProvider =>
+            // False positive: https://github.com/typescript-eslint/typescript-eslint/issues/1691
+            // eslint-disable-next-line @typescript-eslint/require-await
             async function*(
                 textDocument: sourcegraph.TextDocument,
                 position: sourcegraph.Position,

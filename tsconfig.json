@@ -4,7 +4,8 @@
     { "path": "shared" },
     { "path": "extensions/go" },
     { "path": "extensions/template" },
-    { "path": "extensions/typescript" }
+    { "path": "extensions/typescript" },
+    { "path": "dev/scripts" }
   ],
   "compilerOptions": {
     "target": "es2019",
@@ -16,5 +17,6 @@
     "rootDir": ".",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
-  }
+  },
+  "include": []
 }

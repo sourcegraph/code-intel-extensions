@@ -223,6 +223,8 @@ async function* asyncGeneratorFromValues<P>(
 
 async function gatherValues<T>(o: Observable<T>): Promise<T[]> {
     const values: T[] = []
-    await new Promise(r => o.subscribe(v => values.push(v), undefined, r))
+    await new Promise(complete =>
+        o.subscribe({ next: v => values.push(v), complete })
+    )
     return values
 }
