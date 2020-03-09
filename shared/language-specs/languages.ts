@@ -110,6 +110,13 @@ const haskellSpec: LanguageSpec = {
     ],
 }
 
+const jsonnetSpec: LanguageSpec = {
+    languageID: 'jsonnet',
+    stylized: 'Jsonnet',
+    fileExts: ['jsonnet'],
+    commentStyles: [cStyleComment]
+}
+
 const kotlinSpec: LanguageSpec = {
     languageID: 'kotlin',
     stylized: 'Kotlin',
@@ -328,6 +335,7 @@ export const languageSpecs: LanguageSpec[] = [
     graphqlSpec,
     groovySpec,
     haskellSpec,
+    jsonnetSpec,
     javaSpec,
     kotlinSpec,
     lispSpec,
