@@ -1,5 +1,4 @@
-const g: any = global
-g.btoa = g.btoa || ((s: string) => Buffer.from(s, 'binary').toString('base64'))
+import btoa from 'btoa'
 
 /**
  * Creates a base64-encoded image URI.

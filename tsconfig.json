@@ -15,7 +15,8 @@
     "lib": ["esnext", "webworker"],
     "composite": true,
     "rootDir": ".",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": []
 }
