@@ -46,7 +46,7 @@ export function createExternalReferencesProvider(
         /** A URL of the Sourcegraph API reachable from the browser. */
         sourcegraphClientURL: URL
         /** The access token. */
-        accessToken: string
+        accessToken?: string
     },
     api: API = new API()
 ): ReferencesProvider {
@@ -117,7 +117,7 @@ export function createExternalReferencesProvider(
 async function getDefinition(
     client: LSPClient,
     sourcegraphServerURL: URL,
-    accessToken: string,
+    accessToken: string | undefined,
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ): Promise<lsp.Location[]> {
@@ -150,7 +150,7 @@ async function findExternalRefsInDependent(
     api: API,
     client: LSPClient,
     sourcegraphServerURL: URL,
-    accessToken: string,
+    accessToken: string | undefined,
     repoName: string,
     definition: lsp.Location
 ): Promise<sourcegraph.Location[]> {
