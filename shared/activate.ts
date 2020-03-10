@@ -148,7 +148,7 @@ export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
     clientFactory: ClientFactory<S>,
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
-    logger: Logger = console,
+    logger: Logger = console
 ): (
     ctx: sourcegraph.ExtensionContext,
     providerWrapper: ProviderWrapper
