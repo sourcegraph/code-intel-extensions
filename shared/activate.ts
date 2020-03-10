@@ -89,6 +89,7 @@ const DUMMY_CTX = {
  * @param selector The document selector for which this extension is active.
  * @param languageSpec The language spec used to provide search-based code intelligence.
  * @param lspFactory An optional factory that registers an LSP client.
+ * @param logger An optional logger instance.
  */
 export async function activateCodeIntel(
     ctx: sourcegraph.ExtensionContext = DUMMY_CTX,
@@ -110,6 +111,7 @@ export async function activateCodeIntel(
  * @param ctx  The extension context.
  * @param wrapper The provider wrapper.
  * @param lspFactory An optional factory that registers an LSP client.
+ * @param logger An optional logger instance.
  */
 export async function tryInitLSP(
     ctx: sourcegraph.ExtensionContext,
@@ -140,11 +142,13 @@ export async function tryInitLSP(
  * @param languageID The language identifier
  * @param clientFactory A factory that initializes an LSP client.
  * @param externalReferencesProviderFactory A factory that creates an external reference provider.
+ * @param logger An optional logger instance.
  */
 export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
     clientFactory: ClientFactory<S>,
-    externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>
+    externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
+    logger: Logger = console
 ): (
     ctx: sourcegraph.ExtensionContext,
     providerWrapper: ProviderWrapper
@@ -157,6 +161,7 @@ export function initLSP<S extends { [key: string]: any }>(
 
         const serverURL = settings[`${languageID}.serverUrl`]
         if (!serverURL) {
+            console.log('No language server url is configured')
             return false
         }
 
@@ -165,6 +170,7 @@ export function initLSP<S extends { [key: string]: any }>(
             languageID
         )
         if (!accessToken) {
+            console.log('No language server access token is available')
             return false
         }
 
@@ -199,6 +205,8 @@ export function initLSP<S extends { [key: string]: any }>(
             externalReferencesProvider
         )
         registerImplementationsPanel(ctx, `${languageID}.impl`)
+
+        logger.log('Language Server providers are active')
         return true
     }
 }
