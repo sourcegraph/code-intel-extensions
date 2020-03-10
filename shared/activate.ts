@@ -37,7 +37,7 @@ export type ClientFactory<S> = (args: {
     /** The URL of the Sourcegraph API. */
     sourcegraphURL: URL
     /** The access token. */
-    accessToken: string
+    accessToken?: string
     /**
      * A value that can decorate definition, references, and hover providers
      * with LSIF and basic intelligence.
@@ -65,7 +65,7 @@ export type ExternalReferencesProviderFactory<S> = (args: {
     /** A URL of the Sourcegraph API reachable from the browser. */
     sourcegraphClientURL: URL
     /** The access token. */
-    accessToken: string
+    accessToken?: string
 }) => ReferencesProvider
 
 /**
@@ -171,7 +171,6 @@ export function initLSP<S extends { [key: string]: any }>(
         )
         if (!accessToken) {
             console.log('No language server access token is available')
-            return false
         }
 
         const sgUrl = sourcegraphURL(
