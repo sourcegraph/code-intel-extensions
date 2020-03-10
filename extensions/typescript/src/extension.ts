@@ -52,7 +52,7 @@ async function registerClient({
     /** The URL of the Sourcegraph API. */
     sourcegraphURL: URL
     /** The access token. */
-    accessToken: string
+    accessToken?: string
     /**
      * A value that can decorate definition, references, and hover providers
      * with LSIF and basic intelligence.

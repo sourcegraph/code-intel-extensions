@@ -28,7 +28,7 @@ export function removeHash(url: URL): URL {
  */
 export function gitToRawApiUri(
     sourcegraphURL: URL,
-    accessToken: string,
+    accessToken: string | undefined,
     uri: URL
 ): URL {
     if (uri.protocol !== 'git:') {
