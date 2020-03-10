@@ -39,8 +39,9 @@ export function createProviders(logger: Logger): Providers {
         return noopProviders
     }
 
+    const providers = createGraphQLProviders()
     logger.log('LSIF is enabled')
-    return createGraphQLProviders()
+    return providers
 }
 
 /**
@@ -314,12 +315,12 @@ async function queryLSIF<
 ): Promise<R | null> {
     const { repo, commit, path } = parseGitURI(new URL(doc.uri))
     const queryArgs = {
+        ...rest,
         repository: repo,
         commit,
         path,
         line: position.line,
         character: position.character,
-        ...rest,
     }
 
     const data = await queryGraphQL(query, queryArgs)
