@@ -40,7 +40,7 @@ export function createProviders(logger: Logger): Providers {
     }
 
     const providers = createGraphQLProviders()
-    logger.log('LSIF is enabled')
+    logger.log('LSIF providers are active')
     return providers
 }
 
