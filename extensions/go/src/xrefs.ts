@@ -4,7 +4,7 @@ import * as lsp from 'vscode-languageserver-protocol'
 import { LSPClient } from '../../../shared/lsp/client'
 import { convertRange } from '../../../shared/lsp/conversion'
 import { ReferencesProvider } from '../../../shared/providers'
-import { findReposViaSearch } from '../../../shared/util/api'
+import { API } from '../../../shared/util/api'
 import { notIn } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
 import { removeHash, withHash } from '../../../shared/util/uri'
@@ -45,16 +45,20 @@ const xdefinitionWorkspaceRequestType = new lsp.RequestType<
  * Return external references to the symbol at the given position.
  *
  * @param args Parameter bag.
+ * @param api The GraphQL API instance.
  */
-export function createExternalReferencesProvider({
-    client,
-    settings,
-}: {
-    /** The LSP client. */
-    client: LSPClient
-    /** The current settings. */
-    settings: Settings
-}): ReferencesProvider {
+export function createExternalReferencesProvider(
+    {
+        client,
+        settings,
+    }: {
+        /** The LSP client. */
+        client: LSPClient
+        /** The current settings. */
+        settings: Settings
+    },
+    api: API = new API()
+): ReferencesProvider {
     const gddoURL = settings['go.gddoURL']
     const corsAnywhereURL = settings['go.corsAnywhereURL']
     const limit = settings['go.maxExternalReferenceRepos'] || 20
@@ -70,7 +74,9 @@ export function createExternalReferencesProvider({
         }
 
         // TODO - support named imports
-        return findReposViaSearch(`file:\\.go$ \t"${packageName}" max:${limit}`)
+        return api.findReposViaSearch(
+            `file:\\.go$ \t"${packageName}" max:${limit}`
+        )
     }
 
     return async function*(
