@@ -4,13 +4,13 @@ import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
 import { QueryGraphQLFn } from '../util/graphql'
 import {
-    createProviders,
+    createGraphQLProviders as createProviders,
     DefinitionResponse,
     GenericLSIFResponse,
     HoverResponse,
     MAX_REFERENCE_PAGE_REQUESTS,
     ReferencesResponse,
-} from './graphql'
+} from './providers'
 
 const doc = createStubTextDocument({
     uri: 'https://sourcegraph.test/repo@rev/-/raw/foo.ts',
