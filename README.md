@@ -1,5 +1,8 @@
 # Sourcegraph code intelligence extensions
 
+[![Build status](https://badge.buildkite.com/6766067d76ccea068c30c6e143919363b24accd235892bfa07.svg)](https://buildkite.com/sourcegraph/code-intel-extensions)
+[![codecov](https://codecov.io/gh/sourcegraph/code-intel-extensions/branch/master/graph/badge.svg)](https://codecov.io/gh/sourcegraph/code-intel-extensions)
+
 This repository contains the code for the [Sourcegraph extensions that provide code intelligence](https://sourcegraph.com/extensions?query=category%3A%22Programming+languages%22). These extensions provide precise code intelligence via LSIF and Language Servers, and provides fuzzy code intelligence using a combination of ctags and search.
 
 ## Repository structure

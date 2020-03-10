@@ -23,8 +23,8 @@ export function definitionQuery({
 
     return [
         `^${searchToken}$`,
-        `type:symbol`,
-        `patternType:regexp`,
+        'type:symbol',
+        'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
     ].join(' ')
@@ -51,8 +51,8 @@ export function referencesQuery({
 
     return [
         `\\b${searchToken}\\b`,
-        `type:file`,
-        `patternType:regexp`,
+        'type:file',
+        'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
     ].join(' ')

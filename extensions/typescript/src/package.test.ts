@@ -1,40 +1,46 @@
 import * as assert from 'assert'
 import * as sinon from 'sinon'
 import { findPackageName, PackageJson, resolvePackageRepo } from './package'
+import { API } from '../../../shared/util/api'
 
 describe('resolvePackageRepo', () => {
     it('resolves string repo', async () => {
-        const resolver = sinon.spy(repo => Promise.resolve(repo))
-        const name = await resolvePackageRepo('{"repository": "foo"}', resolver)
+        const api = new API()
+        const mock = sinon.stub(api, 'resolveRepo')
+        mock.callsFake(repo => Promise.resolve(repo))
+        const name = await resolvePackageRepo('{"repository": "foo"}', api)
         assert.equal(name, 'foo')
-        sinon.assert.calledWith(resolver, 'foo')
+        sinon.assert.calledWith(mock, 'foo')
     })
 
     it('resolves repos with url', async () => {
-        const resolver = sinon.spy(repo => Promise.resolve(repo))
+        const api = new API()
+        const mock = sinon.stub(api, 'resolveRepo')
+        mock.callsFake(repo => Promise.resolve(repo))
         const name = await resolvePackageRepo(
             '{"repository": {"url": "foo"}}',
-            resolver
+            api
         )
         assert.equal(name, 'foo')
-        sinon.assert.calledWith(resolver, 'foo')
+        sinon.assert.calledWith(mock, 'foo')
     })
 
     it('resolves repos without repo field', async () => {
-        const resolver = sinon.spy(repo => Promise.resolve(repo))
-        const name = await resolvePackageRepo('{}', resolver)
+        const api = new API()
+        const mock = sinon.stub(api, 'resolveRepo')
+        mock.callsFake(repo => Promise.resolve(repo))
+        const name = await resolvePackageRepo('{}', api)
         assert.equal(name, undefined)
-        sinon.assert.notCalled(resolver)
+        sinon.assert.notCalled(mock)
     })
 
     it('guards against unknown repos', async () => {
-        const resolver = sinon.spy(() =>
-            Promise.reject(new Error('unknown repo'))
-        )
-
-        const name = await resolvePackageRepo('{"repository": "foo"}', resolver)
+        const api = new API()
+        const mock = sinon.stub(api, 'resolveRepo')
+        mock.rejects(new Error('unknown repo'))
+        const name = await resolvePackageRepo('{"repository": "foo"}', api)
         assert.equal(name, undefined)
-        sinon.assert.called(resolver)
+        sinon.assert.called(mock)
     })
 })
 

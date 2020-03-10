@@ -3,7 +3,7 @@ import {
     createStubSourcegraphAPI,
     createStubTextDocument,
 } from '@sourcegraph/extension-api-stubs'
-import * as mock from 'mock-require'
+import mock from 'mock-require'
 const stubAPI = createStubSourcegraphAPI()
 mock('sourcegraph', stubAPI)
 
@@ -25,6 +25,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
         let closed = false
         return {
             sendNotification: sinon.spy(),
+            // eslint-disable-next-line @typescript-eslint/require-await
             sendRequest: sinon.spy(async ({ method }, params) => {
                 if (method in server) {
                     return (server as any)[method](params)
@@ -46,7 +47,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
     })
 
 describe('register()', () => {
-    it('should initialize one connection with each workspace folder if the server is multi-root capable', async () => {
+    it('should initialize one connection for each workspace folder', async () => {
         const sourcegraph = createStubSourcegraphAPI()
         sourcegraph.workspace.roots = [
             { uri: new URL('git://repo1?rev') },
@@ -63,42 +64,6 @@ describe('register()', () => {
         await register({
             sourcegraph: sourcegraph as any,
             transport: createConnection,
-            supportsWorkspaceFolders: true,
-            documentSelector: [{ language: 'foo' }],
-            logger,
-            providerWrapper,
-        })
-        sinon.assert.calledOnce(createConnection)
-        sinon.assert.calledOnce(server.initialize)
-        sinon.assert.calledWith(
-            server.initialize,
-            sinon.match({
-                rootUri: null,
-                workspaceFolders: [
-                    { name: '', uri: 'git://repo1?rev' },
-                    { name: '', uri: 'git://repo2?rev' },
-                ],
-            })
-        )
-    })
-    it('should initialize one connection for each workspace folder if the server is not multi-root capable', async () => {
-        const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [
-            { uri: new URL('git://repo1?rev') },
-            { uri: new URL('git://repo2?rev') },
-        ]
-        const server = {
-            initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
-                    capabilities: {},
-                })
-            ),
-        }
-        const createConnection = stubTransport(server)
-        await register({
-            sourcegraph: sourcegraph as any,
-            transport: createConnection,
-            supportsWorkspaceFolders: false,
             documentSelector: [{ language: 'foo' }],
             logger,
             providerWrapper,
@@ -137,7 +102,6 @@ describe('register()', () => {
         await register({
             sourcegraph: sourcegraph as any,
             transport: createConnection,
-            supportsWorkspaceFolders: false,
             documentSelector: [{ language: 'foo' }],
             logger,
             providerWrapper,
@@ -216,7 +180,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(
@@ -304,7 +268,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(
@@ -334,6 +298,7 @@ describe('register()', () => {
             initialize: sinon.spy(
                 async (
                     params: lsp.InitializeParams
+                    // eslint-disable-next-line @typescript-eslint/require-await
                 ): Promise<lsp.InitializeResult> => ({
                     capabilities: {
                         hoverProvider: true,
@@ -343,6 +308,7 @@ describe('register()', () => {
             'textDocument/hover': sinon.spy(
                 async (
                     params: lsp.TextDocumentPositionParams
+                    // eslint-disable-next-line @typescript-eslint/require-await
                 ): Promise<lsp.Hover> => ({
                     contents: {
                         kind: lsp.MarkupKind.Markdown,
@@ -395,11 +361,10 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                // If the server is not multi-root capable and
-                // we're in multi-connection mode, the document
+                // IF we're in multi-connection mode, the document
                 // selector should be scoped to the root URI
                 // of the connection that registered the provider
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(
@@ -488,7 +453,7 @@ describe('register()', () => {
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
-                pattern: 'https://sourcegraph.test/repo@rev/-/raw/**',
+                baseUri: new URL('https://sourcegraph.test/repo@rev/-/raw/'),
             },
         ])
         const result = await consume(

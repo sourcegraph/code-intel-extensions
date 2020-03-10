@@ -16,7 +16,7 @@ export interface Feature<
         connection: LSPConnection
         clientToServerURI: (uri: URL) => URL
         serverToClientURI: (uri: URL) => URL
-        scopedDocumentSelector: lsp.DocumentSelector
+        scopedDocumentSelector: sourcegraph.DocumentSelector
         providerWrapper: ProviderWrapper
         featureOptions: Observable<O>
     }): sourcegraph.Unsubscribable

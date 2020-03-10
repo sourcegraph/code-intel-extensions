@@ -1,4 +1,4 @@
-import { resolveRepo } from '../../../shared/util/api'
+import { API } from '../../../shared/util/api'
 import { fetch } from '../../../shared/util/fetch'
 import {
     isDefined,
@@ -20,6 +20,8 @@ export interface Response {
  * @param corsAnywhereURL The URL of the CORS proxy.
  * @param importPath The import path to query.
  * @param limit The maximum number of results to return.
+ * @param fetcher A mock HTTP fetch function.
+ * @param api The GraphQL API instance.
  */
 export async function findReposViaGDDO(
     gddoURL: string,
@@ -27,7 +29,7 @@ export async function findReposViaGDDO(
     importPath: string,
     limit: number,
     fetcher: (url: URL) => Promise<Response> = fetch,
-    repoResolver: (cloneURL: string) => Promise<string> = resolveRepo
+    api: API = new API()
 ): Promise<string[]> {
     const importersURL = new URL(gddoURL)
     importersURL.pathname = `importers/${importPath}`
@@ -40,7 +42,7 @@ export async function findReposViaGDDO(
                 .map(transformGithubCloneURL)
                 .filter(isDefined)
                 .slice(0, limit)
-                .map(safePromise(repoResolver))
+                .map(safePromise(api.resolveRepo.bind(api)))
         )
     ).filter(isDefined)
 }

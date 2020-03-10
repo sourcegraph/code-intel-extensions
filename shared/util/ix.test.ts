@@ -8,7 +8,7 @@ import {
 
 describe('observableFromAsyncIterator', () => {
     it('converts iterator into an observable', async () => {
-        const o = observableFromAsyncIterator(
+        const o = observableFromAsyncIterator(() =>
             (async function*(): AsyncIterator<number> {
                 await Promise.resolve()
                 yield 1
@@ -20,12 +20,14 @@ describe('observableFromAsyncIterator', () => {
         )
 
         const values: number[] = []
-        await new Promise(r => o.subscribe(v => values.push(v), undefined, r))
+        await new Promise(complete =>
+            o.subscribe({ next: v => values.push(v), complete })
+        )
         assert.deepStrictEqual(values, [1, 2, 3, 4, 5])
     })
 
     it('throws iterator error', async () => {
-        const o = observableFromAsyncIterator(
+        const o = observableFromAsyncIterator(() =>
             (async function*(): AsyncIterator<number> {
                 await Promise.resolve()
                 yield 1
@@ -35,7 +37,7 @@ describe('observableFromAsyncIterator', () => {
             })()
         )
 
-        const err = await new Promise(r => o.subscribe(undefined, r))
+        const err = await new Promise(error => o.subscribe({ error }))
         assert.deepStrictEqual(err, new Error('oops'))
     })
 })

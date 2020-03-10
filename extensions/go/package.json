@@ -9,7 +9,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sourcegraph/code-intel-extensions/extensions/go"
+    "url": "github:sourcegraph/code-intel-extensions",
+    "directory": "extensions/go"
   },
   "categories": [
     "Programming languages"

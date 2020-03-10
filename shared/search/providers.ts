@@ -1,11 +1,9 @@
 import { flatten, sortBy } from 'lodash'
+import LRUCache from 'lru-cache'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
-import {
-    getFileContent as getFileContentFromApi,
-    search as searchViaApi,
-} from '../util/api'
+import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI } from '../util/uri'
@@ -16,18 +14,46 @@ import { definitionQuery, referencesQuery } from './queries'
 import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
 
+/** The number of elements in the definition LRU cache. */
+const DEFINITION_CACHE_SIZE = 50
+
 /**
  * Creates providers powered by search-based code intelligence.
  *
  * @param spec The language spec.
+ * @param api The GraphQL API instance.
  */
-export function createProviders({
-    languageID,
-    fileExts = [],
-    commentStyles,
-    identCharPattern,
-    filterDefinitions = results => results,
-}: LanguageSpec): Providers {
+export function createProviders(
+    {
+        languageID,
+        fileExts = [],
+        commentStyles,
+        identCharPattern,
+        filterDefinitions = results => results,
+    }: LanguageSpec,
+    api: API = new API()
+): Providers {
+    /**
+     * Retrieve the text of the current text document. This may be cached on the
+     * text document itself. If it's not, we fetch it from the Raw API.
+     *
+     * @param uri The URI of the text document to fetch.
+     */
+    const getFileContent = ({
+        uri,
+        text,
+    }: {
+        /** The URI of the text document to fetch. */
+        uri: string
+        /** Possibly cached text from a previous query. */
+        text?: string
+    }): Promise<string | undefined> => {
+        const { repo, commit, path } = parseGitURI(new URL(uri))
+        return text
+            ? Promise.resolve(text)
+            : api.getFileContent(repo, commit, path)
+    }
+
     /**
      * Return the text document content adn the search token found under the
      * current hover position. Returns undefined if either piece of data could
@@ -64,9 +90,9 @@ export function createProviders({
      * Retrieve a definition for the current hover position.
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
-    const definition = async (
+    const rawDefinition = async (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
@@ -79,35 +105,27 @@ export function createProviders({
 
         // Construct base definition query without scoping terms
         const query = definitionQuery({ searchToken, doc, fileExts })
+        const queryArgs = {
+            doc,
+            repo,
+            commit,
+            path,
+            text,
+            filterDefinitions,
+            query,
+        }
+
+        const doSearch = (
+            negateRepoFilter: boolean
+        ): Promise<sourcegraph.Location[]> =>
+            searchWithFallback(
+                args => searchAndFilterDefinitions(api, args),
+                queryArgs,
+                negateRepoFilter
+            )
 
         // Perform a search in the current git tree
-        const sameRepoDefinitions = searchWithFallback(
-            searchAndFilterDefinitions,
-            {
-                doc,
-                repo,
-                commit,
-                path,
-                text,
-                filterDefinitions,
-                query,
-            }
-        )
-
-        // Perform an indexed search over all repositories. Do not do this
-        // on the DotCom instance as we are unlikely to have indexed the
-        // relevant definition and we'd end up jumping to what would seem
-        // like a random line of code.
-        const anyRepoDefinitions = isSourcegraphDotCom()
-            ? Promise.resolve([])
-            : searchAndFilterDefinitions({
-                  doc,
-                  repo,
-                  path,
-                  text,
-                  filterDefinitions,
-                  query,
-              })
+        const sameRepoDefinitions = doSearch(false)
 
         // Return any local location definitions first
         const results = await sameRepoDefinitions
@@ -115,15 +133,46 @@ export function createProviders({
             return results
         }
 
-        // Fallback to definitions found in any other repository
-        return await anyRepoDefinitions
+        // Fallback to definitions found in any other repository. This performs
+        // an indexed search over all repositories. Do not do this on the DotCom
+        // instance as we are unlikely to have indexed the relevant definition
+        // and we'd end up jumping to what would seem like a random line of code.
+        return isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
+    }
+
+    const definitionCache = new LRUCache<
+        string,
+        Promise<sourcegraph.Definition>
+    >(DEFINITION_CACHE_SIZE)
+
+    /**
+     * Retrieve a definition for the current hover position. Keep the
+     * result around in a small LRU cache. The cache does not need to be
+     * large as we are only trying to stop two identical search requests
+     * being made at the same time (one for a def and one for hover).
+     *
+     * @param doc The current text document.
+     * @param pos The current hover position.
+     */
+    const definition = async (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<sourcegraph.Definition> => {
+        const key = [doc.uri, pos.line, pos.character].join(':')
+
+        let promise = definitionCache.get(key)
+        if (!promise) {
+            promise = rawDefinition(doc, pos)
+            definitionCache.set(key, promise)
+        }
+        return promise
     }
 
     /**
      * Retrieve references for the current hover position.
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
     const references = async (
         doc: sourcegraph.TextDocument,
@@ -138,24 +187,34 @@ export function createProviders({
 
         // Construct base references query without scoping terms
         const query = referencesQuery({ searchToken, doc, fileExts })
-
-        // Perform a search in the current git tree
-        const sameRepoReferences = searchWithFallback(searchReferences, {
+        const queryArgs = {
             repo,
             commit,
             query,
-        })
+        }
+
+        const doSearch = (
+            negateRepoFilter: boolean
+        ): Promise<sourcegraph.Location[]> =>
+            searchWithFallback(
+                args => searchReferences(api, args),
+                queryArgs,
+                negateRepoFilter
+            )
+
+        // Perform a search in the current git tree
+        const sameRepoReferences = doSearch(false)
 
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
-        const otherRepoReferences = isSourcegraphDotCom()
+        const remoteRepoReferences = isSourcegraphDotCom()
             ? Promise.resolve([])
-            : searchReferences({ query: `${query} -repo:^${repo}$` })
+            : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
-        const referenceChunk = [sameRepoReferences, otherRepoReferences]
+        const referenceChunk = [sameRepoReferences, remoteRepoReferences]
         const mergedReferences = flatten(await Promise.all(referenceChunk))
         return sortByProximity(mergedReferences, new URL(doc.uri))
     }
@@ -164,20 +223,20 @@ export function createProviders({
      * Retrieve hover text for the current hover position.
      *
      * @param doc The current text document.
-     * @param position The current hover position.
+     * @param pos The current hover position.
      */
     const hover = async (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
-        const text = await getFileContent(doc)
-        if (!text) {
-            return null
-        }
-
         // Get the first definition and ensure it has a range
         const def = asArray(await definition(doc, pos))[0]
         if (!def || !def.range) {
+            return null
+        }
+
+        const text = await getFileContent({ uri: def.uri.href })
+        if (!text) {
             return null
         }
 
@@ -227,52 +286,40 @@ export function createProviders({
 }
 
 /**
- * Retrieve the text of the current text document. This may be cached on the text
- * document itself. If it's not, we fetch it from the Raw API.
- *
- * @param doc The current text document.
- */
-function getFileContent(
-    doc: sourcegraph.TextDocument
-): Promise<string | undefined> {
-    if (doc.text) {
-        return Promise.resolve(doc.text)
-    }
-    const { repo, commit, path } = parseGitURI(new URL(doc.uri))
-    return getFileContentFromApi(repo, commit, path)
-}
-
-/**
  * Perform a search query for definitions. Returns results converted to locations,
  * filtered by the language's definition filter, and sorted by proximity to the
  * current text document path.
  *
+ * @param api The GraphQL API instance.
  * @param args Parameter bag.
  */
-async function searchAndFilterDefinitions({
-    doc,
-    repo,
-    path,
-    text,
-    filterDefinitions,
-    query,
-}: {
-    /** The current text document. */
-    doc: sourcegraph.TextDocument
-    /** The repository containing the current text document. */
-    repo: string
-    /** The path of the current text document. */
-    path: string
-    /** The content of the current text document */
-    text: string
-    /** The function used to filter definitions. */
-    filterDefinitions: FilterDefinitions
-    /** The search query. */
-    query: string
-}): Promise<sourcegraph.Location[]> {
+async function searchAndFilterDefinitions(
+    api: API,
+    {
+        doc,
+        repo,
+        path,
+        text,
+        filterDefinitions,
+        query,
+    }: {
+        /** The current text document. */
+        doc: sourcegraph.TextDocument
+        /** The repository containing the current text document. */
+        repo: string
+        /** The path of the current text document. */
+        path: string
+        /** The content of the current text document */
+        text: string
+        /** The function used to filter definitions. */
+        filterDefinitions: FilterDefinitions
+        /** The search query. */
+        query: string
+    }
+): Promise<sourcegraph.Location[]> {
     // Perform search and perform pre-filtering before passing it
     // off to the language spec for the proper filtering pass.
-    const searchResults = await search(query)
+    const searchResults = await search(api, query)
     const preFilteredResults = searchResults.filter(
         result => !isExternalPrivateSymbol(doc, path, result)
     )
@@ -295,21 +342,21 @@ async function searchAndFilterDefinitions({
  * Results are not sorted in any meaningful way as these results are meant to be
  * merged with other search query results.
  *
+ * @param api The GraphQL API instance.
  * @param args Parameter bag.
  */
-async function searchReferences({
-    query,
-}: {
-    /** The search query. */
-    query: string
-}): Promise<sourcegraph.Location[]> {
-    return (await search(query)).map(resultToLocation)
+async function searchReferences(
+    api: API,
+    { query }: { /** The search query. */ query: string }
+): Promise<sourcegraph.Location[]> {
+    return (await search(api, query)).map(resultToLocation)
 }
 
 /**
  * Invoke the given search function by modifying the query with a term that will
  * only look in the current git tree by appending a repo filter with the repo name
- * and the current commit.
+ * and the current commit or, if `negateRepoFilter` is set, outside of current git
+ * tree.
  *
  * This is likely to timeout on large repos or organizations with monorepos if the
  * current commit is not an indexed commit. Instead of waiting for a timeout, we
@@ -324,10 +371,18 @@ async function searchReferences({
 export function searchWithFallback<
     P extends { repo: string; commit: string; query: string },
     R
->(search: (args: P) => Promise<R>, args: P): Promise<R> {
+>(
+    search: (args: P) => Promise<R>,
+    args: P,
+    negateRepoFilter = false
+): Promise<R> {
     const { repo, commit, query } = args
-    const unindexedQuery = `${query} repo:^${repo}$@${commit}`
-    const indexedQuery = `${query} repo:^${repo}$ index:only`
+    const unindexedQuery = negateRepoFilter
+        ? `${query} -repo:^${repo}$` // commit does not apply to a different repository
+        : `${query} repo:^${repo}$@${commit}`
+    const indexedQuery = negateRepoFilter
+        ? `${query} -repo:^${repo}$ index:only`
+        : `${query} repo:^${repo}$ index:only`
 
     if (getConfig('basicCodeIntel.indexOnly', false)) {
         return search({
@@ -351,16 +406,18 @@ export function searchWithFallback<
 /**
  * Perform a search query.
  *
+ *
+ * @param api The GraphQL API instance.
  * @param query The search query.
  */
-async function search(query: string): Promise<Result[]> {
+async function search(api: API, query: string): Promise<Result[]> {
     if (getConfig('basicCodeIntel.debug.traceSearch', false)) {
         console.log('%cSearch', 'font-weight:bold;', {
             query,
         })
     }
 
-    return (await searchViaApi(query, getConfig('fileLocal', false))).flatMap(
+    return (await api.search(query, getConfig('fileLocal', false))).flatMap(
         searchResultToResults
     )
 }
@@ -470,7 +527,7 @@ export async function raceWithDelayOffset<T>(
         return results
     }
 
-    return await Promise.race([primary, fallback()])
+    return Promise.race([primary, fallback()])
 }
 
 /**

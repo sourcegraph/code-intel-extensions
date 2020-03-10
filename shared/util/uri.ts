@@ -32,7 +32,7 @@ export function gitToRawApiUri(
     uri: URL
 ): URL {
     if (uri.protocol !== 'git:') {
-        throw new Error(`Not a Sourcegraph git:// URI: ${uri}`)
+        throw new Error(`Not a Sourcegraph git:// URI: ${uri.href}`)
     }
 
     const rootUri = new URL(sourcegraphURL.href)
@@ -51,10 +51,10 @@ export function gitToRawApiUri(
  */
 export function rawApiToGitUri(rawApiUrl: URL): URL {
     const match = rawApiUrl.pathname.match(
-        /^\/([^@]+)(?:@([^\/]+))?\/-\/raw\/(.*)$/
+        /^\/([^@]+)(?:@([^/]+))?\/-\/raw\/(.*)$/
     )
     if (!match) {
-        throw new Error(`Not a Sourcegraph raw API URL: ${rawApiUrl}`)
+        throw new Error(`Not a Sourcegraph raw API URL: ${rawApiUrl.href}`)
     }
 
     const [, repoName, rev, filePath] = match as [

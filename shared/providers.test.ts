@@ -16,18 +16,18 @@ const doc = createStubTextDocument({
 })
 
 const pos = new sourcegraph.Position(10, 5)
-const r1 = new sourcegraph.Range(1, 2, 3, 4)
-const r2 = new sourcegraph.Range(5, 6, 7, 8)
+const range1 = new sourcegraph.Range(1, 2, 3, 4)
+const range2 = new sourcegraph.Range(5, 6, 7, 8)
 
-const loc1 = new sourcegraph.Location(new URL('http://test/1'), r1)
-const loc2 = new sourcegraph.Location(new URL('http://test/2'), r1)
-const loc3 = new sourcegraph.Location(new URL('http://test/3'), r1)
-const loc4 = new sourcegraph.Location(new URL('http://test/4'), r1)
-const loc5 = new sourcegraph.Location(new URL('http://test/5'), r1)
-const loc6 = new sourcegraph.Location(new URL('http://test/6'), r1)
-const loc7 = new sourcegraph.Location(new URL('http://test/2'), r2) // overlapping URI
-const loc8 = new sourcegraph.Location(new URL('http://test/3'), r2) // overlapping URI
-const loc9 = new sourcegraph.Location(new URL('http://test/4'), r2) // overlapping URI
+const loc1 = new sourcegraph.Location(new URL('http://test/1'), range1)
+const loc2 = new sourcegraph.Location(new URL('http://test/2'), range1)
+const loc3 = new sourcegraph.Location(new URL('http://test/3'), range1)
+const loc4 = new sourcegraph.Location(new URL('http://test/4'), range1)
+const loc5 = new sourcegraph.Location(new URL('http://test/5'), range1)
+const loc6 = new sourcegraph.Location(new URL('http://test/6'), range1)
+const loc7 = new sourcegraph.Location(new URL('http://test/2'), range2) // overlapping URI
+const loc8 = new sourcegraph.Location(new URL('http://test/3'), range2) // overlapping URI
+const loc9 = new sourcegraph.Location(new URL('http://test/4'), range2) // overlapping URI
 
 const hover1: sourcegraph.Hover = { contents: { value: 'test1' } }
 const hover2: sourcegraph.Hover = { contents: { value: 'test2' } }
@@ -223,6 +223,8 @@ async function* asyncGeneratorFromValues<P>(
 
 async function gatherValues<T>(o: Observable<T>): Promise<T[]> {
     const values: T[] = []
-    await new Promise(r => o.subscribe(v => values.push(v), undefined, r))
+    await new Promise(complete =>
+        o.subscribe({ next: v => values.push(v), complete })
+    )
     return values
 }

@@ -48,8 +48,11 @@ export const implementationFeature: Feature<
                     options.implementationId || 'unknown.impl',
                     scopedDocumentSelector,
                     {
-                        provideLocations: (textDocument, position) =>
-                            observableFromAsyncIterator(
+                        provideLocations: (
+                            textDocument: sourcegraph.TextDocument,
+                            position: sourcegraph.Position
+                        ) =>
+                            observableFromAsyncIterator(() =>
                                 implementation(textDocument, position)
                             ),
                     }

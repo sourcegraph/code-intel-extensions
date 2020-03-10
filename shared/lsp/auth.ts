@@ -1,5 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-import { createAccessToken, getUser } from '../util/api'
+import { API } from '../util/api'
 
 let accessTokenPromise: Promise<string | undefined> | undefined
 
@@ -14,10 +14,12 @@ let accessTokenPromise: Promise<string | undefined> | undefined
  *
  * @param name The name of the configuration setting with an access token.
  * @param note A note to tag to a newly created access token.
+ * @param api The GraphQL API instance.
  */
 export async function getOrCreateAccessToken(
     name: string,
-    note: string
+    note: string,
+    api: API = new API()
 ): Promise<string | undefined> {
     const accessToken = sourcegraph.configuration.get().get(name) as
         | string
@@ -27,12 +29,12 @@ export async function getOrCreateAccessToken(
     }
     if (!accessTokenPromise) {
         accessTokenPromise = (async (): Promise<string | undefined> => {
-            const userId = await getUser()
+            const userId = await api.getUser()
             if (!userId) {
                 return undefined
             }
 
-            const token = await createAccessToken(userId, note)
+            const token = await api.createAccessToken(userId, note)
             await sourcegraph.configuration.get().update(name, token)
             return token
         })()

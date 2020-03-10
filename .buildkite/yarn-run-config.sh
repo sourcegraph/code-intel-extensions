@@ -8,8 +8,8 @@ trap "{ rm -f $tmpfile; }" EXIT
 
 cat << EOF >> ${tmpfile}
 {
-  "endpoint": "https://sourcegraph.com",
-  "accessToken": "${CODE_INTEL_EXTENSIONS_SOURCEGRAPH_ACCESS_TOKEN}"
+    "endpoint": "https://sourcegraph.com",
+    "accessToken": "${CODE_INTEL_EXTENSIONS_SOURCEGRAPH_ACCESS_TOKEN}"
 }
 EOF
 

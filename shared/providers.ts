@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs'
+import { NEVER, Observable } from 'rxjs'
 import { shareReplay } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { impreciseBadge } from './badges'
@@ -65,8 +65,8 @@ export class NoopProviderWrapper implements ProviderWrapper {
             pos: sourcegraph.Position
         ) =>
             provider
-                ? observableFromAsyncIterator(provider(doc, pos))
-                : new Observable(),
+                ? observableFromAsyncIterator(() => provider(doc, pos))
+                : NEVER,
     })
 
     public references = (
@@ -78,8 +78,8 @@ export class NoopProviderWrapper implements ProviderWrapper {
             ctx: sourcegraph.ReferenceContext
         ) =>
             provider
-                ? observableFromAsyncIterator(provider(doc, pos, ctx))
-                : new Observable(),
+                ? observableFromAsyncIterator(() => provider(doc, pos, ctx))
+                : NEVER,
     })
 
     public hover = (provider?: HoverProvider): sourcegraph.HoverProvider => ({
@@ -88,8 +88,8 @@ export class NoopProviderWrapper implements ProviderWrapper {
             pos: sourcegraph.Position
         ) =>
             provider
-                ? observableFromAsyncIterator(provider(doc, pos))
-                : new Observable(),
+                ? observableFromAsyncIterator(() => provider(doc, pos))
+                : NEVER,
     })
 }
 
@@ -188,8 +188,8 @@ export function createDefinitionProvider(
 /**
  * Creates a reference provider.
  *
- * @param lsifProviders The LSIF-based references provider.
- * @param searchProviders The search-based references provider.
+ * @param lsifProvider The LSIF-based references provider.
+ * @param searchProvider The search-based references provider.
  * @param lspProvider An optional LSP-based references provider.
  */
 export function createReferencesProvider(
@@ -199,7 +199,7 @@ export function createReferencesProvider(
 ): sourcegraph.ReferenceProvider {
     // Gets an opaque value that is the same for all locations
     // within a file but different from other files.
-    const file = (loc: sourcegraph.Location) =>
+    const file = (loc: sourcegraph.Location): string =>
         `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
 
     return {
@@ -360,7 +360,7 @@ function wrapProvider<P extends unknown[], R>(
             return previousResult
         }
         previousArgs = args
-        previousResult = observableFromAsyncIterator(fn(...args)).pipe(
+        previousResult = observableFromAsyncIterator(() => fn(...args)).pipe(
             shareReplay(1)
         )
         return previousResult

@@ -53,6 +53,10 @@ export function findSearchToken({
         }
     }
 
+    if (start >= end) {
+        return undefined
+    }
+
     const searchToken = line.substring(start, end)
 
     // Determine if the token occurs after a comment on the same line

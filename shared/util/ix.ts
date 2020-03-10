@@ -28,12 +28,13 @@ export function createAbortError(): AbortError {
 /**
  * Convert an async iterator into an observable.
  *
- * @param iterator The source iterator.
+ * @param factory A function returning the source iterator.
  */
 export const observableFromAsyncIterator = <T>(
-    iterator: AsyncIterator<T>
+    factory: () => AsyncIterator<T>
 ): Observable<T> =>
     new Observable((observer: Observer<T>) => {
+        const iterator = factory()
         let unsubscribed = false
         let iteratorDone = false
         function next(): void {
@@ -48,6 +49,7 @@ export const observableFromAsyncIterator = <T>(
                     } else {
                         observer.next(result.value)
                         next()
+                        return
                     }
                 },
                 err => {

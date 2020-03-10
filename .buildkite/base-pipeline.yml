@@ -5,15 +5,9 @@ steps:
   - command: ./.buildkite/check-all.sh
     label: ':white_check_mark:'
   - command: ./.buildkite/lint.sh
-    label: ':lipstick: :lint-roller:'
+    label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
-    label: ':jest:'
-  - command: CWD=extensions/go ./.buildkite/yarn-run.sh build
-    label: ':go:'
-  - command: CWD=extensions/typescript ./.buildkite/yarn-run.sh build
-    label: ':typescript:'
-  - command: CWD=extensions/template ./.buildkite/yarn-run.sh build
-    label: ':question:'
+    label: ':jest: :codecov:'
 
   - wait
 

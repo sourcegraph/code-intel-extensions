@@ -43,6 +43,7 @@ export function sortUnique<T>(values: T[]): T[] {
 
 /**
  * Constructs a function that returns true if the input is not in the blacklist.
+ *
  * @param blacklist The blacklist.
  */
 export function notIn<T>(blacklist: T[]): (v: T) => boolean {
