@@ -8,7 +8,7 @@ import {
 
 describe('observableFromAsyncIterator', () => {
     it('converts iterator into an observable', async () => {
-        const o = observableFromAsyncIterator(
+        const o = observableFromAsyncIterator(() =>
             (async function*(): AsyncIterator<number> {
                 await Promise.resolve()
                 yield 1
@@ -27,7 +27,7 @@ describe('observableFromAsyncIterator', () => {
     })
 
     it('throws iterator error', async () => {
-        const o = observableFromAsyncIterator(
+        const o = observableFromAsyncIterator(() =>
             (async function*(): AsyncIterator<number> {
                 await Promise.resolve()
                 yield 1

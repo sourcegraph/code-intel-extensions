@@ -52,7 +52,7 @@ export const implementationFeature: Feature<
                             textDocument: sourcegraph.TextDocument,
                             position: sourcegraph.Position
                         ) =>
-                            observableFromAsyncIterator(
+                            observableFromAsyncIterator(() =>
                                 implementation(textDocument, position)
                             ),
                     }

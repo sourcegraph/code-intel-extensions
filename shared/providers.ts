@@ -63,7 +63,9 @@ export class NoopProviderWrapper implements ProviderWrapper {
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ) =>
-            provider ? observableFromAsyncIterator(provider(doc, pos)) : NEVER,
+            provider
+                ? observableFromAsyncIterator(() => provider(doc, pos))
+                : NEVER,
     })
 
     public references = (
@@ -75,7 +77,7 @@ export class NoopProviderWrapper implements ProviderWrapper {
             ctx: sourcegraph.ReferenceContext
         ) =>
             provider
-                ? observableFromAsyncIterator(provider(doc, pos, ctx))
+                ? observableFromAsyncIterator(() => provider(doc, pos, ctx))
                 : NEVER,
     })
 
@@ -84,7 +86,9 @@ export class NoopProviderWrapper implements ProviderWrapper {
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ) =>
-            provider ? observableFromAsyncIterator(provider(doc, pos)) : NEVER,
+            provider
+                ? observableFromAsyncIterator(() => provider(doc, pos))
+                : NEVER,
     })
 }
 
@@ -319,7 +323,7 @@ function wrapProvider<P extends unknown[], R>(
             return previousResult
         }
         previousArgs = args
-        previousResult = observableFromAsyncIterator(fn(...args)).pipe(
+        previousResult = observableFromAsyncIterator(() => fn(...args)).pipe(
             shareReplay(1)
         )
         return previousResult
