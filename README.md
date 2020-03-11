@@ -39,7 +39,9 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 
 ## Generating & publishing extensions
 
-Extensions are generated and published from the [master branch](https://buildkite.com/sourcegraph/code-intel-extensions/builds?branch=master).
+Typically you do not need to explicitly generate and publish extensions. By default, extensions are generated and published in BuildKite from the [master branch](https://buildkite.com/sourcegraph/code-intel-extensions/builds?branch=master).
+
+If you need to manually generate/publish extensions, do so as follows:
 
 Generate:
 
