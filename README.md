@@ -15,28 +15,47 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 ## Development
 
 1. Run `yarn`
-1. Run `yarn --cwd extensions/{go,typescript,template} run serve` (pick one, `template` includes all others)
-1. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
+2. Run `yarn --cwd extensions/{go,typescript,template} run serve` (pick one, `template` includes all others)
+3. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
 
-```json
-{
-  ...
-  "extensions": {
-      "sourcegraph/cpp": false,
+    ```json
+    {
       ...
-  }
-}
-```
+      "extensions": {
+          "sourcegraph/cpp": false,
+          ...
+      }
+    }
+    ```
 
 4. [Sideload the extension](https://docs.sourcegraph.com/extensions/authoring/local_development) (hit OK on the alert to accept the default URL http://localhost:1234) on your Sourcegraph instance and refresh the page. Make sure you don't see two of the same language extension in the **Ext** menu.
 
 ## Adding a language extension
 
 1. Add an entry to the [`shared/language-specs`](shared/language-specs) directory. For languages with a trivial configuration add a new entry (in alphabetical order) to [`languages.ts`](shared/language-specs/languages.ts). Otherwise, add additional files following the existing examples.
-1. (optional, to enable jump to definition) Ensure the language is present in the command line arguments to universal-ctags https://github.com/sourcegraph/sourcegraph/blob/21efc6844838e773b9a8f4a7ba1d5628e8076984/cmd/symbols/internal/pkg/ctags/parser.go#L71
-1. Make sure there is a mapping entry for the `languageID` in https://github.com/sourcegraph/sourcegraph/blob/master/shared/src/languages.ts#L40
-1. Generate and publish the extension as described in the previous section.
+2. (optional, to enable jump to definition) Ensure the language is present in the command line arguments to universal-ctags https://github.com/sourcegraph/sourcegraph/blob/21efc6844838e773b9a8f4a7ba1d5628e8076984/cmd/symbols/internal/pkg/ctags/parser.go#L71
+3. Make sure there is a mapping entry for the `languageID` in https://github.com/sourcegraph/sourcegraph/blob/master/shared/src/languages.ts#L40
+4. Generate and publish the extension as described below.
 
-## Publishing extensions
+## Generating & publishing extensions
 
-Extensions are generated and published from the [master branch](https://buildkite.com/sourcegraph/code-intel-extensions/builds?branch=master).
+Typically you do not need to explicitly generate and publish extensions. By default, extensions are generated and published in BuildKite from the [master branch](https://buildkite.com/sourcegraph/code-intel-extensions/builds?branch=master).
+
+If you need to manually generate/publish extensions, do so as follows:
+
+Generate:
+
+-   Specific template extensions: `yarn run generate --languages=foo,bar`
+-   All known template extensions: `yarn run generate`
+
+Publish:
+
+1. Ensure the [`src` command-line tool](https://github.com/sourcegraph/src-cli)
+   is installed on your PATH, and environment variables are set:
+    - `SRC_ENDPOINT` should be the URL of your instance.
+    - `SRC_ACCESS_TOKEN` should contain an access token for your instance.
+2. Publish:
+    - Specific template extensions: `yarn run publish --languages=foo,bar`
+    - All the template extensions: `yarn run publish`
+    - Go: `yarn run publish:go`
+    - TypeScript: `yarn run publish:typescript`
