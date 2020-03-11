@@ -955,7 +955,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/js-base64@^2.3.1":
+"@types/js-base64@2.3.1":
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@types/js-base64/-/js-base64-2.3.1.tgz#c39f14f129408a3d96a1105a650d8b2b6eeb4168"
   integrity sha512-4RKbhIDGC87s4EBy2Cp2/5S2O6kmCRcZnD5KRCq1q9z2GhBte1+BdsfVKCpG8yKpDGNyEE2G6IqFIh6W2YwWPA==
