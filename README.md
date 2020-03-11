@@ -37,9 +37,13 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 3. Make sure there is a mapping entry for the `languageID` in https://github.com/sourcegraph/sourcegraph/blob/master/shared/src/languages.ts#L40
 4. Generate and publish the extension as described below.
 
-## Publishing extensions
+## Generating & publishing extensions
 
 Extensions are generated and published from the [master branch](https://buildkite.com/sourcegraph/code-intel-extensions/builds?branch=master).
+
+Generate:
+- Specific template extensions: `yarn run generate --languages=foo,bar`
+- All known template extensions: `yarn run generate`
 
 To publish an extension, you will need the [`src` command-line tool](https://github.com/sourcegraph/src-cli) installed somewhere on your PATH. Then:
 
