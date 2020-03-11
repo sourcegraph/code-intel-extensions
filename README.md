@@ -42,8 +42,9 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 Extensions are generated and published from the [master branch](https://buildkite.com/sourcegraph/code-intel-extensions/builds?branch=master).
 
 Generate:
-- Specific template extensions: `yarn run generate --languages=foo,bar`
-- All known template extensions: `yarn run generate`
+
+-   Specific template extensions: `yarn run generate --languages=foo,bar`
+-   All known template extensions: `yarn run generate`
 
 To publish an extension, you will need the [`src` command-line tool](https://github.com/sourcegraph/src-cli) installed somewhere on your PATH. Then:
 
