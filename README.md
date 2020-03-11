@@ -48,9 +48,10 @@ Generate:
 -   Specific template extensions: `yarn run generate --languages=foo,bar`
 -   All known template extensions: `yarn run generate`
 
-To publish an extension, you will need the [`src` command-line tool](https://github.com/sourcegraph/src-cli) installed somewhere on your PATH. Then:
+Publish:
 
-1. Ensure environment variables are set:
+1. Ensure the [`src` command-line tool](https://github.com/sourcegraph/src-cli)
+   is installed on your PATH, and environment variables are set:
     - `SRC_ENDPOINT` should be the URL of your instance.
     - `SRC_ACCESS_TOKEN` should contain an access token for your instance.
 2. Publish:
