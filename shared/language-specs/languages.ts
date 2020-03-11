@@ -113,7 +113,7 @@ const haskellSpec: LanguageSpec = {
 const jsonnetSpec: LanguageSpec = {
     languageID: 'jsonnet',
     stylized: 'Jsonnet',
-    fileExts: ['jsonnet'],
+    fileExts: ['jsonnet', 'libsonnet'],
     commentStyles: [cStyleComment],
 }
 
