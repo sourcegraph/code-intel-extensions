@@ -388,15 +388,13 @@ export async function register({
             connection.unsubscribe()
         }
     }
-
+    411
     function addRoot(root: sourcegraph.WorkspaceRoot): void {
         const connectionPromise = (async () => {
             try {
-                const serverRootUri = clientToServerURI(
-                    new URL(root.uri.toString())
-                )
+                const serverRootUri = clientToServerURI(root.uri)
                 const connection = await connect({
-                    clientRootUri: new URL(root.uri.toString()),
+                    clientRootUri: root.uri,
                     initParams: {
                         processId: null,
                         rootUri: serverRootUri.href,
