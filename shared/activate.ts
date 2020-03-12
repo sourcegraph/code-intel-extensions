@@ -2,7 +2,7 @@ import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
 import { distinctUntilChanged, map } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
-import { Logger } from './logging'
+import { Logger, RedactingLogger } from './logging'
 import { getOrCreateAccessToken } from './lsp/auth'
 import { LSPClient } from './lsp/client'
 import { FeatureOptions } from './lsp/registration'
@@ -37,7 +37,7 @@ export type ClientFactory<S> = (args: {
     /** The URL of the Sourcegraph API. */
     sourcegraphURL: URL
     /** The access token. */
-    accessToken: string
+    accessToken?: string
     /**
      * A value that can decorate definition, references, and hover providers
      * with LSIF and basic intelligence.
@@ -65,7 +65,7 @@ export type ExternalReferencesProviderFactory<S> = (args: {
     /** A URL of the Sourcegraph API reachable from the browser. */
     sourcegraphClientURL: URL
     /** The access token. */
-    accessToken: string
+    accessToken?: string
 }) => ReferencesProvider
 
 /**
@@ -89,13 +89,14 @@ const DUMMY_CTX = {
  * @param selector The document selector for which this extension is active.
  * @param languageSpec The language spec used to provide search-based code intelligence.
  * @param lspFactory An optional factory that registers an LSP client.
+ * @param logger An optional logger instance.
  */
 export async function activateCodeIntel(
     ctx: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger = new RedactingLogger(console)
 ): Promise<void> {
     const wrapper = createProviderWrapper(languageSpec, logger)
 
@@ -110,12 +111,13 @@ export async function activateCodeIntel(
  * @param ctx  The extension context.
  * @param wrapper The provider wrapper.
  * @param lspFactory An optional factory that registers an LSP client.
+ * @param logger An optional logger instance.
  */
 export async function tryInitLSP(
     ctx: sourcegraph.ExtensionContext,
     wrapper: ProviderWrapper,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger = new RedactingLogger(console)
 ): Promise<boolean> {
     if (!lspFactory) {
         return false
@@ -140,11 +142,13 @@ export async function tryInitLSP(
  * @param languageID The language identifier
  * @param clientFactory A factory that initializes an LSP client.
  * @param externalReferencesProviderFactory A factory that creates an external reference provider.
+ * @param logger An optional logger instance.
  */
 export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
     clientFactory: ClientFactory<S>,
-    externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>
+    externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
+    logger: Logger = new RedactingLogger(console)
 ): (
     ctx: sourcegraph.ExtensionContext,
     providerWrapper: ProviderWrapper
@@ -157,6 +161,7 @@ export function initLSP<S extends { [key: string]: any }>(
 
         const serverURL = settings[`${languageID}.serverUrl`]
         if (!serverURL) {
+            logger.log('No language server url is configured')
             return false
         }
 
@@ -165,12 +170,13 @@ export function initLSP<S extends { [key: string]: any }>(
             languageID
         )
         if (!accessToken) {
-            return false
+            logger.log('No language server access token is available')
         }
 
         const sgUrl = sourcegraphURL(
             settings[`${languageID}.sourcegraphUrl`],
-            languageID
+            languageID,
+            logger
         )
 
         const { client, featureOptionsSubject } = await clientFactory({
@@ -199,6 +205,8 @@ export function initLSP<S extends { [key: string]: any }>(
             externalReferencesProvider
         )
         registerImplementationsPanel(ctx, `${languageID}.impl`)
+
+        logger.log('Language Server providers are active')
         return true
     }
 }
@@ -260,15 +268,20 @@ function getSettings<S extends { [key: string]: any }>(
  *
  * @param setting The user configured sourcegraph URL.
  * @param languageID The language identifier.
+ * @param logger The logger instance.
  */
-function sourcegraphURL(setting: string | undefined, languageID: string): URL {
+function sourcegraphURL(
+    setting: string | undefined,
+    languageID: string,
+    logger: Logger
+): URL {
     const url = setting || sourcegraph.internal.sourcegraphURL.toString()
 
     try {
         return new URL(url)
     } catch (err) {
         if (err.message?.includes('Invalid URL')) {
-            console.error(
+            logger.error(
                 new Error(
                     [
                         `Invalid ${languageID}.sourcegraphUrl ${url} in your Sourcegraph settings.`,

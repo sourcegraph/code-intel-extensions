@@ -113,7 +113,7 @@ const haskellSpec: LanguageSpec = {
 const jsonnetSpec: LanguageSpec = {
     languageID: 'jsonnet',
     stylized: 'Jsonnet',
-    fileExts: ['jsonnet'],
+    fileExts: ['jsonnet', 'libsonnet'],
     commentStyles: [cStyleComment],
 }
 
@@ -302,6 +302,13 @@ const swiftSpec: LanguageSpec = {
     commentStyles: [javaStyleComment],
 }
 
+const thriftSpec: LanguageSpec = {
+    languageID: 'thrift',
+    stylized: 'Thrift',
+    fileExts: ['thrift'],
+    commentStyles: [cStyleComment],
+}
+
 const verilogSpec: LanguageSpec = {
     languageID: 'verilog',
     stylized: 'Verilog',
@@ -353,6 +360,7 @@ export const languageSpecs: LanguageSpec[] = [
     scalaSpec,
     shellSpec,
     swiftSpec,
+    thriftSpec,
     typescriptSpec,
     verilogSpec,
     vhdlSpec,

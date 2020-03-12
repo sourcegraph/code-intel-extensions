@@ -3,7 +3,6 @@ import { Subject } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
 import { activateCodeIntel, initLSP } from '../../../shared/activate'
 import { findLanguageSpec } from '../../../shared/language-specs/languages'
-import { NoopLogger } from '../../../shared/logging'
 import { LSPClient } from '../../../shared/lsp/client'
 import { webSocketTransport } from '../../../shared/lsp/connection'
 import { FeatureOptions, register } from '../../../shared/lsp/registration'
@@ -52,7 +51,7 @@ async function registerClient({
     /** The URL of the Sourcegraph API. */
     sourcegraphURL: URL
     /** The access token. */
-    accessToken: string
+    accessToken?: string
     /**
      * A value that can decorate definition, references, and hover providers
      * with LSIF and basic intelligence.
@@ -69,7 +68,6 @@ async function registerClient({
 
     const transport = webSocketTransport({
         serverUrl: serverURL,
-        logger: new NoopLogger(),
         cancellationToken,
     })
 
