@@ -86,6 +86,7 @@ export function createExternalReferencesProvider(
         // Get the symbol and package at the current position
         const definitions = await getDefinition(client, doc, pos)
         if (definitions.length === 0) {
+            // TODO
             console.error('No definitions')
             return
         }

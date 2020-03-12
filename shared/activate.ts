@@ -96,7 +96,7 @@ export async function activateCodeIntel(
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger = console // TODO
 ): Promise<void> {
     const wrapper = createProviderWrapper(languageSpec, logger)
 
@@ -117,7 +117,7 @@ export async function tryInitLSP(
     ctx: sourcegraph.ExtensionContext,
     wrapper: ProviderWrapper,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger = console // TODO
 ): Promise<boolean> {
     if (!lspFactory) {
         return false
@@ -148,7 +148,7 @@ export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
     clientFactory: ClientFactory<S>,
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
-    logger: Logger = console
+    logger: Logger = console // TODO
 ): (
     ctx: sourcegraph.ExtensionContext,
     providerWrapper: ProviderWrapper
@@ -161,6 +161,7 @@ export function initLSP<S extends { [key: string]: any }>(
 
         const serverURL = settings[`${languageID}.serverUrl`]
         if (!serverURL) {
+            // TODO
             console.log('No language server url is configured')
             return false
         }
@@ -170,6 +171,7 @@ export function initLSP<S extends { [key: string]: any }>(
             languageID
         )
         if (!accessToken) {
+            // TODO
             console.log('No language server access token is available')
         }
 
@@ -275,6 +277,7 @@ function sourcegraphURL(setting: string | undefined, languageID: string): URL {
         return new URL(url)
     } catch (err) {
         if (err.message?.includes('Invalid URL')) {
+            // TODO
             console.error(
                 new Error(
                     [

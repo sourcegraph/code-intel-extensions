@@ -25,7 +25,7 @@ export interface LSPConnection extends sourcegraph.Unsubscribable {
 export const webSocketTransport = ({
     serverUrl,
     cancellationToken,
-    logger = console,
+    logger = console, // TODO
 }: {
     serverUrl: string | URL
     cancellationToken: jsonrpc.CancellationToken

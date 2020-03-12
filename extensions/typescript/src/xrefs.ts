@@ -84,6 +84,7 @@ export function createExternalReferencesProvider(
             position
         )
         if (definitions.length === 0) {
+            // TODO
             console.error('No definitions')
             return
         }

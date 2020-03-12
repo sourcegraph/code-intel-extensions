@@ -86,7 +86,7 @@ export async function register({
     sourcegraph,
     clientToServerURI = identity,
     serverToClientURI = identity,
-    logger = console,
+    logger = console, // TODO
     progressSuffix = '',
     transport: createConnection,
     documentSelector,
