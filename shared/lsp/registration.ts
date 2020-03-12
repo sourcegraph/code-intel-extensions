@@ -406,14 +406,16 @@ export async function register({
                 })
                 subscriptions.add(connection)
 
-                connection.closeEvent.subscribe(() => {
-                    if (connectionsByRootUri.has(root.uri.toString())) {
-                        logger.log(
-                            'Refreshing WebSocket connection to language server'
-                        )
-                        addRoot(root)
-                    }
-                })
+                subscriptions.add(
+                    connection.closeEvent.subscribe(() => {
+                        if (connectionsByRootUri.has(root.uri.toString())) {
+                            logger.log(
+                                'Refreshing WebSocket connection to language server'
+                            )
+                            addRoot(root)
+                        }
+                    })
+                )
 
                 return connection
             } catch (err) {
