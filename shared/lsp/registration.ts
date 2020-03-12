@@ -388,7 +388,7 @@ export async function register({
             connection.unsubscribe()
         }
     }
-    411
+
     function addRoot(root: sourcegraph.WorkspaceRoot): void {
         const connectionPromise = (async () => {
             try {
