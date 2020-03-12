@@ -24,12 +24,12 @@ export interface LSPConnection extends sourcegraph.Unsubscribable {
 
 export const webSocketTransport = ({
     serverUrl,
-    logger = console,
     cancellationToken,
+    logger = console,
 }: {
     serverUrl: string | URL
-    logger: Logger
     cancellationToken: jsonrpc.CancellationToken
+    logger?: Logger
 }) => async (): Promise<LSPConnection> => {
     const socket = new WebSocket(serverUrl.toString())
     const event = await merge(
