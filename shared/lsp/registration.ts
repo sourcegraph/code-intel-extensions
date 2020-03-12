@@ -389,33 +389,47 @@ export async function register({
         }
     }
 
+    function addRoot(root: sourcegraph.WorkspaceRoot): void {
+        const connectionPromise = (async () => {
+            try {
+                const serverRootUri = clientToServerURI(
+                    new URL(root.uri.toString())
+                )
+                const connection = await connect({
+                    clientRootUri: new URL(root.uri.toString()),
+                    initParams: {
+                        processId: null,
+                        rootUri: serverRootUri.href,
+                        capabilities: clientCapabilities,
+                        workspaceFolders: null,
+                        initializationOptions,
+                    },
+                    registerProviders: true,
+                })
+                subscriptions.add(connection)
+
+                connection.closeEvent.subscribe(() => {
+                    if (connectionsByRootUri.has(root.uri.toString())) {
+                        logger.log(
+                            'Refreshing WebSocket connection to language server'
+                        )
+                        addRoot(root)
+                    }
+                })
+
+                return connection
+            } catch (err) {
+                logger.error('Error creating connection', err)
+                connectionsByRootUri.delete(root.uri.toString())
+                throw err
+            }
+        })()
+        connectionsByRootUri.set(root.uri.toString(), connectionPromise)
+    }
+
     function addRoots(added: readonly sourcegraph.WorkspaceRoot[]): void {
         for (const root of added) {
-            const connectionPromise = (async () => {
-                try {
-                    const serverRootUri = clientToServerURI(
-                        new URL(root.uri.toString())
-                    )
-                    const connection = await connect({
-                        clientRootUri: new URL(root.uri.toString()),
-                        initParams: {
-                            processId: null,
-                            rootUri: serverRootUri.href,
-                            capabilities: clientCapabilities,
-                            workspaceFolders: null,
-                            initializationOptions,
-                        },
-                        registerProviders: true,
-                    })
-                    subscriptions.add(connection)
-                    return connection
-                } catch (err) {
-                    logger.error('Error creating connection', err)
-                    connectionsByRootUri.delete(root.uri.toString())
-                    throw err
-                }
-            })()
-            connectionsByRootUri.set(root.uri.toString(), connectionPromise)
+            addRoot(root)
         }
     }
     subscriptions.add(

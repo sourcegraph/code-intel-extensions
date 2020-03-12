@@ -61,7 +61,6 @@ async function registerClient({
 
     const transport = webSocketTransport({
         serverUrl: serverURL,
-        logger: new NoopLogger(),
         cancellationToken,
     })
 

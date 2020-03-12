@@ -24,7 +24,7 @@ export interface LSPConnection extends sourcegraph.Unsubscribable {
 
 export const webSocketTransport = ({
     serverUrl,
-    logger,
+    logger = console,
     cancellationToken,
 }: {
     serverUrl: string | URL
@@ -49,8 +49,8 @@ export const webSocketTransport = ({
         new jsonrpc.WebSocketMessageWriter(rpcWebSocket),
         logger
     )
-    socket.addEventListener('close', event => {
-        logger.warn('WebSocket connection to language server closed', event)
+    socket.addEventListener('close', () => {
+        logger.warn('WebSocket connection to language server closed')
         connection.dispose()
     })
     socket.addEventListener('error', event => {
