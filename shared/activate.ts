@@ -2,7 +2,7 @@ import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
 import { distinctUntilChanged, map } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
-import { Logger } from './logging'
+import { Logger, RedactingLogger } from './logging'
 import { getOrCreateAccessToken } from './lsp/auth'
 import { LSPClient } from './lsp/client'
 import { FeatureOptions } from './lsp/registration'
@@ -96,7 +96,7 @@ export async function activateCodeIntel(
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger = new RedactingLogger(console)
 ): Promise<void> {
     const wrapper = createProviderWrapper(languageSpec, logger)
 
@@ -117,7 +117,7 @@ export async function tryInitLSP(
     ctx: sourcegraph.ExtensionContext,
     wrapper: ProviderWrapper,
     lspFactory?: LSPFactory,
-    logger: Logger = console
+    logger: Logger = new RedactingLogger(console)
 ): Promise<boolean> {
     if (!lspFactory) {
         return false
@@ -148,7 +148,7 @@ export function initLSP<S extends { [key: string]: any }>(
     languageID: string,
     clientFactory: ClientFactory<S>,
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
-    logger: Logger = console
+    logger: Logger = new RedactingLogger(console)
 ): (
     ctx: sourcegraph.ExtensionContext,
     providerWrapper: ProviderWrapper
@@ -161,7 +161,7 @@ export function initLSP<S extends { [key: string]: any }>(
 
         const serverURL = settings[`${languageID}.serverUrl`]
         if (!serverURL) {
-            console.log('No language server url is configured')
+            logger.log('No language server url is configured')
             return false
         }
 
@@ -170,12 +170,13 @@ export function initLSP<S extends { [key: string]: any }>(
             languageID
         )
         if (!accessToken) {
-            console.log('No language server access token is available')
+            logger.log('No language server access token is available')
         }
 
         const sgUrl = sourcegraphURL(
             settings[`${languageID}.sourcegraphUrl`],
-            languageID
+            languageID,
+            logger
         )
 
         const { client, featureOptionsSubject } = await clientFactory({
@@ -267,15 +268,20 @@ function getSettings<S extends { [key: string]: any }>(
  *
  * @param setting The user configured sourcegraph URL.
  * @param languageID The language identifier.
+ * @param logger The logger instance.
  */
-function sourcegraphURL(setting: string | undefined, languageID: string): URL {
+function sourcegraphURL(
+    setting: string | undefined,
+    languageID: string,
+    logger: Logger
+): URL {
     const url = setting || sourcegraph.internal.sourcegraphURL.toString()
 
     try {
         return new URL(url)
     } catch (err) {
         if (err.message?.includes('Invalid URL')) {
-            console.error(
+            logger.error(
                 new Error(
                     [
                         `Invalid ${languageID}.sourcegraphUrl ${url} in your Sourcegraph settings.`,

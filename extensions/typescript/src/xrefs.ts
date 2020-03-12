@@ -3,6 +3,7 @@ import * as lsp from 'vscode-languageserver-protocol'
 import { LSPClient } from '../../../shared/lsp/client'
 import { convertLocation, toLocation } from '../../../shared/lsp/conversion'
 import { ReferencesProvider } from '../../../shared/providers'
+import { Logger, RedactingLogger } from '../../../shared/logging'
 import { API } from '../../../shared/util/api'
 import { asArray, isDefined } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
@@ -27,6 +28,7 @@ type DefinitionResult =
  * Return external references to the symbol at the given position.
  *
  * @param args Parameter bag.
+ * @param logger The optional logger instance.
  * @param api The GraphQL API instance.
  */
 export function createExternalReferencesProvider(
@@ -48,6 +50,7 @@ export function createExternalReferencesProvider(
         /** The access token. */
         accessToken?: string
     },
+    logger: Logger = new RedactingLogger(console),
     api: API = new API()
 ): ReferencesProvider {
     const limit = settings['typescript.maxExternalReferenceRepos'] || 20
@@ -84,7 +87,7 @@ export function createExternalReferencesProvider(
             position
         )
         if (definitions.length === 0) {
-            console.error('No definitions')
+            logger.error('No definitions')
             return
         }
         const definition = definitions[0]

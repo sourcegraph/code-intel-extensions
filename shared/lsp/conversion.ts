@@ -168,7 +168,7 @@ export function toLSPWorkspaceFolder(
     clientToServerURI: (u: URL) => URL
 ): (root: sourcegraph.WorkspaceRoot) => lsp.WorkspaceFolder {
     return root => {
-        const serverUri = clientToServerURI(new URL(root.uri.toString()))
+        const serverUri = clientToServerURI(root.uri)
         return {
             uri: serverUri.href,
             name: new URL(serverUri.href).pathname.split('/').pop()!,
