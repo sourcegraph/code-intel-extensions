@@ -6,6 +6,7 @@ import { convertRange } from '../../../shared/lsp/conversion'
 import { ReferencesProvider } from '../../../shared/providers'
 import { API } from '../../../shared/util/api'
 import { notIn } from '../../../shared/util/helpers'
+import { Logger, RedactingLogger } from '../../../shared/logging'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
 import { removeHash, withHash } from '../../../shared/util/uri'
 import { findReposViaGDDO } from './gddo'
@@ -45,6 +46,7 @@ const xdefinitionWorkspaceRequestType = new lsp.RequestType<
  * Return external references to the symbol at the given position.
  *
  * @param args Parameter bag.
+ * @param logger An optional logger instance.
  * @param api The GraphQL API instance.
  */
 export function createExternalReferencesProvider(
@@ -57,6 +59,7 @@ export function createExternalReferencesProvider(
         /** The current settings. */
         settings: Settings
     },
+    logger: Logger = new RedactingLogger(console),
     api: API = new API()
 ): ReferencesProvider {
     const gddoURL = settings['go.gddoURL']
@@ -86,8 +89,7 @@ export function createExternalReferencesProvider(
         // Get the symbol and package at the current position
         const definitions = await getDefinition(client, doc, pos)
         if (definitions.length === 0) {
-            // TODO
-            console.error('No definitions')
+            logger.error('No definitions')
             return
         }
         const { symbol } = definitions[0]

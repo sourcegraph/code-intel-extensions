@@ -4,7 +4,7 @@ import { map, scan, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import * as uuid from 'uuid'
 import * as lsp from 'vscode-languageserver-protocol'
-import { Logger, LogLevel } from '../logging'
+import { Logger, LogLevel, RedactingLogger } from '../logging'
 import { ProviderWrapper } from '../providers'
 import { LSPClient } from './client'
 import { LSPConnection } from './connection'
@@ -86,7 +86,7 @@ export async function register({
     sourcegraph,
     clientToServerURI = identity,
     serverToClientURI = identity,
-    logger = console, // TODO
+    logger = new RedactingLogger(console),
     progressSuffix = '',
     transport: createConnection,
     documentSelector,
