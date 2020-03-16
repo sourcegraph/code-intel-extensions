@@ -1,4 +1,5 @@
 import { Base64 } from 'js-base64'
+import * as sourcegraph from 'sourcegraph'
 
 /**
  * Creates a base64-encoded image URI.
@@ -60,7 +61,7 @@ function makeInfoIcon(color: string): string {
 /**
  * The badge to send back on all results that come from searched-based data.
  */
-export const impreciseBadge = {
+export const impreciseBadge: sourcegraph.BadgeAttachmentRenderOptions = {
     icon: makeInfoIcon('#ffffff'),
     light: { icon: makeInfoIcon('#000000') },
     hoverMessage:

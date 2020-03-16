@@ -17,7 +17,7 @@ export function asArray<T>(value: T | T[] | null): T[] {
 }
 
 /**
- * Apply a map function on a singel value or over a list of values. Returns the
+ * Apply a map function on a single value or over a list of values. Returns the
  * modified result in the same shape as the input.
  *
  * @param value The list of values, a single value, or null.
