@@ -386,14 +386,9 @@ export function searchWithFallback<
         return searchIndexed(search, args, negateRepoFilter)
     }
 
-    // searchIndexed/searchUnindexed modifies queryTerms so make
-    // a disjoint copy of the query terms used in the invocation
-    const args1 = { ...args, queryTerms: Array.from(args.queryTerms) }
-    const args2 = { ...args, queryTerms: Array.from(args.queryTerms) }
-
     return raceWithDelayOffset(
-        searchUnindexed(search, args1, negateRepoFilter),
-        () => searchIndexed(search, args2, negateRepoFilter),
+        searchUnindexed(search, args, negateRepoFilter),
+        () => searchIndexed(search, args, negateRepoFilter),
         getConfig<number>('basicCodeIntel.unindexedSearchTimeout', 5000)
     )
 }
@@ -415,13 +410,18 @@ function searchIndexed<
 ): Promise<R> {
     const { repo, queryTerms } = args
 
+    // Create a copy of the args so that concurrent calls to other
+    // search methods do not have their query terms unintentionally
+    // modified.
+    const queryTermsCopy = Array.from(queryTerms)
+
     // Unlike unindexed search, we can't supply a commit as that particular
     // commit may not be indexed. We force index and look inside/outside
     // the repo at _whatever_ commit happens to be indexed at the time.
-    queryTerms.push((negateRepoFilter ? '-' : '') + `repo:^${repo}$`)
-    queryTerms.push('index:only')
+    queryTermsCopy.push((negateRepoFilter ? '-' : '') + `repo:^${repo}$`)
+    queryTermsCopy.push('index:only')
 
-    return search({ ...args, queryTerms })
+    return search({ ...args, queryTerms: queryTermsCopy })
 }
 
 /**
@@ -441,15 +441,20 @@ function searchUnindexed<
 ): Promise<R> {
     const { repo, commit, queryTerms } = args
 
+    // Create a copy of the args so that concurrent calls to other
+    // search methods do not have their query terms unintentionally
+    // modified.
+    const queryTermsCopy = Array.from(queryTerms)
+
     if (!negateRepoFilter) {
         // Look in this commit only
-        queryTerms.push(`repo:^${repo}$@${commit}`)
+        queryTermsCopy.push(`repo:^${repo}$@${commit}`)
     } else {
         // Look outside the repo (not outside the commit)
-        queryTerms.push(`-repo:^${repo}$`)
+        queryTermsCopy.push(`-repo:^${repo}$`)
     }
 
-    return search({ ...args, queryTerms })
+    return search({ ...args, queryTerms: queryTermsCopy })
 }
 
 /**
