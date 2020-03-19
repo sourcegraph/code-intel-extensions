@@ -373,8 +373,6 @@ async function searchReferences(
  * @param search The search function.
  * @param args The arguments to the search function.
  * @param negateRepoFilter Whether to look only inside or outside the given repo.
- * @param includeForks Whether to include forked repos in results.
- * @param includeArchived Whether to include archived repos in results.
  */
 export function searchWithFallback<
     P extends { repo: string; commit: string; queryTerms: string[] },
@@ -457,7 +455,6 @@ function searchUnindexed<
 /**
  * Perform a search query.
  *
- *
  * @param api The GraphQL API instance.
  * @param queryTerms The terms of the search query.
  */
@@ -537,7 +534,6 @@ function isSourcegraphDotCom(): boolean {
         sourcegraph.internal.sourcegraphURL.href === 'https://sourcegraph.com/'
     )
 }
-
 
 /**
  * Race an in-flight promise and a promise that will be invoked only after
