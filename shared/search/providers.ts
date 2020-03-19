@@ -104,7 +104,7 @@ export function createProviders(
         const { repo, commit, path } = parseGitURI(new URL(doc.uri))
 
         // Construct base definition query without scoping terms
-        const query = definitionQuery({ searchToken, doc, fileExts })
+        const queryTerms = definitionQuery({ searchToken, doc, fileExts })
         const queryArgs = {
             doc,
             repo,
@@ -112,7 +112,7 @@ export function createProviders(
             path,
             text,
             filterDefinitions,
-            query,
+            queryTerms,
         }
 
         const doSearch = (
@@ -186,11 +186,11 @@ export function createProviders(
         const { repo, commit } = parseGitURI(new URL(doc.uri))
 
         // Construct base references query without scoping terms
-        const query = referencesQuery({ searchToken, doc, fileExts })
+        const queryTerms = referencesQuery({ searchToken, doc, fileExts })
         const queryArgs = {
             repo,
             commit,
-            query,
+            queryTerms,
         }
 
         const doSearch = (
@@ -301,7 +301,7 @@ async function searchAndFilterDefinitions(
         path,
         text,
         filterDefinitions,
-        query,
+        queryTerms,
     }: {
         /** The current text document. */
         doc: sourcegraph.TextDocument
@@ -313,13 +313,13 @@ async function searchAndFilterDefinitions(
         text: string
         /** The function used to filter definitions. */
         filterDefinitions: FilterDefinitions
-        /** The search query. */
-        query: string
+        /** The terms of the search query. */
+        queryTerms: string[]
     }
 ): Promise<sourcegraph.Location[]> {
     // Perform search and perform pre-filtering before passing it
     // off to the language spec for the proper filtering pass.
-    const searchResults = await search(api, query)
+    const searchResults = await search(api, queryTerms)
     const preFilteredResults = searchResults.filter(
         result => !isExternalPrivateSymbol(doc, path, result)
     )
@@ -347,9 +347,14 @@ async function searchAndFilterDefinitions(
  */
 async function searchReferences(
     api: API,
-    { query }: { /** The search query. */ query: string }
+    {
+        queryTerms,
+    }: {
+        /** The terms of the search query. */
+        queryTerms: string[]
+    }
 ): Promise<sourcegraph.Location[]> {
-    return (await search(api, query)).map(resultToLocation)
+    return (await search(api, queryTerms)).map(resultToLocation)
 }
 
 /**
@@ -367,40 +372,86 @@ async function searchReferences(
  *
  * @param search The search function.
  * @param args The arguments to the search function.
+ * @param negateRepoFilter Whether to look only inside or outside the given repo.
+ * @param includeForks Whether to include forked repos in results.
+ * @param includeArchived Whether to include archived repos in results.
  */
 export function searchWithFallback<
-    P extends { repo: string; commit: string; query: string },
+    P extends { repo: string; commit: string; queryTerms: string[] },
     R
 >(
     search: (args: P) => Promise<R>,
     args: P,
     negateRepoFilter = false
 ): Promise<R> {
-    const { repo, commit, query } = args
-    const unindexedQuery = negateRepoFilter
-        ? `${query} -repo:^${repo}$` // commit does not apply to a different repository
-        : `${query} repo:^${repo}$@${commit}`
-    const indexedQuery = negateRepoFilter
-        ? `${query} -repo:^${repo}$ index:only`
-        : `${query} repo:^${repo}$ index:only`
-
     if (getConfig('basicCodeIntel.indexOnly', false)) {
-        return search({
-            ...args,
-            query: indexedQuery,
-        })
+        return searchIndexed(search, args, negateRepoFilter)
     }
 
-    const timeout = getConfig<number>(
-        'basicCodeIntel.unindexedSearchTimeout',
-        5000
-    )
+    // searchIndexed/searchUnindexed modifies queryTerms so make
+    // a disjoint copy of the query terms used in the invocation
+    const args1 = { ...args, queryTerms: Array.from(args.queryTerms) }
+    const args2 = { ...args, queryTerms: Array.from(args.queryTerms) }
 
     return raceWithDelayOffset(
-        search({ ...args, query: unindexedQuery }),
-        () => search({ ...args, query: indexedQuery }),
-        timeout
+        searchUnindexed(search, args1, negateRepoFilter),
+        () => searchIndexed(search, args2, negateRepoFilter),
+        getConfig<number>('basicCodeIntel.unindexedSearchTimeout', 5000)
     )
+}
+
+/**
+ * Invoke the given search function as an indexed-only (fast, imprecise) search.
+ *
+ * @param search The search function.
+ * @param args The arguments to the search function.
+ * @param negateRepoFilter Whether to look only inside or outside the given repo.
+ */
+function searchIndexed<
+    P extends { repo: string; commit: string; queryTerms: string[] },
+    R
+>(
+    search: (args: P) => Promise<R>,
+    args: P,
+    negateRepoFilter = false
+): Promise<R> {
+    const { repo, queryTerms } = args
+
+    // Unlike unindexed search, we can't supply a commit as that particular
+    // commit may not be indexed. We force index and look inside/outside
+    // the repo at _whatever_ commit happens to be indexed at the time.
+    queryTerms.push((negateRepoFilter ? '-' : '') + `repo:^${repo}$`)
+    queryTerms.push('index:only')
+
+    return search({ ...args, queryTerms })
+}
+
+/**
+ * Invoke the given search function as an unindexed (slow, precise) search.
+ *
+ * @param search The search function.
+ * @param args The arguments to the search function.
+ * @param negateRepoFilter Whether to look only inside or outside the given repo.
+ */
+function searchUnindexed<
+    P extends { repo: string; commit: string; queryTerms: string[] },
+    R
+>(
+    search: (args: P) => Promise<R>,
+    args: P,
+    negateRepoFilter = false
+): Promise<R> {
+    const { repo, commit, queryTerms } = args
+
+    if (!negateRepoFilter) {
+        // Look in this commit only
+        queryTerms.push(`repo:^${repo}$@${commit}`)
+    } else {
+        // Look outside the repo (not outside the commit)
+        queryTerms.push(`-repo:^${repo}$`)
+    }
+
+    return search({ ...args, queryTerms })
 }
 
 /**
@@ -408,18 +459,12 @@ export function searchWithFallback<
  *
  *
  * @param api The GraphQL API instance.
- * @param query The search query.
+ * @param queryTerms The terms of the search query.
  */
-async function search(api: API, query: string): Promise<Result[]> {
-    if (getConfig('basicCodeIntel.debug.traceSearch', false)) {
-        console.log('%cSearch', 'font-weight:bold;', {
-            query,
-        })
-    }
-
-    return (await api.search(query, getConfig('fileLocal', false))).flatMap(
-        searchResultToResults
-    )
+async function search(api: API, queryTerms: string[]): Promise<Result[]> {
+    return (
+        await api.search(queryTerms.join(' '), getConfig('fileLocal', false))
+    ).flatMap(searchResultToResults)
 }
 
 /**

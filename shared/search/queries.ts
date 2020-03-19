@@ -12,13 +12,13 @@ export function definitionQuery({
     doc,
     fileExts,
 }: {
-    /** The search term. */
+    /** The search token text. */
     searchToken: string
     /** The current text document. */
     doc: sourcegraph.TextDocument
     /** File extensions used by the current extension. */
     fileExts: string[]
-}): string {
+}): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
     return [
@@ -27,7 +27,7 @@ export function definitionQuery({
         'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
-    ].join(' ')
+    ]
 }
 
 /**
@@ -40,13 +40,13 @@ export function referencesQuery({
     doc,
     fileExts,
 }: {
-    /** The search term. */
+    /** The search token text. */
     searchToken: string
     /** The current text document. */
     doc: sourcegraph.TextDocument
     /** File extensions used by the current extension. */
     fileExts: string[]
-}): string {
+}): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
     return [
@@ -55,7 +55,7 @@ export function referencesQuery({
         'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
-    ].join(' ')
+    ]
 }
 
 const blacklist = ['thrift', 'proto', 'graphql']
