@@ -7,7 +7,7 @@ describe('search requests', () => {
     it('makes correct search requests for goto definition', () => {
         interface DefinitionTest {
             doc: sourcegraph.TextDocument
-            expectedSearchQuery: string
+            expectedSearchQueryTerms: string[]
         }
         const tests: DefinitionTest[] = [
             {
@@ -16,8 +16,13 @@ describe('search requests', () => {
                     languageId: 'cpp',
                     text: 'token',
                 }),
-                expectedSearchQuery:
-                    '^token$ type:symbol patternType:regexp case:yes file:\\.(cpp)$',
+                expectedSearchQueryTerms: [
+                    '^token$',
+                    'type:symbol',
+                    'patternType:regexp',
+                    'case:yes',
+                    'file:\\.(cpp)$',
+                ],
             },
         ]
 
@@ -28,7 +33,7 @@ describe('search requests', () => {
                     doc: test.doc,
                     fileExts: ['cpp'],
                 }),
-                test.expectedSearchQuery
+                test.expectedSearchQueryTerms
             )
         }
     })
@@ -36,7 +41,7 @@ describe('search requests', () => {
     it('makes correct search requests for references', () => {
         interface ReferencesTest {
             doc: sourcegraph.TextDocument
-            expectedSearchQuery: string
+            expectedSearchQueryTerms: string[]
         }
         const tests: ReferencesTest[] = [
             {
@@ -45,8 +50,13 @@ describe('search requests', () => {
                     languageId: 'cpp',
                     text: 'token',
                 }),
-                expectedSearchQuery:
-                    '\\btoken\\b type:file patternType:regexp case:yes file:\\.(cpp)$',
+                expectedSearchQueryTerms: [
+                    '\\btoken\\b',
+                    'type:file',
+                    'patternType:regexp',
+                    'case:yes',
+                    'file:\\.(cpp)$',
+                ],
             },
         ]
 
@@ -57,7 +67,7 @@ describe('search requests', () => {
                     doc: test.doc,
                     fileExts: ['cpp'],
                 }),
-                test.expectedSearchQuery
+                test.expectedSearchQueryTerms
             )
         }
     })

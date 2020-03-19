@@ -1,6 +1,7 @@
 import { extname } from 'path'
 import * as sourcegraph from 'sourcegraph'
 import { parseGitURI } from '../util/uri'
+import { getConfig } from './config'
 
 /**
  * Create a search query to find definitions of a symbol.
@@ -12,22 +13,22 @@ export function definitionQuery({
     doc,
     fileExts,
 }: {
-    /** The search term. */
+    /** The search token text. */
     searchToken: string
     /** The current text document. */
     doc: sourcegraph.TextDocument
     /** File extensions used by the current extension. */
     fileExts: string[]
-}): string {
+}): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
-    return [
+    return addRepositoryKindTerms([
         `^${searchToken}$`,
         'type:symbol',
         'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
-    ].join(' ')
+    ])
 }
 
 /**
@@ -40,22 +41,39 @@ export function referencesQuery({
     doc,
     fileExts,
 }: {
-    /** The search term. */
+    /** The search token text. */
     searchToken: string
     /** The current text document. */
     doc: sourcegraph.TextDocument
     /** File extensions used by the current extension. */
     fileExts: string[]
-}): string {
+}): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
-    return [
+    return addRepositoryKindTerms([
         `\\b${searchToken}\\b`,
         'type:file',
         'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
-    ].join(' ')
+    ])
+}
+
+/**
+ * Adds options to include forked and archived repositories.
+ *
+ * @param queryTerms The terms of the search query.
+ */
+function addRepositoryKindTerms(queryTerms: string[]): string[] {
+    if (getConfig('basicCodeIntel.includeForks', false)) {
+        queryTerms.push('fork:yes')
+    }
+
+    if (getConfig('basicCodeIntel.includeArchives', false)) {
+        queryTerms.push('archived:yes')
+    }
+
+    return queryTerms
 }
 
 const blacklist = ['thrift', 'proto', 'graphql']
