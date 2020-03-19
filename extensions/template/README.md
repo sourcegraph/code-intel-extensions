@@ -37,6 +37,15 @@ This extension comes with built-in code intelligence provided by [search-based h
 
 These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
 
+### Indexed and archived repositories
+
+To include indexed and/or archived repositories in search results, add the following to your Sourcegraph global settings:
+
+```json
+  "basicCodeIntel.includeForks": true,
+  "basicCodeIntel.includeArchives": true
+```
+
 ### Large repositories
 
 Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):

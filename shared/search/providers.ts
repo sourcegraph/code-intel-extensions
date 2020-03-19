@@ -11,8 +11,8 @@ import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
-import { BasicCodeIntelligenceSettings } from './settings'
 import { findSearchToken } from './tokens'
+import { getConfig } from './config'
 
 /** The number of elements in the definition LRU cache. */
 const DEFINITION_CACHE_SIZE = 50
@@ -538,14 +538,6 @@ function isSourcegraphDotCom(): boolean {
     )
 }
 
-/** Retrieves a config value by key. */
-function getConfig<T>(key: string, defaultValue: T): T {
-    const configuredValue = sourcegraph.configuration
-        .get<BasicCodeIntelligenceSettings>()
-        .get(key)
-
-    return configuredValue || defaultValue
-}
 
 /**
  * Race an in-flight promise and a promise that will be invoked only after

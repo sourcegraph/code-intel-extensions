@@ -84,8 +84,12 @@
           "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/user/code_intelligence/lsif.",
           "type": "boolean"
         },
-        "basicCodeIntel.debug.traceSearch": {
-          "description": "Trace Sourcegraph search API requests in the console.",
+        "basicCodeIntel.includeForks": {
+          "description": "Whether to include forked repositories in search results.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.includeArchives": {
+          "description": "Whether to include archived repositories in search results.",
           "type": "boolean"
         },
         "basicCodeIntel.indexOnly": {

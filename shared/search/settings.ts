@@ -11,9 +11,13 @@ export interface BasicCodeIntelligenceSettings {
      */
     'codeIntel.lsif'?: boolean
     /**
-     * Trace Sourcegraph search API requests in the console.
+     * Whether to include forked repositories in search results.
      */
-    'basicCodeIntel.debug.traceSearch'?: boolean
+    'basicCodeIntel.includeForks'?: boolean
+    /**
+     * Whether to include archived repositories in search results.
+     */
+    'basicCodeIntel.includeArchives'?: boolean
     /**
      * Whether to use only indexed requests to the search API.
      */
