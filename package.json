@@ -40,7 +40,7 @@
     "vscode-languageserver-protocol": "3.14.1"
   },
   "devDependencies": {
-    "@sourcegraph/eslint-config": "^0.10.3",
+    "@sourcegraph/eslint-config": "^0.10.4",
     "@sourcegraph/extension-api-stubs": "^0.2.5",
     "@sourcegraph/prettierrc": "^3.0.2",
     "@sourcegraph/tsconfig": "^4.0.0",
