@@ -42,7 +42,7 @@
   "devDependencies": {
     "@sourcegraph/eslint-config": "^0.10.3",
     "@sourcegraph/extension-api-stubs": "^0.2.5",
-    "@sourcegraph/prettierrc": "^3.0.2",
+    "@sourcegraph/prettierrc": "^3.0.3",
     "@sourcegraph/tsconfig": "^4.0.0",
     "@types/fs-extra": "8.1.0",
     "@types/js-base64": "2.3.1",
