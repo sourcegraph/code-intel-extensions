@@ -163,7 +163,18 @@ export function createDefinitionProvider(
 
             if (lspProvider) {
                 for await (const lspResult of lspProvider(doc, pos)) {
-                    await emitter.emitOnce('lspDefinitions')
+                    const nonEmptyResult =
+                        lspResult &&
+                        !(Array.isArray(lspResult) && lspResult.length === 0)
+
+                    if (nonEmptyResult) {
+                        // Do not emit definition events for empty location arrays
+                        await emitter.emitOnce('lspDefinitions')
+                    }
+
+                    // Always emit the result regardless if it's interesting. If we return
+                    // without emitting anything here we may indefinitely show an empty hover
+                    // on identifiers with no interesting data indefinitely.
                     yield lspResult
                 }
 
