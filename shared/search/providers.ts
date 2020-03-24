@@ -1,8 +1,9 @@
 import { flatten, sortBy } from 'lodash'
-import LRUCache from 'lru-cache'
+import { from, Observable, isObservable } from 'rxjs'
+import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
-import { Providers } from '../providers'
+import { Providers, SourcegraphProviders } from '../providers'
 import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
@@ -14,13 +15,11 @@ import { definitionQuery, referencesQuery } from './queries'
 import { findSearchToken } from './tokens'
 import { getConfig } from './config'
 
-/** The number of elements in the definition LRU cache. */
-const DEFINITION_CACHE_SIZE = 50
-
 /**
  * Creates providers powered by search-based code intelligence.
  *
  * @param spec The language spec.
+ * @param wrappedProviders A reference to the currently active top-level providers.
  * @param api The GraphQL API instance.
  */
 export function createProviders(
@@ -31,6 +30,7 @@ export function createProviders(
         identCharPattern,
         filterDefinitions = results => results,
     }: LanguageSpec,
+    wrappedProviders: Partial<SourcegraphProviders>,
     api: API = new API()
 ): Providers {
     /**
@@ -92,7 +92,7 @@ export function createProviders(
      * @param doc The current text document.
      * @param pos The current hover position.
      */
-    const rawDefinition = async (
+    const definition = async (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
@@ -138,34 +138,6 @@ export function createProviders(
         // instance as we are unlikely to have indexed the relevant definition
         // and we'd end up jumping to what would seem like a random line of code.
         return isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
-    }
-
-    const definitionCache = new LRUCache<
-        string,
-        Promise<sourcegraph.Definition>
-    >(DEFINITION_CACHE_SIZE)
-
-    /**
-     * Retrieve a definition for the current hover position. Keep the
-     * result around in a small LRU cache. The cache does not need to be
-     * large as we are only trying to stop two identical search requests
-     * being made at the same time (one for a def and one for hover).
-     *
-     * @param doc The current text document.
-     * @param pos The current hover position.
-     */
-    const definition = async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<sourcegraph.Definition> => {
-        const key = [doc.uri, pos.line, pos.character].join(':')
-
-        let promise = definitionCache.get(key)
-        if (!promise) {
-            promise = rawDefinition(doc, pos)
-            definitionCache.set(key, promise)
-        }
-        return promise
     }
 
     /**
@@ -229,8 +201,30 @@ export function createProviders(
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
+        if (!wrappedProviders.definition) {
+            return null
+        }
+
+        // Find the definition for this position. This will generally fall back
+        // to our sibling search-based definition provider defined just above,
+        // but may fall-"up" to the LSIF providers when we have an indexer that
+        // provides definitions but not hover text. This will allow us to get
+        // precise hover text (if it's extractable) if we just fall-"sideways"
+        // to the search-based definition provider as we've done historically.
+        const result = wrappedProviders.definition?.provideDefinition(doc, pos)
+
+        // The providers created by the non-noop provider wrapper in this repo
+        // always returns an observable. If we have something else early-out.
+        if (!result || !isObservable(result)) {
+            return null
+        }
+
         // Get the first definition and ensure it has a range
-        const def = asArray(await definition(doc, pos))[0]
+        const def = asArray(
+            await (from(result) as Observable<sourcegraph.Definition>)
+                .pipe(take(1))
+                .toPromise()
+        )[0]
         if (!def || !def.range) {
             return null
         }

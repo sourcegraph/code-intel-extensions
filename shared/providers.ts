@@ -16,6 +16,12 @@ export interface Providers {
     hover: HoverProvider
 }
 
+export interface SourcegraphProviders {
+    definition: sourcegraph.DefinitionProvider
+    references: sourcegraph.ReferenceProvider
+    hover: sourcegraph.HoverProvider
+}
+
 export type DefinitionProvider = (
     doc: sourcegraph.TextDocument,
     pos: sourcegraph.Position
@@ -102,30 +108,44 @@ export function createProviderWrapper(
     languageSpec: LanguageSpec,
     logger: Logger
 ): ProviderWrapper {
+    // Create empty wrapped providers. Each provider will update the
+    // appropriate field when they are fully wrapped, so this object
+    // always has the "active" providers.
+    const wrapped: Partial<SourcegraphProviders> = {}
+
     const lsifProviders = createLSIFProviders(logger)
-    const searchProviders = createSearchProviders(languageSpec)
+    const searchProviders = createSearchProviders(languageSpec, wrapped)
 
     return {
-        definition: (lspProvider?: DefinitionProvider) =>
-            createDefinitionProvider(
+        definition: (lspProvider?: DefinitionProvider) => {
+            const provider = createDefinitionProvider(
                 lsifProviders.definition,
                 searchProviders.definition,
                 lspProvider
-            ),
+            )
+            wrapped.definition = provider
+            return provider
+        },
 
-        references: (lspProvider?: ReferencesProvider) =>
-            createReferencesProvider(
+        references: (lspProvider?: ReferencesProvider) => {
+            const provider = createReferencesProvider(
                 lsifProviders.references,
                 searchProviders.references,
                 lspProvider
-            ),
+            )
+            wrapped.references = provider
+            return provider
+        },
 
-        hover: (lspProvider?: HoverProvider) =>
-            createHoverProvider(
+        hover: (lspProvider?: HoverProvider) => {
+            const provider = createHoverProvider(
                 lsifProviders.hover,
                 searchProviders.hover,
                 lspProvider
-            ),
+            )
+            wrapped.hover = provider
+            return provider
+        },
     }
 }
 
@@ -354,8 +374,13 @@ export function badgeValues<T extends object>(
 }
 
 /**
- * Converts an async generator provider into an observable provider. This also
- * memoizes the previous result as a workaround for #1321 (below).
+ * Converts an async generator provider into an observable provider. This
+ * also memoizes the previous result. This reduces the number of definition
+ * requests from two to one on each hover.
+ *
+ * The memoization was originally a workaround for #1321 (below), but should
+ * now be kept as relying on memoization here is an efficient replacement for
+ * a local cache of search results.
  *
  * [^1]: https://github.com/sourcegraph/sourcegraph/issues/1321
  *
