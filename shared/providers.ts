@@ -363,8 +363,13 @@ export function badgeValues<T extends object>(
 }
 
 /**
- * Converts an async generator provider into an observable provider. This also
- * memoizes the previous result as a workaround for #1321 (below).
+ * Converts an async generator provider into an observable provider. This
+ * also memoizes the previous result. This reduces the number of definition
+ * requests from two to one on each hover.
+ *
+ * The memoization was originally a workaround for #1321 (below), but should
+ * now be kept as relying on memoization here is an efficient replacement for
+ * a local cache of search results.
  *
  * [^1]: https://github.com/sourcegraph/sourcegraph/issues/1321
  *

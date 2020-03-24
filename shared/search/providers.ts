@@ -1,5 +1,4 @@
 import { flatten, sortBy } from 'lodash'
-import LRUCache from 'lru-cache'
 import { from, Observable, isObservable } from 'rxjs'
 import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
@@ -15,9 +14,6 @@ import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
 import { findSearchToken } from './tokens'
 import { getConfig } from './config'
-
-/** The number of elements in the definition LRU cache. */
-const DEFINITION_CACHE_SIZE = 50
 
 /**
  * Creates providers powered by search-based code intelligence.
@@ -96,7 +92,7 @@ export function createProviders(
      * @param doc The current text document.
      * @param pos The current hover position.
      */
-    const rawDefinition = async (
+    const definition = async (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
@@ -142,34 +138,6 @@ export function createProviders(
         // instance as we are unlikely to have indexed the relevant definition
         // and we'd end up jumping to what would seem like a random line of code.
         return isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
-    }
-
-    const definitionCache = new LRUCache<
-        string,
-        Promise<sourcegraph.Definition>
-    >(DEFINITION_CACHE_SIZE)
-
-    /**
-     * Retrieve a definition for the current hover position. Keep the
-     * result around in a small LRU cache. The cache does not need to be
-     * large as we are only trying to stop two identical search requests
-     * being made at the same time (one for a def and one for hover).
-     *
-     * @param doc The current text document.
-     * @param pos The current hover position.
-     */
-    const definition = async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<sourcegraph.Definition> => {
-        const key = [doc.uri, pos.line, pos.character].join(':')
-
-        let promise = definitionCache.get(key)
-        if (!promise) {
-            promise = rawDefinition(doc, pos)
-            definitionCache.set(key, promise)
-        }
-        return promise
     }
 
     /**
