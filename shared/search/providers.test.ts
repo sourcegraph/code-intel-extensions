@@ -7,6 +7,8 @@ import { cStyleComment } from '../language-specs/comments'
 import { LanguageSpec, Result } from '../language-specs/spec'
 import { API, SearchResult } from '../util/api'
 import { createProviders } from './providers'
+import { Providers, SourcegraphProviders } from '../providers'
+import { observableFromAsyncIterator } from '../util/ix'
 
 const spec: LanguageSpec = {
     stylized: 'Lang',
@@ -121,7 +123,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).definition(
+                    createProviders(spec, {}, api).definition(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos
                     )
@@ -157,7 +159,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).definition(
+                    createProviders(spec, {}, api).definition(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos
                     )
@@ -196,7 +198,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).definition(
+                    createProviders(spec, {}, api).definition(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos
                     )
@@ -229,7 +231,7 @@ describe('search providers', () => {
             )
 
             const values = gatherValues(
-                createProviders(spec, api).definition(
+                createProviders(spec, {}, api).definition(
                     { ...doc, text: '\n\n\nfoobar\n' },
                     pos
                 )
@@ -276,7 +278,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).definition(
+                    createProviders(spec, {}, api).definition(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos
                     )
@@ -331,7 +333,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).references(
+                    createProviders(spec, {}, api).references(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos,
                         { includeDeclaration: false }
@@ -383,7 +385,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).references(
+                    createProviders(spec, {}, api).references(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos,
                         { includeDeclaration: false }
@@ -437,6 +439,23 @@ describe('search providers', () => {
         })
     })
 
+    /** Create providers with the definition provider fed into itself. */
+    const recurProviders = (api: API): Providers => {
+        const recur: Partial<SourcegraphProviders> = {}
+        const providers = createProviders(spec, recur, api)
+        recur.definition = {
+            provideDefinition: (
+                doc: sourcegraph.TextDocument,
+                pos: sourcegraph.Position
+            ) =>
+                observableFromAsyncIterator(() =>
+                    providers.definition(doc, pos)
+                ),
+        }
+
+        return providers
+    }
+
     describe('hover provider', () => {
         it('should correctly parse result', async () => {
             const api = new API()
@@ -447,7 +466,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).hover(
+                    recurProviders(api).hover(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos
                     )
@@ -494,7 +513,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, api).hover(
+                    recurProviders(api).hover(
                         { ...doc, text: '\n\n\nfoobar\n' },
                         pos
                     )
