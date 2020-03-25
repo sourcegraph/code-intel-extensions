@@ -6671,6 +6671,11 @@ sourcegraph@^23.2.0:
   resolved "https://registry.npmjs.org/sourcegraph/-/sourcegraph-23.2.0.tgz#e5e715760fc12b0672843764a8a7913e45a7dfa2"
   integrity sha512-BL9lkjqAKumAn+T21zI5+Jikkj7mt84UW/aAFo2ySc/Ork1RsAeli+Jy8IQO/XCO71NYoRYXRkaqIdErq0xh4Q==
 
+sourcegraph@^24.0.0:
+  version "24.0.0"
+  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-24.0.0.tgz#2a2a2ba0f84e77bb2676d441b0b6c3e334466b49"
+  integrity sha512-SQtLGJ0mvCm2vQV5ABNDNXuGWqCL4rdkFWy1EAbGeDk5NrbY/KCfH6rH/4ZTl0YVyL5mYO5squMcdxjHJX2axw==
+
 spawn-wrap@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/spawn-wrap/-/spawn-wrap-2.0.0.tgz#103685b8b8f9b79771318827aa78650a610d457e"
