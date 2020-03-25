@@ -17,6 +17,7 @@ special_icons=(
     ["powershell"]="question"
     ["protobuf"]="question"
     ["r"]="question"
+    ["thrift"]="question"
     ["verilog"]="question"
     ["vhdl"]="question"
 )
