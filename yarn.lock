@@ -877,10 +877,10 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
-"@sourcegraph/eslint-config@^0.10.4":
-  version "0.10.4"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.10.4.tgz#4c5bf4b77aa26c91a7290c9486cf113a71efa747"
-  integrity sha512-YdmxpeejhuIY5Lb7Tr/AQtjJlAeG/URdVARIgJ0MREjpcamvZmuyLxO8x02K0Amvx8OOdCwtKvUntPKcbenHUQ==
+"@sourcegraph/eslint-config@^0.10.5":
+  version "0.10.5"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.10.5.tgz#0a75931d007511e3457716db40d4b2e4bd5aa82e"
+  integrity sha512-8LqLJnKnDY3c/ThMIFbiXCMOYd35bUTNuZ/5XPfAmAzJ4bVfP2gDdq1TzIjKNzRJVTDlth2zhkYFwXhuraIwHQ==
   dependencies:
     "@sourcegraph/prettierrc" "^3.0.3"
     "@typescript-eslint/eslint-plugin" "^2.22.0"
@@ -888,7 +888,7 @@
     eslint-config-prettier "^6.10.1"
     eslint-plugin-ban "^1.4.0"
     eslint-plugin-etc "^0.0.1-beta.24"
-    eslint-plugin-import "^2.20.1"
+    eslint-plugin-import "^2.20.2"
     eslint-plugin-jsdoc "^22.0.0"
     eslint-plugin-react "^7.19.0"
     eslint-plugin-react-hooks "^2.5.0"
@@ -2799,10 +2799,10 @@ eslint-plugin-etc@^0.0.1-beta.24:
     tsutils "^3.0.0"
     tsutils-etc "^1.0.0"
 
-eslint-plugin-import@^2.20.1:
-  version "2.20.1"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-import/-/eslint-plugin-import-2.20.1.tgz#802423196dcb11d9ce8435a5fc02a6d3b46939b3"
-  integrity sha512-qQHgFOTjguR+LnYRoToeZWT62XM55MBVXObHM6SKFd1VzDcX/vqT1kAz8ssqigh5eMj8qXcRoXXGZpPP6RfdCw==
+eslint-plugin-import@^2.20.2:
+  version "2.20.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-import/-/eslint-plugin-import-2.20.2.tgz#91fc3807ce08be4837141272c8b99073906e588d"
+  integrity sha512-FObidqpXrR8OnCh4iNsxy+WACztJLXAHBO5hK79T1Hc77PgQZkyDGA5Ag9xAvRpglvLNxhH/zSmZ70/pZ31dHg==
   dependencies:
     array-includes "^3.0.3"
     array.prototype.flat "^1.2.1"
