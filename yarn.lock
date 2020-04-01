@@ -877,17 +877,17 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
-"@sourcegraph/eslint-config@^0.11.2":
-  version "0.11.2"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.11.2.tgz#86777e5dc7e00e8cb9c1c1b9b0e546cb6d928222"
-  integrity sha512-BlNUTOp7WoRfvtD2OmsYsg7qlVGuPxIP8VaBuQHJT6OI0M1iGHz52PGpSRoUD5wUJFyhhUB6XsCHsmVdhQkriw==
+"@sourcegraph/eslint-config@^0.11.3":
+  version "0.11.3"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.11.3.tgz#24c2890278623eed1fd835847f6d1d07aaaf78ed"
+  integrity sha512-PcdhY2mOoIFAVe6NvT4fdDc5h3fPJBBECqmI6YwC9IDU2bngVtC0QCf7ylvzw/4+ZE9bb8R3RecLmq2P4ufBeQ==
   dependencies:
     "@sourcegraph/prettierrc" "^3.0.3"
     "@typescript-eslint/eslint-plugin" "^2.26.0"
     "@typescript-eslint/parser" "^2.26.0"
     eslint-config-prettier "^6.10.1"
     eslint-plugin-ban "^1.4.0"
-    eslint-plugin-etc "^0.0.1-beta.24"
+    eslint-plugin-etc "^0.0.1-beta.25"
     eslint-plugin-import "^2.20.2"
     eslint-plugin-jsdoc "^22.0.0"
     eslint-plugin-react "^7.19.0"
@@ -2799,16 +2799,15 @@ eslint-plugin-ban@^1.4.0:
   dependencies:
     requireindex "~1.2.0"
 
-eslint-plugin-etc@^0.0.1-beta.24:
-  version "0.0.1-beta.24"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-etc/-/eslint-plugin-etc-0.0.1-beta.24.tgz#fc2a1bf39b1a0c1d352fd81c86e8cde0fbd9af78"
-  integrity sha512-NQxsxnMhUJvABk62Y7Tbxzaoq7W9po4D7i8xYAgGr4cYKkNRhgHTTlw8IutJQ1Kfb1zF5pwk/e1O9czo3MtXzg==
+eslint-plugin-etc@^0.0.1-beta.25:
+  version "0.0.1-beta.25"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-etc/-/eslint-plugin-etc-0.0.1-beta.25.tgz#c97ccb839622b8e3c9d2d2600fdbf0aff8478872"
+  integrity sha512-FYdepWJPNv9qz5eVGw1LgF1TnJKu/vfuSnZ/79wwzXAqAPr4yBozQzRml0FMYpcrV3DYE0Uel+QxQBaKGSuzUA==
   dependencies:
     "@phenomnomnominal/tsquery" "^4.0.0"
     eslint-etc "^0.0.8"
     requireindex "~1.2.0"
     tslib "^1.8.0"
-    tslint-etc "^1.6.0"
     tsutils "^3.0.0"
     tsutils-etc "^1.0.0"
 
@@ -7263,16 +7262,6 @@ tslib@^1.10.0, tslib@^1.8.0, tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.11.1.tgz#eb15d128827fbee2841549e171f45ed338ac7e35"
   integrity sha512-aZW88SY8kQbU7gpV19lN24LtXh/yD4ZZg6qieAJDDg+YBsJcSmLGK9QpnUjAKVG/xefmvJGd1WUmfpT/g6AJGA==
-
-tslint-etc@^1.6.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/tslint-etc/-/tslint-etc-1.10.0.tgz#de264c4d8042c0eb5627d4c09a60089aa3a65e8e"
-  integrity sha512-OQXNATuKqzQTbfVgv1VvDvoSx3uPUtDCVoqxHTl9Eta44y5NWf6D+nO/0Is/fBzwYVWYNb9Hn1xa4wXRQiOa7A==
-  dependencies:
-    "@phenomnomnominal/tsquery" "^4.0.0"
-    tslib "^1.8.0"
-    tsutils "^3.0.0"
-    tsutils-etc "^1.0.0"
 
 tslint@^6.0.0:
   version "6.0.0"
