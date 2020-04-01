@@ -877,10 +877,10 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
-"@sourcegraph/eslint-config@^0.11.4":
-  version "0.11.4"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.11.4.tgz#6b0b131e914bcc3ef347439abb33129818a9fd8c"
-  integrity sha512-Kyh/HenKwoljZbVofa3GDI0LFbMymwr0Wm5A/PgybRTfa7oUl10CXrmQf0p44pVoICdLDOoQsYSvepn883gyiA==
+"@sourcegraph/eslint-config@^0.12.0":
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.12.0.tgz#a66bb74526218be4283fe901bc0854ceb27c07e5"
+  integrity sha512-jpmwaYKtvXQoJKKIudbkZDveuoaoB+lpNBjGu5GSbldx42BqwQvD8tv85psaL2v7b2bYa/GnhBkNzjc3iGgOMQ==
   dependencies:
     "@sourcegraph/prettierrc" "^3.0.3"
     "@typescript-eslint/eslint-plugin" "^2.26.0"
