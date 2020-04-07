@@ -444,7 +444,7 @@ function searchIndexed<
     // Create a copy of the args so that concurrent calls to other
     // search methods do not have their query terms unintentionally
     // modified.
-    let queryTermsCopy = Array.from(queryTerms)
+    const queryTermsCopy = Array.from(queryTerms)
 
     // Unlike unindexed search, we can't supply a commit as that particular
     // commit may not be indexed. We force index and look inside/outside
@@ -455,10 +455,11 @@ function searchIndexed<
     // If we're a fork, search in forks _for the same repo_. Otherwise,
     // search in forks only if it's set in the settings. This is also
     // symmetric for archived repositories.
-    queryTermsCopy = addRepositoryKindTerms(
-        queryTermsCopy,
-        isFork && !negateRepoFilter,
-        isArchived && !negateRepoFilter
+    queryTermsCopy.push(
+        ...repositoryKindTerms(
+            isFork && !negateRepoFilter,
+            isArchived && !negateRepoFilter
+        )
     )
 
     return search({ ...args, queryTerms: queryTermsCopy })
@@ -490,7 +491,7 @@ function searchUnindexed<
     // Create a copy of the args so that concurrent calls to other
     // search methods do not have their query terms unintentionally
     // modified.
-    let queryTermsCopy = Array.from(queryTerms)
+    const queryTermsCopy = Array.from(queryTerms)
 
     if (!negateRepoFilter) {
         // Look in this commit only
@@ -503,10 +504,11 @@ function searchUnindexed<
     // If we're a fork, search in forks _for the same repo_. Otherwise,
     // search in forks only if it's set in the settings. This is also
     // symmetric for archived repositories.
-    queryTermsCopy = addRepositoryKindTerms(
-        queryTermsCopy,
-        isFork && !negateRepoFilter,
-        isArchived && !negateRepoFilter
+    queryTermsCopy.push(
+        ...repositoryKindTerms(
+            isFork && !negateRepoFilter,
+            isArchived && !negateRepoFilter
+        )
     )
 
     return search({ ...args, queryTerms: queryTermsCopy })
@@ -633,24 +635,23 @@ async function delay(timeout: number): Promise<undefined> {
 }
 
 /**
- * Adds options to include forked and archived repositories.
+ * Returns fork and archived terms that should be supplied with the query.
  *
- * @param queryTerms The terms of the search query.
  * @param includeFork Whether or not the include forked repositories regardless of settings.
  * @param includeArchived Whether or not the include archived repositories regardless of settings.
  */
-function addRepositoryKindTerms(
-    queryTerms: string[],
+function repositoryKindTerms(
     includeFork: boolean,
     includeArchived: boolean
 ): string[] {
+    const additionalTerms = []
     if (includeFork || getConfig('basicCodeIntel.includeForks', false)) {
-        queryTerms.push('fork:yes')
+        additionalTerms.push('fork:yes')
     }
 
     if (includeArchived || getConfig('basicCodeIntel.includeArchives', false)) {
-        queryTerms.push('archived:yes')
+        additionalTerms.push('archived:yes')
     }
 
-    return queryTerms
+    return additionalTerms
 }
