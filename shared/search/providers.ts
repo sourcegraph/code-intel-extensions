@@ -525,9 +525,7 @@ function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
     )
 }
 
-/**
- * Return true if the current Sourcegraph instance is DotCom.
- */
+/** Return true if the current Sourcegraph instance is DotCom. */
 function isSourcegraphDotCom(): boolean {
     return (
         sourcegraph.internal.sourcegraphURL.href === 'https://sourcegraph.com/'

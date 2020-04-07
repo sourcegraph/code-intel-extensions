@@ -58,9 +58,7 @@ function makeInfoIcon(color: string): string {
     `)
 }
 
-/**
- * The badge to send back on all results that come from searched-based data.
- */
+/** The badge to send back on all results that come from searched-based data. */
 export const impreciseBadge: sourcegraph.BadgeAttachmentRenderOptions = {
     icon: makeInfoIcon('#ffffff'),
     light: { icon: makeInfoIcon('#000000') },

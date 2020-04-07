@@ -68,9 +68,7 @@ export type ExternalReferencesProviderFactory<S> = (args: {
     accessToken?: string
 }) => ReferencesProvider
 
-/**
- * A dummy context that is used for versions of Sourcegraph to 3.0.
- */
+/** A dummy context that is used for versions of Sourcegraph to 3.0. */
 const DUMMY_CTX = {
     subscriptions: {
         add: (): void => {

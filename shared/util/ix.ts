@@ -3,9 +3,7 @@ import { MergeAsyncIterable } from 'ix/asynciterable/merge'
 import { flatMap, share } from 'ix/asynciterable/operators'
 import { Observable, Observer } from 'rxjs'
 
-/**
- * An async generator that yields no values.
- */
+/** An async generator that yields no values. */
 export const noopAsyncGenerator = async function*<T>(): AsyncGenerator<
     T,
     void,
@@ -18,9 +16,7 @@ export interface AbortError extends Error {
     name: 'AbortError'
 }
 
-/**
- * Creates an Error with name "AbortError"
- */
+/** Creates an Error with name "AbortError" */
 export function createAbortError(): AbortError {
     return Object.assign(new Error('Aborted'), { name: 'AbortError' as const })
 }

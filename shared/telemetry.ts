@@ -26,9 +26,7 @@ export class TelemetryEmitter {
         return this.emit(action, args)
     }
 
-    /**
-     * Emit a telemetry event with a durationMs attribute.
-     */
+    /** Emit a telemetry event with a durationMs attribute. */
     public async emit(action: string, args: object = {}): Promise<void> {
         try {
             await sourcegraph.commands.executeCommand(

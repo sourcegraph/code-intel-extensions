@@ -5,29 +5,19 @@
  * search results for definitions.
  */
 export interface LanguageSpec {
-    /**
-     * Used to label markdown code blocks.
-     */
+    /** Used to label markdown code blocks. */
     languageID: string
 
-    /**
-     * The name of the generated extension.
-     */
+    /** The name of the generated extension. */
     stylized: string
 
-    /**
-     * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`).
-     */
+    /** The part of the filename after the `.` (e.g. `cpp` in `main.cpp`). */
     fileExts: string[]
 
-    /**
-     * Regex that matches individual characters in an identifier.
-     */
+    /** Regex that matches individual characters in an identifier. */
     identCharPattern?: RegExp
 
-    /**
-     * Instructions on how to parse comments in order to extract docstrings.
-     */
+    /** Instructions on how to parse comments in order to extract docstrings. */
     commentStyles: CommentStyle[]
 
     /**
@@ -37,9 +27,7 @@ export interface LanguageSpec {
     filterDefinitions?: FilterDefinitions
 }
 
-/**
- * Comment patterns and delimiters for a particular language.
- */
+/** Comment patterns and delimiters for a particular language. */
 export interface CommentStyle {
     /**
      * Captures the content of a line comment. Also prevents jump-to-definition
@@ -48,9 +36,7 @@ export interface CommentStyle {
      */
     lineRegex?: RegExp
 
-    /**
-     * The style of block comments.
-     */
+    /** The style of block comments. */
     block?: BlockCommentStyle
 
     /**
@@ -67,23 +53,15 @@ export interface CommentStyle {
     docstringIgnore?: RegExp
 }
 
-/**
- * Where a docstring is located relative to a definition.
- */
+/** Where a docstring is located relative to a definition. */
 export type DocPlacement = 'above the definition' | 'below the definition'
 
-/**
- * Block comment delimiter patterns for a particular language.
- */
+/** Block comment delimiter patterns for a particular language. */
 export interface BlockCommentStyle {
-    /**
-     * Matches the start of a block comment. C++ example: `/\/\*\*?/`
-     */
+    /** Matches the start of a block comment. C++ example: `/\/\*\*?/` */
     startRegex: RegExp
 
-    /**
-     * Matches the end of a block comment. C++ example: `/\*\//`
-     */
+    /** Matches the end of a block comment. C++ example: `/\*\//` */
     endRegex: RegExp
 
     /**
@@ -94,45 +72,29 @@ export interface BlockCommentStyle {
     lineNoiseRegex?: RegExp
 }
 
-/**
- * A filter function that prunes imprecise definitions from search results.
- */
+/** A filter function that prunes imprecise definitions from search results. */
 export type FilterDefinitions = <T extends Result>(
     results: T[],
     context: FilterContext
 ) => T[]
 
-/**
- * Additional context supplied when filtering search results.
- */
+/** Additional context supplied when filtering search results. */
 export interface FilterContext {
-    /**
-     * The name of the repository containing of the current file.
-     */
+    /** The name of the repository containing of the current file. */
     repo: string
 
-    /**
-     * The path to the current file relative to the repository root.
-     */
+    /** The path to the current file relative to the repository root. */
     filePath: string
 
-    /**
-     * The full text content of the current file.
-     */
+    /** The full text content of the current file. */
     fileContent: string
 }
 
-/**
- * Result represents a search result returned from the Sourcegraph API.
- */
+/** Result represents a search result returned from the Sourcegraph API. */
 export interface Result {
-    /**
-     * The name of the repository containing the result.
-     */
+    /** The name of the repository containing the result. */
     repo: string
 
-    /**
-     * The path to the result file relative to the repository root.
-     */
+    /** The path to the result file relative to the repository root. */
     file: string
 }

@@ -9,21 +9,15 @@
 import { NotificationHandler, NotificationType } from 'vscode-jsonrpc'
 
 export interface WindowProgressClientCapabilities {
-    /**
-     * Experimental client capabilities.
-     */
+    /** Experimental client capabilities. */
     experimental: {
-        /**
-         * The client has support for reporting progress.
-         */
+        /** The client has support for reporting progress. */
         progress?: boolean
     }
 }
 
 export interface ProgressParams {
-    /**
-     * A unique identifier to associate multiple progress notifications with the same progress.
-     */
+    /** A unique identifier to associate multiple progress notifications with the same progress. */
     id: string
 
     /**

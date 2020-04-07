@@ -21,9 +21,7 @@ export interface SearchResult {
     lineMatches: LineMatch[]
 }
 
-/**
- * A symbol search result.
- */
+/** A symbol search result. */
 export interface SearchSymbol {
     name: string
     fileLocal: boolean
@@ -34,9 +32,7 @@ export interface SearchSymbol {
     }
 }
 
-/**
- * An indexed or un-indexed search result.
- */
+/** An indexed or un-indexed search result. */
 export interface LineMatch {
     lineNumber: number
     offsetAndLengths: [number, number][]
@@ -176,9 +172,7 @@ export class API {
             .filter(isDefined)
     }
 
-    /**
-     * Retrieve the version of the Sourcegraph instance.
-     */
+    /** Retrieve the version of the Sourcegraph instance. */
     public async productVersion(): Promise<string> {
         const query = gql`
             query ProductVersion {
