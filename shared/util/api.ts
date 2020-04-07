@@ -78,7 +78,11 @@ export class API {
         return data.repository
     }
 
-    /** Determines via introspection if the GraphQL API has iSFork field on the Repository type. */
+    /**
+     * Determines via introspection if the GraphQL API has iSFork field on the Repository type.
+     *
+     * TODO(efritz) - Remove this when we no longer need to support pre-3.15 instances.
+     */
     private async hasForkField(): Promise<boolean> {
         const introspectionQuery = gql`
             query RepositoryIntrospection() {
