@@ -36,14 +36,16 @@ export async function findReposViaGDDO(
     const url = new URL((corsAnywhereURL || '') + importersURL.href)
 
     return sortUnique(
-        await Promise.all(
-            (await fetcher(url)).results
-                .map(({ path }) => path)
-                .map(transformGithubCloneURL)
-                .filter(isDefined)
-                .slice(0, limit)
-                .map(safePromise(api.resolveRepo.bind(api)))
-        )
+        (
+            await Promise.all(
+                (await fetcher(url)).results
+                    .map(({ path }) => path)
+                    .map(transformGithubCloneURL)
+                    .filter(isDefined)
+                    .slice(0, limit)
+                    .map(safePromise(api.resolveRepo.bind(api)))
+            )
+        ).map(meta => meta?.name)
     ).filter(isDefined)
 }
 

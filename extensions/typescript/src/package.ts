@@ -13,7 +13,7 @@ export interface PackageJson {
  * @param rawManifest The unparsed manifest.
  * @param api The GraphQL API instance.
  */
-export function resolvePackageRepo(
+export async function resolvePackageRepo(
     rawManifest: string,
     api: API = new API()
 ): Promise<string | undefined> {
@@ -22,11 +22,13 @@ export function resolvePackageRepo(
         return Promise.resolve(undefined)
     }
 
-    return safePromise(api.resolveRepo.bind(api))(
-        typeof packageJson.repository === 'string'
-            ? packageJson.repository
-            : packageJson.repository.url
-    )
+    return (
+        await safePromise(api.resolveRepo.bind(api))(
+            typeof packageJson.repository === 'string'
+                ? packageJson.repository
+                : packageJson.repository.url
+        )
+    )?.name
 }
 
 function definitelyTypedPackageName(uri: URL): string | undefined {
