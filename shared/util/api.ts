@@ -70,8 +70,6 @@ export class API {
             }
         `
 
-        console.log({query})
-
         interface Response {
             repository: RepoMeta
         }

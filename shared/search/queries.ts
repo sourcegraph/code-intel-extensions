@@ -1,7 +1,6 @@
 import { extname } from 'path'
 import * as sourcegraph from 'sourcegraph'
 import { parseGitURI } from '../util/uri'
-import { getConfig } from './config'
 
 /**
  * Create a search query to find definitions of a symbol.
@@ -22,13 +21,13 @@ export function definitionQuery({
 }): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
-    return addRepositoryKindTerms([
+    return [
         `^${searchToken}$`,
         'type:symbol',
         'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
-    ])
+    ]
 }
 
 /**
@@ -50,30 +49,13 @@ export function referencesQuery({
 }): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
-    return addRepositoryKindTerms([
+    return [
         `\\b${searchToken}\\b`,
         'type:file',
         'patternType:regexp',
         'case:yes',
         fileExtensionTerm(path, fileExts),
-    ])
-}
-
-/**
- * Adds options to include forked and archived repositories.
- *
- * @param queryTerms The terms of the search query.
- */
-function addRepositoryKindTerms(queryTerms: string[]): string[] {
-    if (getConfig('basicCodeIntel.includeForks', false)) {
-        queryTerms.push('fork:yes')
-    }
-
-    if (getConfig('basicCodeIntel.includeArchives', false)) {
-        queryTerms.push('archived:yes')
-    }
-
-    return queryTerms
+    ]
 }
 
 const blacklist = ['thrift', 'proto', 'graphql']

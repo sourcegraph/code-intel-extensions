@@ -115,9 +115,19 @@ describe('search providers', () => {
         tick++
     })
 
+    const newAPIWithStubResolveRepo = (): API => {
+        const api = new API()
+        const stub = sinon.stub(api, 'resolveRepo')
+        stub.callsFake(repo =>
+            Promise.resolve({ name: repo, isFork: false, isArchived: false })
+        )
+
+        return api
+    }
+
     describe('definition provider', () => {
         it('should correctly parse result', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.resolves([searchResult1])
 
@@ -149,7 +159,7 @@ describe('search providers', () => {
         })
 
         it('should fallback to remote definition', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.callsFake((searchQuery: string) =>
                 Promise.resolve(
@@ -192,7 +202,7 @@ describe('search providers', () => {
         })
 
         it('should apply definition filter', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.resolves([searchResult1, searchResult2, searchResult3])
 
@@ -221,7 +231,7 @@ describe('search providers', () => {
         })
 
         it('should fallback to index-only queries', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.callsFake(
                 (searchQuery: string): Promise<SearchResult[]> =>
@@ -265,7 +275,7 @@ describe('search providers', () => {
         })
 
         it('should fallback to index-only remote definition definition', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.callsFake(
                 (searchQuery: string): Promise<SearchResult[]> =>
@@ -321,7 +331,7 @@ describe('search providers', () => {
 
     describe('references provider', () => {
         it('should correctly parse result', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.callsFake((searchQuery: string) =>
                 Promise.resolve(
@@ -371,7 +381,7 @@ describe('search providers', () => {
         })
 
         it('should fallback to index-only queries', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
 
             stub.callsFake(
@@ -458,7 +468,7 @@ describe('search providers', () => {
 
     describe('hover provider', () => {
         it('should correctly parse result', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const searchStub = sinon.stub(api, 'search')
             searchStub.resolves([searchResult1])
             const getFileContentStub = sinon.stub(api, 'getFileContent')
@@ -500,7 +510,7 @@ describe('search providers', () => {
         })
 
         it('should fallback to index-only queries', async () => {
-            const api = new API()
+            const api = newAPIWithStubResolveRepo()
             const searchStub = sinon.stub(api, 'search')
             searchStub.callsFake((searchQuery: string) =>
                 searchQuery.includes('index:only')
