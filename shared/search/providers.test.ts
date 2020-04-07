@@ -121,7 +121,7 @@ describe('search providers', () => {
     }: {
         isFork?: boolean
         isArchived?: boolean
-    }={}): API => {
+    } = {}): API => {
         const api = new API()
         const stub = sinon.stub(api, 'resolveRepo')
         stub.callsFake(repo =>
@@ -334,7 +334,7 @@ describe('search providers', () => {
         })
 
         it('should search forks in same repo if repo is a fork', async () => {
-            const api = newAPIWithStubResolveRepo({isFork:true})
+            const api = newAPIWithStubResolveRepo({ isFork: true })
             const stub = sinon.stub(api, 'search')
             stub.callsFake((searchQuery: string) =>
                 Promise.resolve(
@@ -497,23 +497,8 @@ describe('search providers', () => {
             ])
         })
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         it('should search forks in same repo if repo is a fork', async () => {
-            const api = newAPIWithStubResolveRepo({isFork:true})
+            const api = newAPIWithStubResolveRepo({ isFork: true })
             const stub = sinon.stub(api, 'search')
 
             stub.callsFake(
