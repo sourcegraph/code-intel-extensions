@@ -54,7 +54,7 @@ export class API {
      * Retrieves the name and fork/archive status of a repository. This method
      * throws an error if the repository is not known to the Sourcegraph instance.
      *
-     * @param cloneURL The repository's clone URL.
+     * @param name The repository's name.
      */
     public async resolveRepo(name: string): Promise<RepoMeta> {
         const metaFields = (await this.hasForkField())
