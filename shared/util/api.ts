@@ -54,16 +54,16 @@ export class API {
      * Retrieves the name and fork/archive status of a repository. This method
      * throws an error if the repository is not known to the Sourcegraph instance.
      *
-     * @param cloneURL The repository's clone URL.
+     * @param name The repository's name.
      */
-    public async resolveRepo(cloneURL: string): Promise<RepoMeta> {
+    public async resolveRepo(name: string): Promise<RepoMeta> {
         const metaFields = (await this.hasForkField())
             ? 'isFork\nisArchived'
             : ''
 
         const query = gql`
-            query ResolveRepo($cloneURL: String!) {
-                repository(cloneURL: $cloneURL) {
+            query ResolveRepo($name: String!) {
+                repository(name: $name) {
                     name
                     ${metaFields}
                 }
@@ -74,7 +74,7 @@ export class API {
             repository: RepoMeta
         }
 
-        const data = await queryGraphQL<Response>(query, { cloneURL })
+        const data = await queryGraphQL<Response>(query, { name })
         return data.repository
     }
 
