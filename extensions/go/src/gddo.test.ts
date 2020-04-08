@@ -10,7 +10,11 @@ import { API } from '../../../shared/util/api'
 
 describe('findReposViaGDDO', () => {
     const trimGitHubPrefix = (url: string) =>
-        Promise.resolve(url.substring('github.com/'.length))
+        Promise.resolve({
+            name: url.substring('github.com/'.length),
+            isFork: false,
+            isArchived: false,
+        })
 
     const makeStubAPI = () => {
         const api = new API()

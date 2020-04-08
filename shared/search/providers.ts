@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers, SourcegraphProviders } from '../providers'
-import { API } from '../util/api'
+import { API, RepoMeta } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { parseGitURI } from '../util/uri'
@@ -33,6 +33,21 @@ export function createProviders(
     wrappedProviders: Partial<SourcegraphProviders>,
     api: API = new API()
 ): Providers {
+    /** Small never-evict map from repo names to their meta. */
+    const cachedMetas = new Map<string, Promise<RepoMeta>>()
+
+    /** Retrieves the name and fork/archive status of a repository. */
+    const resolveRepo = (name: string): Promise<RepoMeta> => {
+        const cachedMeta = cachedMetas.get(name)
+        if (cachedMeta !== undefined) {
+            return cachedMeta
+        }
+
+        const meta = api.resolveRepo(name)
+        cachedMetas.set(name, meta)
+        return meta
+    }
+
     /**
      * Retrieve the text of the current text document. This may be cached on the
      * text document itself. If it's not, we fetch it from the Raw API.
@@ -102,12 +117,15 @@ export function createProviders(
         }
         const { text, searchToken } = contentAndToken
         const { repo, commit, path } = parseGitURI(new URL(doc.uri))
+        const { isFork, isArchived } = await resolveRepo(repo)
 
         // Construct base definition query without scoping terms
         const queryTerms = definitionQuery({ searchToken, doc, fileExts })
         const queryArgs = {
             doc,
             repo,
+            isFork,
+            isArchived,
             commit,
             path,
             text,
@@ -156,11 +174,14 @@ export function createProviders(
         }
         const { searchToken } = contentAndToken
         const { repo, commit } = parseGitURI(new URL(doc.uri))
+        const { isFork, isArchived } = await resolveRepo(repo)
 
         // Construct base references query without scoping terms
         const queryTerms = referencesQuery({ searchToken, doc, fileExts })
         const queryArgs = {
             repo,
+            isFork,
+            isArchived,
             commit,
             queryTerms,
         }
@@ -301,6 +322,10 @@ async function searchAndFilterDefinitions(
         doc: sourcegraph.TextDocument
         /** The repository containing the current text document. */
         repo: string
+        /** Whether the repository containing the current text document is a fork. */
+        isFork: boolean
+        /** Whether the repository containing the current text document is archived. */
+        isArchived: boolean
         /** The path of the current text document. */
         path: string
         /** The content of the current text document */
@@ -369,7 +394,13 @@ async function searchReferences(
  * @param negateRepoFilter Whether to look only inside or outside the given repo.
  */
 export function searchWithFallback<
-    P extends { repo: string; commit: string; queryTerms: string[] },
+    P extends {
+        repo: string
+        isFork: boolean
+        isArchived: boolean
+        commit: string
+        queryTerms: string[]
+    },
     R
 >(
     search: (args: P) => Promise<R>,
@@ -395,14 +426,20 @@ export function searchWithFallback<
  * @param negateRepoFilter Whether to look only inside or outside the given repo.
  */
 function searchIndexed<
-    P extends { repo: string; commit: string; queryTerms: string[] },
+    P extends {
+        repo: string
+        isFork: boolean
+        isArchived: boolean
+        commit: string
+        queryTerms: string[]
+    },
     R
 >(
     search: (args: P) => Promise<R>,
     args: P,
     negateRepoFilter = false
 ): Promise<R> {
-    const { repo, queryTerms } = args
+    const { repo, isFork, isArchived, queryTerms } = args
 
     // Create a copy of the args so that concurrent calls to other
     // search methods do not have their query terms unintentionally
@@ -415,6 +452,16 @@ function searchIndexed<
     queryTermsCopy.push((negateRepoFilter ? '-' : '') + `repo:^${repo}$`)
     queryTermsCopy.push('index:only')
 
+    // If we're a fork, search in forks _for the same repo_. Otherwise,
+    // search in forks only if it's set in the settings. This is also
+    // symmetric for archived repositories.
+    queryTermsCopy.push(
+        ...repositoryKindTerms(
+            isFork && !negateRepoFilter,
+            isArchived && !negateRepoFilter
+        )
+    )
+
     return search({ ...args, queryTerms: queryTermsCopy })
 }
 
@@ -426,14 +473,20 @@ function searchIndexed<
  * @param negateRepoFilter Whether to look only inside or outside the given repo.
  */
 function searchUnindexed<
-    P extends { repo: string; commit: string; queryTerms: string[] },
+    P extends {
+        repo: string
+        isFork: boolean
+        isArchived: boolean
+        commit: string
+        queryTerms: string[]
+    },
     R
 >(
     search: (args: P) => Promise<R>,
     args: P,
     negateRepoFilter = false
 ): Promise<R> {
-    const { repo, commit, queryTerms } = args
+    const { repo, isFork, isArchived, commit, queryTerms } = args
 
     // Create a copy of the args so that concurrent calls to other
     // search methods do not have their query terms unintentionally
@@ -447,6 +500,16 @@ function searchUnindexed<
         // Look outside the repo (not outside the commit)
         queryTermsCopy.push(`-repo:^${repo}$`)
     }
+
+    // If we're a fork, search in forks _for the same repo_. Otherwise,
+    // search in forks only if it's set in the settings. This is also
+    // symmetric for archived repositories.
+    queryTermsCopy.push(
+        ...repositoryKindTerms(
+            isFork && !negateRepoFilter,
+            isArchived && !negateRepoFilter
+        )
+    )
 
     return search({ ...args, queryTerms: queryTermsCopy })
 }
@@ -569,4 +632,26 @@ export async function raceWithDelayOffset<T>(
  */
 async function delay(timeout: number): Promise<undefined> {
     return new Promise(r => setTimeout(r, timeout))
+}
+
+/**
+ * Returns fork and archived terms that should be supplied with the query.
+ *
+ * @param includeFork Whether or not the include forked repositories regardless of settings.
+ * @param includeArchived Whether or not the include archived repositories regardless of settings.
+ */
+function repositoryKindTerms(
+    includeFork: boolean,
+    includeArchived: boolean
+): string[] {
+    const additionalTerms = []
+    if (includeFork || getConfig('basicCodeIntel.includeForks', false)) {
+        additionalTerms.push('fork:yes')
+    }
+
+    if (includeArchived || getConfig('basicCodeIntel.includeArchives', false)) {
+        additionalTerms.push('archived:yes')
+    }
+
+    return additionalTerms
 }

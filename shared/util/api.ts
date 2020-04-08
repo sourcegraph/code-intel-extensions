@@ -42,28 +42,65 @@ export interface LineMatch {
     offsetAndLengths: [number, number][]
 }
 
+/** Metadata about a resolved repository. */
+export interface RepoMeta {
+    name: string
+    isFork: boolean
+    isArchived: boolean
+}
+
 export class API {
     /**
-     * Retrieves the name of a repository. Throws an error if the repository
-     * is not known to the Sourcegraph instance.
+     * Retrieves the name and fork/archive status of a repository. This method
+     * throws an error if the repository is not known to the Sourcegraph instance.
      *
      * @param cloneURL The repository's clone URL.
      */
-    public async resolveRepo(cloneURL: string): Promise<string> {
+    public async resolveRepo(cloneURL: string): Promise<RepoMeta> {
+        const metaFields = (await this.hasForkField())
+            ? 'isFork\nisArchived'
+            : ''
+
         const query = gql`
             query ResolveRepo($cloneURL: String!) {
                 repository(cloneURL: $cloneURL) {
                     name
+                    ${metaFields}
                 }
             }
         `
 
         interface Response {
-            repository: { name: string }
+            repository: RepoMeta
         }
 
         const data = await queryGraphQL<Response>(query, { cloneURL })
-        return data.repository.name
+        return data.repository
+    }
+
+    /**
+     * Determines via introspection if the GraphQL API has iSFork field on the Repository type.
+     *
+     * TODO(efritz) - Remove this when we no longer need to support pre-3.15 instances.
+     */
+    private async hasForkField(): Promise<boolean> {
+        const introspectionQuery = gql`
+            query RepositoryIntrospection() {
+                __type(name: "Repository") {
+                    fields {
+                        name
+                    }
+                }
+            }
+        `
+
+        interface IntrospectionResponse {
+            __type: { fields: { name: string }[] }
+        }
+
+        return (
+            await queryGraphQL<IntrospectionResponse>(introspectionQuery)
+        ).__type.fields.some(field => field.name === 'isFork')
     }
 
     /**
