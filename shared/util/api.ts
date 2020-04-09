@@ -61,6 +61,9 @@ export class API {
             ? 'isFork\nisArchived'
             : ''
 
+        // Assume repo is not a fork/archived for older instances
+        const defaults = { isFork: false, isArchived: false }
+
         const query = gql`
             query ResolveRepo($name: String!) {
                 repository(name: $name) {
@@ -75,7 +78,7 @@ export class API {
         }
 
         const data = await queryGraphQL<Response>(query, { name })
-        return data.repository
+        return { ...defaults, ...data.repository }
     }
 
     /**
