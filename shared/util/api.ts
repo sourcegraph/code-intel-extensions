@@ -147,8 +147,10 @@ export class API {
      * @param searchQuery The input to the search function.
      */
     public async findReposViaSearch(searchQuery: string): Promise<string[]> {
+        // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
+        // dashboards to distinguish searches that originated from code intelligence.
         const query = gql`
-            query Search($query: String!) {
+            query CodeIntelSearch($query: String!) {
                 search(query: $query) {
                     results {
                         results {
@@ -345,8 +347,10 @@ export class API {
         searchQuery: string,
         fileLocal = true
     ): Promise<SearchResult[]> {
+        // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
+        // dashboards to distinguish searches that originated from code intelligence.
         const query = gql`
-        query Search($query: String!) {
+        query CodeIntelSearch($query: String!) {
             search(query: $query) {
                 results {
                     __typename
