@@ -235,7 +235,7 @@ const protobufSpec: LanguageSpec = {
 const tclSpec: LanguageSpec = {
     languageID: 'tcl',
     stylized: 'Tcl',
-    fileExts: ['tcl'],
+    fileExts: ['tcl', 'tk', 'wish', 'itcl'],
     commentStyles: [shellStyleComment],
 }
 
