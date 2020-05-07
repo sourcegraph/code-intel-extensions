@@ -28,6 +28,13 @@ const clojureSpec: LanguageSpec = {
     commentStyles: [lispStyleComment],
 }
 
+const cobolSpec: LanguageSpec = {
+    languageID: 'cobol',
+    stylized: 'Cobol',
+    fileExts: ['cbl', 'cob', 'cpy', 'dds', 'ss', 'wks', 'pco'],
+    commentStyles: [{ lineRegex: /\*/ }],
+}
+
 const csharpSpec: LanguageSpec = {
     languageID: 'csharp',
     stylized: 'C#',
@@ -225,6 +232,13 @@ const protobufSpec: LanguageSpec = {
     commentStyles: [cStyleComment],
 }
 
+const tclSpec: LanguageSpec = {
+    languageID: 'tcl',
+    stylized: 'Tcl',
+    fileExts: ['tcl'],
+    commentStyles: [shellStyleComment],
+}
+
 const rSpec: LanguageSpec = {
     languageID: 'r',
     stylized: 'R',
@@ -332,6 +346,7 @@ const vhdlSpec: LanguageSpec = {
  */
 export const languageSpecs: LanguageSpec[] = [
     clojureSpec,
+    cobolSpec,
     cppSpec,
     csharpSpec,
     cudaSpec,
@@ -354,6 +369,7 @@ export const languageSpecs: LanguageSpec[] = [
     powershellSpec,
     protobufSpec,
     pythonSpec,
+    tclSpec,
     rSpec,
     rubySpec,
     rustSpec,
