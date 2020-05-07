@@ -32,6 +32,7 @@ const cobolSpec: LanguageSpec = {
     languageID: 'cobol',
     stylized: 'Cobol',
     fileExts: ['cbl', 'cob', 'cpy', 'dds', 'ss', 'wks', 'pco'],
+    identCharPattern: createIdentCharPattern('-'),
     commentStyles: [{ lineRegex: /\*/ }],
 }
 
