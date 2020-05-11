@@ -42,9 +42,10 @@ export interface LanguageSpec {
  */
 export interface CommentStyle {
     /**
-     * Captures the content of a line comment. Also prevents jump-to-definition
-     * (except when the token appears to refer to code). Python example:
-     * `/#\s?(.*)/`
+     * Identifies a single-line comment. Also used to prevent jump-to-definition
+     * into comments (except when the token appears to refer to code).
+     *
+     * Python example: `/#\s?/`
      */
     lineRegex?: RegExp
 
