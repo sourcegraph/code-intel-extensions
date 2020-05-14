@@ -347,55 +347,61 @@ export class API {
         searchQuery: string,
         fileLocal = true
     ): Promise<SearchResult[]> {
+        const context = sourcegraph.workspace.versionContext
+
         // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
         // dashboards to distinguish searches that originated from code intelligence.
         const query = gql`
-        query CodeIntelSearch($query: String!) {
-            search(query: $query) {
-                results {
-                    __typename
-                        results {
-                            ... on FileMatch {
-                                __typename
-                                file {
-                                    path
-                                    commit {
-                                        oid
-                                    }
-                                }
-                                repository {
-                                    name
-                                }
-                                symbols {
-                                    name
-                                    ${fileLocal ? 'fileLocal' : ''}
-                                    kind
-                                    location {
-                                        resource {
-                                            path
-                                        }
-                                        range {
-                                            start {
-                                                line
-                                                character
-                                            }
-                                            end {
-                                                line
-                                                character
-                                            }
+            query CodeIntelSearch($query: String!${
+                context ? ', $versionContext: String' : ''
+            }) {
+                search(query: $query${
+                    context ? ', versionContext: $versionContext' : ''
+                }) {
+                    results {
+                        __typename
+                            results {
+                                ... on FileMatch {
+                                    __typename
+                                    file {
+                                        path
+                                        commit {
+                                            oid
                                         }
                                     }
-                                }
-                                lineMatches {
-                                    lineNumber
-                                    offsetAndLengths
-                                }
+                                    repository {
+                                        name
+                                    }
+                                    symbols {
+                                        name
+                                        ${fileLocal ? 'fileLocal' : ''}
+                                        kind
+                                        location {
+                                            resource {
+                                                path
+                                            }
+                                            range {
+                                                start {
+                                                    line
+                                                    character
+                                                }
+                                                end {
+                                                    line
+                                                    character
+                                                }
+                                            }
+                                        }
+                                    }
+                                    lineMatches {
+                                        lineNumber
+                                        offsetAndLengths
+                                    }
+                            }
                         }
                     }
                 }
             }
-        }
-    `
+        `
 
         interface Response {
             search: {
@@ -406,7 +412,10 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(query, { query: searchQuery })
+        const data = await queryGraphQL<Response>(query, {
+            query: searchQuery,
+            context,
+        })
         return data.search.results.results.filter(isDefined)
     }
 }

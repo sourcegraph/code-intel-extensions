@@ -33,14 +33,14 @@
     "mz": "^2.7.0",
     "path-browserify": "^1.0.1",
     "rxjs": "^6.5.4",
-    "sourcegraph": "^24.0.0",
+    "sourcegraph": "^24.3.0",
     "tagged-template-noop": "^2.1.1",
     "uuid": "^7.0.2",
     "vscode-languageserver-protocol": "3.14.1"
   },
   "devDependencies": {
     "@sourcegraph/eslint-config": "^0.16.3",
-    "@sourcegraph/extension-api-stubs": "^0.2.6",
+    "@sourcegraph/extension-api-stubs": "^1.0.1",
     "@sourcegraph/prettierrc": "^3.0.3",
     "@sourcegraph/tsconfig": "^4.0.1",
     "@types/fs-extra": "8.1.0",

@@ -201,6 +201,10 @@ export async function register({
             // Clear all diagnostics held by this connection
             for (const appWindow of sourcegraph.app.windows) {
                 for (const viewComponent of appWindow.visibleViewComponents) {
+                    if (viewComponent.type !== 'CodeEditor') {
+                        continue
+                    }
+
                     if (diagnosticsByUri.has(viewComponent.document.uri)) {
                         viewComponent.setDecorations(decorationType, [])
                     }
@@ -220,6 +224,10 @@ export async function register({
                     )
                     for (const appWindow of sourcegraph.app.windows) {
                         for (const viewComponent of appWindow.visibleViewComponents) {
+                            if (viewComponent.type !== 'CodeEditor') {
+                                continue
+                            }
+
                             if (
                                 viewComponent.document.uri ===
                                 sourcegraphTextDocumentUri.href
@@ -240,6 +248,10 @@ export async function register({
             sourcegraph.workspace.openedTextDocuments.subscribe(() => {
                 for (const appWindow of sourcegraph.app.windows) {
                     for (const viewComponent of appWindow.visibleViewComponents) {
+                        if (viewComponent.type !== 'CodeEditor') {
+                            continue
+                        }
+
                         const diagnostics =
                             diagnosticsByUri.get(viewComponent.document.uri) ??
                             []
