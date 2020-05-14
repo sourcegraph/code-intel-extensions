@@ -352,56 +352,56 @@ export class API {
         // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
         // dashboards to distinguish searches that originated from code intelligence.
         const query = gql`
-        query CodeIntelSearch($query: String!${
-            context ? ', $versionContext: String' : ''
-        }) {
-            search(query: $query${
-                context ? ', versionContext: $versionContext' : ''
+            query CodeIntelSearch($query: String!${
+                context ? ', $versionContext: String' : ''
             }) {
-                results {
-                    __typename
-                        results {
-                            ... on FileMatch {
-                                __typename
-                                file {
-                                    path
-                                    commit {
-                                        oid
-                                    }
-                                }
-                                repository {
-                                    name
-                                }
-                                symbols {
-                                    name
-                                    ${fileLocal ? 'fileLocal' : ''}
-                                    kind
-                                    location {
-                                        resource {
-                                            path
-                                        }
-                                        range {
-                                            start {
-                                                line
-                                                character
-                                            }
-                                            end {
-                                                line
-                                                character
-                                            }
+                search(query: $query${
+                    context ? ', versionContext: $versionContext' : ''
+                }) {
+                    results {
+                        __typename
+                            results {
+                                ... on FileMatch {
+                                    __typename
+                                    file {
+                                        path
+                                        commit {
+                                            oid
                                         }
                                     }
-                                }
-                                lineMatches {
-                                    lineNumber
-                                    offsetAndLengths
-                                }
+                                    repository {
+                                        name
+                                    }
+                                    symbols {
+                                        name
+                                        ${fileLocal ? 'fileLocal' : ''}
+                                        kind
+                                        location {
+                                            resource {
+                                                path
+                                            }
+                                            range {
+                                                start {
+                                                    line
+                                                    character
+                                                }
+                                                end {
+                                                    line
+                                                    character
+                                                }
+                                            }
+                                        }
+                                    }
+                                    lineMatches {
+                                        lineNumber
+                                        offsetAndLengths
+                                    }
+                            }
                         }
                     }
                 }
             }
-        }
-    `
+        `
 
         interface Response {
             search: {
