@@ -347,11 +347,17 @@ export class API {
         searchQuery: string,
         fileLocal = true
     ): Promise<SearchResult[]> {
+        const context = sourcegraph.workspace.versionContext
+
         // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
         // dashboards to distinguish searches that originated from code intelligence.
         const query = gql`
-        query CodeIntelSearch($query: String!) {
-            search(query: $query) {
+        query CodeIntelSearch($query: String!${
+            context ? ', $versionContext: String' : ''
+        }) {
+            search(query: $query${
+                context ? ', versionContext: $versionContext' : ''
+            }) {
                 results {
                     __typename
                         results {
@@ -406,7 +412,12 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(query, { query: searchQuery })
+        let vars: { [name: string]: unknown } = { query: searchQuery }
+        if (context) {
+            vars = { context, ...vars }
+        }
+
+        const data = await queryGraphQL<Response>(query, vars)
         return data.search.results.results.filter(isDefined)
     }
 }
