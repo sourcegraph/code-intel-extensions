@@ -412,12 +412,7 @@ export class API {
             }
         }
 
-        let vars: { [name: string]: unknown } = { query: searchQuery }
-        if (context) {
-            vars = { context, ...vars }
-        }
-
-        const data = await queryGraphQL<Response>(query, vars)
+        const data = await queryGraphQL<Response>(query, { query: searchQuery, context })
         return data.search.results.results.filter(isDefined)
     }
 }
