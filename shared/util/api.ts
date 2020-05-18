@@ -414,7 +414,7 @@ export class API {
 
         const data = await queryGraphQL<Response>(query, {
             query: searchQuery,
-            context,
+            versionContext: context,
         })
         return data.search.results.results.filter(isDefined)
     }
