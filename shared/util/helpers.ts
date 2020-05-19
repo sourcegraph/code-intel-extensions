@@ -8,6 +8,18 @@ export function isDefined<T>(value: T | undefined): value is T {
 }
 
 /**
+ * Returns true fi the value is defined and, if an array, contains at least
+ * one element.
+ *
+ * @param value The value to test.
+ */
+export function nonEmpty<T>(
+    value: T | T[] | null | undefined
+): value is T | T[] {
+    return !!value && !(Array.isArray(value) && value.length === 0)
+}
+
+/**
  * Ensure that the given value is an array.
  *
  * @param value The list of values, a single value, or null.
