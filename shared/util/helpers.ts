@@ -8,7 +8,7 @@ export function isDefined<T>(value: T | undefined): value is T {
 }
 
 /**
- * Returns true fi the value is defined and, if an array, contains at least
+ * Returns true if the value is defined and, if an array, contains at least
  * one element.
  *
  * @param value The value to test.
