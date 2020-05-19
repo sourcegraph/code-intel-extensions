@@ -7,7 +7,7 @@ import { Logger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
-import { asArray, mapArrayish } from './util/helpers'
+import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
 
 export interface Providers {
@@ -168,26 +168,22 @@ export function createDefinitionProvider(
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
             const emitter = new TelemetryEmitter()
 
-            let lastLsifResult: sourcegraph.Definition | undefined
+            let hasPreciseResult = false
             for await (const lsifResult of lsifProvider(doc, pos)) {
-                if (lsifResult) {
+                if (nonEmpty(lsifResult)) {
                     await emitter.emitOnce('lsifDefinitions')
                     yield lsifResult
-                    lastLsifResult = lsifResult
+                    hasPreciseResult = true
                 }
             }
-            if (lastLsifResult) {
+            if (hasPreciseResult) {
                 // Found the best precise definition we'll get. Stop.
                 return
             }
 
             if (lspProvider) {
                 for await (const lspResult of lspProvider(doc, pos)) {
-                    const nonEmptyResult =
-                        lspResult &&
-                        !(Array.isArray(lspResult) && lspResult.length === 0)
-
-                    if (nonEmptyResult) {
+                    if (nonEmpty(lspResult)) {
                         // Do not emit definition events for empty location arrays
                         await emitter.emitOnce('lspDefinitions')
                     }
@@ -198,19 +194,19 @@ export function createDefinitionProvider(
                     yield lspResult
                 }
 
-                // Do not try to supplement
-                // with additional search results as we have all the context we
-                // need for complete and precise results here.
+                // Do not try to supplement with additional search results as we have all the
+                // context we need for complete and precise results here.
                 return
             }
 
+            // No results so far, fall back to search
             for await (const searchResult of searchProvider(doc, pos)) {
-                // No results so far, fall back to search. Mark the result as
-                // imprecise.
-                if (searchResult) {
+                if (nonEmpty(searchResult)) {
                     await emitter.emitOnce('searchDefinitions')
-                    yield badgeValues(searchResult, impreciseBadge)
                 }
+
+                // Mark the result as imprecise
+                yield badgeValues(searchResult, impreciseBadge)
             }
         }),
     }
@@ -243,7 +239,7 @@ export function createReferencesProvider(
 
             let lsifResults: sourcegraph.Location[] = []
             for await (const lsifResult of lsifProvider(doc, pos, ctx)) {
-                if (lsifResult) {
+                if (nonEmpty(lsifResult)) {
                     await emitter.emitOnce('lsifReferences')
                     yield lsifResult
                     lsifResults = lsifResult
@@ -319,15 +315,15 @@ export function createHoverProvider(
         > {
             const emitter = new TelemetryEmitter()
 
-            let lastLsifResult: sourcegraph.Hover | null | undefined
+            let hasPreciseResult = false
             for await (const lsifResult of lsifProvider(doc, pos)) {
                 if (lsifResult) {
                     await emitter.emitOnce('lsifHover')
                     yield lsifResult
-                    lastLsifResult = lsifResult
+                    hasPreciseResult = true
                 }
             }
-            if (lastLsifResult) {
+            if (hasPreciseResult) {
                 // Found the best precise hover text we'll get. Stop.
                 return
             }
