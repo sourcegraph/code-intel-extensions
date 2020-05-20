@@ -35,7 +35,7 @@
     "rxjs": "^6.5.5",
     "sourcegraph": "^24.4.0",
     "tagged-template-noop": "^2.1.1",
-    "uuid": "^7.0.2",
+    "uuid": "^7.0.3",
     "vscode-languageserver-protocol": "3.14.1"
   },
   "devDependencies": {
