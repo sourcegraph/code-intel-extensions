@@ -35,7 +35,7 @@
     "rxjs": "^6.5.5",
     "sourcegraph": "^24.4.0",
     "tagged-template-noop": "^2.1.1",
-    "uuid": "^7.0.3",
+    "uuid": "^8.0.0",
     "vscode-languageserver-protocol": "3.14.1"
   },
   "devDependencies": {
@@ -50,7 +50,7 @@
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.0",
     "@types/node": "13.13.5",
-    "@types/uuid": "7.0.0",
+    "@types/uuid": "8.0.0",
     "@types/yargs": "15.0.5",
     "codecov": "^3.6.5",
     "dot-json": "^1.2.0",
