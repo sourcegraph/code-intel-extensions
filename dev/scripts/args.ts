@@ -1,4 +1,4 @@
-import * as yargs from 'yargs'
+import yargs from 'yargs'
 import { languageSpecs } from '../../shared/language-specs/languages'
 import { LanguageSpec } from '../../shared/language-specs/spec'
 
