@@ -52,7 +52,7 @@
     "@types/node": "13.13.5",
     "@types/uuid": "8.0.0",
     "@types/yargs": "15.0.5",
-    "codecov": "^3.6.5",
+    "codecov": "^3.7.0",
     "dot-json": "^1.2.0",
     "eslint": "^7.0.0",
     "fs-extra": "^9.0.0",
