@@ -48,7 +48,7 @@
     "@types/lodash": "4.14.154",
     "@types/mocha": "7.0.2",
     "@types/mock-require": "2.0.0",
-    "@types/mz": "2.7.0",
+    "@types/mz": "2.7.1",
     "@types/node": "13.13.5",
     "@types/uuid": "8.0.0",
     "@types/yargs": "15.0.5",
