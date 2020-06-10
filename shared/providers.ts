@@ -327,7 +327,9 @@ export function createHoverProvider(
                 // imprecise.
                 if (searchResult) {
                     await emitter.emitOnce('searchHover')
-                    yield { ...searchResult, badge: impreciseBadge }
+                    const toYield = { ...searchResult, tooltips: [{summary: 'Summary Text'}], badge: impreciseBadge };
+                    console.log('yielding', toYield)
+                    yield toYield
                 }
             }
         }),
