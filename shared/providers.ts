@@ -391,7 +391,11 @@ export function createHoverProvider(
 }
 
 /**
- * TODO - document
+ * Creates a document highlight provider.
+ *
+ * @param lsifProvider The LSIF-based document highlight provider.
+ * @param searchProvider The search-based document highlight provider.
+ * @param lspProvider An optional LSP-based document highlight provider.
  */
 export function createDocumentHighlightProvider(
     lsifProvider: DocumentHighlightProvider,
