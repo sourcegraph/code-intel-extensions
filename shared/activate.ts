@@ -242,7 +242,10 @@ function activateWithoutLSP(
     )
 
     ctx.subscriptions.add(
-        sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
+        sourcegraph.languages.registerDocumentHighlightProvider(
+            selector,
+            wrapper.documentHighlights()
+        )
     )
 }
 

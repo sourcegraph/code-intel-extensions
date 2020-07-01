@@ -356,7 +356,7 @@ export function documentHighlights(
         } = lsifObj
 
         return nodes
-            .filter(({resource: { path }}) => path === doc.uri.split('#')[1]) // TODO - not stupid
+            .filter(({ resource: { path } }) => path === doc.uri.split('#')[1]) // TODO - not stupid
             .map(({ range }) => range && { range })
             .filter(isDefined)
     }
