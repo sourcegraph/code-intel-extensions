@@ -13,7 +13,7 @@ import {
 } from './providers'
 
 const doc = createStubTextDocument({
-    uri: 'https://sourcegraph.test/repo@rev/-/raw/foo.ts',
+    uri: 'git://repo@ref#/foo.ts',
     languageId: 'typescript',
     text: undefined,
 })
@@ -28,7 +28,11 @@ const pos = new sourcegraph.Position(5, 10)
 const range1 = new sourcegraph.Range(1, 2, 3, 4)
 const range2 = new sourcegraph.Range(2, 3, 4, 5)
 const range3 = new sourcegraph.Range(3, 4, 5, 6)
+const range4 = new sourcegraph.Range(4, 5, 6, 7)
+const range5 = new sourcegraph.Range(5, 6, 7, 8)
+const range6 = new sourcegraph.Range(6, 7, 8, 9)
 
+const resource0 = makeResource('repo', 'rev', '/foo.ts')
 const resource1 = makeResource('repo1', 'deadbeef1', '/a.ts')
 const resource2 = makeResource('repo2', 'deadbeef2', '/b.ts')
 const resource3 = makeResource('repo3', 'deadbeef3', '/c.ts')
@@ -304,6 +308,54 @@ describe('graphql providers', () => {
             assert.deepStrictEqual(
                 await gatherValues(
                     createProviders(queryGraphQLFn).hover(doc, pos)
+                ),
+                [null]
+            )
+        })
+    })
+
+    describe('document highlights provider', () => {
+        it('should correctly parse result', async () => {
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
+            >(() =>
+                makeEnvelope({
+                    references: {
+                        nodes: [
+                            { resource: resource0, range: range1 },
+                            { resource: resource1, range: range2 },
+                            { resource: resource0, range: range3 },
+                            { resource: resource2, range: range4 },
+                            { resource: resource0, range: range5 },
+                            { resource: resource3, range: range6 },
+                        ],
+                        pageInfo: {},
+                    },
+                })
+            )
+
+            console.log(
+                await gatherValues(
+                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
+                )
+            )
+
+            assert.deepEqual(
+                await gatherValues(
+                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
+                ),
+                [[{ range: range1 }, { range: range3 }, { range: range5 }]]
+            )
+        })
+
+        it('should deal with empty payload', async () => {
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
+            >(() => makeEnvelope())
+
+            assert.deepEqual(
+                await gatherValues(
+                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
                 ),
                 [null]
             )

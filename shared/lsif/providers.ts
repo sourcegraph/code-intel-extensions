@@ -303,7 +303,7 @@ export function documentHighlights(
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
         const query = `
-            query ReferencesForHighlights($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            query ReferencesForDocumentHighlights($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
                 repository(name: $repository) {
                     commit(rev: $commit) {
                         blob(path: $path) {
@@ -356,8 +356,6 @@ export function documentHighlights(
         const {
             references: { nodes },
         } = lsifObj
-
-        console.log({nodes, targetPath})
 
         return nodes
             .filter(({ resource: { path } }) => path === targetPath)
