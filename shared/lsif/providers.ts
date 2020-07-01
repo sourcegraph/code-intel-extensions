@@ -291,7 +291,7 @@ function hover(
     }
 }
 
-/** TODO - document */
+/** Retrieve references ranges of the current hover position to highlight. */
 export function documentHighlights(
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
 ): (
@@ -303,7 +303,7 @@ export function documentHighlights(
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
         const query = `
-            query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+            query ReferencesForHighlights($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
                 repository(name: $repository) {
                     commit(rev: $commit) {
                         blob(path: $path) {
@@ -351,12 +351,16 @@ export function documentHighlights(
             return null
         }
 
+        const { path: targetPath } = parseGitURI(new URL(doc.uri))
+
         const {
             references: { nodes },
         } = lsifObj
 
+        console.log({nodes, targetPath})
+
         return nodes
-            .filter(({ resource: { path } }) => path === doc.uri.split('#')[1]) // TODO - not stupid
+            .filter(({ resource: { path } }) => path === targetPath)
             .map(({ range }) => range && { range })
             .filter(isDefined)
     }
