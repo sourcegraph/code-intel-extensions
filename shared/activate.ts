@@ -240,6 +240,10 @@ function activateWithoutLSP(
     ctx.subscriptions.add(
         sourcegraph.languages.registerHoverProvider(selector, wrapper.hover())
     )
+
+    ctx.subscriptions.add(
+        sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
+    )
 }
 
 /**

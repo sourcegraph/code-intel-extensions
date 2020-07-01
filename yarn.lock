@@ -6744,10 +6744,8 @@ source-map@^0.5.0, source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-sourcegraph@^24.5.0:
+sourcegraph@../sourcegraph/packages/sourcegraph-extension-api, sourcegraph@^24.5.0:
   version "24.5.0"
-  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-24.5.0.tgz#5ee53b1c933db99addfc801f958ce753afa850c3"
-  integrity sha512-VQw73xafvfZZkjNqJY0kZEXexHRbqut60ed/guDlncdZJwf6zr7jQXeqh3p5v1VH09ef23758s6u6Fqbqgmt9Q==
 
 spawn-wrap@^2.0.0:
   version "2.0.0"

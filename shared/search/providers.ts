@@ -293,10 +293,16 @@ export function createProviders(
         }
     }
 
+    const documentHighlights =  (
+        doc: sourcegraph.TextDocument,
+        pos: sourcegraph.Position
+    ): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
+
     return {
         definition: asyncGeneratorFromPromise(definition),
         references: asyncGeneratorFromPromise(references),
         hover: asyncGeneratorFromPromise(hover),
+        documentHighlights: asyncGeneratorFromPromise(documentHighlights)
     }
 }
 
