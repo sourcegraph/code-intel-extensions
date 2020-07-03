@@ -82,7 +82,7 @@ export class API {
     }
 
     /**
-     * Determines via introspection if the GraphQL API has iSFork field on the Repository type.
+     * Determines via introspection if the GraphQL API has isFork field on the Repository type.
      *
      * TODO(efritz) - Remove this when we no longer need to support pre-3.15 instances.
      */
