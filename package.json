@@ -33,7 +33,7 @@
     "mz": "^2.7.0",
     "path-browserify": "^1.0.1",
     "rxjs": "^6.5.5",
-    "sourcegraph": "^24.5.0",
+    "sourcegraph": "^24.6.0",
     "tagged-template-noop": "^2.1.1",
     "uuid": "^8.0.0",
     "vscode-languageserver-protocol": "3.14.1"
