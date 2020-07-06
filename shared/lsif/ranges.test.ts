@@ -2,12 +2,12 @@ import * as assert from 'assert'
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
 import {
-    calculateWindow,
-    rangesInWindow,
-    findOverlappingAggregateCodeIntelligence,
+    calculateRangeWindow,
+    rangesInRangeWindow,
     findOverlappingWindows,
-    WindowResponse,
-} from './window'
+    RangesResponse,
+    findOverlappingCodeIntelligenceRange,
+} from './ranges'
 import {
     range1,
     makeEnvelope,
@@ -39,8 +39,8 @@ describe('findOverlappingWindows', () => {
 
     it('creates new window and inserts it correctly', async () => {
         const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<WindowResponse | null>>
-        >(() => makeEnvelope({ window: { nodes: [{ range: range2 }] } }))
+            QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>>
+        >(() => makeEnvelope({ ranges: { nodes: [{ range: range2 }] } }))
 
         const windows = [
             { startLine: 1, endLine: 3, ranges: Promise.resolve([aggregate1]) },
@@ -61,27 +61,27 @@ describe('findOverlappingWindows', () => {
     })
 })
 
-describe('calculateWindow', () => {
+describe('calculateRangeWindow', () => {
     it('centers window around line', () => {
-        assert.deepEqual(calculateWindow(200, 0, undefined), [150, 250])
+        assert.deepEqual(calculateRangeWindow(200, 0, undefined), [150, 250])
     })
 
     it('respects lower and upper bounds', () => {
-        assert.deepEqual(calculateWindow(200, 175, 225), [175, 225])
+        assert.deepEqual(calculateRangeWindow(200, 175, 225), [175, 225])
     })
 
     it('gives upper slack to start line', () => {
-        assert.deepEqual(calculateWindow(200, 0, 225), [125, 225])
-        assert.deepEqual(calculateWindow(200, 140, 225), [140, 225])
+        assert.deepEqual(calculateRangeWindow(200, 0, 225), [125, 225])
+        assert.deepEqual(calculateRangeWindow(200, 140, 225), [140, 225])
     })
 
     it('gives lower slack to end line', () => {
-        assert.deepEqual(calculateWindow(200, 175, undefined), [175, 275])
-        assert.deepEqual(calculateWindow(200, 175, 260), [175, 260])
+        assert.deepEqual(calculateRangeWindow(200, 175, undefined), [175, 275])
+        assert.deepEqual(calculateRangeWindow(200, 175, 260), [175, 260])
     })
 })
 
-describe('findOverlappingAggregateCodeIntelligence', () => {
+describe('findOverlappingCodeIntelligenceRange', () => {
     it('checks singe line overlap', () => {
         const range = { range: new sourcegraph.Range(10, 5, 10, 7) }
 
@@ -93,7 +93,7 @@ describe('findOverlappingAggregateCodeIntelligence', () => {
 
         for (const pos of overlappingPositions) {
             assert.equal(
-                findOverlappingAggregateCodeIntelligence(pos, [range]),
+                findOverlappingCodeIntelligenceRange(pos, [range]),
                 range
             )
         }
@@ -107,7 +107,7 @@ describe('findOverlappingAggregateCodeIntelligence', () => {
 
         for (const pos of disjointPositions) {
             assert.equal(
-                findOverlappingAggregateCodeIntelligence(pos, [range]),
+                findOverlappingCodeIntelligenceRange(pos, [range]),
                 null
             )
         }
@@ -126,7 +126,7 @@ describe('findOverlappingAggregateCodeIntelligence', () => {
 
         for (const pos of overlappingPositions) {
             assert.equal(
-                findOverlappingAggregateCodeIntelligence(pos, [range]),
+                findOverlappingCodeIntelligenceRange(pos, [range]),
                 range
             )
         }
@@ -140,20 +140,20 @@ describe('findOverlappingAggregateCodeIntelligence', () => {
 
         for (const pos of disjointPositions) {
             assert.equal(
-                findOverlappingAggregateCodeIntelligence(pos, [range]),
+                findOverlappingCodeIntelligenceRange(pos, [range]),
                 null
             )
         }
     })
 })
 
-describe('rangesInWindow', () => {
+describe('rangesInRangeWindow', () => {
     it('should correctly parse result', async () => {
         const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<WindowResponse | null>>
+            QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>>
         >(() =>
             makeEnvelope({
-                window: {
+                ranges: {
                     nodes: [
                         {
                             range: range1,
@@ -193,38 +193,41 @@ describe('rangesInWindow', () => {
             })
         )
 
-        assert.deepEqual(await rangesInWindow(doc, 10, 20, queryGraphQLFn), [
-            {
-                range: range1,
-                definitions: [
-                    new sourcegraph.Location(
-                        new URL('git://repo?rev#/bar.ts'),
-                        range2
-                    ),
-                ],
-                references: [
-                    new sourcegraph.Location(
-                        new URL('git://repo?rev#/baz.ts'),
-                        range3
-                    ),
-                ],
-                hover: {
-                    markdown: {
-                        text: 'foo',
-                    },
+        assert.deepEqual(
+            await rangesInRangeWindow(doc, 10, 20, queryGraphQLFn),
+            [
+                {
                     range: range1,
+                    definitions: [
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#/bar.ts'),
+                            range2
+                        ),
+                    ],
+                    references: [
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#/baz.ts'),
+                            range3
+                        ),
+                    ],
+                    hover: {
+                        markdown: {
+                            text: 'foo',
+                        },
+                        range: range1,
+                    },
                 },
-            },
-        ])
+            ]
+        )
     })
 
     it('should deal with empty payload', async () => {
         const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<WindowResponse | null>>
+            QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>>
         >(() => makeEnvelope())
 
         assert.deepStrictEqual(
-            await rangesInWindow(doc, 10, 20, queryGraphQLFn),
+            await rangesInRangeWindow(doc, 10, 20, queryGraphQLFn),
             null
         )
     })

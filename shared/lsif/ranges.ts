@@ -12,71 +12,69 @@ import {
     markdownFragment,
 } from './api'
 
-/** The size of the bounds on each window request. */
-const WINDOW_SIZE = 100
+/** The size of the bounds on each ranges request. */
+const RANGE_WINDOW_SIZE = 100
 
-/** The type returned by makeWindowFactory. */
-export type WindowFactoryFn = (
+/** The type returned by makeRangeWindowFactory. */
+export type RangeWindowFactoryFn = (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
-) => Promise<AggregateCodeIntelligence | null>
+) => Promise<CodeIntelligenceRange | null>
 
 /** A range and a subset of its intelligence data. */
-export interface AggregateCodeIntelligence {
+export interface CodeIntelligenceRange {
     range: sourcegraph.Range
     definitions?: sourcegraph.Location[]
     references?: sourcegraph.Location[]
     hover?: HoverPayload
 }
 
-/** A set of aggregate code intelligence and the line bounds in which they are contained. */
-interface Window {
+/** A set of code intelligence ranges and the line bounds in which they are contained. */
+interface RangeWindow {
     startLine: number
     endLine: number
-    ranges: Promise<AggregateCodeIntelligence[] | null>
+    ranges: Promise<CodeIntelligenceRange[] | null>
 }
 
 /**
- * Create a factory function that returns aggregate code intelligence
- * for the given document and position. This will request bulk data from
- * the GraphQL API (a range around the given position) and cache the result
- * so that similar queries will not have to make a subsequent network
- * request.
+ * Create a factory function that returns code intelligence ranges for the given
+ * document and position. This will request bulk data from the GraphQL API
+ * (a range around the given position) and cache the result so that similar queries
+ * will not have to make a subsequent network request.
  *
- * The data returned from this function is precise but not complete. Notably,
- * it is missing any definitions and references that do not exist in the
- * same bundle. In order to get cross-repository and cross-root intelligence,
- * the provider must fall back to an explicit request for that range when the
- * data here is not sufficient.
+ * The data returned from this function is precise but not complete. Notably, it is
+ * missing any definitions and references that do not exist in the same bundle. In
+ * order to get cross-repository and cross-root intelligence, the provider must fall
+ * back to an explicit request for that range when the data here is not sufficient.
  *
  * @param queryGraphQL The function used to query the GraphQL API.
  */
-export async function makeWindowFactory(
+export async function makeRangeWindowFactory(
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL
-): Promise<WindowFactoryFn> {
-    if (!(await hasWindowQuery(queryGraphQL))) {
+): Promise<RangeWindowFactoryFn> {
+    if (!(await hasRangesQuery(queryGraphQL))) {
         // No-op if the instance doesn't support bulk loading
         return () => Promise.resolve(null)
     }
 
     // TODO(efritz) - figure out how when to free space
-    const cache = new Map<sourcegraph.TextDocument, Window[]>()
+    const cache = new Map<sourcegraph.TextDocument, RangeWindow[]>()
 
     const getPromise = async (
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
-    ): Promise<AggregateCodeIntelligence[] | null> => {
-        let windows = cache.get(doc)
-        if (!windows) {
-            windows = []
-            cache.set(doc, windows)
+    ): Promise<CodeIntelligenceRange[] | null> => {
+        let rangeWindows = cache.get(doc)
+        if (!rangeWindows) {
+            rangeWindows = []
+            cache.set(doc, rangeWindows)
         }
 
-        return findOverlappingWindows(doc, position, windows, queryGraphQL)
+        return findOverlappingWindows(doc, position, rangeWindows, queryGraphQL)
     }
 
     return async (doc, position) =>
-        findOverlappingAggregateCodeIntelligence(
+        findOverlappingCodeIntelligenceRange(
             position,
             (await getPromise(doc, position)) || []
         )
@@ -93,45 +91,45 @@ export async function makeWindowFactory(
  *
  * @param doc The current document.
  * @param position The target position.
- * @param windows The set of windows known to the document.
+ * @param rangeWindows The set of windows known to the document.
  * @param queryGraphQL The function used to query the GraphQL API.
  */
 export async function findOverlappingWindows(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position,
-    windows: Window[],
+    rangeWindows: RangeWindow[],
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL
-): Promise<AggregateCodeIntelligence[] | null> {
+): Promise<CodeIntelligenceRange[] | null> {
     let index = -1
-    for (const window of windows) {
-        if (window.startLine > position.line) {
+    for (const rangeWindow of rangeWindows) {
+        if (rangeWindow.startLine > position.line) {
             // Current window begins after this position
             break
         }
 
-        if (position.line <= window.endLine) {
+        if (position.line <= rangeWindow.endLine) {
             // The position is within the window bounds
-            return window.ranges
+            return rangeWindow.ranges
         }
 
         // Current window ends before this position
         index++
     }
 
-    const [startLine, endLine] = calculateWindow(
+    const [startLine, endLine] = calculateRangeWindow(
         position.line,
         // clamp at zero or after the previous context
-        index < 0 ? 0 : windows[index].endLine + 1,
+        index < 0 ? 0 : rangeWindows[index].endLine + 1,
         // clamp before the next context, if one exists
-        index + 1 < windows.length
-            ? windows[index + 1].startLine - 1
+        index + 1 < rangeWindows.length
+            ? rangeWindows[index + 1].startLine - 1
             : undefined
     )
 
     // Query this range and insert it into the current index to keep the
     // array of windows sorted.
-    const ranges = rangesInWindow(doc, startLine, endLine, queryGraphQL)
-    windows.splice(index + 1, 0, { startLine, endLine, ranges })
+    const ranges = rangesInRangeWindow(doc, startLine, endLine, queryGraphQL)
+    rangeWindows.splice(index + 1, 0, { startLine, endLine, ranges })
     return ranges
 }
 
@@ -142,12 +140,12 @@ export async function findOverlappingWindows(
  * @param lowerBound The minimum lower bound of the window.
  * @param upperBound The maximum upper bound of the window.
  */
-export function calculateWindow(
+export function calculateRangeWindow(
     line: number,
     lowerBound: number,
     upperBound?: number
 ): [number, number] {
-    const radius = WINDOW_SIZE / 2
+    const radius = RANGE_WINDOW_SIZE / 2
     const candidateStartLine = line - radius
     const candidateEndLine = line + radius
     const lowerSlack = lowerBound - candidateStartLine
@@ -162,15 +160,15 @@ export function calculateWindow(
 }
 
 /**
- * Return the aggregate code intelligence that overlaps the given position.
+ * Return the code intelligence range that overlaps the given position.
  *
  * @param position The target position.
  * @param ranges The candidate ranges with aggregate code intelligence.
  */
-export function findOverlappingAggregateCodeIntelligence(
+export function findOverlappingCodeIntelligenceRange(
     position: sourcegraph.Position,
-    ranges: AggregateCodeIntelligence[]
-): AggregateCodeIntelligence | null {
+    ranges: CodeIntelligenceRange[]
+): CodeIntelligenceRange | null {
     return (
         ranges.find(
             ({
@@ -205,19 +203,19 @@ interface IntrospectionResponse {
     __type: { fields: { name: string }[] }
 }
 
-/** Determine if the LSIF query resolvers have a window function. */
-async function hasWindowQuery(
+/** Determine if the LSIF query resolvers have a ranges function. */
+async function hasRangesQuery(
     queryGraphQL: QueryGraphQLFn<IntrospectionResponse> = sgQueryGraphQL
 ): Promise<boolean> {
     return (await queryGraphQL(introspectionQuery)).__type.fields.some(
-        field => field.name === 'window'
+        field => field.name === 'ranges'
     )
 }
 
-const windowQuery = gql`
-    query Window($repository: String!, $commit: String!, $path: String!, $startLine: Int!, $endLine: Int!) {
+const rangesQuery = gql`
+    query Ranges($repository: String!, $commit: String!, $path: String!, $startLine: Int!, $endLine: Int!) {
         ${lsifRequest(gql`
-            window(startLine: $startLine, endLine: $endLine) {
+            ranges(startLine: $startLine, endLine: $endLine) {
                 nodes {
                     ${rangeFragment}
                     definitions {
@@ -242,28 +240,28 @@ const windowQuery = gql`
 `
 
 /** Retrieve local (same-bundle) code intelligence for symbols between the given lines. */
-export async function rangesInWindow(
+export async function rangesInRangeWindow(
     doc: sourcegraph.TextDocument,
     startLine: number,
     endLine: number,
     queryGraphQL: QueryGraphQLFn<
-        GenericLSIFResponse<WindowResponse | null>
+        GenericLSIFResponse<RangesResponse | null>
     > = sgQueryGraphQL
-): Promise<AggregateCodeIntelligence[] | null> {
-    return windowResponseToAggregateCodeIntelligenceNodes(
+): Promise<CodeIntelligenceRange[] | null> {
+    return rangesResponseToCodeIntelligenceRangeNodes(
         doc,
         await queryLSIF(
-            { query: windowQuery, uri: doc.uri, startLine, endLine },
+            { query: rangesQuery, uri: doc.uri, startLine, endLine },
             queryGraphQL
         )
     )
 }
 
-export interface WindowResponse {
-    window: { nodes: AggregateCodeIntelligenceConnectionNode[] }
+export interface RangesResponse {
+    ranges: { nodes: CodeIntelligenceRangeConnectionNode[] }
 }
 
-export interface AggregateCodeIntelligenceConnectionNode {
+export interface CodeIntelligenceRangeConnectionNode {
     range: sourcegraph.Range
     definitions?: { nodes: LocationConnectionNode[] }
     references?: { nodes: LocationConnectionNode[] }
@@ -271,37 +269,37 @@ export interface AggregateCodeIntelligenceConnectionNode {
 }
 
 /**
- * Convert a GraphQL window response into a list of aggregate code intelligence objects.
+ * Convert a GraphQL ranges response into a list of code intelligence ranges.
  *
  * @param doc The current document.
  * @param lsifObj The resolved LSIF object.
  */
-export function windowResponseToAggregateCodeIntelligenceNodes(
+export function rangesResponseToCodeIntelligenceRangeNodes(
     doc: sourcegraph.TextDocument,
-    lsifObj: WindowResponse | null
-): AggregateCodeIntelligence[] | null {
+    lsifObj: RangesResponse | null
+): CodeIntelligenceRange[] | null {
     return (
-        lsifObj?.window.nodes.map(node =>
-            nodeToAggregateCodeIntelligence(doc, node)
+        lsifObj?.ranges.nodes.map(node =>
+            nodeToCodeIntelligenceRange(doc, node)
         ) || null
     )
 }
 
 /**
- * Convert LSIF response node into a AggregateCodeIntelligence.
+ * Convert LSIF response node into a CodeIntelligenceRange.
  *
  * @param doc The current document.
- * @param node A nav view connection node.
+ * @param node A code intelligence range connection node.
  */
-export function nodeToAggregateCodeIntelligence(
+export function nodeToCodeIntelligenceRange(
     doc: sourcegraph.TextDocument,
     {
         range,
         definitions,
         references,
         hover,
-    }: AggregateCodeIntelligenceConnectionNode
-): AggregateCodeIntelligence {
+    }: CodeIntelligenceRangeConnectionNode
+): CodeIntelligenceRange {
     return {
         range,
         definitions: (definitions?.nodes || []).map(node =>

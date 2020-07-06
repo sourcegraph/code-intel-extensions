@@ -3,7 +3,7 @@ import { Providers, noopProviders } from '../providers'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { Logger } from '../logging'
-import { WindowFactoryFn, makeWindowFactory } from './window'
+import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { hoverPayloadToHover, hoverForPosition } from './hover'
 import { definitionForPosition } from './definition'
 import { referencesForPosition } from './references'
@@ -23,7 +23,7 @@ export function createProviders(logger: Logger): Providers {
 
     const providers = createGraphQLProviders(
         sgQueryGraphQL,
-        makeWindowFactory(sgQueryGraphQL)
+        makeRangeWindowFactory(sgQueryGraphQL)
     )
 
     logger.log('LSIF providers are active')
@@ -35,19 +35,19 @@ export function createProviders(logger: Logger): Providers {
  * set of providers will use the GraphQL API.
  *
  * @param queryGraphQL The function used to query the GraphQL API.
- * @param getBulkLocalIntelligence The function used to query bulk code intelligence.
+ * @param getRangeFromWindow The function used to query bulk code intelligence.
  */
 export function createGraphQLProviders(
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL,
-    getBulkLocalIntelligence?: Promise<WindowFactoryFn>
+    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): Providers {
     return {
         definition: asyncGeneratorFromPromise(
-            definition(queryGraphQL, getBulkLocalIntelligence)
+            definition(queryGraphQL, getRangeFromWindow)
         ),
-        references: references(queryGraphQL, getBulkLocalIntelligence),
+        references: references(queryGraphQL, getRangeFromWindow),
         hover: asyncGeneratorFromPromise(
-            hover(queryGraphQL, getBulkLocalIntelligence)
+            hover(queryGraphQL, getRangeFromWindow)
         ),
     }
 }
@@ -55,7 +55,7 @@ export function createGraphQLProviders(
 /** Retrieve a definition for the current hover position. */
 function definition(
     queryGraphQL: QueryGraphQLFn<any>,
-    getBulkLocalIntelligence?: Promise<WindowFactoryFn>
+    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -64,15 +64,10 @@ function definition(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
-        if (getBulkLocalIntelligence) {
-            const aggregateCodeIntelligence = await (
-                await getBulkLocalIntelligence
-            )(doc, position)
-            if (
-                aggregateCodeIntelligence?.definitions &&
-                aggregateCodeIntelligence.definitions.length > 0
-            ) {
-                return aggregateCodeIntelligence.definitions
+        if (getRangeFromWindow) {
+            const range = await (await getRangeFromWindow)(doc, position)
+            if (range?.definitions && range.definitions.length > 0) {
+                return range.definitions
             }
         }
 
@@ -83,7 +78,7 @@ function definition(
 /** Retrieve references for the current hover position. */
 function references(
     queryGraphQL: QueryGraphQLFn<any>,
-    getBulkLocalIntelligence?: Promise<WindowFactoryFn>
+    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -93,12 +88,10 @@ function references(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-        if (getBulkLocalIntelligence) {
-            const aggregateCodeIntelligence = await (
-                await getBulkLocalIntelligence
-            )(doc, position)
-            if (aggregateCodeIntelligence?.references) {
-                yield aggregateCodeIntelligence?.references
+        if (getRangeFromWindow) {
+            const range = await (await getRangeFromWindow)(doc, position)
+            if (range?.references) {
+                yield range?.references
             }
         }
 
@@ -109,7 +102,7 @@ function references(
 /** Retrieve hover text for the current hover position. */
 function hover(
     queryGraphQL: QueryGraphQLFn<any>,
-    getBulkLocalIntelligence?: Promise<WindowFactoryFn>
+    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -118,12 +111,10 @@ function hover(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
-        if (getBulkLocalIntelligence) {
-            const aggregateCodeIntelligence = await (
-                await getBulkLocalIntelligence
-            )(doc, position)
-            if (aggregateCodeIntelligence?.hover) {
-                return hoverPayloadToHover(aggregateCodeIntelligence?.hover)
+        if (getRangeFromWindow) {
+            const range = await (await getRangeFromWindow)(doc, position)
+            if (range?.hover) {
+                return hoverPayloadToHover(range?.hover)
             }
         }
 
