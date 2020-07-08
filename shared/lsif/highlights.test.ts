@@ -3,7 +3,7 @@ import { range1, range2, range3, range4, doc } from './util.test'
 import { filterLocationsForDocumentHighlights } from './highlights'
 
 describe('filterLocationsForDocumentHighlights', () => {
-    it('should filter out distinct paths', async () => {
+    it('should filter out distinct paths', () => {
         assert.deepStrictEqual(
             filterLocationsForDocumentHighlights(doc, [
                 { uri: new URL(doc.uri), range: range1 },
