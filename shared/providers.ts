@@ -14,12 +14,14 @@ export interface Providers {
     definition: DefinitionProvider
     references: ReferencesProvider
     hover: HoverProvider
+    documentHighlights: DocumentHighlightProvider
 }
 
 export interface SourcegraphProviders {
     definition: sourcegraph.DefinitionProvider
     references: sourcegraph.ReferenceProvider
     hover: sourcegraph.HoverProvider
+    documentHighlights: sourcegraph.DocumentHighlightProvider
 }
 
 export type DefinitionProvider = (
@@ -38,16 +40,23 @@ export type HoverProvider = (
     pos: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Hover | null, void, undefined>
 
+export type DocumentHighlightProvider = (
+    doc: sourcegraph.TextDocument,
+    pos: sourcegraph.Position
+) => AsyncGenerator<sourcegraph.DocumentHighlight[] | null, void, undefined>
+
 export const noopProviders = {
     definition: noopAsyncGenerator,
     references: noopAsyncGenerator,
     hover: noopAsyncGenerator,
+    documentHighlights: noopAsyncGenerator,
 }
 
 export interface ProviderWrapper {
     definition: DefinitionWrapper
     references: ReferencesWrapper
     hover: HoverWrapper
+    documentHighlights: DocumentHighlightWrapper
 }
 
 export type DefinitionWrapper = (
@@ -61,6 +70,10 @@ export type ReferencesWrapper = (
 export type HoverWrapper = (
     provider?: HoverProvider
 ) => sourcegraph.HoverProvider
+
+export type DocumentHighlightWrapper = (
+    provider?: DocumentHighlightProvider
+) => sourcegraph.DocumentHighlightProvider
 
 export class NoopProviderWrapper implements ProviderWrapper {
     public definition = (
@@ -90,6 +103,18 @@ export class NoopProviderWrapper implements ProviderWrapper {
 
     public hover = (provider?: HoverProvider): sourcegraph.HoverProvider => ({
         provideHover: (
+            doc: sourcegraph.TextDocument,
+            pos: sourcegraph.Position
+        ) =>
+            provider
+                ? observableFromAsyncIterator(() => provider(doc, pos))
+                : NEVER,
+    })
+
+    public documentHighlights = (
+        provider?: DocumentHighlightProvider
+    ): sourcegraph.DocumentHighlightProvider => ({
+        provideDocumentHighlights: (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ) =>
@@ -144,6 +169,16 @@ export function createProviderWrapper(
                 lspProvider
             )
             wrapped.hover = provider
+            return provider
+        },
+
+        documentHighlights: (lspProvider?: DocumentHighlightProvider) => {
+            const provider = createDocumentHighlightProvider(
+                lsifProviders.documentHighlights,
+                searchProviders.documentHighlights,
+                lspProvider
+            )
+            wrapped.documentHighlights = provider
             return provider
         },
     }
@@ -349,6 +384,39 @@ export function createHoverProvider(
                 if (searchResult) {
                     await emitter.emitOnce('searchHover')
                     yield { ...searchResult, badge: impreciseBadge }
+                }
+            }
+        }),
+    }
+}
+
+/**
+ * Creates a document highlight provider.
+ *
+ * @param lsifProvider The LSIF-based document highlight provider.
+ * @param searchProvider The search-based document highlight provider.
+ * @param lspProvider An optional LSP-based document highlight provider.
+ */
+export function createDocumentHighlightProvider(
+    lsifProvider: DocumentHighlightProvider,
+    searchProvider: DocumentHighlightProvider,
+    lspProvider?: DocumentHighlightProvider
+): sourcegraph.DocumentHighlightProvider {
+    return {
+        provideDocumentHighlights: wrapProvider(async function*(
+            doc: sourcegraph.TextDocument,
+            pos: sourcegraph.Position
+        ): AsyncGenerator<
+            sourcegraph.DocumentHighlight[] | null | undefined,
+            void,
+            undefined
+        > {
+            const emitter = new TelemetryEmitter()
+
+            for await (const lsifResult of lsifProvider(doc, pos)) {
+                if (lsifResult) {
+                    await emitter.emitOnce('lsifDocumentHighlight')
+                    yield lsifResult
                 }
             }
         }),

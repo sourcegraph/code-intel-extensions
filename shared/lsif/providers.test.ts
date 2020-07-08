@@ -10,12 +10,16 @@ import { HoverResponse } from './hover'
 import {
     gatherValues,
     makeEnvelope,
+    resource0,
     resource1,
     resource2,
     resource3,
     range1,
     range2,
     range3,
+    range4,
+    range5,
+    range6,
     doc,
     pos,
 } from './util.test'
@@ -439,6 +443,94 @@ describe('graphql providers', () => {
             assert.deepStrictEqual(
                 await gatherValues(
                     createProviders(queryGraphQLFn).hover(doc, pos)
+                ),
+                [null]
+            )
+        })
+    })
+
+    describe('document highlights provider', () => {
+        it('should use result from window', async () => {
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
+            >(() => makeEnvelope(null))
+
+            const getBulkLocalIntelligence = Promise.resolve(() =>
+                Promise.resolve({
+                    range: range1,
+                    references: [
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#foo.ts'),
+                            range1
+                        ),
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#bar.ts'),
+                            range2
+                        ),
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#foo.ts'),
+                            range3
+                        ),
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#baz.ts'),
+                            range4
+                        ),
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#foo.ts'),
+                            range5
+                        ),
+                        new sourcegraph.Location(
+                            new URL('git://repo?rev#baz.ts'),
+                            range6
+                        ),
+                    ],
+                })
+            )
+
+            assert.deepEqual(
+                await gatherValues(
+                    createProviders(
+                        queryGraphQLFn,
+                        getBulkLocalIntelligence
+                    ).documentHighlights(doc, pos)
+                ),
+                [[{ range: range1 }, { range: range3 }, { range: range5 }]]
+            )
+        })
+
+        it('should correctly parse result', async () => {
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
+            >(() =>
+                makeEnvelope({
+                    references: {
+                        nodes: [
+                            { resource: resource0, range: range1 },
+                            { resource: resource1, range: range2 },
+                            { resource: resource0, range: range3 },
+                            { resource: resource2, range: range4 },
+                            { resource: resource0, range: range5 },
+                            { resource: resource3, range: range6 },
+                        ],
+                        pageInfo: {},
+                    },
+                })
+            )
+            assert.deepEqual(
+                await gatherValues(
+                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
+                ),
+                [[{ range: range1 }, { range: range3 }, { range: range5 }]]
+            )
+        })
+
+        it('should deal with empty payload', async () => {
+            const queryGraphQLFn = sinon.spy<
+                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
+            >(() => makeEnvelope())
+            assert.deepEqual(
+                await gatherValues(
+                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
                 ),
                 [null]
             )

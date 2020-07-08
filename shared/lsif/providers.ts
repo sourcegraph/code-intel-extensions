@@ -6,7 +6,8 @@ import { Logger } from '../logging'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { hoverPayloadToHover, hoverForPosition } from './hover'
 import { definitionForPosition } from './definition'
-import { referencesForPosition } from './references'
+import { referencesForPosition, referencePageForPosition } from './references'
+import { filterLocationsForDocumentHighlights } from './highlights'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
@@ -48,6 +49,9 @@ export function createGraphQLProviders(
         references: references(queryGraphQL, getRangeFromWindow),
         hover: asyncGeneratorFromPromise(
             hover(queryGraphQL, getRangeFromWindow)
+        ),
+        documentHighlights: asyncGeneratorFromPromise(
+            documentHighlights(queryGraphQL, getRangeFromWindow)
         ),
     }
 }
@@ -119,5 +123,44 @@ function hover(
         }
 
         return hoverForPosition(doc, position, queryGraphQL)
+    }
+}
+
+/** Retrieve references ranges of the current hover position to highlight. */
+export function documentHighlights(
+    queryGraphQL: QueryGraphQLFn<any>,
+    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
+): (
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+) => Promise<sourcegraph.DocumentHighlight[] | null> {
+    return async (
+        doc: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.DocumentHighlight[] | null> => {
+        if (getRangeFromWindow) {
+            const range = await (await getRangeFromWindow)(doc, position)
+            if (range?.references) {
+                return filterLocationsForDocumentHighlights(
+                    doc,
+                    range?.references
+                )
+            }
+        }
+
+        // Fall back to doing a reference request, but only take the first page
+        // of results. This may not result in precise highlights if the first page
+        // does not contain any/all hovers for the current path. This is a best
+        // effort attempt that we don't want to waste too many resources on.
+        const { locations } = await referencePageForPosition(
+            doc,
+            position,
+            undefined,
+            queryGraphQL
+        )
+
+        return locations
+            ? filterLocationsForDocumentHighlights(doc, locations)
+            : null
     }
 }

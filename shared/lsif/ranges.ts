@@ -107,7 +107,7 @@ export async function findOverlappingWindows(
             break
         }
 
-        if (position.line <= rangeWindow.endLine) {
+        if (position.line < rangeWindow.endLine) {
             // The position is within the window bounds
             return rangeWindow.ranges
         }
@@ -119,10 +119,10 @@ export async function findOverlappingWindows(
     const [startLine, endLine] = calculateRangeWindow(
         position.line,
         // clamp at zero or after the previous context
-        index < 0 ? 0 : rangeWindows[index].endLine + 1,
+        index < 0 ? 0 : rangeWindows[index].endLine,
         // clamp before the next context, if one exists
         index + 1 < rangeWindows.length
-            ? rangeWindows[index + 1].startLine - 1
+            ? rangeWindows[index + 1].startLine
             : undefined
     )
 

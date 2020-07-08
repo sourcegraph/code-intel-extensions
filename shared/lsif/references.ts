@@ -60,18 +60,11 @@ export async function* referencesForPosition(
         }
 
         // Make the request for the page starting at the after cursor
-        const { locations, endCursor } = referenceResponseToLocations(
+        const { locations, endCursor } = await referencePageForPosition(
             doc,
-            await queryLSIF(
-                {
-                    query: referencesQuery,
-                    uri: doc.uri,
-                    after,
-                    line: position.line,
-                    character: position.character,
-                },
-                queryGraphQL
-            )
+            position,
+            after,
+            queryGraphQL
         )
 
         // Yield this page's set of results
@@ -84,6 +77,30 @@ export async function* referencesForPosition(
     }
 
     yield* concat(queryPage(MAX_REFERENCE_PAGE_REQUESTS))
+}
+
+/** Retrieve a single page of references for the current hover position. */
+export async function referencePageForPosition(
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position,
+    after: string | undefined,
+    queryGraphQL: QueryGraphQLFn<
+        GenericLSIFResponse<ReferencesResponse | null>
+    > = sgQueryGraphQL
+): Promise<{ locations: sourcegraph.Location[] | null; endCursor?: string }> {
+    return referenceResponseToLocations(
+        doc,
+        await queryLSIF(
+            {
+                query: referencesQuery,
+                uri: doc.uri,
+                after,
+                line: position.line,
+                character: position.character,
+            },
+            queryGraphQL
+        )
+    )
 }
 
 /**

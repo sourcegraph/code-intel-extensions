@@ -240,6 +240,17 @@ function activateWithoutLSP(
     ctx.subscriptions.add(
         sourcegraph.languages.registerHoverProvider(selector, wrapper.hover())
     )
+
+    // Do not try to register this provider on pre-3.18 instances as it
+    // didn't exist.
+    if (sourcegraph.languages.registerDocumentHighlightProvider) {
+        ctx.subscriptions.add(
+            sourcegraph.languages.registerDocumentHighlightProvider(
+                selector,
+                wrapper.documentHighlights()
+            )
+        )
+    }
 }
 
 /**
