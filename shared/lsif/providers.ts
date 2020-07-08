@@ -6,6 +6,7 @@ import { asyncGeneratorFromPromise, concat } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { LocationConnectionNode, nodeToLocation } from './conversion'
 import { Logger } from '../logging'
+import { isDefined } from '../util/helpers'
 
 /**
  * The maximum number of chained GraphQL requests to make for a single
@@ -57,6 +58,9 @@ export function createGraphQLProviders(
         definition: asyncGeneratorFromPromise(definition(queryGraphQL)),
         references: references(queryGraphQL),
         hover: asyncGeneratorFromPromise(hover(queryGraphQL)),
+        documentHighlights: asyncGeneratorFromPromise(
+            documentHighlights(queryGraphQL)
+        ),
     }
 }
 
@@ -284,6 +288,79 @@ function hover(
             },
             range: lsifObj.hover.range,
         }
+    }
+}
+
+/** Retrieve references ranges of the current hover position to highlight. */
+export function documentHighlights(
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
+): (
+    doc: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+) => Promise<sourcegraph.DocumentHighlight[] | null> {
+    return async (
+        doc: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.DocumentHighlight[] | null> => {
+        const query = `
+            query ReferencesForDocumentHighlights($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+                repository(name: $repository) {
+                    commit(rev: $commit) {
+                        blob(path: $path) {
+                            lsif {
+                                references(line: $line, character: $character) {
+                                    nodes {
+                                        resource {
+                                            path
+                                            repository {
+                                                name
+                                            }
+                                            commit {
+                                                oid
+                                            }
+                                        }
+                                        range {
+                                            start {
+                                                line
+                                                character
+                                            }
+                                            end {
+                                                line
+                                                character
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `
+
+        // Make the request for the page starting at the after cursor
+        const lsifObj: ReferencesResponse | null = await queryLSIF(
+            {
+                doc,
+                position,
+                query,
+            },
+            queryGraphQL
+        )
+        if (!lsifObj) {
+            return null
+        }
+
+        const { path: targetPath } = parseGitURI(new URL(doc.uri))
+
+        const {
+            references: { nodes },
+        } = lsifObj
+
+        return nodes
+            .filter(({ resource: { path } }) => path === targetPath)
+            .map(({ range }) => range && { range })
+            .filter(isDefined)
     }
 }
 

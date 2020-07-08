@@ -7,6 +7,7 @@ import {
     createDefinitionProvider,
     createHoverProvider,
     createReferencesProvider,
+    createDocumentHighlightProvider,
 } from './providers'
 
 const doc = createStubTextDocument({
@@ -207,6 +208,25 @@ describe('createHoverProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             { ...hover3, badge: impreciseBadge },
+        ])
+    })
+})
+
+describe('createDocumentHighlightProvider', () => {
+    it('uses LSIF document highlights', async () => {
+        const result = createDocumentHighlightProvider(
+            () =>
+                asyncGeneratorFromValues([
+                    [{ range: range1 }, { range: range2 }],
+                ]),
+            () => asyncGeneratorFromValues([]),
+            () => asyncGeneratorFromValues([])
+        ).provideDocumentHighlights(doc, pos) as Observable<
+            sourcegraph.DocumentHighlight[]
+        >
+
+        assert.deepStrictEqual(await gatherValues(result), [
+            [{ range: range1 }, { range: range2 }],
         ])
     })
 })
