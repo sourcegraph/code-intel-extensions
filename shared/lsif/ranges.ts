@@ -15,6 +15,14 @@ import {
 /** The size of the bounds on each ranges request. */
 const RANGE_WINDOW_SIZE = 100
 
+/**
+ * The maximum number of documents to store windows for. This value can be
+ * relatively low as only the current document really matters. We just want
+ * to keep a handful of values around in case the user navigates back to a
+ * previous page.
+ */
+const WINDOW_CACHE_CAPACITY = 5
+
 /** The type returned by makeRangeWindowFactory. */
 export type RangeWindowFactoryFn = (
     doc: sourcegraph.TextDocument,
@@ -57,20 +65,43 @@ export async function makeRangeWindowFactory(
         return () => Promise.resolve(null)
     }
 
-    // TODO(efritz) - figure out how when to free space
-    const cache = new Map<sourcegraph.TextDocument, RangeWindow[]>()
+    const cache = new Map<
+        sourcegraph.TextDocument,
+        {
+            lasthit: Date
+            windows: RangeWindow[]
+        }
+    >()
 
     const getPromise = async (
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<CodeIntelligenceRange[] | null> => {
-        let rangeWindows = cache.get(doc)
-        if (!rangeWindows) {
-            rangeWindows = []
-            cache.set(doc, rangeWindows)
+        let cacheEntry = cache.get(doc)
+        if (!cacheEntry) {
+            // Add fresh entry
+            cacheEntry = { lasthit: new Date(), windows: [] }
+            cache.set(doc, cacheEntry)
+
+            // Remove oldest entries to keep the cache under capacity
+            while (cache.size > WINDOW_CACHE_CAPACITY) {
+                cache.delete(
+                    Array.from(cache.entries()).reduce((e1, e2) =>
+                        e1[1].lasthit < e2[1].lasthit ? e1 : e2
+                    )[0]
+                )
+            }
+        } else {
+            // Keep track of recency
+            cacheEntry.lasthit = new Date()
         }
 
-        return findOverlappingWindows(doc, position, rangeWindows, queryGraphQL)
+        return findOverlappingWindows(
+            doc,
+            position,
+            cacheEntry?.windows || [],
+            queryGraphQL
+        )
     }
 
     return async (doc, position) =>
