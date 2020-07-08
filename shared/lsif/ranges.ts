@@ -20,6 +20,12 @@ const RANGE_WINDOW_SIZE = 100
  * relatively low as only the current document really matters. We just want
  * to keep a handful of values around in case the user navigates back to a
  * previous page.
+ *
+ * Note: Alternatively, we may want to enforce a maximum number of windows
+ * that can remain resident in the extension at one time as well. This will
+ * make it easier to browse much larger files, but this seems like it is a
+ * good enough v1 to stop things from slowing to a crawl in the vast majority
+ * of circumstances.
  */
 const WINDOW_CACHE_CAPACITY = 5
 
@@ -215,7 +221,7 @@ export function findOverlappingCodeIntelligenceRange(
                 // right side check
                 (position.line < endLine ||
                     (position.line === endLine &&
-                        position.character <= endCharacter))
+                        position.character < endCharacter))
         ) || null
     )
 }

@@ -106,6 +106,7 @@ export async function referencePageForPosition(
 /**
  * Convert a GraphQL reference response into a set of Sourcegraph locations and end cursor.
  *
+ * @param doc The current document.
  * @param lsifObj The resolved LSIF object.
  */
 export function referenceResponseToLocations(

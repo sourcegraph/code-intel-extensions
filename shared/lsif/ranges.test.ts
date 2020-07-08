@@ -88,7 +88,6 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         const overlappingPositions = [
             new sourcegraph.Position(10, 5),
             new sourcegraph.Position(10, 6),
-            new sourcegraph.Position(10, 7),
         ]
 
         for (const pos of overlappingPositions) {
@@ -101,6 +100,7 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         const disjointPositions = [
             new sourcegraph.Position(9, 1), // before start line
             new sourcegraph.Position(10, 4), // before
+            new sourcegraph.Position(10, 7), // on right edge
             new sourcegraph.Position(10, 8), // after
             new sourcegraph.Position(11, 1), // after end line
         ]
