@@ -4,13 +4,7 @@ import { parseGitURI } from '../util/uri'
 
 /** The response envelope for all LSIF queries. */
 export interface GenericLSIFResponse<R> {
-    repository: {
-        commit: {
-            blob: {
-                lsif: R
-            }
-        }
-    }
+    repository: { commit: { blob: { lsif: R | null } | null } | null }
 }
 
 /**
@@ -87,5 +81,5 @@ export async function queryLSIF<P extends { query: string; uri: string }, R>(
     const { repo, commit, path } = parseGitURI(new URL(uri))
     const queryArgs = { repository: repo, commit, path, ...rest }
     const data = await queryGraphQL(query, queryArgs)
-    return data.repository.commit.blob.lsif
+    return data.repository?.commit?.blob?.lsif || null
 }
