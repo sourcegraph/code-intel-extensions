@@ -52,7 +52,7 @@ export async function definitionForPosition(
 }
 
 /**
- * Convert a GraphQL definition response into a list of Sourcegraph lcoations.
+ * Convert a GraphQL definition response into a list of Sourcegraph locations.
  *
  * @param lsifObj The resolved LSIF object.
  */
