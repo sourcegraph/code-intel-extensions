@@ -72,7 +72,7 @@ export async function makeRangeWindowFactory(
     }
 
     const cache = new Map<
-        sourcegraph.TextDocument,
+        string,
         {
             lasthit: Date
             windows: RangeWindow[]
@@ -83,11 +83,11 @@ export async function makeRangeWindowFactory(
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<CodeIntelligenceRange[] | null> => {
-        let cacheEntry = cache.get(doc)
+        let cacheEntry = cache.get(doc.uri)
         if (!cacheEntry) {
             // Add fresh entry
             cacheEntry = { lasthit: new Date(), windows: [] }
-            cache.set(doc, cacheEntry)
+            cache.set(doc.uri, cacheEntry)
 
             // Remove oldest entries to keep the cache under capacity
             while (cache.size > WINDOW_CACHE_CAPACITY) {
