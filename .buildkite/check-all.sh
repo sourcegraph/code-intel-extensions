@@ -5,7 +5,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 CHECKS=(
     ./yarn-deduplicate.sh
-    ./update-graphql-schema.sh
+    ./check-graphql-schema.sh
 )
 
 for c in "${CHECKS[@]}"; do
