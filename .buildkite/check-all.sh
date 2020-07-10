@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
 set -ex
-cd $(dirname "${BASH_SOURCE[0]}")
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
 CHECKS=(
     ./yarn-deduplicate.sh
+    ./update-graphql-schema.sh
 )
 
-for c in $CHECKS; do
+for c in "${CHECKS[@]}"; do
     $c
 done
