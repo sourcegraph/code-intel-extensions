@@ -1,7 +1,14 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "plugins": [
+      {
+        "name": "ts-graphql-plugin",
+        "schema": "../schema/schema.graphql",
+        "tag": "gql"
+      }
+    ]
   },
   "include": ["./**/*"],
   "exclude": ["dist"]

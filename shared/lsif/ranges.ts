@@ -220,7 +220,7 @@ export function findOverlappingCodeIntelligenceRange(
 }
 
 const introspectionQuery = gql`
-    query GitBlobLSIFDataIntrospection() {
+    query GitBlobLSIFDataIntrospection {
         __type(name: "GitBlobLSIFData") {
             fields {
                 name
@@ -243,7 +243,13 @@ async function hasRangesQuery(
 }
 
 const rangesQuery = gql`
-    query Ranges($repository: String!, $commit: String!, $path: String!, $startLine: Int!, $endLine: Int!) {
+    query Ranges(
+        $repository: String!
+        $commit: String!
+        $path: String!
+        $startLine: Int!
+        $endLine: Int!
+    ) {
         repository(name: $repository) {
             commit(rev: $commit) {
                 blob(path: $path) {
