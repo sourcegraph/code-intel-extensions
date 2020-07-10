@@ -2,13 +2,7 @@ import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { LocationConnectionNode, nodeToLocation } from './locations'
-import {
-    GenericLSIFResponse,
-    queryLSIF,
-    resourceFragment,
-    rangeFragment,
-    lsifRequest,
-} from './api'
+import { GenericLSIFResponse, queryLSIF } from './api'
 
 export interface DefinitionResponse {
     definitions: {
@@ -17,15 +11,44 @@ export interface DefinitionResponse {
 }
 
 const definitionsQuery = gql`
-    query Definitions($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
-        ${lsifRequest(gql`
-            definitions(line: $line, character: $character) {
-                nodes {
-                    ${resourceFragment}
-                    ${rangeFragment}
+    query Definitions(
+        $repository: String!
+        $commit: String!
+        $path: String!
+        $line: Int!
+        $character: Int!
+    ) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    lsif {
+                        definitions(line: $line, character: $character) {
+                            nodes {
+                                resource {
+                                    path
+                                    repository {
+                                        name
+                                    }
+                                    commit {
+                                        oid
+                                    }
+                                }
+                                range {
+                                    start {
+                                        line
+                                        character
+                                    }
+                                    end {
+                                        line
+                                        character
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        `)}
+        }
     }
 `
 

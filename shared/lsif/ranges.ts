@@ -3,14 +3,7 @@ import gql from 'tagged-template-noop'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { nodeToLocation, LocationConnectionNode } from './locations'
 import { HoverPayload } from './hover'
-import {
-    GenericLSIFResponse,
-    queryLSIF,
-    lsifRequest,
-    rangeFragment,
-    simpleResourceFragment,
-    markdownFragment,
-} from './api'
+import { GenericLSIFResponse, queryLSIF } from './api'
 
 /** The size of the bounds on each ranges request. */
 const RANGE_WINDOW_SIZE = 100
@@ -251,27 +244,66 @@ async function hasRangesQuery(
 
 const rangesQuery = gql`
     query Ranges($repository: String!, $commit: String!, $path: String!, $startLine: Int!, $endLine: Int!) {
-        ${lsifRequest(gql`
-            ranges(startLine: $startLine, endLine: $endLine) {
-                nodes {
-                    ${rangeFragment}
-                    definitions {
-                        nodes {
-                            ${simpleResourceFragment}
-                            ${rangeFragment}
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    lsif {
+                        ranges(startLine: $startLine, endLine: $endLine) {
+                            nodes {
+                                range {
+                                    start {
+                                        line
+                                        character
+                                    }
+                                    end {
+                                        line
+                                        character
+                                    }
+                                }
+                                definitions {
+                                    nodes {
+                                        resource {
+                                            path
+                                        }
+                                        range {
+                                            start {
+                                                line
+                                                character
+                                            }
+                                            end {
+                                                line
+                                                character
+                                            }
+                                        }
+                                    }
+                                }
+                                references {
+                                    nodes {
+                                        resource {
+                                            path
+                                        }
+                                        range {
+                                            start {
+                                                line
+                                                character
+                                            }
+                                            end {
+                                                line
+                                                character
+                                            }
+                                        }
+                                    }
+                                }
+                                hover {
+                                    markdown {
+                                        text
+                                    }
+                                }
+                            }
                         }
-                    }
-                    references {
-                        nodes {
-                            ${simpleResourceFragment}
-                            ${rangeFragment}
-                        }
-                    }
-                    hover {
-                        ${markdownFragment}
                     }
                 }
-            `)}
+            }
         }
     }
 `

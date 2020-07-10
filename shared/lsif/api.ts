@@ -1,4 +1,3 @@
-import gql from 'tagged-template-noop'
 import { QueryGraphQLFn } from '../util/graphql'
 import { parseGitURI } from '../util/uri'
 
@@ -6,60 +5,6 @@ import { parseGitURI } from '../util/uri'
 export interface GenericLSIFResponse<R> {
     repository: { commit: { blob: { lsif: R | null } | null } | null }
 }
-
-/**
- * Envelopes an LSIF resolver request.
- *
- * @param inner The GraphQL fragment inside of the lsif resolver.
- */
-export const lsifRequest = (inner: string): string => gql`
-    repository(name: $repository) {
-        commit(rev: $commit) {
-            blob(path: $path) {
-                lsif {
-                    ${inner}
-                }
-            }
-        }
-    }
-`
-
-export const resourceFragment = gql`
-    resource {
-        path
-        repository {
-            name
-        }
-        commit {
-            oid
-        }
-    }
-`
-
-export const simpleResourceFragment = gql`
-    resource {
-        path
-    }
-`
-
-export const rangeFragment = gql`
-    range {
-        start {
-            line
-            character
-        }
-        end {
-            line
-            character
-        }
-    }
-`
-
-export const markdownFragment = gql`
-    markdown {
-        text
-    }
-`
 
 /**
  * Perform an LSIF request to the GraphQL API.

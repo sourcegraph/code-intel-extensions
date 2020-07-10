@@ -1,12 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
-import {
-    GenericLSIFResponse,
-    queryLSIF,
-    rangeFragment,
-    markdownFragment,
-    lsifRequest,
-} from './api'
+import { GenericLSIFResponse, queryLSIF } from './api'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 
 export interface HoverResponse {
@@ -19,13 +13,36 @@ export interface HoverPayload {
 }
 
 const hoverQuery = gql`
-    query Hover($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
-        ${lsifRequest(gql`
-            hover(line: $line, character: $character) {
-                ${markdownFragment}
-                ${rangeFragment}
+    query Hover(
+        $repository: String!
+        $commit: String!
+        $path: String!
+        $line: Int!
+        $character: Int!
+    ) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    lsif {
+                        hover(line: $line, character: $character) {
+                            markdown {
+                                text
+                            }
+                            range {
+                                start {
+                                    line
+                                    character
+                                }
+                                end {
+                                    line
+                                    character
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        `)}
+        }
     }
 `
 

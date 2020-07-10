@@ -3,13 +3,7 @@ import gql from 'tagged-template-noop'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { concat } from '../util/ix'
 import { nodeToLocation, LocationConnectionNode } from './locations'
-import {
-    queryLSIF,
-    GenericLSIFResponse,
-    rangeFragment,
-    resourceFragment,
-    lsifRequest,
-} from './api'
+import { queryLSIF, GenericLSIFResponse } from './api'
 
 /**
  * The maximum number of chained GraphQL requests to make for a single
@@ -27,18 +21,52 @@ export interface ReferencesResponse {
 }
 
 const referencesQuery = gql`
-    query References($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!, $after: String) {
-        ${lsifRequest(gql`
-            references(line: $line, character: $character, after: $after) {
-                nodes {
-                    ${resourceFragment}
-                    ${rangeFragment}
-                }
-                pageInfo {
-                    endCursor
+    query References(
+        $repository: String!
+        $commit: String!
+        $path: String!
+        $line: Int!
+        $character: Int!
+        $after: String
+    ) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    lsif {
+                        references(
+                            line: $line
+                            character: $character
+                            after: $after
+                        ) {
+                            nodes {
+                                resource {
+                                    path
+                                    repository {
+                                        name
+                                    }
+                                    commit {
+                                        oid
+                                    }
+                                }
+                                range {
+                                    start {
+                                        line
+                                        character
+                                    }
+                                    end {
+                                        line
+                                        character
+                                    }
+                                }
+                            }
+                            pageInfo {
+                                endCursor
+                            }
+                        }
+                    }
                 }
             }
-        `)}
+        }
     }
 `
 
