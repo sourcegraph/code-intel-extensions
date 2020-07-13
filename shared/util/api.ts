@@ -57,38 +57,49 @@ export class API {
      * @param name The repository's name.
      */
     public async resolveRepo(name: string): Promise<RepoMeta> {
-        const metaFields = (await this.hasForkField())
-            ? 'isFork\nisArchived'
-            : ''
-
-        // Assume repo is not a fork/archived for older instances
-        const defaults = { isFork: false, isArchived: false }
-
-        const query = gql`
+        const queryWithFork = gql`
             query ResolveRepo($name: String!) {
                 repository(name: $name) {
                     name
-                    ${metaFields}
+                    isFork
+                    isArchived
+                }
+            }
+        `
+
+        const queryWithoutFork = gql`
+            query ResolveRepo($name: String!) {
+                repository(name: $name) {
+                    name
                 }
             }
         `
 
         interface Response {
-            repository: RepoMeta
+            repository: {
+                name: string
+                isFork?: boolean
+                isArchived?: boolean
+            }
         }
 
-        const data = await queryGraphQL<Response>(query, { name })
-        return { ...defaults, ...data.repository }
+        const data = await queryGraphQL<Response>(
+            (await this.hasForkField()) ? queryWithFork : queryWithoutFork,
+            { name }
+        )
+
+        // Assume repo is not a fork/archived for older instances
+        return { isFork: false, isArchived: false, ...data.repository }
     }
 
     /**
-     * Determines via introspection if the GraphQL API has iSFork field on the Repository type.
+     * Determines via introspection if the GraphQL API has isFork field on the Repository type.
      *
      * TODO(efritz) - Remove this when we no longer need to support pre-3.15 instances.
      */
     private async hasForkField(): Promise<boolean> {
         const introspectionQuery = gql`
-            query RepositoryIntrospection() {
+            query RepositoryIntrospection {
                 __type(name: "Repository") {
                     fields {
                         name
@@ -147,8 +158,6 @@ export class API {
      * @param searchQuery The input to the search function.
      */
     public async findReposViaSearch(searchQuery: string): Promise<string[]> {
-        // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
-        // dashboards to distinguish searches that originated from code intelligence.
         const query = gql`
             query CodeIntelSearch($query: String!) {
                 search(query: $query) {
@@ -349,60 +358,6 @@ export class API {
     ): Promise<SearchResult[]> {
         const context = sourcegraph.workspace.versionContext
 
-        // Note: the query name "CodeIntelSearch" is used by Sourcegraph's Grafana
-        // dashboards to distinguish searches that originated from code intelligence.
-        const query = gql`
-            query CodeIntelSearch($query: String!${
-                context ? ', $versionContext: String' : ''
-            }) {
-                search(query: $query${
-                    context ? ', versionContext: $versionContext' : ''
-                }) {
-                    results {
-                        __typename
-                            results {
-                                ... on FileMatch {
-                                    __typename
-                                    file {
-                                        path
-                                        commit {
-                                            oid
-                                        }
-                                    }
-                                    repository {
-                                        name
-                                    }
-                                    symbols {
-                                        name
-                                        ${fileLocal ? 'fileLocal' : ''}
-                                        kind
-                                        location {
-                                            resource {
-                                                path
-                                            }
-                                            range {
-                                                start {
-                                                    line
-                                                    character
-                                                }
-                                                end {
-                                                    line
-                                                    character
-                                                }
-                                            }
-                                        }
-                                    }
-                                    lineMatches {
-                                        lineNumber
-                                        offsetAndLengths
-                                    }
-                            }
-                        }
-                    }
-                }
-            }
-        `
-
         interface Response {
             search: {
                 results: {
@@ -412,10 +367,124 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(query, {
-            query: searchQuery,
-            versionContext: context,
-        })
+        const data = await queryGraphQL<Response>(
+            buildSearchQuery(!!context, fileLocal),
+            {
+                query: searchQuery,
+                versionContext: context,
+            }
+        )
         return data.search.results.results.filter(isDefined)
     }
+}
+
+function buildSearchQuery(context: boolean, fileLocal: boolean): string {
+    const searchResultsFragment = gql`
+        fragment SearchResults on Search {
+            results {
+                __typename
+                results {
+                    ... on FileMatch {
+                        __typename
+                        file {
+                            path
+                            commit {
+                                oid
+                            }
+                        }
+                        repository {
+                            name
+                        }
+                        symbols {
+                            name
+                            kind
+                            location {
+                                resource {
+                                    path
+                                }
+                                range {
+                                    start {
+                                        line
+                                        character
+                                    }
+                                    end {
+                                        line
+                                        character
+                                    }
+                                }
+                            }
+                        }
+                        lineMatches {
+                            lineNumber
+                            offsetAndLengths
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    const fileLocalFragment = gql`
+        fragment FileLocal on Search {
+            results {
+                __typename
+                results {
+                    ... on FileMatch {
+                        symbols {
+                            fileLocal
+                        }
+                    }
+                }
+            }
+        }
+    `
+
+    if (fileLocal) {
+        if (context) {
+            return gql`
+                ${searchResultsFragment}
+                ${fileLocalFragment}
+                query CodeIntelSearch(
+                    $query: String!
+                    $versionContext: String
+                ) {
+                    search(query: $query, versionContext: $versionContext) {
+                        ...SearchResults
+                        ...FileLocal
+                    }
+                }
+            `
+        }
+
+        return gql`
+            ${searchResultsFragment}
+            ${fileLocalFragment}
+            query CodeIntelSearch($query: String!) {
+                search(query: $query) {
+                    ...SearchResults
+                    ...FileLocal
+                }
+            }
+        `
+    }
+
+    if (context) {
+        return gql`
+            ${searchResultsFragment}
+            query CodeIntelSearch($query: String!, $versionContext: String) {
+                search(query: $query, versionContext: $versionContext) {
+                    ...SearchResults
+                }
+            }
+        `
+    }
+
+    return gql`
+        ${searchResultsFragment}
+        query CodeIntelSearch($query: String!) {
+            search(query: $query) {
+                ...SearchResults
+            }
+        }
+    `
 }
