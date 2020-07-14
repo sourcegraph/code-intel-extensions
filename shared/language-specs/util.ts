@@ -37,9 +37,9 @@ export function extractFromLines(fileContent: string, ...patterns: RegExp[]): st
 export function filterResultsByImports<T extends Result>(
     results: T[],
     importPaths: string[],
-    fn: (result: T, importPath: string) => boolean
+    func: (result: T, importPath: string) => boolean
 ): T[] {
-    return filterResults(results, result => importPaths.some(importPath => fn(result, importPath)))
+    return filterResults(results, result => importPaths.some(importPath => func(result, importPath)))
 }
 
 /**
@@ -49,8 +49,8 @@ export function filterResultsByImports<T extends Result>(
  * @param results A list of results to filter.
  * @param fn The filter function.
  */
-export function filterResults<T extends Result>(results: T[], fn: (result: T) => boolean): T[] {
-    const filteredResults = results.filter(result => fn(result))
+export function filterResults<T extends Result>(results: T[], func: (result: T) => boolean): T[] {
+    const filteredResults = results.filter(result => func(result))
 
     // If we filtered out all results, fall back to whatever fuzzy
     // results we had in the first place. It's better than nothing.
@@ -58,13 +58,13 @@ export function filterResults<T extends Result>(results: T[], fn: (result: T) =>
 }
 
 export function removeExtension(filePath: string): string {
-    return filePath.replace(/\.[^/.]+$/, '')
+    return filePath.replace(/\.[^./]+$/, '')
 }
 
-export function slashToDot(s: string): string {
-    return s.replace(/\//g, '.')
+export function slashToDot(value: string): string {
+    return value.replace(/\//g, '.')
 }
 
-export function dotToSlash(s: string): string {
-    return s.replace(/\./g, '/')
+export function dotToSlash(value: string): string {
+    return value.replace(/\./g, '/')
 }

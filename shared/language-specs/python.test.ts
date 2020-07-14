@@ -25,8 +25,7 @@ describe('pythonSpec', () => {
         ]
 
         const filtered =
-            pythonSpec.filterDefinitions &&
-            pythonSpec.filterDefinitions(results, {
+            pythonSpec.filterDefinitions?.(results, {
                 ...nilFilterContext,
                 filePath: 'a/b/c/foo.py',
                 fileContent,

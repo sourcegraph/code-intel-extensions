@@ -78,13 +78,13 @@ export async function findPackageName(
             const url = new URL('package.json', current.href)
             const { name } = await fetcher(url, headers)
             return name
-        } catch (err) {
-            if (err && err.code === 404) {
+        } catch (error) {
+            if (error && error.code === 404) {
                 current.pathname = new URL('..', current.href).pathname
                 continue
             }
 
-            throw err
+            throw error
         }
     }
 

@@ -124,7 +124,7 @@ export class API {
      * @param repoName The repository's name.
      * @param rev The revision.
      */
-    public async resolveRev(repoName: string, rev: string): Promise<string | undefined> {
+    public async resolveRev(repoName: string, revision: string): Promise<string | undefined> {
         const query = gql`
             query ResolveRev($repoName: String!, $rev: String!) {
                 repository(name: $repoName) {
@@ -143,7 +143,7 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(query, { repoName, rev })
+        const data = await queryGraphQL<Response>(query, { repoName, rev: revision })
         return data.repository.commit?.oid
     }
 
@@ -182,7 +182,7 @@ export class API {
         }
 
         const data = await queryGraphQL<Response>(query, { query: searchQuery })
-        return sortUnique(data.search.results.results.map(r => r.repository?.name)).filter(isDefined)
+        return sortUnique(data.search.results.results.map(result => result.repository?.name)).filter(isDefined)
     }
 
     /**
@@ -216,7 +216,7 @@ export class API {
         }
 
         const data = await queryGraphQL<Response>(query)
-        return data.extensionRegistry.extensions.nodes.map(e => e.manifest?.raw).filter(isDefined)
+        return data.extensionRegistry.extensions.nodes.map(extension => extension.manifest?.raw).filter(isDefined)
     }
 
     /**
@@ -302,7 +302,7 @@ export class API {
      * @param rev The revision in which the target version of the file exists.
      * @param path The path of the file.
      */
-    public async getFileContent(repo: string, rev: string, path: string): Promise<string | undefined> {
+    public async getFileContent(repo: string, revision: string, path: string): Promise<string | undefined> {
         const query = gql`
             query FileContent($repo: String!, $rev: String!, $path: String!) {
                 repository(name: $repo) {
@@ -323,7 +323,7 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(query, { repo, rev, path })
+        const data = await queryGraphQL<Response>(query, { repo, rev: revision, path })
         return data.repository.commit?.file?.content
     }
 

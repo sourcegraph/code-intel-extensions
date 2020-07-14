@@ -87,7 +87,7 @@ export function createExternalReferencesProvider(
         yield* concat(
             flatMapConcurrent(dependents, EXTERNAL_REFS_CONCURRENCY, repoName =>
                 // Call references for the target symbol in each dependent workspace
-                findExternalRefsInDependent(api, client, sourcegraphServerURL, accessToken, repoName, definition)
+                findExternalReferencesInDependent(api, client, sourcegraphServerURL, accessToken, repoName, definition)
             )
         )
     }
@@ -102,7 +102,7 @@ async function getDefinition(
 ): Promise<lsp.Location[]> {
     const workspaceRoot = removeHash(new URL(textDocument.uri))
 
-    const params = {
+    const parameters = {
         textDocument: {
             uri: gitToRawApiUri(sourcegraphServerURL, accessToken, new URL(textDocument.uri)).href,
         },
@@ -111,13 +111,13 @@ async function getDefinition(
 
     const result: DefinitionResult = await client.withConnection(
         workspaceRoot,
-        async connection => (await connection.sendRequest(lsp.DefinitionRequest.type, params)) || []
+        async connection => (await connection.sendRequest(lsp.DefinitionRequest.type, parameters)) || []
     )
 
     return asArray(result).map(toLocation)
 }
 
-async function findExternalRefsInDependent(
+async function findExternalReferencesInDependent(
     api: API,
     client: LSPClient,
     sourcegraphServerURL: URL,
@@ -136,7 +136,7 @@ async function findExternalRefsInDependent(
 
     const workspaceRoot = rawApiToGitUri(rootUri)
 
-    const params = {
+    const parameters = {
         textDocument: { uri: definition.uri },
         position: definition.range.start,
         context: { includeDeclaration: false },
@@ -144,7 +144,7 @@ async function findExternalRefsInDependent(
 
     const results = await client.withConnection(
         workspaceRoot,
-        async connection => (await connection.sendRequest(lsp.ReferencesRequest.type, params)) || []
+        async connection => (await connection.sendRequest(lsp.ReferencesRequest.type, parameters)) || []
     )
 
     return (

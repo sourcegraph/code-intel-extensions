@@ -46,8 +46,8 @@ export const observableFromAsyncIterator = <T>(factory: () => AsyncIterator<T>):
                         return
                     }
                 },
-                err => {
-                    observer.error(err)
+                error => {
+                    observer.error(error)
                 }
             )
         }
@@ -91,11 +91,11 @@ export async function* concat<T>(source: AsyncIterable<T[] | null>): AsyncIterab
 export function flatMapConcurrent<T, R>(
     source: T[],
     concurrency: number,
-    fn: (value: T) => Promise<R>
+    func: (value: T) => Promise<R>
 ): AsyncIterableX<R> {
     return new MergeAsyncIterable(
         new Array<AsyncIterable<R>>(concurrency).fill(
-            from(of(...source).pipe(share(), flatMap(asyncGeneratorFromPromise(fn))))
+            from(of(...source).pipe(share(), flatMap(asyncGeneratorFromPromise(func))))
         )
     )
 }
@@ -107,9 +107,9 @@ export function flatMapConcurrent<T, R>(
  * @param fn The promise function.
  */
 export function asyncGeneratorFromPromise<P extends unknown[], R>(
-    fn: (...args: P) => Promise<R>
+    func: (...args: P) => Promise<R>
 ): (...args: P) => AsyncGenerator<R, void, unknown> {
     return async function* (...args: P): AsyncGenerator<R, void, unknown> {
-        yield await fn(...args)
+        yield await func(...args)
     }
 }

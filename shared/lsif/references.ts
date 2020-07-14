@@ -69,7 +69,7 @@ const referencesQuery = gql`
 /** Retrieve references for the current hover position. */
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function* referencesForPosition(
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
 ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
@@ -82,7 +82,7 @@ export async function* referencesForPosition(
         }
 
         // Make the request for the page starting at the after cursor
-        const { locations, endCursor } = await referencePageForPosition(doc, position, after, queryGraphQL)
+        const { locations, endCursor } = await referencePageForPosition(textDocument, position, after, queryGraphQL)
 
         // Yield this page's set of results
         yield locations
@@ -98,17 +98,17 @@ export async function* referencesForPosition(
 
 /** Retrieve a single page of references for the current hover position. */
 export async function referencePageForPosition(
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     after: string | undefined,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
 ): Promise<{ locations: sourcegraph.Location[] | null; endCursor?: string }> {
     return referenceResponseToLocations(
-        doc,
+        textDocument,
         await queryLSIF(
             {
                 query: referencesQuery,
-                uri: doc.uri,
+                uri: textDocument.uri,
                 after,
                 line: position.line,
                 character: position.character,
@@ -125,15 +125,15 @@ export async function referencePageForPosition(
  * @param lsifObj The resolved LSIF object.
  */
 export function referenceResponseToLocations(
-    doc: sourcegraph.TextDocument,
-    lsifObj: ReferencesResponse | null
+    textDocument: sourcegraph.TextDocument,
+    lsifObject: ReferencesResponse | null
 ): { locations: sourcegraph.Location[] | null; endCursor?: string } {
-    if (!lsifObj) {
+    if (!lsifObject) {
         return { locations: null }
     }
 
     return {
-        locations: lsifObj.references.nodes.map(node => nodeToLocation(doc, node)),
-        endCursor: lsifObj.references.pageInfo.endCursor,
+        locations: lsifObject.references.nodes.map(node => nodeToLocation(textDocument, node)),
+        endCursor: lsifObject.references.pageInfo.endCursor,
     }
 }

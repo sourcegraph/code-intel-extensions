@@ -22,8 +22,7 @@ describe('cppSpec', () => {
         ]
 
         const filtered =
-            cppSpec.filterDefinitions &&
-            cppSpec.filterDefinitions(results, {
+            cppSpec.filterDefinitions?.(results, {
                 ...nilFilterContext,
                 fileContent,
             })

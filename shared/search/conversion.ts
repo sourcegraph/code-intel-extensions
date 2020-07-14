@@ -35,9 +35,9 @@ export interface Result {
  * @param searchResult The search result.
  */
 export function searchResultToResults({ ...result }: SearchResult): Result[] {
-    const symbolResults = result.symbols ? result.symbols.map(s => searchResultSymbolToResults(result, s)) : []
+    const symbolResults = result.symbols ? result.symbols.map(symbol => searchResultSymbolToResults(result, symbol)) : []
 
-    const lineMatchResults = result.lineMatches ? result.lineMatches.flatMap(m => lineMatchesToResults(result, m)) : []
+    const lineMatchResults = result.lineMatches ? result.lineMatches.flatMap(matches => lineMatchesToResults(result, matches)) : []
 
     return symbolResults.filter(isDefined).concat(lineMatchResults)
 }
@@ -52,7 +52,7 @@ function searchResultSymbolToResults(
     {
         repository: { name: repo },
         file: {
-            commit: { oid: rev },
+            commit: { oid: revision },
         },
     }: SearchResult,
     {
@@ -67,7 +67,7 @@ function searchResultSymbolToResults(
     return (
         range && {
             repo,
-            rev,
+            rev: revision,
             file,
             range,
             symbolKind,
@@ -87,14 +87,14 @@ function lineMatchesToResults(
         repository: { name: repo },
         file: {
             path: file,
-            commit: { oid: rev },
+            commit: { oid: revision },
         },
     }: SearchResult,
     { lineNumber, offsetAndLengths }: LineMatch
 ): Result[] {
     return offsetAndLengths.map(([offset, length]) => ({
         repo,
-        rev,
+        rev: revision,
         file,
         range: new sourcegraph.Range(lineNumber, offset, lineNumber, offset + length),
     }))

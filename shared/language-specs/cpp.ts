@@ -20,13 +20,13 @@ function filterDefinitions<T extends Result>(results: T[], { fileContent }: Filt
 
     // Capture Objective-C import statements. In plain C and C++ files, this
     // should not capture anything.
-    const objCImports = extractFromLines(fileContent, /^@import (.+);$/)
+    const objectCImports = extractFromLines(fileContent, /^@import (.+);$/)
 
     // Rewrite `@import x.y.z;` as x/y/z to make the paths uniform with the
     // C and C++ paths captured above.
-    const objCImportPaths = objCImports.map(dotToSlash)
+    const objectCImportPaths = objectCImports.map(dotToSlash)
 
-    return filterResultsByImports(results, importPaths.concat(objCImportPaths), ({ file }, importPath) =>
+    return filterResultsByImports(results, importPaths.concat(objectCImportPaths), ({ file }, importPath) =>
         // Match results with a basename suffix of an import path
         removeExtension(file).endsWith(removeExtension(importPath))
     )

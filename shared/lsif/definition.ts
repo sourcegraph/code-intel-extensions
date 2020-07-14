@@ -48,16 +48,16 @@ const definitionsQuery = gql`
 
 /** Retrieve a definition for the current hover position. */
 export async function definitionForPosition(
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>> = sgQueryGraphQL
 ): Promise<sourcegraph.Definition> {
     return definitionResponseToLocations(
-        doc,
+        textDocument,
         await queryLSIF(
             {
                 query: definitionsQuery,
-                uri: doc.uri,
+                uri: textDocument.uri,
                 line: position.line,
                 character: position.character,
             },
@@ -72,8 +72,8 @@ export async function definitionForPosition(
  * @param lsifObj The resolved LSIF object.
  */
 export function definitionResponseToLocations(
-    doc: sourcegraph.TextDocument,
-    lsifObj: DefinitionResponse | null
+    textDocument: sourcegraph.TextDocument,
+    lsifObject: DefinitionResponse | null
 ): sourcegraph.Location[] | null {
-    return lsifObj?.definitions.nodes.map(node => nodeToLocation(doc, node)) || null
+    return lsifObject?.definitions.nodes.map(node => nodeToLocation(textDocument, node)) || null
 }

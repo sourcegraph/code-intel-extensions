@@ -22,7 +22,7 @@ function filterDefinitions<T extends Result>(results: T[], { repo, filePath, fil
             // Match results from the same package
             resultImportPath === importPath(repo, filePath) ||
             // Match results that are imported explicitly
-            importPaths.some(i => resultImportPath.includes(i))
+            importPaths.some(index => resultImportPath.includes(index))
         )
     })
 }

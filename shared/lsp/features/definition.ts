@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
-import { convertLocations, convertProviderParams, rewriteUris } from '../conversion'
+import { convertLocations, convertProviderParameters, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 
 export interface DefinitionFeatureOptions {}
@@ -26,7 +26,7 @@ export const definitionFeature: Feature<
         ): AsyncGenerator<sourcegraph.Definition, void, undefined> {
             const result = await connection.sendRequest(
                 lsp.DefinitionRequest.type,
-                convertProviderParams(textDocument, position, clientToServerURI)
+                convertProviderParameters(textDocument, position, clientToServerURI)
             )
             rewriteUris(result, serverToClientURI)
             yield convertLocations(result)

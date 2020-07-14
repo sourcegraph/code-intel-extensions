@@ -3,7 +3,7 @@
  * C-like languages (C/C++, C#, Java, etc.) but not for languages that allow
  * punctuation characters (e.g. Ruby).
  */
-const DEFAULT_IDENT_CHAR_PATTERN = /[A-Za-z0-9_]/
+const DEFAULT_IDENT_CHAR_PATTERN = /\w/
 
 /**
  * Extract the token that occurs on the given line at the given position. This will
@@ -34,9 +34,9 @@ export function findSearchToken({
     // then we default to the end of the line.
 
     let end = line.length
-    for (let c = position.character; c < line.length; c++) {
-        if (!identCharPattern.test(line[c])) {
-            end = c
+    for (let index = position.character; index < line.length;index++) {
+        if (!identCharPattern.test(line[index])) {
+            end = index
             break
         }
     }
@@ -46,9 +46,9 @@ export function findSearchToken({
     // then we default to the start of the line.
 
     let start = 0
-    for (let c = position.character; c >= 0; c--) {
-        if (!identCharPattern.test(line[c])) {
-            start = c + 1
+    for (let index = position.character; index >= 0; index--) {
+        if (!identCharPattern.test(line[index])) {
+            start = index + 1
             break
         }
     }
@@ -57,7 +57,7 @@ export function findSearchToken({
         return undefined
     }
 
-    const searchToken = line.substring(start, end)
+    const searchToken = line.slice(start, end)
 
     // Determine if the token occurs after a comment on the same line
     const insideComment = lineRegexes.some(lineRegex => {

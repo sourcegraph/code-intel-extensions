@@ -95,7 +95,7 @@ export async function register({
             if (!sourcegraph.workspace.roots.some(root => serverTextDocumentUri.href.startsWith(root.uri.toString()))) {
                 continue
             }
-            const didOpenParams: lsp.DidOpenTextDocumentParams = {
+            const didOpenParameters: lsp.DidOpenTextDocumentParams = {
                 textDocument: {
                     uri: serverTextDocumentUri.href,
                     languageId: textDocument.languageId,
@@ -103,7 +103,7 @@ export async function register({
                     version: 1,
                 },
             }
-            connection.sendNotification(lsp.DidOpenTextDocumentNotification.type, didOpenParams)
+            connection.sendNotification(lsp.DidOpenTextDocumentNotification.type, didOpenParameters)
         }
     }
 
@@ -180,10 +180,10 @@ export async function register({
         })
 
         subscriptions.add(
-            connection.observeNotification(lsp.PublishDiagnosticsNotification.type).subscribe(params => {
-                const uri = new URL(params.uri)
+            connection.observeNotification(lsp.PublishDiagnosticsNotification.type).subscribe(parameters => {
+                const uri = new URL(parameters.uri)
                 const sourcegraphTextDocumentUri = serverToClientURI(uri)
-                diagnosticsByUri.set(sourcegraphTextDocumentUri.href, params.diagnostics)
+                diagnosticsByUri.set(sourcegraphTextDocumentUri.href, parameters.diagnostics)
                 for (const appWindow of sourcegraph.app.windows) {
                     for (const viewComponent of appWindow.visibleViewComponents) {
                         if (viewComponent.type !== 'CodeEditor') {
@@ -193,7 +193,7 @@ export async function register({
                         if (viewComponent.document.uri === sourcegraphTextDocumentUri.href) {
                             viewComponent.setDecorations(
                                 decorationType,
-                                params.diagnostics.map(d => convertDiagnosticToDecoration(d))
+                                parameters.diagnostics.map(diagnostic => convertDiagnosticToDecoration(diagnostic))
                             )
                         }
                     }
@@ -212,7 +212,7 @@ export async function register({
                         const diagnostics = diagnosticsByUri.get(viewComponent.document.uri) ?? []
                         viewComponent.setDecorations(
                             decorationType,
-                            diagnostics.map(d => convertDiagnosticToDecoration(d))
+                            diagnostics.map(diagnostic => convertDiagnosticToDecoration(diagnostic))
                         )
                     }
                 }
@@ -255,8 +255,8 @@ export async function register({
                             reporter.complete()
                             progressReporters.delete(id)
                         }
-                    } catch (err) {
-                        logger.error('Error handling progress notification', err)
+                    } catch (error) {
+                        logger.error('Error handling progress notification', error)
                     }
                 })
         )
@@ -292,8 +292,8 @@ export async function register({
             )
 
             // Listen for dynamic capabilities
-            connection.setRequestHandler(lsp.RegistrationRequest.type, params => {
-                registerCapabilities(connection, clientRootUri, params.registrations)
+            connection.setRequestHandler(lsp.RegistrationRequest.type, parameters => {
+                registerCapabilities(connection, clientRootUri, parameters.registrations)
             })
             // Register static capabilities
             registerCapabilities(connection, clientRootUri, staticRegistrations)
@@ -307,11 +307,11 @@ export async function register({
 
     const withConnection = async <R>(
         workspaceFolder: URL,
-        fn: (connection: LSPConnection) => Promise<R>
+        func: (connection: LSPConnection) => Promise<R>
     ): Promise<R> => {
         let connection = await connectionsByRootUri.get(workspaceFolder.href)
         if (connection) {
-            return fn(connection)
+            return func(connection)
         }
         const serverRootUri = clientToServerURI(workspaceFolder)
         connection = await connect({
@@ -327,7 +327,7 @@ export async function register({
         })
         subscriptions.add(connection)
         try {
-            return await fn(connection)
+            return await func(connection)
         } finally {
             connection.unsubscribe()
         }
@@ -360,10 +360,10 @@ export async function register({
                 )
 
                 return connection
-            } catch (err) {
-                logger.error('Error creating connection', err)
+            } catch (error) {
+                logger.error('Error creating connection', error)
                 connectionsByRootUri.delete(root.uri.toString())
-                throw err
+                throw error
             }
         })()
         connectionsByRootUri.set(root.uri.toString(), connectionPromise)
@@ -396,8 +396,8 @@ export async function register({
                                     connectionsByRootUri.delete(root.uri.toString())
                                     connection.unsubscribe()
                                 }
-                            } catch (err) {
-                                logger.error('Error disposing connection', err)
+                            } catch (error) {
+                                logger.error('Error disposing connection', error)
                             }
                         })
                     )

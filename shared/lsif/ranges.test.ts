@@ -8,7 +8,7 @@ import {
     RangesResponse,
     findOverlappingCodeIntelligenceRange,
 } from './ranges'
-import { range1, makeEnvelope, range2, range3, doc, makeResource, pos } from './util.test'
+import { range1, makeEnvelope, range2, range3, document, makeResource, position } from './util.test'
 import { QueryGraphQLFn } from '../util/graphql'
 import { GenericLSIFResponse } from './api'
 
@@ -24,7 +24,7 @@ describe('findOverlappingWindows', () => {
             { startLine: 7, endLine: 9, ranges: Promise.resolve([aggregate3]) },
         ]
 
-        assert.deepEqual(await findOverlappingWindows(doc, pos, windows), [aggregate2])
+        assert.deepEqual(await findOverlappingWindows(document, position, windows), [aggregate2])
     })
 
     it('creates new window and inserts it correctly', async () => {
@@ -38,7 +38,7 @@ describe('findOverlappingWindows', () => {
             { startLine: 7, endLine: 9, ranges: Promise.resolve([aggregate3]) },
         ]
 
-        assert.deepEqual(await findOverlappingWindows(doc, pos, windows, queryGraphQLFn), [aggregate2])
+        assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn), [aggregate2])
         assert.equal(windows.length, 3)
         assert.equal(windows[1].startLine, 4)
         assert.equal(windows[1].endLine, 6)
@@ -74,8 +74,8 @@ describe('findOverlappingCodeIntelligenceRange', () => {
 
         const overlappingPositions = [new sourcegraph.Position(10, 5), new sourcegraph.Position(10, 6)]
 
-        for (const pos of overlappingPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(pos, [range]), range)
+        for (const position of overlappingPositions) {
+            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), range)
         }
 
         const disjointPositions = [
@@ -86,8 +86,8 @@ describe('findOverlappingCodeIntelligenceRange', () => {
             new sourcegraph.Position(11, 1), // after end line
         ]
 
-        for (const pos of disjointPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(pos, [range]), null)
+        for (const position of disjointPositions) {
+            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), null)
         }
     })
 
@@ -102,8 +102,8 @@ describe('findOverlappingCodeIntelligenceRange', () => {
             new sourcegraph.Position(12, 6), // end line (inside range)
         ]
 
-        for (const pos of overlappingPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(pos, [range]), range)
+        for (const position of overlappingPositions) {
+            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), range)
         }
 
         const disjointPositions = [
@@ -113,8 +113,8 @@ describe('findOverlappingCodeIntelligenceRange', () => {
             new sourcegraph.Position(13, 1), // after end line
         ]
 
-        for (const pos of disjointPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(pos, [range]), null)
+        for (const position of disjointPositions) {
+            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), null)
         }
     })
 
@@ -126,8 +126,8 @@ describe('findOverlappingCodeIntelligenceRange', () => {
             { range: new sourcegraph.Range(3, 4, 3, 6) },
         ]
 
-        const pos = new sourcegraph.Position(3, 5)
-        assert.equal(findOverlappingCodeIntelligenceRange(pos, ranges), ranges[3])
+        const position = new sourcegraph.Position(3, 5)
+        assert.equal(findOverlappingCodeIntelligenceRange(position, ranges), ranges[3])
     })
 })
 
@@ -167,7 +167,7 @@ describe('rangesInRangeWindow', () => {
             })
         )
 
-        assert.deepEqual(await rangesInRangeWindow(doc, 10, 20, queryGraphQLFn), [
+        assert.deepEqual(await rangesInRangeWindow(document, 10, 20, queryGraphQLFn), [
             {
                 range: range1,
                 definitions: [new sourcegraph.Location(new URL('git://repo?rev#/bar.ts'), range2)],
@@ -187,6 +187,6 @@ describe('rangesInRangeWindow', () => {
             makeEnvelope()
         )
 
-        assert.deepStrictEqual(await rangesInRangeWindow(doc, 10, 20, queryGraphQLFn), null)
+        assert.deepStrictEqual(await rangesInRangeWindow(document, 10, 20, queryGraphQLFn), null)
     })
 })

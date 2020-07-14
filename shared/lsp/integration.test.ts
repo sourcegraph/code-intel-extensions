@@ -23,11 +23,11 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
         return {
             sendNotification: sinon.spy(),
             // eslint-disable-next-line @typescript-eslint/require-await
-            sendRequest: sinon.spy(async ({ method }, params) => {
+            sendRequest: sinon.spy(async ({ method }:{method:string}, parameters) => {
                 if (method in server) {
-                    return (server as any)[method](params)
+                    return (server as any)[method](parameters)
                 }
-                throw new Error('Unhandled method ' + method)
+                throw new Error(`Unhandled method ${method}`)
             }),
             observeNotification: () => new Observable<never>(),
             setRequestHandler: sinon.spy(),
@@ -49,7 +49,7 @@ describe('register()', () => {
         sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
         const server = {
             initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
+                (parameters: lsp.InitializeParams): lsp.InitializeResult => ({
                     capabilities: {},
                 })
             ),
@@ -84,7 +84,7 @@ describe('register()', () => {
         sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
         const server = {
             initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
+                (parameters: lsp.InitializeParams): lsp.InitializeResult => ({
                     capabilities: {},
                 })
             ),
@@ -107,13 +107,13 @@ describe('register()', () => {
         const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
         const server = {
             initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
+                (parameters: lsp.InitializeParams): lsp.InitializeResult => ({
                     capabilities: {
                         referencesProvider: true,
                     },
                 })
             ),
-            'textDocument/references': sinon.spy((params: lsp.ReferenceParams): lsp.Location[] => [
+            'textDocument/references': sinon.spy((parameters: lsp.ReferenceParams): lsp.Location[] => [
                 {
                     uri: new URL('bar.ts', repoRoot).href,
                     range: {
@@ -191,14 +191,14 @@ describe('register()', () => {
         const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
         const server = {
             initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
+                (parameters: lsp.InitializeParams): lsp.InitializeResult => ({
                     capabilities: {
                         definitionProvider: true,
                     },
                 })
             ),
             'textDocument/definition': sinon.spy(
-                (params: lsp.TextDocumentPositionParams): lsp.Definition => ({
+                (parameters: lsp.TextDocumentPositionParams): lsp.Definition => ({
                     uri: new URL('bar.ts', repoRoot).href,
                     range: {
                         start: { line: 1, character: 2 },
@@ -269,7 +269,7 @@ describe('register()', () => {
         const server = {
             initialize: sinon.spy(
                 async (
-                    params: lsp.InitializeParams
+                    parameters: lsp.InitializeParams
                     // eslint-disable-next-line @typescript-eslint/require-await
                 ): Promise<lsp.InitializeResult> => ({
                     capabilities: {
@@ -279,7 +279,7 @@ describe('register()', () => {
             ),
             'textDocument/hover': sinon.spy(
                 async (
-                    params: lsp.TextDocumentPositionParams
+                    parameters: lsp.TextDocumentPositionParams
                     // eslint-disable-next-line @typescript-eslint/require-await
                 ): Promise<lsp.Hover> => ({
                     contents: {
@@ -293,7 +293,7 @@ describe('register()', () => {
 
         stubAPI.workspace.textDocuments = [
             createStubTextDocument({
-                uri: repoRoot + '#foo.ts',
+                uri: `${repoRoot.toString()}#foo.ts`,
                 languageId: 'typescript',
                 text: 'console.log("Hello world")',
             }),
@@ -354,13 +354,13 @@ describe('register()', () => {
         const repoRoot = new URL('https://sourcegraph.test/repo@rev/-/raw/')
         const server = {
             initialize: sinon.spy(
-                (params: lsp.InitializeParams): lsp.InitializeResult => ({
+                (parameters: lsp.InitializeParams): lsp.InitializeResult => ({
                     capabilities: {
                         implementationProvider: true,
                     },
                 })
             ),
-            'textDocument/implementation': sinon.spy((params: lsp.TextDocumentPositionParams): lsp.Location[] => [
+            'textDocument/implementation': sinon.spy((parameters: lsp.TextDocumentPositionParams): lsp.Location[] => [
                 {
                     uri: new URL('bar.ts', repoRoot).href,
                     range: {
@@ -435,10 +435,10 @@ describe('register()', () => {
 
 async function consume<T>(result: sourcegraph.ProviderResult<T>): Promise<T | null | undefined> {
     const observable = (await result) as sourcegraph.Subscribable<T | null | undefined>
-    return new Promise(r => {
-        const sub = observable.subscribe(v => {
-            r(v)
-            sub.unsubscribe()
+    return new Promise(resolve => {
+        const subscription = observable.subscribe(value => {
+            resolve(value)
+            subscription.unsubscribe()
         })
     })
 }

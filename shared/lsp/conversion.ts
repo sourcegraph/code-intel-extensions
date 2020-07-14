@@ -69,7 +69,7 @@ export function convertRange(range: lsp.Range): sourcegraph.Range {
  * @param position The current hover position.
  * @param clientToServerURI A function that converts a URI to one reachable from the language server.
  */
-export function convertProviderParams(
+export function convertProviderParameters(
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     clientToServerURI: (u: URL) => URL
@@ -110,7 +110,7 @@ export function convertHover(hover: lsp.Hover | null): sourcegraph.Hover | null 
                     }
                     return '```' + content.language + '\n' + content.value + '\n```'
                 })
-                .filter(str => !!str.trim())
+                .filter(string => !!string.trim())
                 .join('\n\n---\n\n'),
         },
     }
@@ -154,25 +154,25 @@ export function toLSPWorkspaceFolder(
  * @param obj The object to mutate.
  * @param transform The transform function to apply to URLs.
  */
-export function rewriteUris(obj: any, transform: (uri: URL) => URL): void {
+export function rewriteUris(object: any, transform: (uri: URL) => URL): void {
     // Scalar
-    if (typeof obj !== 'object' || obj === null) {
+    if (typeof object !== 'object' || object === null) {
         return
     }
 
     // Arrays
-    if (Array.isArray(obj)) {
-        for (const element of obj) {
+    if (Array.isArray(object)) {
+        for (const element of object) {
             rewriteUris(element, transform)
         }
         return
     }
 
     // Object
-    if ('uri' in obj) {
-        obj.uri = transform(new URL(obj.uri)).href
+    if ('uri' in object) {
+        object.uri = transform(new URL(object.uri)).href
     }
-    for (const key of Object.keys(obj)) {
-        rewriteUris(obj[key], transform)
+    for (const key of Object.keys(object)) {
+        rewriteUris(object[key], transform)
     }
 }

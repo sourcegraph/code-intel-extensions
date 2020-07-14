@@ -35,9 +35,9 @@ export function gitToRawApiUri(sourcegraphURL: URL, accessToken: string | undefi
     if (accessToken) {
         rootUri.username = accessToken
     }
-    const rev = uri.search.length > 1 ? '@' + uri.search.substr(1) : ''
-    rootUri.pathname = `${uri.host}${uri.pathname}${rev}/-/raw/`
-    return new URL(uri.hash.substr(1), rootUri.href)
+    const revision = uri.search.length > 1 ? '@' + uri.search.slice(1) : ''
+    rootUri.pathname = `${uri.host}${uri.pathname}${revision}/-/raw/`
+    return new URL(uri.hash.slice(1), rootUri.href)
 }
 
 /**
@@ -51,10 +51,10 @@ export function rawApiToGitUri(rawApiUrl: URL): URL {
         throw new Error(`Not a Sourcegraph raw API URL: ${rawApiUrl.href}`)
     }
 
-    const [, repoName, rev, filePath] = match as [string, string, string | undefined, string]
+    const [, repoName, revision, filePath] = match as [string, string, string | undefined, string]
 
     const gitUri = new URL(`git://${repoName}`)
-    gitUri.search = rev || ''
+    gitUri.search = revision || ''
     gitUri.hash = filePath
     return gitUri
 }

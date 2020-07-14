@@ -35,8 +35,7 @@ describe('goSpec', () => {
         ]
 
         const filtered =
-            goSpec.filterDefinitions &&
-            goSpec.filterDefinitions(results, {
+            goSpec.filterDefinitions?.(results, {
                 ...nilFilterContext,
                 repo: 'github.com/foo/test',
                 filePath: 'x/y/z.go',
@@ -55,8 +54,7 @@ describe('goSpec', () => {
         ]
 
         const filtered =
-            goSpec.filterDefinitions &&
-            goSpec.filterDefinitions(results, {
+            goSpec.filterDefinitions?.(results, {
                 ...nilFilterContext,
                 repo: 'github.com/foo/test',
                 filePath: 'main.go',

@@ -2,11 +2,11 @@ import * as sourcegraph from 'sourcegraph'
 import { isDefined } from '../util/helpers'
 
 export function filterLocationsForDocumentHighlights(
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     locations: sourcegraph.Location[]
 ): sourcegraph.DocumentHighlight[] {
     return locations
-        .filter(({ uri }) => uri.toString() === doc.uri)
+        .filter(({ uri }) => uri.toString() === textDocument.uri)
         .map(({ range }) => range)
         .filter(isDefined)
         .map(range => ({ range }))

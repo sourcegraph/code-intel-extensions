@@ -55,11 +55,11 @@ describe('findPackageName', () => {
     })
 
     it('falls back to parent package.json', async () => {
-        const notFoundErr = Object.assign(new Error('not found'), { code: 404 })
+        const notFoundError = Object.assign(new Error('not found'), { code: 404 })
 
         const fetcher = sinon.stub()
-        fetcher.onCall(0).returns(Promise.reject(notFoundErr))
-        fetcher.onCall(1).returns(Promise.reject(notFoundErr))
+        fetcher.onCall(0).returns(Promise.reject(notFoundError))
+        fetcher.onCall(1).returns(Promise.reject(notFoundError))
         fetcher.returns(Promise.resolve({ name: 'foobar' }))
 
         const name = await findPackageName(new URL('http://package/foo/bar/baz/bonk/quux.ts'), fetcher)
@@ -78,31 +78,31 @@ describe('findPackageName', () => {
     })
 
     it('throws error on server error', async () => {
-        const serverErr = Object.assign(new Error('server error'), {
+        const serverError = Object.assign(new Error('server error'), {
             code: 500,
         })
 
         const fetcher = sinon.stub()
-        fetcher.returns(Promise.reject(serverErr))
+        fetcher.returns(Promise.reject(serverError))
 
         try {
             await findPackageName(new URL('http://package/foo/bar/baz/bonk/quux.ts'), fetcher)
             assert.fail('Expected exception')
-        } catch (err) {
-            assert.deepStrictEqual(err, serverErr)
+        } catch (error) {
+            assert.deepStrictEqual(error, serverError)
         }
     })
 
     it('throws error on failure', async () => {
-        const notFoundErr = Object.assign(new Error('not found'), { code: 404 })
+        const notFoundError = Object.assign(new Error('not found'), { code: 404 })
 
         const fetcher = sinon.stub()
-        fetcher.returns(Promise.reject(notFoundErr))
+        fetcher.returns(Promise.reject(notFoundError))
 
         try {
             await findPackageName(new URL('http://package/foo/bar/baz/bonk/quux.ts'), fetcher)
             assert.fail('Expected exception')
-        } catch (err) {
+        } catch  {
             // pass
         }
     })

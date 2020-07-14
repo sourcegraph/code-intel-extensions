@@ -32,8 +32,7 @@ describe('javaSpec', () => {
         ]
 
         const filtered =
-            javaSpec.filterDefinitions &&
-            javaSpec.filterDefinitions(results, {
+            javaSpec.filterDefinitions?.(results, {
                 ...nilFilterContext,
                 fileContent,
             })

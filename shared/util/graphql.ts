@@ -22,17 +22,17 @@ export type QueryGraphQLFn<T> = (query: string, vars?: { [name: string]: unknown
  * @param vars The query variables.
  */
 export async function queryGraphQL<T>(query: string, vars: { [name: string]: unknown } = {}): Promise<T> {
-    const resp = await sourcegraph.commands.executeCommand<GraphQLResponse<T>>('queryGraphQL', query, vars)
+    const response = await sourcegraph.commands.executeCommand<GraphQLResponse<T>>('queryGraphQL', query, vars)
 
-    if (resp.errors !== undefined) {
-        throw resp.errors.length === 1 ? resp.errors[0] : aggregateErrors(resp.errors)
+    if (response.errors !== undefined) {
+        throw response.errors.length === 1 ? response.errors[0] : aggregateErrors(response.errors)
     }
 
-    return resp.data
+    return response.data
 }
 
 function aggregateErrors(errors: Error[]): Error {
-    return Object.assign(new Error(errors.map(e => e.message).join('\n')), {
+    return Object.assign(new Error(errors.map(error => error.message).join('\n')), {
         name: 'AggregateError',
         errors,
     })

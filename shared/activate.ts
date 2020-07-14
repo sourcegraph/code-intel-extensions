@@ -85,7 +85,7 @@ const DUMMY_CTX = {
  * @param logger An optional logger instance.
  */
 export async function activateCodeIntel(
-    ctx: sourcegraph.ExtensionContext = DUMMY_CTX,
+    context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     lspFactory?: LSPFactory,
@@ -93,8 +93,8 @@ export async function activateCodeIntel(
 ): Promise<void> {
     const wrapper = createProviderWrapper(languageSpec, logger)
 
-    if (!(await tryInitLSP(ctx, wrapper, lspFactory, logger))) {
-        activateWithoutLSP(ctx, selector, wrapper)
+    if (!(await tryInitLSP(context, wrapper, lspFactory, logger))) {
+        activateWithoutLSP(context, selector, wrapper)
     }
 }
 
@@ -107,7 +107,7 @@ export async function activateCodeIntel(
  * @param logger An optional logger instance.
  */
 export async function tryInitLSP(
-    ctx: sourcegraph.ExtensionContext,
+    context: sourcegraph.ExtensionContext,
     wrapper: ProviderWrapper,
     lspFactory?: LSPFactory,
     logger: Logger = new RedactingLogger(console)
@@ -117,12 +117,12 @@ export async function tryInitLSP(
     }
 
     try {
-        if (await lspFactory(ctx, wrapper)) {
+        if (await lspFactory(context, wrapper)) {
             return true
         }
-    } catch (err) {
+    } catch (error) {
         logger.error('Failed to initialize language server client', {
-            err,
+            err: error,
         })
     }
     return false
@@ -143,8 +143,8 @@ export function initLSP<S extends { [key: string]: any }>(
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
     logger: Logger = new RedactingLogger(console)
 ): (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean> {
-    return async (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper): Promise<boolean> => {
-        const { settings, settingsSubject } = getSettings<S>(ctx)
+    return async (context: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper): Promise<boolean> => {
+        const { settings, settingsSubject } = getSettings<S>(context)
 
         const serverURL = settings[`${languageID}.serverUrl`]
         if (!serverURL) {
@@ -160,7 +160,7 @@ export function initLSP<S extends { [key: string]: any }>(
         const sgUrl = sourcegraphURL(settings[`${languageID}.sourcegraphUrl`], languageID, logger)
 
         const { client, featureOptionsSubject } = await clientFactory({
-            ctx,
+            ctx: context,
             serverURL,
             sourcegraphURL: sgUrl,
             accessToken,
@@ -177,14 +177,14 @@ export function initLSP<S extends { [key: string]: any }>(
         })
 
         registerExternalReferenceProviderToggle(
-            ctx,
+            context,
             `${languageID}.impl`,
             settingsSubject,
             `${languageID}.showExternalReferences`,
             featureOptionsSubject,
             externalReferencesProvider
         )
-        registerImplementationsPanel(ctx, `${languageID}.impl`)
+        registerImplementationsPanel(context, `${languageID}.impl`)
 
         logger.log('Language Server providers are active')
         return true
@@ -199,20 +199,20 @@ export function initLSP<S extends { [key: string]: any }>(
  * @param wrapper The provider wrapper.
  */
 function activateWithoutLSP(
-    ctx: sourcegraph.ExtensionContext,
+    context: sourcegraph.ExtensionContext,
     selector: sourcegraph.DocumentSelector,
     wrapper: ProviderWrapper
 ): void {
-    ctx.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, wrapper.definition()))
+    context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, wrapper.definition()))
 
-    ctx.subscriptions.add(sourcegraph.languages.registerReferenceProvider(selector, wrapper.references()))
+    context.subscriptions.add(sourcegraph.languages.registerReferenceProvider(selector, wrapper.references()))
 
-    ctx.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, wrapper.hover()))
+    context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, wrapper.hover()))
 
     // Do not try to register this provider on pre-3.18 instances as it
     // didn't exist.
     if (sourcegraph.languages.registerDocumentHighlightProvider) {
-        ctx.subscriptions.add(
+        context.subscriptions.add(
             sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
         )
     }
@@ -225,12 +225,12 @@ function activateWithoutLSP(
  * @param ctx The extension context.
  */
 function getSettings<S extends { [key: string]: any }>(
-    ctx: sourcegraph.ExtensionContext
+    context: sourcegraph.ExtensionContext
 ): { settings: S; settingsSubject: Observable<S> } {
     const settings = sourcegraph.configuration.get<S>().value
     const settingsSubject: BehaviorSubject<S> = new BehaviorSubject<S>(settings)
 
-    ctx.subscriptions.add(
+    context.subscriptions.add(
         sourcegraph.configuration.subscribe(() => settingsSubject.next(sourcegraph.configuration.get<S>().value))
     )
 
@@ -249,8 +249,8 @@ function sourcegraphURL(setting: string | undefined, languageID: string, logger:
 
     try {
         return new URL(url)
-    } catch (err) {
-        if (err.message?.includes('Invalid URL')) {
+    } catch (error) {
+        if (error.message?.includes('Invalid URL')) {
             logger.error(
                 new Error(
                     [
@@ -262,7 +262,7 @@ function sourcegraphURL(setting: string | undefined, languageID: string, logger:
             )
         }
 
-        throw err
+        throw error
     }
 }
 
@@ -279,20 +279,20 @@ function sourcegraphURL(setting: string | undefined, languageID: string, logger:
  * @param externalReferencesProvider The external references provider to register.
  */
 function registerExternalReferenceProviderToggle<S extends { [key: string]: any }>(
-    ctx: sourcegraph.ExtensionContext,
+    context: sourcegraph.ExtensionContext,
     implementationId: string,
     settingsSubject: Observable<S>,
     settingName: string,
     featureOptionsSubject: Subject<FeatureOptions>,
     externalReferencesProvider: ReferencesProvider
 ): void {
-    ctx.subscriptions.add(
+    context.subscriptions.add(
         from(settingsSubject)
             .pipe(
                 distinctUntilChanged(),
-                map(v => ({
+                map(settings => ({
                     implementationId,
-                    ...(v[settingName] ? { externalReferencesProvider } : {}),
+                    ...(settings[settingName] ? { externalReferencesProvider } : {}),
                 }))
             )
             .subscribe(featureOptionsSubject)
@@ -305,10 +305,10 @@ function registerExternalReferenceProviderToggle<S extends { [key: string]: any 
  * @param ctx The extension context.
  * @param implementationId The identifier of the registered locations provider.
  */
-function registerImplementationsPanel(ctx: sourcegraph.ExtensionContext, implementationId: string): void {
+function registerImplementationsPanel(context: sourcegraph.ExtensionContext, implementationId: string): void {
     const panelView = sourcegraph.app.createPanelView(implementationId)
     panelView.title = 'Implementations'
     panelView.component = { locationProvider: implementationId }
     panelView.priority = 160
-    ctx.subscriptions.add(panelView)
+    context.subscriptions.add(panelView)
 }

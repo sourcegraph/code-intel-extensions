@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { observableFromAsyncIterator } from '../../util/ix'
-import { convertLocations, convertProviderParams, rewriteUris } from '../conversion'
+import { convertLocations, convertProviderParameters, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 import { reregisterOnChange } from './util'
 
@@ -30,7 +30,7 @@ export const implementationFeature: Feature<
         ): AsyncIterator<sourcegraph.Location[] | null> {
             const result = await connection.sendRequest(
                 lsp.ImplementationRequest.type,
-                convertProviderParams(textDocument, position, clientToServerURI)
+                convertProviderParameters(textDocument, position, clientToServerURI)
             )
             rewriteUris(result, serverToClientURI)
             yield convertLocations(result)

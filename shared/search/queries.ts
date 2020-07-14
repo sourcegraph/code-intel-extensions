@@ -46,7 +46,7 @@ export function referencesQuery({
     return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(path, fileExts)]
 }
 
-const blacklist = ['thrift', 'proto', 'graphql']
+const blacklist = new Set(['thrift', 'proto', 'graphql'])
 
 /**
  * Constructs a file extension term (or an empty string) if the current file end
@@ -57,8 +57,8 @@ const blacklist = ['thrift', 'proto', 'graphql']
  * @param whitelist The file extensions for the current language.
  */
 function fileExtensionTerm(path: string, whitelist: string[]): string {
-    const ext = extname(path).substring(1)
-    if (!ext || blacklist.includes(ext) || !whitelist.includes(ext)) {
+    const extension = extname(path).slice(1)
+    if (!extension || blacklist.has(extension) || !whitelist.includes(extension)) {
         return ''
     }
 

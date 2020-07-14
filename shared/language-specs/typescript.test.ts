@@ -23,8 +23,7 @@ describe('typescriptSpec', () => {
         ]
 
         const filtered =
-            typescriptSpec.filterDefinitions &&
-            typescriptSpec.filterDefinitions(results, {
+            typescriptSpec.filterDefinitions?.(results, {
                 ...nilFilterContext,
                 filePath: 'a/b/c/foo.ts',
                 fileContent,
