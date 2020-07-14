@@ -527,9 +527,9 @@ function sortByProximity(locations: sourcegraph.Location[], currentURI: URL): so
 function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
     return (
         // Get the size of the intersection
-        new Set([...[...a]].filter(value => b.has(value))).size /
+        new Set([...a].filter(value => b.has(value))).size /
         // Get the size of the union
-        new Set([...[...a], ...[...b]]).size
+        new Set([...a, ...b]).size
     )
 }
 
