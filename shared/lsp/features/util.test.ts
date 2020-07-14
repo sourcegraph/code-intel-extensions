@@ -18,13 +18,13 @@ describe('reregisterOnChange', () => {
             },
         }))
 
-        const o = new BehaviorSubject<TestSettings>({
+        const observable = new BehaviorSubject<TestSettings>({
             foo: 'foo',
             bar: 'bar',
             baz: 'baz',
         })
 
-        reregisterOnChange(o, [], register)
+        reregisterOnChange(observable, [], register)
         sinon.assert.calledWith(register, {
             foo: 'foo',
             bar: 'bar',
@@ -39,14 +39,14 @@ describe('reregisterOnChange', () => {
             },
         }))
 
-        const o = new BehaviorSubject<TestSettings>({
+        const observable = new BehaviorSubject<TestSettings>({
             foo: 'foo1',
             bar: 'bar2',
             baz: 'baz3',
         })
 
-        reregisterOnChange(o, ['foo', 'bar', 'baz'], register)
-        o.next({ foo: 'foo4', bar: 'bar5', baz: 'baz6' })
+        reregisterOnChange(observable, ['foo', 'bar', 'baz'], register)
+        observable.next({ foo: 'foo4', bar: 'bar5', baz: 'baz6' })
 
         sinon.assert.callCount(register, 2)
         sinon.assert.calledWith(register, {
@@ -63,16 +63,16 @@ describe('reregisterOnChange', () => {
             },
         }))
 
-        const o = new BehaviorSubject<TestSettings>({
+        const observable = new BehaviorSubject<TestSettings>({
             foo: 'foo1',
             bar: 'bar2',
             baz: 'baz3',
         })
 
-        reregisterOnChange(o, ['bar'], register)
-        o.next({ foo: 'foo4', bar: 'bar2', baz: 'baz4' })
-        o.next({ foo: 'foo5', bar: 'bar3', baz: 'baz5' })
-        o.next({ foo: 'foo6', bar: 'bar3', baz: 'baz6' })
+        reregisterOnChange(observable, ['bar'], register)
+        observable.next({ foo: 'foo4', bar: 'bar2', baz: 'baz4' })
+        observable.next({ foo: 'foo5', bar: 'bar3', baz: 'baz5' })
+        observable.next({ foo: 'foo6', bar: 'bar3', baz: 'baz6' })
 
         sinon.assert.callCount(register, 2)
         sinon.assert.calledWith(register, {
@@ -98,16 +98,16 @@ describe('reregisterOnChange', () => {
         register.onCall(1).returns({ unsubscribe: unsub2 })
         register.onCall(2).returns({ unsubscribe: unsub3 })
 
-        const o = new BehaviorSubject<TestSettings>({
+        const observable = new BehaviorSubject<TestSettings>({
             foo: 'foo',
             bar: '',
             baz: '',
         })
 
-        const unsub4 = reregisterOnChange(o, ['foo'], register)
-        o.next({ foo: 'foo', bar: '', baz: '' })
-        o.next({ foo: 'bar', bar: '', baz: '' })
-        o.next({ foo: 'baz', bar: '', baz: '' })
+        const unsub4 = reregisterOnChange(observable, ['foo'], register)
+        observable.next({ foo: 'foo', bar: '', baz: '' })
+        observable.next({ foo: 'bar', bar: '', baz: '' })
+        observable.next({ foo: 'baz', bar: '', baz: '' })
 
         sinon.assert.callCount(register, 3)
         sinon.assert.calledOnce(unsub1)

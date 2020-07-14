@@ -3,7 +3,7 @@ import { rewriteUris } from './conversion'
 
 describe('rewriteUris', () => {
     it('rewrites values recursively', () => {
-        const obj = {
+        const object = {
             foo: [{ uri: 'http://test.com/1' }, { uri: 'http://test.com/2' }, { uri: 'http://test.com/3' }],
             bar: {
                 foo: { uri: 'http://test.com/4' },
@@ -14,14 +14,14 @@ describe('rewriteUris', () => {
             baz: 'bonk',
         }
 
-        rewriteUris(obj, uri => new URL(uri.href + 'x'))
+        rewriteUris(object, uri => new URL(uri.href + 'x'))
 
-        assert.equal(obj.foo[0].uri, 'http://test.com/1x')
-        assert.equal(obj.foo[1].uri, 'http://test.com/2x')
-        assert.equal(obj.foo[2].uri, 'http://test.com/3x')
-        assert.equal(obj.bar.foo.uri, 'http://test.com/4x')
-        assert.equal(obj.bar.bar.uri, 'http://test.com/5x')
-        assert.equal(obj.bar.baz.uri, 'http://test.com/6x')
-        assert.equal(obj.uri, 'http://test.com/7x')
+        assert.equal(object.foo[0].uri, 'http://test.com/1x')
+        assert.equal(object.foo[1].uri, 'http://test.com/2x')
+        assert.equal(object.foo[2].uri, 'http://test.com/3x')
+        assert.equal(object.bar.foo.uri, 'http://test.com/4x')
+        assert.equal(object.bar.bar.uri, 'http://test.com/5x')
+        assert.equal(object.bar.baz.uri, 'http://test.com/6x')
+        assert.equal(object.uri, 'http://test.com/7x')
     })
 })

@@ -51,6 +51,14 @@ export function wrapIndentationInCodeBlocks(languageID: string, docstring: strin
         .join('\n')
 }
 
+const reducer = (
+    last: LineKind | undefined,
+    line: { line: string; kind: LineKind | undefined }
+): LineKind | undefined => {
+    line.kind = line.kind || (last === 'prose' ? 'prose' : undefined)
+    return line.kind
+}
+
 /**
  * Decorate each line of text with its kind (prose or code) depending on the
  * context in which it occurs.
@@ -58,14 +66,6 @@ export function wrapIndentationInCodeBlocks(languageID: string, docstring: strin
  * @param lines An array of lines.
  */
 function categorize(lines: string[]): { line: string; kind: LineKind | undefined }[] {
-    const reducer = (
-        last: LineKind | undefined,
-        line: { line: string; kind: LineKind | undefined }
-    ): LineKind | undefined => {
-        line.kind = line.kind || (last === 'prose' ? 'prose' : undefined)
-        return line.kind
-    }
-
     // Find an initial category for lines that don't need additional context
     const categorizedLines = lines.map(line => ({ line, kind: kindOf(line) }))
 
@@ -88,17 +88,17 @@ function categorize(lines: string[]): { line: string; kind: LineKind | undefined
 /**
  * Determine the type of line:
  *
- *   - prose lines start with no-whitespace at the beginning of the line
- *   - code lines start with two spaces or a `>` followed by non-whitespace
- *   - empty lines or whitespace-only lines are of an unknown type
+ * - prose lines start with no-whitespace at the beginning of the line
+ * - code lines start with two spaces or a `>` followed by non-whitespace
+ * - empty lines or whitespace-only lines are of an unknown type
  *
  * @param line The line content.
  */
 function kindOf(line: string): LineKind | undefined {
-    if (/^[^\s]/.test(line)) {
+    if (/^\S/.test(line)) {
         return 'prose'
     }
-    if (/^( {2}|>).*[^\s]/.test(line)) {
+    if (/^( {2}|>).*\S/.test(line)) {
         return 'code'
     }
     return undefined

@@ -56,10 +56,13 @@ function definition(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Definition> {
-    return async (doc: sourcegraph.TextDocument, position: sourcegraph.Position): Promise<sourcegraph.Definition> => {
+    return async (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.Definition> => {
         const getDefinitionsFromRangeRequest = async (): Promise<sourcegraph.Definition> => {
             if (getRangeFromWindow) {
-                const range = await (await getRangeFromWindow)(doc, position)
+                const range = await (await getRangeFromWindow)(textDocument, position)
                 if (range?.definitions && range.definitions.length > 0) {
                     return range.definitions
                 }
@@ -77,9 +80,9 @@ function definition(
         // have an empty set of definitions for this position.
         return raceWithDelayOffset(
             getDefinitionsFromRangeRequest(),
-            async () => definitionForPosition(doc, position, queryGraphQL),
+            async () => definitionForPosition(textDocument, position, queryGraphQL),
             RANGE_RESOLUTION_DELAY,
-            v => v !== null && !(Array.isArray(v) && v.length === 0)
+            results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
     }
 }
@@ -93,12 +96,12 @@ function references(
     position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
     return async function* (
-        doc: sourcegraph.TextDocument,
+        textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
         const getReferencesFromRangeRequest = async (): Promise<sourcegraph.Location[] | null> => {
             if (getRangeFromWindow) {
-                const range = await (await getRangeFromWindow)(doc, position)
+                const range = await (await getRangeFromWindow)(textDocument, position)
                 if (range?.references && range.references.length > 0) {
                     return range.references
                 }
@@ -118,7 +121,7 @@ function references(
             getReferencesFromRangeRequest(),
             () => Promise.resolve(null),
             RANGE_RESOLUTION_DELAY,
-            v => v !== null && !(Array.isArray(v) && v.length === 0)
+            results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
 
         if (localReferences && localReferences.length < 0) {
@@ -127,7 +130,7 @@ function references(
         }
 
         // Replace local references with actual results
-        yield* referencesForPosition(doc, position, queryGraphQL)
+        yield* referencesForPosition(textDocument, position, queryGraphQL)
     }
 }
 
@@ -136,10 +139,13 @@ function hover(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Hover | null> {
-    return async (doc: sourcegraph.TextDocument, position: sourcegraph.Position): Promise<sourcegraph.Hover | null> => {
+    return async (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.Hover | null> => {
         const getHoverFromRangeRequest = async (): Promise<sourcegraph.Hover | null> => {
             if (getRangeFromWindow) {
-                const range = await (await getRangeFromWindow)(doc, position)
+                const range = await (await getRangeFromWindow)(textDocument, position)
                 if (range?.hover) {
                     return hoverPayloadToHover(range?.hover)
                 }
@@ -158,7 +164,7 @@ function hover(
         // hover data for this position.
         return raceWithDelayOffset(
             getHoverFromRangeRequest(),
-            async () => hoverForPosition(doc, position, queryGraphQL),
+            async () => hoverForPosition(textDocument, position, queryGraphQL),
             RANGE_RESOLUTION_DELAY
         )
     }
@@ -170,13 +176,13 @@ export function documentHighlights(
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.DocumentHighlight[] | null> {
     return async (
-        doc: sourcegraph.TextDocument,
+        textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
         if (getRangeFromWindow) {
-            const range = await (await getRangeFromWindow)(doc, position)
+            const range = await (await getRangeFromWindow)(textDocument, position)
             if (range?.references) {
-                return filterLocationsForDocumentHighlights(doc, range?.references)
+                return filterLocationsForDocumentHighlights(textDocument, range?.references)
             }
         }
 
@@ -184,8 +190,8 @@ export function documentHighlights(
         // of results. This may not result in precise highlights if the first page
         // does not contain any/all hovers for the current path. This is a best
         // effort attempt that we don't want to waste too many resources on.
-        const { locations } = await referencePageForPosition(doc, position, undefined, queryGraphQL)
+        const { locations } = await referencePageForPosition(textDocument, position, undefined, queryGraphQL)
 
-        return locations ? filterLocationsForDocumentHighlights(doc, locations) : null
+        return locations ? filterLocationsForDocumentHighlights(textDocument, locations) : null
     }
 }

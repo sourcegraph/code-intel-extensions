@@ -21,11 +21,11 @@ async function main(): Promise<void> {
 
 async function publish(languageID: string): Promise<void> {
     console.log(`Publishing ${languageID} extension`)
-    const langDir = path.join('temp', languageID)
-    await child_process.exec(`yarn --cwd ${langDir} run publish`)
+    const langDirectory = path.join('temp', languageID)
+    await child_process.exec(`yarn --cwd ${langDirectory} run publish`)
 }
 
-main().catch(err => {
-    console.error(err?.message)
+main().catch(error => {
+    console.error(error?.message)
     process.exit(1)
 })

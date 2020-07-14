@@ -6,28 +6,28 @@ import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {
     const specs = findLanguageSpecs()
-    await Promise.all(specs.map(s => generate(s)))
+    await Promise.all(specs.map(spec => generate(spec)))
 }
 
-const templateDir = path.join('extensions', 'template')
+const templateDirectory = path.join('extensions', 'template')
 
 async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     console.log(`Generating ${languageID} extension`)
 
-    const langDir = path.join('temp', languageID)
+    const langDirectory = path.join('temp', languageID)
     const iconFilename = path.join('icons', `${languageID}.png`)
-    const pkgFilename = path.join(langDir, 'package.json')
-    const readmeFilename = path.join(langDir, 'README.md')
-    const languageFilename = path.join(langDir, 'src', 'language.ts')
+    const packageFilename = path.join(langDirectory, 'package.json')
+    const readmeFilename = path.join(langDirectory, 'README.md')
+    const languageFilename = path.join(langDirectory, 'src', 'language.ts')
 
-    await ensureDir(langDir)
-    await emptyDir(langDir)
-    await copy(templateDir, langDir)
+    await ensureDir(langDirectory)
+    await emptyDir(langDirectory)
+    await copy(templateDirectory, langDirectory)
 
     // Update package.json contents
-    const packageContents = (await fs.readFile(pkgFilename)).toString()
+    const packageContents = (await fs.readFile(packageFilename)).toString()
     await fs.writeFile(
-        pkgFilename,
+        packageFilename,
         JSON.stringify(
             {
                 // N.B. This needs to be first so we can overwrite default
@@ -61,7 +61,7 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     )
 }
 
-main().catch(err => {
-    console.error(err?.message)
+main().catch(error => {
+    console.error(error?.message)
     process.exit(1)
 })

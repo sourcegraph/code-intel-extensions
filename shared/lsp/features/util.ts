@@ -4,7 +4,7 @@ import { distinctUntilChanged, finalize, map } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 
 export function reregisterOnChange<T extends object>(
-    o: Observable<T>,
+    observable: Observable<T>,
     reloadOnValues: (keyof T)[] | undefined,
     register: (value: T) => sourcegraph.Unsubscribable
 ): sourcegraph.Unsubscribable {
@@ -17,14 +17,16 @@ export function reregisterOnChange<T extends object>(
         }
     }
 
-    return from(o)
+    return from(observable)
         .pipe(
-            distinctUntilChanged((x, y) =>
-                reloadOnValues !== undefined ? isEqual(pick(x, reloadOnValues), pick(y, reloadOnValues)) : isEqual(x, y)
+            distinctUntilChanged((previous, next) =>
+                reloadOnValues !== undefined
+                    ? isEqual(pick(previous, reloadOnValues), pick(next, reloadOnValues))
+                    : isEqual(previous, next)
             ),
-            map(v => {
+            map(value => {
                 unsubscribe()
-                registration = register(v)
+                registration = register(value)
             }),
             finalize(unsubscribe)
         )

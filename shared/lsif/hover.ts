@@ -42,7 +42,7 @@ const hoverQuery = gql`
 
 /** Retrieve hover text for the current hover position. */
 export async function hoverForPosition(
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>> = sgQueryGraphQL
 ): Promise<sourcegraph.Hover | null> {
@@ -50,7 +50,7 @@ export async function hoverForPosition(
         await queryLSIF(
             {
                 query: hoverQuery,
-                uri: doc.uri,
+                uri: textDocument.uri,
                 line: position.line,
                 character: position.character,
             },
@@ -64,8 +64,8 @@ export async function hoverForPosition(
  *
  * @param lsifObj The resolved LSIF object.
  */
-export function hoverResponseToHover(lsifObj: HoverResponse | null): sourcegraph.Hover | null {
-    return hoverPayloadToHover(lsifObj?.hover || null)
+export function hoverResponseToHover(lsifObject: HoverResponse | null): sourcegraph.Hover | null {
+    return hoverPayloadToHover(lsifObject?.hover || null)
 }
 
 /**

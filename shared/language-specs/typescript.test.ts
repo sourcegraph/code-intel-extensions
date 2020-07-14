@@ -22,13 +22,11 @@ describe('typescriptSpec', () => {
             { ...nilResult, file: 'a/b/shared/baz.ts' },
         ]
 
-        const filtered =
-            typescriptSpec.filterDefinitions &&
-            typescriptSpec.filterDefinitions(results, {
-                ...nilFilterContext,
-                filePath: 'a/b/c/foo.ts',
-                fileContent,
-            })
+        const filtered = typescriptSpec.filterDefinitions?.(results, {
+            ...nilFilterContext,
+            filePath: 'a/b/c/foo.ts',
+            fileContent,
+        })
 
         assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3]])
     })

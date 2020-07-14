@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
-import { convertHover, convertProviderParams, rewriteUris } from '../conversion'
+import { convertHover, convertProviderParameters, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 
 export interface HoverFeatureOptions {}
@@ -22,7 +22,7 @@ export const hoverFeature: Feature<typeof lsp.HoverRequest.type, 'hoverProvider'
         ): AsyncGenerator<sourcegraph.Hover | null, void, undefined> {
             const result = await connection.sendRequest(
                 lsp.HoverRequest.type,
-                convertProviderParams(textDocument, position, clientToServerURI)
+                convertProviderParameters(textDocument, position, clientToServerURI)
             )
             rewriteUris(result, serverToClientURI)
             yield convertHover(result)

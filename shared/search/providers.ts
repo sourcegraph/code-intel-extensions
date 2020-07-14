@@ -16,6 +16,11 @@ import { findSearchToken } from './tokens'
 import { getConfig } from './config'
 import { raceWithDelayOffset } from '../util/promise'
 
+const documentHighlights = (
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
+
 /**
  * Creates providers powered by search-based code intelligence.
  *
@@ -26,7 +31,7 @@ import { raceWithDelayOffset } from '../util/promise'
 export function createProviders(
     {
         languageID,
-        fileExts = [],
+        fileExts: fileExtensions = [],
         commentStyles,
         identCharPattern,
         filterDefinitions = results => results,
@@ -77,17 +82,17 @@ export function createProviders(
      * @param pos The current hover position.
      */
     const getContentAndToken = async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
     ): Promise<{ text: string; searchToken: string } | undefined> => {
-        const text = await getFileContent(doc)
+        const text = await getFileContent(textDocument)
         if (!text) {
             return undefined
         }
 
         const tokenResult = findSearchToken({
             text,
-            position: pos,
+            position,
             lineRegexes: commentStyles.map(style => style.lineRegex).filter(isDefined),
             identCharPattern,
         })
@@ -105,21 +110,21 @@ export function createProviders(
      * @param pos The current hover position.
      */
     const definition = async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
-        const contentAndToken = await getContentAndToken(doc, pos)
+        const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
             return null
         }
         const { text, searchToken } = contentAndToken
-        const { repo, commit, path } = parseGitURI(new URL(doc.uri))
+        const { repo, commit, path } = parseGitURI(new URL(textDocument.uri))
         const { isFork, isArchived } = await resolveRepo(repo)
 
         // Construct base definition query without scoping terms
-        const queryTerms = definitionQuery({ searchToken, doc, fileExts })
-        const queryArgs = {
-            doc,
+        const queryTerms = definitionQuery({ searchToken, doc: textDocument, fileExts: fileExtensions })
+        const queryArguments = {
+            doc: textDocument,
             repo,
             isFork,
             isArchived,
@@ -131,7 +136,7 @@ export function createProviders(
         }
 
         const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
-            searchWithFallback(args => searchAndFilterDefinitions(api, args), queryArgs, negateRepoFilter)
+            searchWithFallback(args => searchAndFilterDefinitions(api, args), queryArguments, negateRepoFilter)
 
         // Perform a search in the current git tree
         const sameRepoDefinitions = doSearch(false)
@@ -156,20 +161,20 @@ export function createProviders(
      * @param pos The current hover position.
      */
     const references = async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
     ): Promise<sourcegraph.Location[]> => {
-        const contentAndToken = await getContentAndToken(doc, pos)
+        const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
             return []
         }
         const { searchToken } = contentAndToken
-        const { repo, commit } = parseGitURI(new URL(doc.uri))
+        const { repo, commit } = parseGitURI(new URL(textDocument.uri))
         const { isFork, isArchived } = await resolveRepo(repo)
 
         // Construct base references query without scoping terms
-        const queryTerms = referencesQuery({ searchToken, doc, fileExts })
-        const queryArgs = {
+        const queryTerms = referencesQuery({ searchToken, doc: textDocument, fileExts: fileExtensions })
+        const queryArguments = {
             repo,
             isFork,
             isArchived,
@@ -178,7 +183,7 @@ export function createProviders(
         }
 
         const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
-            searchWithFallback(args => searchReferences(api, args), queryArgs, negateRepoFilter)
+            searchWithFallback(args => searchReferences(api, args), queryArguments, negateRepoFilter)
 
         // Perform a search in the current git tree
         const sameRepoReferences = doSearch(false)
@@ -192,7 +197,7 @@ export function createProviders(
         // to the current text document path.
         const referenceChunk = [sameRepoReferences, remoteRepoReferences]
         const mergedReferences = flatten(await Promise.all(referenceChunk))
-        return sortByProximity(mergedReferences, new URL(doc.uri))
+        return sortByProximity(mergedReferences, new URL(textDocument.uri))
     }
 
     /**
@@ -202,8 +207,8 @@ export function createProviders(
      * @param pos The current hover position.
      */
     const hover = async (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
         if (!wrappedProviders.definition) {
             return null
@@ -215,7 +220,7 @@ export function createProviders(
         // provides definitions but not hover text. This will allow us to get
         // precise hover text (if it's extractable) if we just fall-"sideways"
         // to the search-based definition provider as we've done historically.
-        const result = wrappedProviders.definition?.provideDefinition(doc, pos)
+        const result = wrappedProviders.definition?.provideDefinition(textDocument, position)
 
         // The providers created by the non-noop provider wrapper in this repo
         // always returns an observable. If we have something else early-out.
@@ -241,7 +246,7 @@ export function createProviders(
         }
 
         // Clean up the line by removing punctuation from the right end
-        const trimmedLine = line.trim().replace(/[:;=,{(<]+$/, '')
+        const trimmedLine = line.trim().replace(/[(,:;<={]+$/, '')
 
         if (trimmedLine.includes('```')) {
             // Don't render the line if it breaks out of the Markdown
@@ -267,11 +272,6 @@ export function createProviders(
             },
         }
     }
-
-    const documentHighlights = (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
-    ): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
 
     return {
         definition: asyncGeneratorFromPromise(definition),
@@ -412,7 +412,7 @@ function searchIndexed<
     // Create a copy of the args so that concurrent calls to other
     // search methods do not have their query terms unintentionally
     // modified.
-    const queryTermsCopy = Array.from(queryTerms)
+    const queryTermsCopy = [...queryTerms]
 
     // Unlike unindexed search, we can't supply a commit as that particular
     // commit may not be indexed. We force index and look inside/outside
@@ -450,7 +450,7 @@ function searchUnindexed<
     // Create a copy of the args so that concurrent calls to other
     // search methods do not have their query terms unintentionally
     // modified.
-    const queryTermsCopy = Array.from(queryTerms)
+    const queryTermsCopy = [...queryTerms]
 
     if (!negateRepoFilter) {
         // Look in this commit only
@@ -487,7 +487,7 @@ async function search(api: API, queryTerms: string[]): Promise<Result[]> {
  * @param result The search result.
  */
 function isExternalPrivateSymbol(
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     path: string,
     { fileLocal, file, symbolKind }: Result
 ): boolean {
@@ -495,7 +495,7 @@ function isExternalPrivateSymbol(
     // doesn't let us treat that way.
     // See https://github.com/universal-ctags/ctags/issues/1844
 
-    if (doc.languageId === 'java' && symbolKind === 'ENUMMEMBER') {
+    if (textDocument.languageId === 'java' && symbolKind === 'ENUMMEMBER') {
         return false
     }
 
@@ -527,9 +527,9 @@ function sortByProximity(locations: sourcegraph.Location[], currentURI: URL): so
 function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
     return (
         // Get the size of the intersection
-        new Set([...Array.from(a)].filter(value => b.has(value))).size /
+        new Set([...[...a]].filter(value => b.has(value))).size /
         // Get the size of the union
-        new Set([...Array.from(a), ...Array.from(b)]).size
+        new Set([...[...a], ...[...b]]).size
     )
 }
 

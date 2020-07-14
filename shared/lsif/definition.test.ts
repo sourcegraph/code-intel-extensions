@@ -14,8 +14,8 @@ import {
     range1,
     range2,
     range3,
-    doc,
-    pos,
+    document,
+    position,
 } from './util.test'
 
 describe('definitionForPosition', () => {
@@ -32,7 +32,7 @@ describe('definitionForPosition', () => {
             })
         )
 
-        assert.deepEqual(await definitionForPosition(doc, pos, queryGraphQLFn), [
+        assert.deepEqual(await definitionForPosition(document, position, queryGraphQLFn), [
             new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
             new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
             new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
@@ -44,6 +44,6 @@ describe('definitionForPosition', () => {
             makeEnvelope()
         )
 
-        assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(doc, pos)), [null])
+        assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(document, position)), [null])
     })
 })

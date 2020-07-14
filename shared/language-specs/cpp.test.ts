@@ -21,12 +21,10 @@ describe('cppSpec', () => {
             { ...nilResult, file: 'e/f.cpp' },
         ]
 
-        const filtered =
-            cppSpec.filterDefinitions &&
-            cppSpec.filterDefinitions(results, {
-                ...nilFilterContext,
-                fileContent,
-            })
+        const filtered = cppSpec.filterDefinitions?.(results, {
+            ...nilFilterContext,
+            fileContent,
+        })
 
         assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3]])
     })

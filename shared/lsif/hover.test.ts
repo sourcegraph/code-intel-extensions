@@ -3,7 +3,7 @@ import * as sinon from 'sinon'
 import { QueryGraphQLFn } from '../util/graphql'
 import { GenericLSIFResponse } from './api'
 import { HoverResponse, hoverForPosition } from './hover'
-import { makeEnvelope, range1, doc, pos } from './util.test'
+import { makeEnvelope, range1, document, position } from './util.test'
 
 describe('hoverForPosition', () => {
     it('should correctly parse result', async () => {
@@ -16,7 +16,7 @@ describe('hoverForPosition', () => {
             })
         )
 
-        assert.deepStrictEqual(await hoverForPosition(doc, pos, queryGraphQLFn), {
+        assert.deepStrictEqual(await hoverForPosition(document, position, queryGraphQLFn), {
             contents: {
                 value: 'foo',
                 kind: 'markdown',
@@ -30,6 +30,6 @@ describe('hoverForPosition', () => {
             makeEnvelope()
         )
 
-        assert.deepStrictEqual(await hoverForPosition(doc, pos, queryGraphQLFn), null)
+        assert.deepStrictEqual(await hoverForPosition(document, position, queryGraphQLFn), null)
     })
 })

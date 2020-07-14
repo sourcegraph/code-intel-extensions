@@ -16,9 +16,9 @@ const documentSelector = [{ language: 'go' }]
  *
  * @param ctx The extension context.
  */
-export function activate(ctx?: sourcegraph.ExtensionContext): Promise<void> {
+export function activate(context: sourcegraph.ExtensionContext): Promise<void> {
     return activateCodeIntel(
-        ctx,
+        context,
         documentSelector,
         findLanguageSpec('go'),
         initLSP('go', registerClient, createExternalReferencesProvider)

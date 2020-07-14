@@ -18,9 +18,9 @@ const documentSelector: sourcegraph.DocumentSelector = [{ language: 'typescript'
  *
  * @param ctx The extension context.
  */
-export function activate(ctx?: sourcegraph.ExtensionContext): Promise<void> {
+export function activate(context: sourcegraph.ExtensionContext): Promise<void> {
     return activateCodeIntel(
-        ctx,
+        context,
         documentSelector,
         findLanguageSpec('typescript'),
         initLSP('typescript', registerClient, createExternalReferencesProvider)

@@ -10,7 +10,7 @@ function makeIcon(svg: string): string {
     return `data:image/svg+xml;base64,${Base64.encode(
         svg
             .split('\n')
-            .map(r => r.trimStart())
+            .map(line => line.trimStart())
             .join(' ')
     )}`
 }

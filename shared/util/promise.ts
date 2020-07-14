@@ -13,13 +13,13 @@
  * @param makeFallback A factory that creates a fallback promise.
  * @param timeout The timeout in ms before the fallback is invoked.
  * @param filter An optional filter function to determine if a set of results
- *        should be returned immediately.
+ * should be returned immediately.
  */
 export async function raceWithDelayOffset<T>(
     primary: Promise<T>,
     makeFallback: () => Promise<T>,
     timeout: number,
-    filter: (v: T) => boolean = v => v !== null
+    filter: (value: T) => boolean = value => value !== null
 ): Promise<T> {
     const primaryResults = await Promise.race([primary, delay(timeout)])
     if (primaryResults !== undefined && filter(primaryResults)) {
@@ -41,5 +41,5 @@ export async function raceWithDelayOffset<T>(
  * @param timeout The timeout in ms.
  */
 async function delay(timeout: number): Promise<undefined> {
-    return new Promise(r => setTimeout(r, timeout))
+    return new Promise(resolve => setTimeout(resolve, timeout))
 }

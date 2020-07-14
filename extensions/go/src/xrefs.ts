@@ -76,19 +76,19 @@ export function createExternalReferencesProvider(
     }
 
     return async function* (
-        doc: sourcegraph.TextDocument,
-        pos: sourcegraph.Position
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
         // Get the symbol and package at the current position
-        const definitions = await getDefinition(client, doc, pos)
+        const definitions = await getDefinition(client, textDocument, position)
         if (definitions.length === 0) {
             logger.error('No definitions')
             return
         }
         const { symbol } = definitions[0]
 
-        const rootURI = removeHash(new URL(doc.uri))
-        const { hostname, pathname } = new URL(doc.uri)
+        const rootURI = removeHash(new URL(textDocument.uri))
+        const { hostname, pathname } = new URL(textDocument.uri)
         const repoName = path.join(hostname, pathname.slice(1))
 
         // Find dependent repositories. Remove results that refer to the source
@@ -100,7 +100,7 @@ export function createExternalReferencesProvider(
         yield* concat(
             flatMapConcurrent(dependents, EXTERNAL_REFS_CONCURRENCY, repoName =>
                 // Call references for the target symbol in each dependent workspace
-                findExternalRefsInDependent(client, repoName, rootURI, symbol)
+                findExternalReferencesInDependent(client, repoName, rootURI, symbol)
             )
         )
     }
@@ -108,25 +108,25 @@ export function createExternalReferencesProvider(
 
 function getDefinition(
     client: LSPClient,
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
 ): Promise<{ symbol: SymbolDescriptor }[]> {
-    const workspaceRoot = removeHash(new URL(doc.uri))
+    const workspaceRoot = removeHash(new URL(textDocument.uri))
 
-    const params = {
+    const parameters = {
         textDocument: {
-            uri: doc.uri,
+            uri: textDocument.uri,
         },
-        position: pos,
+        position,
     }
 
     return client.withConnection(
         workspaceRoot,
-        async conn => (await conn.sendRequest(xdefinitionRequestType, params)) || []
+        async conn => (await conn.sendRequest(xdefinitionRequestType, parameters)) || []
     )
 }
 
-async function findExternalRefsInDependent(
+async function findExternalReferencesInDependent(
     client: LSPClient,
     repoName: string,
     rootURI: URL,
@@ -134,14 +134,14 @@ async function findExternalRefsInDependent(
 ): Promise<sourcegraph.Location[]> {
     const workspaceRoot = new URL(`git://${repoName}?HEAD`)
 
-    const params = {
+    const parameters = {
         query: symbol,
         limit: 20,
     }
 
     const results = await client.withConnection(
         workspaceRoot,
-        async conn => (await conn.sendRequest(xdefinitionWorkspaceRequestType, params)) || []
+        async conn => (await conn.sendRequest(xdefinitionWorkspaceRequestType, parameters)) || []
     )
 
     return results.map(

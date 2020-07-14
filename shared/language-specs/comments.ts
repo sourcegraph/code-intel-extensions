@@ -1,16 +1,16 @@
 import { BlockCommentStyle, CommentStyle } from './spec'
 
 /** Matches two or more slashes followed by one optional space. */
-export const slashPattern = /\/\/\/*\s?/
+export const slashPattern = /\/\/+\s?/
 
 /** Matches three slashes followed by one optional space. */
-export const tripleSlashPattern = /\/\/\/\s?/
+export const tripleSlashPattern = /\/{3}\s?/
 
 /** Matches a hash followed by one optional space. */
 export const hashPattern = /#\s?/
 
 /** Matches two or more dashes followed by one optional space. */
-export const dashPattern = /---*\s?/
+export const dashPattern = /--+\s?/
 
 /** Matches whitespace followed by an at-symbol at beginning of a line. */
 export const leadingAtSymbolPattern = /^\s*@/

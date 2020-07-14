@@ -3,7 +3,7 @@ import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { ReferencesProvider } from '../../providers'
 import { concat, noopAsyncGenerator } from '../../util/ix'
-import { convertLocations, convertProviderParams, rewriteUris } from '../conversion'
+import { convertLocations, convertProviderParameters, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 import { reregisterOnChange } from './util'
 
@@ -32,8 +32,8 @@ export const referencesFeature: Feature<
             position: sourcegraph.Position,
             context: sourcegraph.ReferenceContext
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-            const params = convertProviderParams(textDocument, position, clientToServerURI)
-            const result = await connection.sendRequest(lsp.ReferencesRequest.type, { ...params, context })
+            const parameters = convertProviderParameters(textDocument, position, clientToServerURI)
+            const result = await connection.sendRequest(lsp.ReferencesRequest.type, { ...parameters, context })
             rewriteUris(result, serverToClientURI)
             yield convertLocations(result) || []
         }

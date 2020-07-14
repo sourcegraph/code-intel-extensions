@@ -31,12 +31,10 @@ describe('javaSpec', () => {
             { ...nilResult, file: `${prefix}/foo/sub/file.java` },
         ]
 
-        const filtered =
-            javaSpec.filterDefinitions &&
-            javaSpec.filterDefinitions(results, {
-                ...nilFilterContext,
-                fileContent,
-            })
+        const filtered = javaSpec.filterDefinitions?.(results, {
+            ...nilFilterContext,
+            fileContent,
+        })
 
         assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3], results[4]])
     })

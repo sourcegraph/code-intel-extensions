@@ -11,7 +11,7 @@ import { API } from '../../../shared/util/api'
 describe('findReposViaGDDO', () => {
     const trimGitHubPrefix = (url: string) =>
         Promise.resolve({
-            name: url.substring('github.com/'.length),
+            name: url.slice('github.com/'.length),
             isFork: false,
             isArchived: false,
         })
@@ -108,8 +108,8 @@ describe('findReposViaGDDO', () => {
             5,
             () =>
                 Promise.resolve({
-                    results: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => ({
-                        path: `github.com/foo/${i}`,
+                    results: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(index => ({
+                        path: `github.com/foo/${index}`,
                     })),
                 }),
             api

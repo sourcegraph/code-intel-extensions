@@ -9,7 +9,7 @@ describe('findSearchToken', () => {
                 text: '(defn skip-ws! []',
                 position: { line: 0, character: 6 },
                 lineRegexes: [],
-                identCharPattern: /[A-Za-z0-9_\-!?]/,
+                identCharPattern: /[\w!?-]/,
             }),
             {
                 searchToken: 'skip-ws!',

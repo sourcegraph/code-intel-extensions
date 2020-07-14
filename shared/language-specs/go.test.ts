@@ -34,14 +34,12 @@ describe('goSpec', () => {
             { ...nilResult, repo: 'github.com/foo/foo', file: 'r/a.go' },
         ]
 
-        const filtered =
-            goSpec.filterDefinitions &&
-            goSpec.filterDefinitions(results, {
-                ...nilFilterContext,
-                repo: 'github.com/foo/test',
-                filePath: 'x/y/z.go',
-                fileContent,
-            })
+        const filtered = goSpec.filterDefinitions?.(results, {
+            ...nilFilterContext,
+            repo: 'github.com/foo/test',
+            filePath: 'x/y/z.go',
+            fileContent,
+        })
 
         assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3], results[4]])
     })
@@ -54,14 +52,12 @@ describe('goSpec', () => {
             { ...nilResult, repo: 'github.com/ext/bar', file: 'a.go' },
         ]
 
-        const filtered =
-            goSpec.filterDefinitions &&
-            goSpec.filterDefinitions(results, {
-                ...nilFilterContext,
-                repo: 'github.com/foo/test',
-                filePath: 'main.go',
-                fileContent,
-            })
+        const filtered = goSpec.filterDefinitions?.(results, {
+            ...nilFilterContext,
+            repo: 'github.com/foo/test',
+            filePath: 'main.go',
+            fileContent,
+        })
 
         assert.deepStrictEqual(filtered, [results[0]])
     })

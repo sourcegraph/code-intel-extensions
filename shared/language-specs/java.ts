@@ -16,7 +16,7 @@ function filterDefinitions<T extends Result>(results: T[], { fileContent }: Filt
     const importPaths = extractFromLines(
         fileContent,
         /^import ([\w.]+);$/,
-        /^import static ([a-z_0-9.]+)\.([a-z_0-9]+|\*);$/
+        /^import static ([\d._a-z]+)\.([\d_a-z]+|\*);$/
     )
 
     const currentPackage = extractFromLines(fileContent, /^package ([\w.]+);$/)

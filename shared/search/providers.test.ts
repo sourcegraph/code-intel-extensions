@@ -16,16 +16,16 @@ const spec: LanguageSpec = {
     fileExts: [],
     commentStyles: [cStyleComment],
     identCharPattern: /./,
-    filterDefinitions: <T extends Result>(results: T[]) => results.filter(r => r.file !== '/f.ts'),
+    filterDefinitions: <T extends Result>(results: T[]) => results.filter(result => result.file !== '/f.ts'),
 }
 
-const doc = createStubTextDocument({
+const textDocument = createStubTextDocument({
     uri: 'git://sourcegraph.test/repo?rev#/foo.ts',
     languageId: 'typescript',
     text: undefined,
 })
 
-const pos = new sourcegraph.Position(3, 1)
+const position = new sourcegraph.Position(3, 1)
 const range1 = new sourcegraph.Range(2, 3, 4, 5)
 const range2 = new sourcegraph.Range(3, 4, 5, 6)
 const range3 = new sourcegraph.Range(4, 5, 6, 7)
@@ -134,7 +134,9 @@ describe('search providers', () => {
             stub.resolves([searchResult1])
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -156,7 +158,9 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -183,7 +187,9 @@ describe('search providers', () => {
             stub.resolves([searchResult1, searchResult2, searchResult3])
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [
                     [
                         new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
@@ -204,7 +210,7 @@ describe('search providers', () => {
             )
 
             const values = gatherValues(
-                createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)
+                createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
             )
 
             assert.deepEqual(await values, [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]])
@@ -240,7 +246,9 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -277,7 +285,9 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -310,7 +320,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, {}, api).references({ ...doc, text: '\n\n\nfoobar\n' }, pos, {
+                    createProviders(spec, {}, api).references({ ...textDocument, text: '\n\n\nfoobar\n' }, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -354,7 +364,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, {}, api).references({ ...doc, text: '\n\n\nfoobar\n' }, pos, {
+                    createProviders(spec, {}, api).references({ ...textDocument, text: '\n\n\nfoobar\n' }, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -414,7 +424,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, {}, api).references({ ...doc, text: '\n\n\nfoobar\n' }, pos, {
+                    createProviders(spec, {}, api).references({ ...textDocument, text: '\n\n\nfoobar\n' }, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -467,8 +477,8 @@ describe('search providers', () => {
         const recur: Partial<SourcegraphProviders> = {}
         const providers = createProviders(spec, recur, api)
         recur.definition = {
-            provideDefinition: (doc: sourcegraph.TextDocument, pos: sourcegraph.Position) =>
-                observableFromAsyncIterator(() => providers.definition(doc, pos)),
+            provideDefinition: (textDocument_: sourcegraph.TextDocument, position_: sourcegraph.Position) =>
+                observableFromAsyncIterator(() => providers.definition(textDocument_, position_)),
         }
 
         return providers
@@ -482,14 +492,17 @@ describe('search providers', () => {
             const getFileContentStub = sinon.stub(api, 'getFileContent')
             getFileContentStub.resolves('text\n// simple docstring\ndef')
 
-            assert.deepEqual(await gatherValues(recurProviders(api).hover({ ...doc, text: '\n\n\nfoobar\n' }, pos)), [
-                {
-                    contents: {
-                        kind: 'markdown',
-                        value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+            assert.deepEqual(
+                await gatherValues(recurProviders(api).hover({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                [
+                    {
+                        contents: {
+                            kind: 'markdown',
+                            value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+                        },
                     },
-                },
-            ])
+                ]
+            )
 
             assert.equal(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
@@ -514,14 +527,17 @@ describe('search providers', () => {
             const getFileContentStub = sinon.stub(api, 'getFileContent')
             getFileContentStub.resolves('text\n// simple docstring\ndef')
 
-            assert.deepEqual(await gatherValues(recurProviders(api).hover({ ...doc, text: '\n\n\nfoobar\n' }, pos)), [
-                {
-                    contents: {
-                        kind: 'markdown',
-                        value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+            assert.deepEqual(
+                await gatherValues(recurProviders(api).hover({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                [
+                    {
+                        contents: {
+                            kind: 'markdown',
+                            value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+                        },
                     },
-                },
-            ])
+                ]
+            )
 
             assert.equal(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
@@ -547,16 +563,16 @@ describe('search providers', () => {
 })
 
 function assertQuery(searchQuery: string, expectedTerms: string[]): void {
-    const actualTerms = searchQuery.split(' ').filter(p => !!p)
+    const actualTerms = searchQuery.split(' ').filter(part => !!part)
     actualTerms.sort()
     expectedTerms.sort()
     assert.deepEqual(actualTerms, expectedTerms)
 }
 
-async function gatherValues<T>(g: AsyncGenerator<T>): Promise<T[]> {
+async function gatherValues<T>(generator: AsyncGenerator<T>): Promise<T[]> {
     const values: T[] = []
-    for await (const v of g) {
-        values.push(v)
+    for await (const value of generator) {
+        values.push(value)
     }
     return values
 }

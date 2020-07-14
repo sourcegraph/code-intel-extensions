@@ -12,7 +12,7 @@ import { extractFromLines, filterResultsByImports, removeExtension } from './uti
  * the user doesn't get an empty response unless there really is nothing.
  */
 function filterDefinitions<T extends Result>(results: T[], { filePath, fileContent }: FilterContext): T[] {
-    const importPaths = extractFromLines(fileContent, /^import ([.\w]*)/, /^from ([.\w]*)/)
+    const importPaths = extractFromLines(fileContent, /^import ([\w.]*)/, /^from ([\w.]*)/)
 
     return filterResultsByImports(results, importPaths, ({ file }, importPath) => {
         const relativePath = relativeImportPath(filePath, importPath)
@@ -44,7 +44,7 @@ function absoluteImportPath(importPath: string): string {
  * @param importPath The relative or absolute Python import path (`.a.b`, `a.b.c`).
  */
 export function relativeImportPath(sourcePath: string, importPath: string): string | undefined {
-    const match = /^(?:\.)(\.*)(.*)/.exec(importPath)
+    const match = /^\.(\.*)(.*)/.exec(importPath)
     if (!match) {
         return undefined
     }

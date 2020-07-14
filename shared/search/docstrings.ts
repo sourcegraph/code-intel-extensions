@@ -103,8 +103,12 @@ function findDocstringOnDefinitionLine(line: string, { lineRegex, block }: Comme
  * @param docPlacement The placement of a docblock for the current language.
  * @param definitionLine The line on which the definition occurs.
  */
-function mungeLines(lines: string[], docPlacement: DocPlacement | undefined, definitionLine: number): string[] {
-    return docPlacement === 'below the definition'
+function mungeLines(
+    lines: string[],
+    textDocumentPlacement: DocPlacement | undefined,
+    definitionLine: number
+): string[] {
+    return textDocumentPlacement === 'below the definition'
         ? lines.slice(definitionLine + 1)
         : lines.slice(0, definitionLine).reverse()
 }
@@ -115,8 +119,8 @@ function mungeLines(lines: string[], docPlacement: DocPlacement | undefined, def
  * @param lines The lines of the text document.
  * @param docPlacement The placement of a docblock for the current language.
  */
-function unmungeLines(lines: string[], docPlacement: DocPlacement | undefined): string[] {
-    return docPlacement === 'below the definition' ? lines : lines.reverse()
+function unmungeLines(lines: string[], textDocumentPlacement: DocPlacement | undefined): string[] {
+    return textDocumentPlacement === 'below the definition' ? lines : lines.reverse()
 }
 
 /**
@@ -140,7 +144,7 @@ function findDocstringInLineComments({
     // Add whitespace to the beginning of the line regex
     const pattern = new RegExp(/^\s*/.source + lineRegex.source)
 
-    const docLines = takeWhile(
+    const textDocumentLines = takeWhile(
         // Drop any leading ignored content between the definition and the docstring
         dropWhile(lines, line => docstringIgnore?.test(line)),
         // Eat all comment lines following the definition
@@ -148,7 +152,12 @@ function findDocstringInLineComments({
     )
 
     // If there were any comments, remove the prefixes
-    return docLines.length > 0 ? docLines.map(line => line.replace(pattern, '')) : undefined
+    return textDocumentLines.length > 0 ? textDocumentLines.map(line => line.replace(pattern, '')) : undefined
+}
+
+const takeWhileInclusive = <T>(array: T[], predicate: (t: T) => boolean): T[] => {
+    const index = array.findIndex(value => !predicate(value))
+    return index === -1 ? array : array.slice(0, index + 1)
 }
 
 /**
@@ -169,11 +178,6 @@ function findDocstringInBlockComment({
     /** An optional pattern to ignore before the docstring. */
     docstringIgnore?: RegExp
 }): string[] | undefined {
-    const takeWhileInclusive = <T>(array: T[], predicate: (t: T) => boolean): T[] => {
-        const index = array.findIndex(value => !predicate(value))
-        return index === -1 ? array : array.slice(0, index + 1)
-    }
-
     // Drop any leading ignored content between the definition and the docstring
     const cleanLines = dropWhile(lines, line => docstringIgnore?.test(line))
 
@@ -193,15 +197,17 @@ function findDocstringInBlockComment({
     // are necessary for doc blocks in languages like Python that have identical
     // open and closing delimiters.
 
-    const docLines = takeWhileInclusive(cleanLines, line => !endRegex.test(line))
+    const textDocumentLines = takeWhileInclusive(cleanLines, line => !endRegex.test(line))
 
     // Construct a pattern that matches the leading indentation of each
     // line of the block comment. We use the indentation of the first line
     // as a market, which seems correct in the vast majority of cases.
 
-    const indentationPattern = new RegExp(`^\\s{0,${docLines[0].length - docLines[0].trimLeft().length}}`)
+    const indentationPattern = new RegExp(
+        `^\\s{0,${textDocumentLines[0].length - textDocumentLines[0].trimStart().length}}`
+    )
 
-    return docLines.map(line =>
+    return textDocumentLines.map(line =>
         line
             // Remove ending delimiter
             .replace(endRegex, '')

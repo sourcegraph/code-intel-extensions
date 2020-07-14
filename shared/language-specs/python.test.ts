@@ -24,13 +24,11 @@ describe('pythonSpec', () => {
             { ...nilResult, file: 'x/y/z/quux.py' },
         ]
 
-        const filtered =
-            pythonSpec.filterDefinitions &&
-            pythonSpec.filterDefinitions(results, {
-                ...nilFilterContext,
-                filePath: 'a/b/c/foo.py',
-                fileContent,
-            })
+        const filtered = pythonSpec.filterDefinitions?.(results, {
+            ...nilFilterContext,
+            filePath: 'a/b/c/foo.py',
+            fileContent,
+        })
 
         assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3]])
     })

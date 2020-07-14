@@ -20,8 +20,8 @@ import {
     range4,
     range5,
     range6,
-    doc,
-    pos,
+    document,
+    position,
 } from './util.test'
 
 describe('graphql providers', () => {
@@ -43,7 +43,9 @@ describe('graphql providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).definition(doc, pos)),
+                await gatherValues(
+                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).definition(document, position)
+                ),
                 [
                     [
                         new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
@@ -67,7 +69,7 @@ describe('graphql providers', () => {
                 })
             )
 
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(doc, pos)), [
+            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(document, position)), [
                 [
                     new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
                     new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
@@ -81,7 +83,7 @@ describe('graphql providers', () => {
                 makeEnvelope()
             )
 
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(doc, pos)), [null])
+            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(document, position)), [null])
         })
     })
 
@@ -113,7 +115,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).references(doc, pos, {
+                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -143,7 +145,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -164,7 +166,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -210,7 +212,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -235,15 +237,15 @@ describe('graphql providers', () => {
             const location = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
 
             const values = [[location]]
-            for (let i = 1; i < MAX_REFERENCE_PAGE_REQUESTS; i++) {
-                const lastCopy = Array.from(values[values.length - 1])
+            for (let index = 1; index < MAX_REFERENCE_PAGE_REQUESTS; index++) {
+                const lastCopy = [...values[values.length - 1]]
                 lastCopy.push(location)
                 values.push(lastCopy)
             }
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(doc, pos, {
+                    createProviders(queryGraphQLFn).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -271,7 +273,7 @@ describe('graphql providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).hover(doc, pos)),
+                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).hover(document, position)),
                 [
                     {
                         contents: {
@@ -294,7 +296,7 @@ describe('graphql providers', () => {
                 })
             )
 
-            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(doc, pos)), [
+            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(document, position)), [
                 {
                     contents: {
                         value: 'foo',
@@ -310,7 +312,9 @@ describe('graphql providers', () => {
                 makeEnvelope()
             )
 
-            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(doc, pos)), [null])
+            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(document, position)), [
+                null,
+            ])
         })
     })
 
@@ -336,7 +340,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).documentHighlights(doc, pos)
+                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).documentHighlights(document, position)
                 ),
                 [[{ range: range1 }, { range: range3 }, { range: range5 }]]
             )
@@ -358,16 +362,20 @@ describe('graphql providers', () => {
                     },
                 })
             )
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).documentHighlights(doc, pos)), [
-                [{ range: range1 }, { range: range3 }, { range: range5 }],
-            ])
+            assert.deepEqual(
+                await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)),
+                [[{ range: range1 }, { range: range3 }, { range: range5 }]]
+            )
         })
 
         it('should deal with empty payload', async () => {
             const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope()
             )
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).documentHighlights(doc, pos)), [null])
+            assert.deepEqual(
+                await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)),
+                [null]
+            )
         })
     })
 })

@@ -44,8 +44,8 @@ export const webSocketTransport = ({
         logger.error('WebSocket error', event)
     })
     const notifications = new Subject<{ method: string; params: any }>()
-    connection.onNotification((method, params) => {
-        notifications.next({ method, params })
+    connection.onNotification((method, parameters) => {
+        notifications.next({ method, params: parameters })
     })
     connection.listen()
     return {
@@ -53,8 +53,8 @@ export const webSocketTransport = ({
             return socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING
         },
         closeEvent: fromEvent<Event>(socket, 'close').pipe(mapTo(undefined), take(1)),
-        sendRequest: async (type, params) => connection.sendRequest(type, params, cancellationToken),
-        sendNotification: (type, params) => connection.sendNotification(type, params),
+        sendRequest: async (type, parameters) => connection.sendRequest(type, parameters, cancellationToken),
+        sendNotification: (type, parameters) => connection.sendNotification(type, parameters),
         setRequestHandler: (type, handler) => connection.onRequest(type, handler),
         observeNotification: type =>
             notifications.pipe(

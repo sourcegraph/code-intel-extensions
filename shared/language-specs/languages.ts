@@ -148,7 +148,7 @@ const luaSpec: LanguageSpec = {
         {
             // --[[ block comment ]]
             lineRegex: dashPattern,
-            block: { startRegex: /--\[\[/, endRegex: /\]\]/ },
+            block: { startRegex: /--\[\[/, endRegex: /]]/ },
         },
     ],
 }
@@ -179,7 +179,7 @@ const pascalSpec: LanguageSpec = {
             // (* block comment *)
             // { turbo pascal block comment }
             lineRegex: slashPattern,
-            block: { startRegex: /(\{|\(\*)\s?/, endRegex: /(\}|\*\))/ },
+            block: { startRegex: /({|\(\*)\s?/, endRegex: /(}|\*\))/ },
         },
     ],
 }
@@ -209,7 +209,7 @@ const powershellSpec: LanguageSpec = {
             block: { startRegex: /<#/, endRegex: /#>/ },
             docPlacement: 'below the definition',
             // any line with braces
-            docstringIgnore: /\{/,
+            docstringIgnore: /{/,
         },
     ],
 }
@@ -376,7 +376,7 @@ export const languageSpecs: LanguageSpec[] = [
  * matches is configured with the given identifier an error is thrown.
  */
 export function findLanguageSpec(languageID: string): LanguageSpec {
-    const languageSpec = languageSpecs.find(s => s.languageID === languageID)
+    const languageSpec = languageSpecs.find(spec => spec.languageID === languageID)
     if (languageSpec) {
         return languageSpec
     }
