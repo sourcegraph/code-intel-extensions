@@ -86,7 +86,7 @@ describe('graphql providers', () => {
     })
 
     describe('references provider', () => {
-        it.only('should use result from window', async () => {
+        it('should use result from window', async () => {
             const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope({
                     references: {
