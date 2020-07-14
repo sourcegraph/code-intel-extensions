@@ -103,7 +103,11 @@ function findDocstringOnDefinitionLine(line: string, { lineRegex, block }: Comme
  * @param docPlacement The placement of a docblock for the current language.
  * @param definitionLine The line on which the definition occurs.
  */
-function mungeLines(lines: string[], textDocumentPlacement: DocPlacement | undefined, definitionLine: number): string[] {
+function mungeLines(
+    lines: string[],
+    textDocumentPlacement: DocPlacement | undefined,
+    definitionLine: number
+): string[] {
     return textDocumentPlacement === 'below the definition'
         ? lines.slice(definitionLine + 1)
         : lines.slice(0, definitionLine).reverse()
@@ -199,7 +203,9 @@ function findDocstringInBlockComment({
     // line of the block comment. We use the indentation of the first line
     // as a market, which seems correct in the vast majority of cases.
 
-    const indentationPattern = new RegExp(`^\\s{0,${textDocumentLines[0].length - textDocumentLines[0].trimStart().length}}`)
+    const indentationPattern = new RegExp(
+        `^\\s{0,${textDocumentLines[0].length - textDocumentLines[0].trimStart().length}}`
+    )
 
     return textDocumentLines.map(line =>
         line

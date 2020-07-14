@@ -102,7 +102,7 @@ describe('findPackageName', () => {
         try {
             await findPackageName(new URL('http://package/foo/bar/baz/bonk/quux.ts'), fetcher)
             assert.fail('Expected exception')
-        } catch  {
+        } catch {
             // pass
         }
     })

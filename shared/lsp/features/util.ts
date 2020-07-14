@@ -20,7 +20,9 @@ export function reregisterOnChange<T extends object>(
     return from(observable)
         .pipe(
             distinctUntilChanged((previous, next) =>
-                reloadOnValues !== undefined ? isEqual(pick(previous, reloadOnValues), pick(next, reloadOnValues)) : isEqual(previous,next)
+                reloadOnValues !== undefined
+                    ? isEqual(pick(previous, reloadOnValues), pick(next, reloadOnValues))
+                    : isEqual(previous, next)
             ),
             map(value => {
                 unsubscribe()

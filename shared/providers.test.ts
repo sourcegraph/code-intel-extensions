@@ -160,7 +160,13 @@ describe('createReferencesProvider', () => {
             [location1, location2],
             [location1, location2, location3],
             [location1, location2, location3, { ...location4, badge: impreciseBadge }],
-            [location1, location2, location3, { ...location4, badge: impreciseBadge }, { ...location9, badge: impreciseBadge }],
+            [
+                location1,
+                location2,
+                location3,
+                { ...location4, badge: impreciseBadge },
+                { ...location9, badge: impreciseBadge },
+            ],
         ])
     })
 })

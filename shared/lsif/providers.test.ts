@@ -43,7 +43,9 @@ describe('graphql providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).definition(document, position)),
+                await gatherValues(
+                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).definition(document, position)
+                ),
                 [
                     [
                         new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
@@ -310,7 +312,9 @@ describe('graphql providers', () => {
                 makeEnvelope()
             )
 
-            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(document, position)), [null])
+            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(document, position)), [
+                null,
+            ])
         })
     })
 
@@ -358,17 +362,20 @@ describe('graphql providers', () => {
                     },
                 })
             )
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)), [
-                [{ range: range1 }, { range: range3 }, { range: range5 }],
-            ])
+            assert.deepEqual(
+                await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)),
+                [[{ range: range1 }, { range: range3 }, { range: range5 }]]
+            )
         })
 
         it('should deal with empty payload', async () => {
             const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope()
             )
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)), [null])
+            assert.deepEqual(
+                await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)),
+                [null]
+            )
         })
     })
 })
-

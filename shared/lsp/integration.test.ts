@@ -23,7 +23,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
         return {
             sendNotification: sinon.spy(),
             // eslint-disable-next-line @typescript-eslint/require-await
-            sendRequest: sinon.spy(async ({ method }:{method:string}, parameters) => {
+            sendRequest: sinon.spy(async ({ method }: { method: string }, parameters) => {
                 if (method in server) {
                     return (server as any)[method](parameters)
                 }

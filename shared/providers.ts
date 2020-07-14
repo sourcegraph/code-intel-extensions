@@ -201,7 +201,8 @@ export function createDefinitionProvider(
 }
 
 /** Gets an opaque value that is the same for all locations within a file but different from other files. */
-const file = (location_: sourcegraph.Location): string => `${location_.uri.host} ${location_.uri.pathname} ${location_.uri.hash}`
+const file = (location_: sourcegraph.Location): string =>
+    `${location_.uri.host} ${location_.uri.pathname} ${location_.uri.hash}`
 
 /**
  * Creates a reference provider.

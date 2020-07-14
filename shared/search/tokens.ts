@@ -34,7 +34,7 @@ export function findSearchToken({
     // then we default to the end of the line.
 
     let end = line.length
-    for (let index = position.character; index < line.length;index++) {
+    for (let index = position.character; index < line.length; index++) {
         if (!identCharPattern.test(line[index])) {
             end = index
             break

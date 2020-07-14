@@ -68,7 +68,7 @@ export function safePromise<P, R>(promise: (arg: P) => Promise<R>): (arg: P) => 
     return async (argument: P): Promise<R | undefined> => {
         try {
             return await promise(argument)
-        } catch  {
+        } catch {
             return undefined
         }
     }

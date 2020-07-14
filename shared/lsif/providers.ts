@@ -56,7 +56,10 @@ function definition(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Definition> {
-    return async (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position): Promise<sourcegraph.Definition> => {
+    return async (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.Definition> => {
         const getDefinitionsFromRangeRequest = async (): Promise<sourcegraph.Definition> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
@@ -136,7 +139,10 @@ function hover(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Hover | null> {
-    return async (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position): Promise<sourcegraph.Hover | null> => {
+    return async (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.Hover | null> => {
         const getHoverFromRangeRequest = async (): Promise<sourcegraph.Hover | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)

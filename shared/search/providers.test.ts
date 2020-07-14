@@ -134,7 +134,9 @@ describe('search providers', () => {
             stub.resolves([searchResult1])
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -156,7 +158,9 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -183,7 +187,9 @@ describe('search providers', () => {
             stub.resolves([searchResult1, searchResult2, searchResult3])
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [
                     [
                         new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
@@ -240,7 +246,9 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -277,7 +285,9 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                await gatherValues(
+                    createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
+                ),
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
@@ -482,14 +492,17 @@ describe('search providers', () => {
             const getFileContentStub = sinon.stub(api, 'getFileContent')
             getFileContentStub.resolves('text\n// simple docstring\ndef')
 
-            assert.deepEqual(await gatherValues(recurProviders(api).hover({ ...textDocument, text: '\n\n\nfoobar\n' }, position)), [
-                {
-                    contents: {
-                        kind: 'markdown',
-                        value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+            assert.deepEqual(
+                await gatherValues(recurProviders(api).hover({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                [
+                    {
+                        contents: {
+                            kind: 'markdown',
+                            value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+                        },
                     },
-                },
-            ])
+                ]
+            )
 
             assert.equal(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
@@ -514,14 +527,17 @@ describe('search providers', () => {
             const getFileContentStub = sinon.stub(api, 'getFileContent')
             getFileContentStub.resolves('text\n// simple docstring\ndef')
 
-            assert.deepEqual(await gatherValues(recurProviders(api).hover({ ...textDocument, text: '\n\n\nfoobar\n' }, position)), [
-                {
-                    contents: {
-                        kind: 'markdown',
-                        value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+            assert.deepEqual(
+                await gatherValues(recurProviders(api).hover({ ...textDocument, text: '\n\n\nfoobar\n' }, position)),
+                [
+                    {
+                        contents: {
+                            kind: 'markdown',
+                            value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
+                        },
                     },
-                },
-            ])
+                ]
+            )
 
             assert.equal(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [

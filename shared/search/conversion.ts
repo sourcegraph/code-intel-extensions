@@ -35,9 +35,13 @@ export interface Result {
  * @param searchResult The search result.
  */
 export function searchResultToResults({ ...result }: SearchResult): Result[] {
-    const symbolResults = result.symbols ? result.symbols.map(symbol => searchResultSymbolToResults(result, symbol)) : []
+    const symbolResults = result.symbols
+        ? result.symbols.map(symbol => searchResultSymbolToResults(result, symbol))
+        : []
 
-    const lineMatchResults = result.lineMatches ? result.lineMatches.flatMap(matches => lineMatchesToResults(result, matches)) : []
+    const lineMatchResults = result.lineMatches
+        ? result.lineMatches.flatMap(matches => lineMatchesToResults(result, matches))
+        : []
 
     return symbolResults.filter(isDefined).concat(lineMatchResults)
 }
