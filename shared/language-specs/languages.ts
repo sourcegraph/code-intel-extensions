@@ -187,19 +187,7 @@ const pascalSpec: LanguageSpec = {
 const perlSpec: LanguageSpec = {
     languageID: 'perl',
     stylized: 'Perl',
-    fileExts: [
-        'pl',
-        'al',
-        'cgi',
-        'fcgi',
-        'perl',
-        'ph',
-        'plx',
-        'pm',
-        'pod',
-        'psgi',
-        't',
-    ],
+    fileExts: ['pl', 'al', 'cgi', 'fcgi', 'perl', 'ph', 'plx', 'pm', 'pod', 'psgi', 't'],
     commentStyles: [shellStyleComment],
 }
 

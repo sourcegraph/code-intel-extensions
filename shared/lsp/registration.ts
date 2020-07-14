@@ -9,23 +9,11 @@ import { ProviderWrapper } from '../providers'
 import { LSPClient } from './client'
 import { LSPConnection } from './connection'
 import { convertDiagnosticToDecoration } from './conversion'
-import {
-    definitionFeature,
-    DefinitionFeatureOptions,
-} from './features/definition'
+import { definitionFeature, DefinitionFeatureOptions } from './features/definition'
 import { hoverFeature, HoverFeatureOptions } from './features/hover'
-import {
-    implementationFeature,
-    ImplementationFeatureOptions,
-} from './features/implementation'
-import {
-    referencesFeature,
-    ReferencesFeatureOptions,
-} from './features/references'
-import {
-    WindowProgressClientCapabilities,
-    WindowProgressNotification,
-} from './protocol.progress.proposed'
+import { implementationFeature, ImplementationFeatureOptions } from './features/implementation'
+import { referencesFeature, ReferencesFeatureOptions } from './features/references'
+import { WindowProgressClientCapabilities, WindowProgressNotification } from './protocol.progress.proposed'
 
 export const LSP_TO_LOG_LEVEL: Record<lsp.MessageType, LogLevel> = {
     [lsp.MessageType.Log]: 'log',
@@ -98,21 +86,13 @@ export async function register({
     const subscriptions = new Subscription()
 
     if (cancellationToken) {
-        cancellationToken.onCancellationRequested(() =>
-            subscriptions.unsubscribe()
-        )
+        cancellationToken.onCancellationRequested(() => subscriptions.unsubscribe())
     }
 
     function syncTextDocuments(connection: LSPConnection): void {
         for (const textDocument of sourcegraph.workspace.textDocuments) {
-            const serverTextDocumentUri = clientToServerURI(
-                new URL(textDocument.uri)
-            )
-            if (
-                !sourcegraph.workspace.roots.some(root =>
-                    serverTextDocumentUri.href.startsWith(root.uri.toString())
-                )
-            ) {
+            const serverTextDocumentUri = clientToServerURI(new URL(textDocument.uri))
+            if (!sourcegraph.workspace.roots.some(root => serverTextDocumentUri.href.startsWith(root.uri.toString()))) {
                 continue
             }
             const didOpenParams: lsp.DidOpenTextDocumentParams = {
@@ -123,10 +103,7 @@ export async function register({
                     version: 1,
                 },
             }
-            connection.sendNotification(
-                lsp.DidOpenTextDocumentNotification.type,
-                didOpenParams
-            )
+            connection.sendNotification(lsp.DidOpenTextDocumentNotification.type, didOpenParams)
         }
     }
 
@@ -149,19 +126,12 @@ export async function register({
                 sourcegraph,
                 serverToClientURI,
                 clientToServerURI,
-                scopedDocumentSelector: scopeDocumentSelectorToRoot(
-                    documentSelector,
-                    scopeRootUri
-                ),
+                scopedDocumentSelector: scopeDocumentSelectorToRoot(documentSelector, scopeRootUri),
                 providerWrapper,
                 featureOptions: featureOptions || EMPTY,
             })
 
-            subscriptions.add(
-                connection.closeEvent.subscribe(() =>
-                    featureSubscription.unsubscribe()
-                )
-            )
+            subscriptions.add(connection.closeEvent.subscribe(() => featureSubscription.unsubscribe()))
         }
     }
 
@@ -179,19 +149,16 @@ export async function register({
         const connection = await createConnection()
         logger.log('WebSocket connection to language server opened')
         subscriptions.add(
-            connection
-                .observeNotification(lsp.LogMessageNotification.type)
-                .subscribe(({ type, message }) => {
-                    const method = LSP_TO_LOG_LEVEL[type]
-                    const args = [
-                        new Date().toLocaleTimeString() +
-                            ' %cLanguage Server%c %s',
-                        'background-color: blue; color: white',
-                        '',
-                        message,
-                    ]
-                    logger[method](...args)
-                })
+            connection.observeNotification(lsp.LogMessageNotification.type).subscribe(({ type, message }) => {
+                const method = LSP_TO_LOG_LEVEL[type]
+                const args = [
+                    new Date().toLocaleTimeString() + ' %cLanguage Server%c %s',
+                    'background-color: blue; color: white',
+                    '',
+                    message,
+                ]
+                logger[method](...args)
+            })
         )
 
         // Display diagnostics as decorations
@@ -213,35 +180,25 @@ export async function register({
         })
 
         subscriptions.add(
-            connection
-                .observeNotification(lsp.PublishDiagnosticsNotification.type)
-                .subscribe(params => {
-                    const uri = new URL(params.uri)
-                    const sourcegraphTextDocumentUri = serverToClientURI(uri)
-                    diagnosticsByUri.set(
-                        sourcegraphTextDocumentUri.href,
-                        params.diagnostics
-                    )
-                    for (const appWindow of sourcegraph.app.windows) {
-                        for (const viewComponent of appWindow.visibleViewComponents) {
-                            if (viewComponent.type !== 'CodeEditor') {
-                                continue
-                            }
+            connection.observeNotification(lsp.PublishDiagnosticsNotification.type).subscribe(params => {
+                const uri = new URL(params.uri)
+                const sourcegraphTextDocumentUri = serverToClientURI(uri)
+                diagnosticsByUri.set(sourcegraphTextDocumentUri.href, params.diagnostics)
+                for (const appWindow of sourcegraph.app.windows) {
+                    for (const viewComponent of appWindow.visibleViewComponents) {
+                        if (viewComponent.type !== 'CodeEditor') {
+                            continue
+                        }
 
-                            if (
-                                viewComponent.document.uri ===
-                                sourcegraphTextDocumentUri.href
-                            ) {
-                                viewComponent.setDecorations(
-                                    decorationType,
-                                    params.diagnostics.map(d =>
-                                        convertDiagnosticToDecoration(d)
-                                    )
-                                )
-                            }
+                        if (viewComponent.document.uri === sourcegraphTextDocumentUri.href) {
+                            viewComponent.setDecorations(
+                                decorationType,
+                                params.diagnostics.map(d => convertDiagnosticToDecoration(d))
+                            )
                         }
                     }
-                })
+                }
+            })
         )
 
         subscriptions.add(
@@ -252,14 +209,10 @@ export async function register({
                             continue
                         }
 
-                        const diagnostics =
-                            diagnosticsByUri.get(viewComponent.document.uri) ??
-                            []
+                        const diagnostics = diagnosticsByUri.get(viewComponent.document.uri) ?? []
                         viewComponent.setDecorations(
                             decorationType,
-                            diagnostics.map(d =>
-                                convertDiagnosticToDecoration(d)
-                            )
+                            diagnostics.map(d => convertDiagnosticToDecoration(d))
                         )
                     }
                 }
@@ -267,10 +220,7 @@ export async function register({
         )
 
         // Show progress reports
-        const progressReporters = new Map<
-            string,
-            Promise<sourcegraph.ProgressReporter>
-        >()
+        const progressReporters = new Map<string, Promise<sourcegraph.ProgressReporter>>()
         subscriptions.add(() => {
             // Cleanup unfinished progress reports
             for (const reporterPromise of progressReporters.values()) {
@@ -288,10 +238,7 @@ export async function register({
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 .subscribe(async ({ id, title, message, percentage, done }) => {
                     try {
-                        if (
-                            typeof sourcegraph.app.activeWindow
-                                ?.showProgress !== 'function'
-                        ) {
+                        if (typeof sourcegraph.app.activeWindow?.showProgress !== 'function') {
                             return
                         }
                         let reporterPromise = progressReporters.get(id)
@@ -299,9 +246,7 @@ export async function register({
                             if (title) {
                                 title = title + progressSuffix
                             }
-                            reporterPromise = sourcegraph.app.activeWindow.showProgress(
-                                { title }
-                            )
+                            reporterPromise = sourcegraph.app.activeWindow.showProgress({ title })
                             progressReporters.set(id, reporterPromise)
                         }
                         const reporter = await reporterPromise
@@ -311,10 +256,7 @@ export async function register({
                             progressReporters.delete(id)
                         }
                     } catch (err) {
-                        logger.error(
-                            'Error handling progress notification',
-                            err
-                        )
+                        logger.error('Error handling progress notification', err)
                     }
                 })
         )
@@ -338,10 +280,7 @@ export async function register({
         initParams: lsp.InitializeParams
         registerProviders: boolean
     }): Promise<void> {
-        const initializeResult = await connection.sendRequest(
-            lsp.InitializeRequest.type,
-            initParams
-        )
+        const initializeResult = await connection.sendRequest(lsp.InitializeRequest.type, initParams)
         // Tell language server about all currently open text documents under this root
         syncTextDocuments(connection)
 
@@ -353,16 +292,9 @@ export async function register({
             )
 
             // Listen for dynamic capabilities
-            connection.setRequestHandler(
-                lsp.RegistrationRequest.type,
-                params => {
-                    registerCapabilities(
-                        connection,
-                        clientRootUri,
-                        params.registrations
-                    )
-                }
-            )
+            connection.setRequestHandler(lsp.RegistrationRequest.type, params => {
+                registerCapabilities(connection, clientRootUri, params.registrations)
+            })
             // Register static capabilities
             registerCapabilities(connection, clientRootUri, staticRegistrations)
         }
@@ -421,9 +353,7 @@ export async function register({
                 subscriptions.add(
                     connection.closeEvent.subscribe(() => {
                         if (connectionsByRootUri.has(root.uri.toString())) {
-                            logger.log(
-                                'Refreshing WebSocket connection to language server'
-                            )
+                            logger.log('Refreshing WebSocket connection to language server')
                             addRoot(root)
                         }
                     })
@@ -451,27 +381,19 @@ export async function register({
                 map(() => [...sourcegraph.workspace.roots]),
                 scan((before, after) => {
                     // Create new connections for added workspaces
-                    const added = differenceBy(after, before, root =>
-                        root.uri.toString()
-                    )
+                    const added = differenceBy(after, before, root => root.uri.toString())
                     addRoots(added)
 
                     // Close connections for removed workspaces
-                    const removed = differenceBy(before, after, root =>
-                        root.uri.toString()
-                    )
+                    const removed = differenceBy(before, after, root => root.uri.toString())
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.all(
                         removed.map(async root => {
                             try {
-                                const connection = await connectionsByRootUri.get(
-                                    root.uri.toString()
-                                )
+                                const connection = await connectionsByRootUri.get(root.uri.toString())
 
                                 if (connection) {
-                                    connectionsByRootUri.delete(
-                                        root.uri.toString()
-                                    )
+                                    connectionsByRootUri.delete(root.uri.toString())
                                     connection.unsubscribe()
                                 }
                             } catch (err) {
@@ -495,9 +417,7 @@ export async function register({
     }
 }
 
-function registrationId(
-    staticOptions: Partial<Pick<lsp.Registration, 'id'>> | boolean | undefined
-): string {
+function registrationId(staticOptions: Partial<Pick<lsp.Registration, 'id'>> | boolean | undefined): string {
     return (
         (staticOptions &&
             typeof staticOptions === 'object' &&
@@ -536,9 +456,6 @@ export function scopeDocumentSelectorToRoot(
         return documentSelector
     }
     return documentSelector
-        .map(
-            (filter): sourcegraph.DocumentFilter =>
-                typeof filter === 'string' ? { language: filter } : filter
-        )
+        .map((filter): sourcegraph.DocumentFilter => (typeof filter === 'string' ? { language: filter } : filter))
         .map(filter => ({ ...filter, baseUri: clientRootUri }))
 }

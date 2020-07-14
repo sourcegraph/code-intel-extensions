@@ -14,12 +14,8 @@ const DIAGNOSTIC_COLORS: Readonly<Record<lsp.DiagnosticSeverity, string>> = {
  *
  * @param location An LSP location or location link.
  */
-export function toLocation(
-    location: lsp.Location | lsp.LocationLink
-): lsp.Location {
-    return lsp.LocationLink.is(location)
-        ? { uri: location.targetUri, range: location.targetRange }
-        : location
+export function toLocation(location: lsp.Location | lsp.LocationLink): lsp.Location {
+    return lsp.LocationLink.is(location) ? { uri: location.targetUri, range: location.targetRange } : location
 }
 
 /**
@@ -27,9 +23,7 @@ export function toLocation(
  *
  * @param location An LSP location.
  */
-export function convertLocation(
-    location: lsp.Location | lsp.LocationLink
-): sourcegraph.Location {
+export function convertLocation(location: lsp.Location | lsp.LocationLink): sourcegraph.Location {
     return {
         uri: new URL(toLocation(location).uri),
         range: convertRange(toLocation(location).range),
@@ -42,18 +36,12 @@ export function convertLocation(
  * @param locationOrLocations An LSP location or location list.
  */
 export function convertLocations(
-    locationOrLocations:
-        | lsp.Location
-        | lsp.Location[]
-        | lsp.LocationLink[]
-        | null
+    locationOrLocations: lsp.Location | lsp.Location[] | lsp.LocationLink[] | null
 ): sourcegraph.Location[] | null {
     if (!locationOrLocations) {
         return null
     }
-    return asArray<lsp.Location | lsp.LocationLink>(
-        locationOrLocations
-    ).map(location => convertLocation(location))
+    return asArray<lsp.Location | lsp.LocationLink>(locationOrLocations).map(location => convertLocation(location))
 }
 
 /**
@@ -71,10 +59,7 @@ export function convertPosition(position: lsp.Position): sourcegraph.Position {
  * @param range An LSP range.
  */
 export function convertRange(range: lsp.Range): sourcegraph.Range {
-    return new sourcegraph.Range(
-        convertPosition(range.start),
-        convertPosition(range.end)
-    )
+    return new sourcegraph.Range(convertPosition(range.start), convertPosition(range.end))
 }
 
 /**
@@ -102,9 +87,7 @@ export function convertProviderParams(
  *
  * @param hover An LSP hover.
  */
-export function convertHover(
-    hover: lsp.Hover | null
-): sourcegraph.Hover | null {
+export function convertHover(hover: lsp.Hover | null): sourcegraph.Hover | null {
     if (!hover) {
         return null
     }
@@ -125,13 +108,7 @@ export function convertHover(
                     if (!content.value) {
                         return ''
                     }
-                    return (
-                        '```' +
-                        content.language +
-                        '\n' +
-                        content.value +
-                        '\n```'
-                    )
+                    return '```' + content.language + '\n' + content.value + '\n```'
                 })
                 .filter(str => !!str.trim())
                 .join('\n\n---\n\n'),
@@ -144,15 +121,10 @@ export function convertHover(
  *
  * @param diagnostic An LSP diagnostic.
  */
-export function convertDiagnosticToDecoration(
-    diagnostic: lsp.Diagnostic
-): sourcegraph.TextDocumentDecoration {
+export function convertDiagnosticToDecoration(diagnostic: lsp.Diagnostic): sourcegraph.TextDocumentDecoration {
     return {
         after: {
-            color:
-                DIAGNOSTIC_COLORS[
-                    diagnostic.severity ?? lsp.DiagnosticSeverity.Hint
-                ],
+            color: DIAGNOSTIC_COLORS[diagnostic.severity ?? lsp.DiagnosticSeverity.Hint],
             contentText: diagnostic.message,
         },
         range: convertRange(diagnostic.range),

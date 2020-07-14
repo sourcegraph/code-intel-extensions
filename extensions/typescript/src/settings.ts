@@ -71,10 +71,5 @@ export interface Settings {
     /**
      * The log level to pass to tsserver. Logs will be forwarded to the browser console with the prefix [tsserver].
      */
-    'typescript.tsserver.log'?:
-        | false
-        | 'terse'
-        | 'normal'
-        | 'requestTime'
-        | 'verbose'
+    'typescript.tsserver.log'?: false | 'terse' | 'normal' | 'requestTime' | 'verbose'
 }

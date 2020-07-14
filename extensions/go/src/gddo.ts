@@ -1,10 +1,6 @@
 import { API } from '../../../shared/util/api'
 import { fetch } from '../../../shared/util/fetch'
-import {
-    isDefined,
-    safePromise,
-    sortUnique,
-} from '../../../shared/util/helpers'
+import { isDefined, safePromise, sortUnique } from '../../../shared/util/helpers'
 
 export interface Response {
     results: {
@@ -56,10 +52,7 @@ export async function findReposViaGDDO(
  */
 function transformGithubCloneURL(path: string): string | undefined {
     if (path.startsWith('github.com/')) {
-        return path
-            .split('/')
-            .slice(0, 3)
-            .join('/')
+        return path.split('/').slice(0, 3).join('/')
     }
 
     return undefined

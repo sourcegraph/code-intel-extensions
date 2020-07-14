@@ -8,13 +8,7 @@ describe('all defined languages', () => {
         const languageIDs = (
             await Promise.all(
                 languageSpecs.map(async ({ languageID }) => {
-                    const filePath = path.join(
-                        __dirname,
-                        '..',
-                        '..',
-                        'icons',
-                        `${languageID}.png`
-                    )
+                    const filePath = path.join(__dirname, '..', '..', 'icons', `${languageID}.png`)
 
                     return {
                         languageID,
@@ -29,9 +23,7 @@ describe('all defined languages', () => {
 
         if (languageIDs.length > 0) {
             assert.fail(
-                `Each LANG must have a corresponding icons/LANG.png file. Icons missing for ${languageIDs.join(
-                    ', '
-                )}.`
+                `Each LANG must have a corresponding icons/LANG.png file. Icons missing for ${languageIDs.join(', ')}.`
             )
         }
     })

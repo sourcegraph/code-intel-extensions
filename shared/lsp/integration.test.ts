@@ -1,8 +1,5 @@
 // Stub Sourcegraph API
-import {
-    createStubSourcegraphAPI,
-    createStubTextDocument,
-} from '@sourcegraph/extension-api-stubs'
+import { createStubSourcegraphAPI, createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import mock from 'mock-require'
 const stubAPI = createStubSourcegraphAPI()
 mock('sourcegraph', stubAPI)
@@ -49,10 +46,7 @@ const stubTransport = (server: Record<string, (params: any) => any>) =>
 describe('register()', () => {
     it('should initialize one connection for each workspace folder', async () => {
         const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [
-            { uri: new URL('git://repo1?rev') },
-            { uri: new URL('git://repo2?rev') },
-        ]
+        sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
         const server = {
             initialize: sinon.spy(
                 (params: lsp.InitializeParams): lsp.InitializeResult => ({
@@ -87,10 +81,7 @@ describe('register()', () => {
     })
     it('should close a connection when a workspace folder is closed', async () => {
         const sourcegraph = createStubSourcegraphAPI()
-        sourcegraph.workspace.roots = [
-            { uri: new URL('git://repo1?rev') },
-            { uri: new URL('git://repo2?rev') },
-        ]
+        sourcegraph.workspace.roots = [{ uri: new URL('git://repo1?rev') }, { uri: new URL('git://repo2?rev') }]
         const server = {
             initialize: sinon.spy(
                 (params: lsp.InitializeParams): lsp.InitializeResult => ({
@@ -122,17 +113,15 @@ describe('register()', () => {
                     },
                 })
             ),
-            'textDocument/references': sinon.spy(
-                (params: lsp.ReferenceParams): lsp.Location[] => [
-                    {
-                        uri: new URL('bar.ts', repoRoot).href,
-                        range: {
-                            start: { line: 1, character: 2 },
-                            end: { line: 3, character: 4 },
-                        },
+            'textDocument/references': sinon.spy((params: lsp.ReferenceParams): lsp.Location[] => [
+                {
+                    uri: new URL('bar.ts', repoRoot).href,
+                    range: {
+                        start: { line: 1, character: 2 },
+                        end: { line: 3, character: 4 },
                     },
-                ]
-            ),
+                },
+            ]),
         }
         const createConnection = stubTransport(server)
 
@@ -173,10 +162,7 @@ describe('register()', () => {
 
         sinon.assert.calledOnce(stubAPI.languages.registerReferenceProvider)
 
-        const [
-            selector,
-            provider,
-        ] = stubAPI.languages.registerReferenceProvider.args[0]
+        const [selector, provider] = stubAPI.languages.registerReferenceProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
@@ -184,11 +170,9 @@ describe('register()', () => {
             },
         ])
         const result = await consume(
-            provider.provideReferences(
-                stubAPI.workspace.textDocuments[0],
-                new sourcegraph.Position(0, 2),
-                { includeDeclaration: false }
-            )
+            provider.provideReferences(stubAPI.workspace.textDocuments[0], new sourcegraph.Position(0, 2), {
+                includeDeclaration: false,
+            })
         )
         sinon.assert.calledOnce(server['textDocument/references'])
         sinon.assert.calledWith(server['textDocument/references'], {
@@ -199,10 +183,7 @@ describe('register()', () => {
         assert.deepStrictEqual(result, [
             {
                 uri: new URL('bar.ts', repoRoot),
-                range: new stubAPI.Range(
-                    new stubAPI.Position(1, 2),
-                    new stubAPI.Position(3, 4)
-                ),
+                range: new stubAPI.Range(new stubAPI.Position(1, 2), new stubAPI.Position(3, 4)),
             },
         ])
     })
@@ -261,10 +242,7 @@ describe('register()', () => {
 
         sinon.assert.calledOnce(stubAPI.languages.registerDefinitionProvider)
 
-        const [
-            selector,
-            provider,
-        ] = stubAPI.languages.registerDefinitionProvider.args[0]
+        const [selector, provider] = stubAPI.languages.registerDefinitionProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
@@ -272,10 +250,7 @@ describe('register()', () => {
             },
         ])
         const result = await consume(
-            provider.provideDefinition(
-                stubAPI.workspace.textDocuments[0],
-                new sourcegraph.Position(0, 2)
-            )
+            provider.provideDefinition(stubAPI.workspace.textDocuments[0], new sourcegraph.Position(0, 2))
         )
         sinon.assert.calledOnce(server['textDocument/definition'])
         sinon.assert.calledWith(server['textDocument/definition'], {
@@ -285,10 +260,7 @@ describe('register()', () => {
         assert.deepStrictEqual(result, [
             {
                 uri: new URL('bar.ts', repoRoot),
-                range: new sourcegraph.Range(
-                    new sourcegraph.Position(1, 2),
-                    new sourcegraph.Position(3, 4)
-                ),
+                range: new sourcegraph.Range(new sourcegraph.Position(1, 2), new sourcegraph.Position(3, 4)),
             },
         ])
     })
@@ -354,10 +326,7 @@ describe('register()', () => {
         // Assert hover provider was registered
         sinon.assert.calledOnce(stubAPI.languages.registerHoverProvider)
 
-        const [
-            selector,
-            hoverProvider,
-        ] = stubAPI.languages.registerHoverProvider.args[0]
+        const [selector, hoverProvider] = stubAPI.languages.registerHoverProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
@@ -368,10 +337,7 @@ describe('register()', () => {
             },
         ])
         const result = await consume(
-            hoverProvider.provideHover(
-                stubAPI.workspace.textDocuments[0],
-                new sourcegraph.Position(0, 2)
-            )
+            hoverProvider.provideHover(stubAPI.workspace.textDocuments[0], new sourcegraph.Position(0, 2))
         )
         sinon.assert.calledOnce(server['textDocument/hover'])
         sinon.assert.calledWith(server['textDocument/hover'], {
@@ -394,17 +360,15 @@ describe('register()', () => {
                     },
                 })
             ),
-            'textDocument/implementation': sinon.spy(
-                (params: lsp.TextDocumentPositionParams): lsp.Location[] => [
-                    {
-                        uri: new URL('bar.ts', repoRoot).href,
-                        range: {
-                            start: { line: 1, character: 2 },
-                            end: { line: 3, character: 4 },
-                        },
+            'textDocument/implementation': sinon.spy((params: lsp.TextDocumentPositionParams): lsp.Location[] => [
+                {
+                    uri: new URL('bar.ts', repoRoot).href,
+                    range: {
+                        start: { line: 1, character: 2 },
+                        end: { line: 3, character: 4 },
                     },
-                ]
-            ),
+                },
+            ]),
         }
         const createConnection = stubTransport(server)
 
@@ -445,11 +409,7 @@ describe('register()', () => {
 
         sinon.assert.calledOnce(stubAPI.languages.registerLocationProvider)
 
-        const [
-            ,
-            selector,
-            provider,
-        ] = stubAPI.languages.registerLocationProvider.args[0]
+        const [, selector, provider] = stubAPI.languages.registerLocationProvider.args[0]
         assert.deepStrictEqual(selector, [
             {
                 language: 'typescript',
@@ -457,10 +417,7 @@ describe('register()', () => {
             },
         ])
         const result = await consume(
-            provider.provideLocations(
-                stubAPI.workspace.textDocuments[0],
-                new sourcegraph.Position(0, 2)
-            )
+            provider.provideLocations(stubAPI.workspace.textDocuments[0], new sourcegraph.Position(0, 2))
         )
         sinon.assert.calledOnce(server['textDocument/implementation'])
         sinon.assert.calledWith(server['textDocument/implementation'], {
@@ -470,21 +427,14 @@ describe('register()', () => {
         assert.deepStrictEqual(result, [
             {
                 uri: new URL('bar.ts', repoRoot),
-                range: new stubAPI.Range(
-                    new stubAPI.Position(1, 2),
-                    new stubAPI.Position(3, 4)
-                ),
+                range: new stubAPI.Range(new stubAPI.Position(1, 2), new stubAPI.Position(3, 4)),
             },
         ])
     })
 })
 
-async function consume<T>(
-    result: sourcegraph.ProviderResult<T>
-): Promise<T | null | undefined> {
-    const observable = (await result) as sourcegraph.Subscribable<
-        T | null | undefined
-    >
+async function consume<T>(result: sourcegraph.ProviderResult<T>): Promise<T | null | undefined> {
+    const observable = (await result) as sourcegraph.Subscribable<T | null | undefined>
     return new Promise(r => {
         const sub = observable.subscribe(v => {
             r(v)

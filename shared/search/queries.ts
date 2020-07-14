@@ -21,13 +21,7 @@ export function definitionQuery({
 }): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
-    return [
-        `^${searchToken}$`,
-        'type:symbol',
-        'patternType:regexp',
-        'case:yes',
-        fileExtensionTerm(path, fileExts),
-    ]
+    return [`^${searchToken}$`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(path, fileExts)]
 }
 
 /**
@@ -49,13 +43,7 @@ export function referencesQuery({
 }): string[] {
     const { path } = parseGitURI(new URL(doc.uri))
 
-    return [
-        `\\b${searchToken}\\b`,
-        'type:file',
-        'patternType:regexp',
-        'case:yes',
-        fileExtensionTerm(path, fileExts),
-    ]
+    return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(path, fileExts)]
 }
 
 const blacklist = ['thrift', 'proto', 'graphql']

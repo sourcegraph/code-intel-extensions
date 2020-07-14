@@ -9,8 +9,5 @@ export interface LSPClient extends Unsubscribable {
      * @param workspaceRoot The client workspace folder root URI that will be ensured to be open before calling the function.
      * @param fn Callback that is called with the connection.
      */
-    withConnection<R>(
-        workspaceRoot: URL,
-        fn: (connection: LSPConnection) => Promise<R>
-    ): Promise<R>
+    withConnection<R>(workspaceRoot: URL, fn: (connection: LSPConnection) => Promise<R>): Promise<R>
 }

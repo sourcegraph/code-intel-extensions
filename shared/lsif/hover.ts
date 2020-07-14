@@ -13,13 +13,7 @@ export interface HoverPayload {
 }
 
 const hoverQuery = gql`
-    query Hover(
-        $repository: String!
-        $commit: String!
-        $path: String!
-        $line: Int!
-        $character: Int!
-    ) {
+    query Hover($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
         repository(name: $repository) {
             commit(rev: $commit) {
                 blob(path: $path) {
@@ -50,9 +44,7 @@ const hoverQuery = gql`
 export async function hoverForPosition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position,
-    queryGraphQL: QueryGraphQLFn<
-        GenericLSIFResponse<HoverResponse | null>
-    > = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>> = sgQueryGraphQL
 ): Promise<sourcegraph.Hover | null> {
     return hoverResponseToHover(
         await queryLSIF(
@@ -72,9 +64,7 @@ export async function hoverForPosition(
  *
  * @param lsifObj The resolved LSIF object.
  */
-export function hoverResponseToHover(
-    lsifObj: HoverResponse | null
-): sourcegraph.Hover | null {
+export function hoverResponseToHover(lsifObj: HoverResponse | null): sourcegraph.Hover | null {
     return hoverPayloadToHover(lsifObj?.hover || null)
 }
 
@@ -83,9 +73,7 @@ export function hoverResponseToHover(
  *
  * @param payload The payload.
  */
-export function hoverPayloadToHover(
-    payload: HoverPayload | null
-): sourcegraph.Hover | null {
+export function hoverPayloadToHover(payload: HoverPayload | null): sourcegraph.Hover | null {
     if (!payload) {
         return null
     }

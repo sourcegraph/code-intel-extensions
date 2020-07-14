@@ -31,11 +31,10 @@ export class TelemetryEmitter {
      */
     public async emit(action: string, args: object = {}): Promise<void> {
         try {
-            await sourcegraph.commands.executeCommand(
-                'logTelemetryEvent',
-                `codeintel.${action}`,
-                { ...args, durationMs: this.elapsed() }
-            )
+            await sourcegraph.commands.executeCommand('logTelemetryEvent', `codeintel.${action}`, {
+                ...args,
+                durationMs: this.elapsed(),
+            })
         } catch {
             // Older version of Sourcegraph may have not registered this
             // command, causing the promise to reject. We can safely ignore

@@ -6,10 +6,10 @@
       {
         "name": "ts-graphql-plugin",
         "schema": "../schema/schema.graphql",
-        "tag": "gql"
-      }
-    ]
+        "tag": "gql",
+      },
+    ],
   },
   "include": ["./**/*"],
-  "exclude": ["dist"]
+  "exclude": ["dist"],
 }

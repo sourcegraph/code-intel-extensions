@@ -35,13 +35,9 @@ export interface Result {
  * @param searchResult The search result.
  */
 export function searchResultToResults({ ...result }: SearchResult): Result[] {
-    const symbolResults = result.symbols
-        ? result.symbols.map(s => searchResultSymbolToResults(result, s))
-        : []
+    const symbolResults = result.symbols ? result.symbols.map(s => searchResultSymbolToResults(result, s)) : []
 
-    const lineMatchResults = result.lineMatches
-        ? result.lineMatches.flatMap(m => lineMatchesToResults(result, m))
-        : []
+    const lineMatchResults = result.lineMatches ? result.lineMatches.flatMap(m => lineMatchesToResults(result, m)) : []
 
     return symbolResults.filter(isDefined).concat(lineMatchResults)
 }
@@ -100,12 +96,7 @@ function lineMatchesToResults(
         repo,
         rev,
         file,
-        range: new sourcegraph.Range(
-            lineNumber,
-            offset,
-            lineNumber,
-            offset + length
-        ),
+        range: new sourcegraph.Range(lineNumber, offset, lineNumber, offset + length),
     }))
 }
 
@@ -114,11 +105,6 @@ function lineMatchesToResults(
  *
  * @param result The search result.
  */
-export function resultToLocation({
-    repo,
-    rev,
-    file,
-    range,
-}: Result): sourcegraph.Location {
+export function resultToLocation({ repo, rev, file, range }: Result): sourcegraph.Location {
     return { uri: new URL(`git://${repo}?${rev || 'HEAD'}#${file}`), range }
 }

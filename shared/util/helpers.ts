@@ -13,9 +13,7 @@ export function isDefined<T>(value: T | undefined): value is T {
  *
  * @param value The value to test.
  */
-export function nonEmpty<T>(
-    value: T | T[] | null | undefined
-): value is T | T[] {
+export function nonEmpty<T>(value: T | T[] | null | undefined): value is T | T[] {
     return !!value && !(Array.isArray(value) && value.length === 0)
 }
 
@@ -35,10 +33,7 @@ export function asArray<T>(value: T | T[] | null): T[] {
  * @param value The list of values, a single value, or null.
  * @param fn The map function.
  */
-export function mapArrayish<T, R>(
-    value: T | T[] | null,
-    fn: (value: T) => R
-): R | R[] | null {
+export function mapArrayish<T, R>(value: T | T[] | null, fn: (value: T) => R): R | R[] | null {
     return Array.isArray(value) ? value.map(fn) : value ? fn(value) : null
 }
 
@@ -69,9 +64,7 @@ export function notIn<T>(blacklist: T[]): (v: T) => boolean {
  *
  * @param p The promise.
  */
-export function safePromise<P, R>(
-    p: (arg: P) => Promise<R>
-): (arg: P) => Promise<R | undefined> {
+export function safePromise<P, R>(p: (arg: P) => Promise<R>): (arg: P) => Promise<R | undefined> {
     return async (arg: P): Promise<R | undefined> => {
         try {
             return await p(arg)

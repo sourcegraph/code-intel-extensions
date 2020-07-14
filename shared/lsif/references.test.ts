@@ -3,11 +3,7 @@ import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
 import { QueryGraphQLFn } from '../util/graphql'
 import { GenericLSIFResponse } from './api'
-import {
-    ReferencesResponse,
-    MAX_REFERENCE_PAGE_REQUESTS,
-    referencesForPosition,
-} from './references'
+import { ReferencesResponse, MAX_REFERENCE_PAGE_REQUESTS, referencesForPosition } from './references'
 import {
     gatherValues,
     makeEnvelope,
@@ -23,9 +19,7 @@ import {
 
 describe('referencesForPosition', () => {
     it('should correctly parse result', async () => {
-        const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-        >(() =>
+        const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
             makeEnvelope({
                 references: {
                     nodes: [
@@ -38,50 +32,29 @@ describe('referencesForPosition', () => {
             })
         )
 
-        assert.deepEqual(
-            await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)),
+        assert.deepEqual(await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)), [
             [
-                [
-                    new sourcegraph.Location(
-                        new URL('git://repo1?deadbeef1#/a.ts'),
-                        range1
-                    ),
-                    new sourcegraph.Location(
-                        new URL('git://repo2?deadbeef2#/b.ts'),
-                        range2
-                    ),
-                    new sourcegraph.Location(
-                        new URL('git://repo3?deadbeef3#/c.ts'),
-                        range3
-                    ),
-                ],
-            ]
-        )
+                new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+                new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+                new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
+            ],
+        ])
     })
 
     it('should deal with empty payload', async () => {
-        const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-        >(() => makeEnvelope())
-
-        assert.deepEqual(
-            await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)),
-            []
+        const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
+            makeEnvelope()
         )
+
+        assert.deepEqual(await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)), [])
     })
 
     it('should paginate results', async () => {
         const stub = sinon.stub<
-            Parameters<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >,
-            ReturnType<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >
+            Parameters<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>,
+            ReturnType<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>
         >()
-        const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-        >(stub)
+        const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(stub)
 
         stub.onCall(0).returns(
             makeEnvelope({
@@ -108,27 +81,15 @@ describe('referencesForPosition', () => {
             })
         )
 
-        const location1 = new sourcegraph.Location(
-            new URL('git://repo1?deadbeef1#/a.ts'),
-            range1
-        )
-        const location2 = new sourcegraph.Location(
-            new URL('git://repo2?deadbeef2#/b.ts'),
-            range2
-        )
-        const location3 = new sourcegraph.Location(
-            new URL('git://repo3?deadbeef3#/c.ts'),
-            range3
-        )
+        const location1 = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
+        const location2 = new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2)
+        const location3 = new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3)
 
-        assert.deepEqual(
-            await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)),
-            [
-                [location1],
-                [location1, location2],
-                [location1, location2, location3],
-            ]
-        )
+        assert.deepEqual(await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)), [
+            [location1],
+            [location1, location2],
+            [location1, location2, location3],
+        ])
 
         assert.equal(queryGraphQLFn.getCall(0).args[1]?.after, undefined)
         assert.equal(queryGraphQLFn.getCall(1).args[1]?.after, 'page2')
@@ -136,9 +97,7 @@ describe('referencesForPosition', () => {
     })
 
     it('should not page results indefinitely', async () => {
-        const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-        >(() =>
+        const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
             makeEnvelope({
                 references: {
                     nodes: [{ resource: resource1, range: range1 }],
@@ -147,10 +106,7 @@ describe('referencesForPosition', () => {
             })
         )
 
-        const location = new sourcegraph.Location(
-            new URL('git://repo1?deadbeef1#/a.ts'),
-            range1
-        )
+        const location = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
 
         const values = [[location]]
         for (let i = 1; i < MAX_REFERENCE_PAGE_REQUESTS; i++) {
@@ -159,10 +115,7 @@ describe('referencesForPosition', () => {
             values.push(lastCopy)
         }
 
-        assert.deepEqual(
-            await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)),
-            values
-        )
+        assert.deepEqual(await gatherValues(referencesForPosition(doc, pos, queryGraphQLFn)), values)
 
         assert.equal(queryGraphQLFn.callCount, MAX_REFERENCE_PAGE_REQUESTS)
     })

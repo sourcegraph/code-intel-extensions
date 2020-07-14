@@ -20,9 +20,7 @@ import {
 
 describe('definitionForPosition', () => {
     it('should correctly parse result', async () => {
-        const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
-        >(() =>
+        const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
             makeEnvelope({
                 definitions: {
                     nodes: [
@@ -34,35 +32,18 @@ describe('definitionForPosition', () => {
             })
         )
 
-        assert.deepEqual(
-            await definitionForPosition(doc, pos, queryGraphQLFn),
-            [
-                new sourcegraph.Location(
-                    new URL('git://repo1?deadbeef1#/a.ts'),
-                    range1
-                ),
-                new sourcegraph.Location(
-                    new URL('git://repo2?deadbeef2#/b.ts'),
-                    range2
-                ),
-                new sourcegraph.Location(
-                    new URL('git://repo3?deadbeef3#/c.ts'),
-                    range3
-                ),
-            ]
-        )
+        assert.deepEqual(await definitionForPosition(doc, pos, queryGraphQLFn), [
+            new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+            new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+            new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
+        ])
     })
 
     it('should deal with empty payload', async () => {
-        const queryGraphQLFn = sinon.spy<
-            QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
-        >(() => makeEnvelope())
-
-        assert.deepEqual(
-            await gatherValues(
-                createProviders(queryGraphQLFn).definition(doc, pos)
-            ),
-            [null]
+        const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
+            makeEnvelope()
         )
+
+        assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(doc, pos)), [null])
     })
 })

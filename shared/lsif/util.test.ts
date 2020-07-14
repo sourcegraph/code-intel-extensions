@@ -27,9 +27,7 @@ export const resource1 = makeResource('repo1', 'deadbeef1', 'a.ts')
 export const resource2 = makeResource('repo2', 'deadbeef2', 'b.ts')
 export const resource3 = makeResource('repo3', 'deadbeef3', 'c.ts')
 
-export const makeEnvelope = <R>(
-    value: R | null = null
-): Promise<GenericLSIFResponse<R | null>> =>
+export const makeEnvelope = <R>(value: R | null = null): Promise<GenericLSIFResponse<R | null>> =>
     Promise.resolve({
         repository: {
             commit: {

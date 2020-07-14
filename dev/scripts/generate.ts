@@ -38,9 +38,7 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
                 title: `${stylized} code intelligence`,
                 description: `Provides basic code intelligence for ${stylized} using the Sourcegraph search API`,
                 activationEvents: [`onLanguage:${languageID}`],
-                icon: `data:image/png;base64,${(
-                    await fs.readFile(iconFilename)
-                ).toString('base64')}`,
+                icon: `data:image/png;base64,${(await fs.readFile(iconFilename)).toString('base64')}`,
             },
             null,
             2

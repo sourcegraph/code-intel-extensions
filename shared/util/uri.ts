@@ -26,11 +26,7 @@ export function removeHash(url: URL): URL {
  * @param accessToken An optional access token.
  * @param uri The URI to transform.
  */
-export function gitToRawApiUri(
-    sourcegraphURL: URL,
-    accessToken: string | undefined,
-    uri: URL
-): URL {
+export function gitToRawApiUri(sourcegraphURL: URL, accessToken: string | undefined, uri: URL): URL {
     if (uri.protocol !== 'git:') {
         throw new Error(`Not a Sourcegraph git:// URI: ${uri.href}`)
     }
@@ -50,19 +46,12 @@ export function gitToRawApiUri(
  * @param rawApiUrl The URL to transform.
  */
 export function rawApiToGitUri(rawApiUrl: URL): URL {
-    const match = rawApiUrl.pathname.match(
-        /^\/([^@]+)(?:@([^/]+))?\/-\/raw\/(.*)$/
-    )
+    const match = rawApiUrl.pathname.match(/^\/([^@]+)(?:@([^/]+))?\/-\/raw\/(.*)$/)
     if (!match) {
         throw new Error(`Not a Sourcegraph raw API URL: ${rawApiUrl.href}`)
     }
 
-    const [, repoName, rev, filePath] = match as [
-        string,
-        string,
-        string | undefined,
-        string
-    ]
+    const [, repoName, rev, filePath] = match as [string, string, string | undefined, string]
 
     const gitUri = new URL(`git://${repoName}`)
     gitUri.search = rev || ''
@@ -75,12 +64,7 @@ export function rawApiToGitUri(rawApiUrl: URL): URL {
  *
  * @param url The text document URL.
  */
-export function parseGitURI({
-    hostname,
-    pathname,
-    search,
-    hash,
-}: URL): { repo: string; commit: string; path: string } {
+export function parseGitURI({ hostname, pathname, search, hash }: URL): { repo: string; commit: string; path: string } {
     return {
         repo: hostname + pathname,
         commit: decodeURIComponent(search.slice(1)),

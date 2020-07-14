@@ -85,9 +85,7 @@ export async function makeRangeWindowFactory(
             // Remove oldest entries to keep the cache under capacity
             while (cache.size > WINDOW_CACHE_CAPACITY) {
                 cache.delete(
-                    Array.from(cache.entries()).reduce((e1, e2) =>
-                        e1[1].lasthit < e2[1].lasthit ? e1 : e2
-                    )[0]
+                    Array.from(cache.entries()).reduce((e1, e2) => (e1[1].lasthit < e2[1].lasthit ? e1 : e2))[0]
                 )
             }
         } else {
@@ -95,19 +93,11 @@ export async function makeRangeWindowFactory(
             cacheEntry.lasthit = new Date()
         }
 
-        return findOverlappingWindows(
-            doc,
-            position,
-            cacheEntry?.windows || [],
-            queryGraphQL
-        )
+        return findOverlappingWindows(doc, position, cacheEntry?.windows || [], queryGraphQL)
     }
 
     return async (doc, position) =>
-        findOverlappingCodeIntelligenceRange(
-            position,
-            (await getPromise(doc, position)) || []
-        )
+        findOverlappingCodeIntelligenceRange(position, (await getPromise(doc, position)) || [])
 }
 
 /**
@@ -151,9 +141,7 @@ export async function findOverlappingWindows(
         // clamp at zero or after the previous context
         index < 0 ? 0 : rangeWindows[index].endLine,
         // clamp before the next context, if one exists
-        index + 1 < rangeWindows.length
-            ? rangeWindows[index + 1].startLine
-            : undefined
+        index + 1 < rangeWindows.length ? rangeWindows[index + 1].startLine : undefined
     )
 
     // Query this range and insert it into the current index to keep the
@@ -170,11 +158,7 @@ export async function findOverlappingWindows(
  * @param lowerBound The minimum lower bound of the window.
  * @param upperBound The maximum upper bound of the window.
  */
-export function calculateRangeWindow(
-    line: number,
-    lowerBound: number,
-    upperBound?: number
-): [number, number] {
+export function calculateRangeWindow(line: number, lowerBound: number, upperBound?: number): [number, number] {
     const radius = RANGE_WINDOW_SIZE / 2
     const candidateStartLine = line - radius
     const candidateEndLine = line + radius
@@ -183,10 +167,7 @@ export function calculateRangeWindow(
     const startLine = candidateStartLine - Math.max(0, upperSlack)
     const endLine = candidateEndLine + Math.max(0, lowerSlack)
 
-    return [
-        Math.max(startLine, lowerBound),
-        upperBound ? Math.min(endLine, upperBound) : endLine,
-    ]
+    return [Math.max(startLine, lowerBound), upperBound ? Math.min(endLine, upperBound) : endLine]
 }
 
 /**
@@ -208,13 +189,9 @@ export function findOverlappingCodeIntelligenceRange(
                 },
             }) =>
                 // left side check
-                (position.line > startLine ||
-                    (position.line === startLine &&
-                        position.character >= startCharacter)) &&
+                (position.line > startLine || (position.line === startLine && position.character >= startCharacter)) &&
                 // right side check
-                (position.line < endLine ||
-                    (position.line === endLine &&
-                        position.character < endCharacter))
+                (position.line < endLine || (position.line === endLine && position.character < endCharacter))
         ) || null
     )
 }
@@ -234,22 +211,12 @@ interface IntrospectionResponse {
 }
 
 /** Determine if the LSIF query resolvers have a ranges function. */
-async function hasRangesQuery(
-    queryGraphQL: QueryGraphQLFn<IntrospectionResponse> = sgQueryGraphQL
-): Promise<boolean> {
-    return (await queryGraphQL(introspectionQuery)).__type.fields.some(
-        field => field.name === 'ranges'
-    )
+async function hasRangesQuery(queryGraphQL: QueryGraphQLFn<IntrospectionResponse> = sgQueryGraphQL): Promise<boolean> {
+    return (await queryGraphQL(introspectionQuery)).__type.fields.some(field => field.name === 'ranges')
 }
 
 const rangesQuery = gql`
-    query Ranges(
-        $repository: String!
-        $commit: String!
-        $path: String!
-        $startLine: Int!
-        $endLine: Int!
-    ) {
+    query Ranges($repository: String!, $commit: String!, $path: String!, $startLine: Int!, $endLine: Int!) {
         repository(name: $repository) {
             commit(rev: $commit) {
                 blob(path: $path) {
@@ -319,16 +286,11 @@ export async function rangesInRangeWindow(
     doc: sourcegraph.TextDocument,
     startLine: number,
     endLine: number,
-    queryGraphQL: QueryGraphQLFn<
-        GenericLSIFResponse<RangesResponse | null>
-    > = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>> = sgQueryGraphQL
 ): Promise<CodeIntelligenceRange[] | null> {
     return rangesResponseToCodeIntelligenceRangeNodes(
         doc,
-        await queryLSIF(
-            { query: rangesQuery, uri: doc.uri, startLine, endLine },
-            queryGraphQL
-        )
+        await queryLSIF({ query: rangesQuery, uri: doc.uri, startLine, endLine }, queryGraphQL)
     )
 }
 
@@ -353,11 +315,7 @@ export function rangesResponseToCodeIntelligenceRangeNodes(
     doc: sourcegraph.TextDocument,
     lsifObj: RangesResponse | null
 ): CodeIntelligenceRange[] | null {
-    return (
-        lsifObj?.ranges.nodes.map(node =>
-            nodeToCodeIntelligenceRange(doc, node)
-        ) || null
-    )
+    return lsifObj?.ranges.nodes.map(node => nodeToCodeIntelligenceRange(doc, node)) || null
 }
 
 /**
@@ -368,21 +326,12 @@ export function rangesResponseToCodeIntelligenceRangeNodes(
  */
 export function nodeToCodeIntelligenceRange(
     doc: sourcegraph.TextDocument,
-    {
-        range,
-        definitions,
-        references,
-        hover,
-    }: CodeIntelligenceRangeConnectionNode
+    { range, definitions, references, hover }: CodeIntelligenceRangeConnectionNode
 ): CodeIntelligenceRange {
     return {
         range,
-        definitions: (definitions?.nodes || []).map(node =>
-            nodeToLocation(doc, node)
-        ),
-        references: (references?.nodes || []).map(node =>
-            nodeToLocation(doc, node)
-        ),
+        definitions: (definitions?.nodes || []).map(node => nodeToLocation(doc, node)),
+        references: (references?.nodes || []).map(node => nodeToLocation(doc, node)),
         hover,
     }
 }

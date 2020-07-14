@@ -12,9 +12,7 @@ describe('resultToLocation', () => {
         })
 
         assert.deepStrictEqual(location, {
-            uri: new URL(
-                'git://github.com/foo/bar?84bf4aea50d542be71e0e6339ff8e096b35c84e6#bonk/quux.ts'
-            ),
+            uri: new URL('git://github.com/foo/bar?84bf4aea50d542be71e0e6339ff8e096b35c84e6#bonk/quux.ts'),
             range: new sourcegraph.Range(10, 20, 15, 25),
         })
     })

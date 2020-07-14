@@ -9,13 +9,13 @@ This extension provides TypeScript/JavaScript code intelligence on Sourcegraph.
 ## Usage
 
 1. Enable the `sourcegraph/typescript` extension:
-    - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/typescript) to enable it.
-    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/typescript`, and enable it.
+   - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/typescript) to enable it.
+   - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/typescript`, and enable it.
 1. Visit any TypeScript code file on Sourcegraph.
 1. Hover over a token in the code file.
-    - See a description of the token.
-    - Click **Go to definition** (if available) to go to the token's definition.
-    - Click **Find references** to see all references to the token.
+   - See a description of the token.
+   - Click **Go to definition** (if available) to go to the token's definition.
+   - Click **Find references** to see all references to the token.
 
 ### On your code host
 
@@ -23,15 +23,15 @@ This extension adds the same features to code files and diffs on your code host 
 
 1. Follow the [usage steps](#usage) above to enable this extension.
 1. Install the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
-    - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
+   - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
 1. Visit any file on your code host and hover over a token to see a description of the token, a **Go to definition** action (if available), and a **Find references** action.
 
 ## Basic code intelligence
 
 This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
--   "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
--   "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
+- "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
+- "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
 
 These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
 
@@ -116,8 +116,8 @@ http {
 }
 ```
 
--   If you're running the quickstart on Linux, change `host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
--   If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)), change `host.docker.internal` to `lang-typescript`.
+- If you're running the quickstart on Linux, change `host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
+- If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)), change `host.docker.internal` to `lang-typescript`.
 
 Add these to your Sourcegraph global settings:
 
@@ -128,10 +128,10 @@ Add these to your Sourcegraph global settings:
 
 Fill in the `PASSWORD` that you created above.
 
--   If you're running the quickstart on Linux, change `host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
--   If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)):
-    -   `typescript.serverUrl` is the address of the TypeScript language server from the perspective of a user's browser (e.g. https://sourcegraph.example.com/typescript)
-    -   `typescript.sourcegraphUrl` is the address of the Sourcegraph instance from the perspective of the TypeScript language server (e.g. http://sourcegraph-frontend:30080)
+- If you're running the quickstart on Linux, change `host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
+- If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)):
+  - `typescript.serverUrl` is the address of the TypeScript language server from the perspective of a user's browser (e.g. https://sourcegraph.example.com/typescript)
+  - `typescript.sourcegraphUrl` is the address of the Sourcegraph instance from the perspective of the TypeScript language server (e.g. http://sourcegraph-frontend:30080)
 
 Finally, restart the sourcegraph/server container (or nginx deployment if deployed to Kubernetes) to pick up the configuration change.
 
@@ -143,32 +143,32 @@ You can always revoke the `PASSWORD` by deleting the `.htpasswd` file and restar
 
 1. Run the Go language server:
 
-    ```sh
-    docker run -p 8080:8080 sourcegraph/lang-typescript
-    ```
+   ```sh
+   docker run -p 8080:8080 sourcegraph/lang-typescript
+   ```
 
-    You can verify it's up and running with [`ws`](https://github.com/hashrocket/ws) (run this from the same machine your browser is running on):
+   You can verify it's up and running with [`ws`](https://github.com/hashrocket/ws) (run this from the same machine your browser is running on):
 
-    ```sh
-    $ go get -u github.com/hashrocket/ws
-    $ ws ws://localhost:8080
-    >
-    ```
+   ```sh
+   $ go get -u github.com/hashrocket/ws
+   $ ws ws://localhost:8080
+   >
+   ```
 
 1. Enable this extension on your Sourcegraph https://sourcegraph.example.com/extensions/sourcegraph/typescript
 
 1. Add these to your Sourcegraph settings in https://sourcegraph.example.com/site-admin/global-settings and make sure the port matches either the Docker command or your Kubernetes config:
 
-    ```json
-    "typescript.serverUrl": "ws://localhost:8080"
-    "typescript.sourcegraphUrl": "http://host.docker.internal:7080",
-    ```
+   ```json
+   "typescript.serverUrl": "ws://localhost:8080"
+   "typescript.sourcegraphUrl": "http://host.docker.internal:7080",
+   ```
 
-    If you're running on Linux, change `go.sourcegraphUrl` to the IP given by:
+   If you're running on Linux, change `go.sourcegraphUrl` to the IP given by:
 
-    ```bash
-    ip addr show docker0 | grep -Po 'inet \K[\d.]+'
-    ```
+   ```bash
+   ip addr show docker0 | grep -Po 'inet \K[\d.]+'
+   ```
 
 Now visit a TypeScript file and you should see code intelligence!
 
@@ -209,46 +209,46 @@ To deploy the language server with Kubernetes, use a deployment like this:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: lang-typescript
+  name: lang-typescript
 spec:
-    replicas: 4 # adjust as needed
-    selector:
-        matchLabels:
-            app: lang-typescript
-    template:
-        metadata:
-            labels:
-                app: lang-typescript
-        spec:
-            containers:
-                - name: lang-typescript
-                  image: sourcegraph/lang-typescript
-                  ports:
-                      - containerPort: 8080
-                        name: wss
-                  env:
-                      # TLS certificate and key to secure the WebSocket connection (optional)
-                      - name: TLS_CERT
-                        value: ... your TLS certificate ...
-                      - name: TLS_KEY
-                        value: ... your TLS key ...
-                  # Resources to provision for the server (adjust as needed)
-                  resources:
-                      limits:
-                          cpu: '4'
-                          memory: 5Gi
-                      requests:
-                          cpu: 500m
-                          memory: 2Gi
-                  # Probes the server periodically to see if it is healthy
-                  livenessProbe:
-                      initialDelaySeconds: 30
-                      tcpSocket:
-                          port: wss
-                      timeoutSeconds: 5
-                  readinessProbe:
-                      tcpSocket:
-                          port: wss
+  replicas: 4 # adjust as needed
+  selector:
+    matchLabels:
+      app: lang-typescript
+  template:
+    metadata:
+      labels:
+        app: lang-typescript
+    spec:
+      containers:
+        - name: lang-typescript
+          image: sourcegraph/lang-typescript
+          ports:
+            - containerPort: 8080
+              name: wss
+          env:
+            # TLS certificate and key to secure the WebSocket connection (optional)
+            - name: TLS_CERT
+              value: ... your TLS certificate ...
+            - name: TLS_KEY
+              value: ... your TLS key ...
+          # Resources to provision for the server (adjust as needed)
+          resources:
+            limits:
+              cpu: '4'
+              memory: 5Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+          # Probes the server periodically to see if it is healthy
+          livenessProbe:
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: wss
+            timeoutSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: wss
 ```
 
 With a corresponding service:
@@ -257,18 +257,18 @@ With a corresponding service:
 apiVersion: v1
 kind: Service
 metadata:
-    labels:
-        app: lang-typescript
-        deploy: lang-typescript
-    name: lang-typescript
+  labels:
+    app: lang-typescript
+    deploy: lang-typescript
+  name: lang-typescript
 spec:
-    ports:
-        - name: wss
-          port: 443
-          targetPort: wss
-    selector:
-        app: lang-typescript
-    type: LoadBalancer
+  ports:
+    - name: wss
+      port: 443
+      targetPort: wss
+  selector:
+    app: lang-typescript
+  type: LoadBalancer
 ```
 
 #### TLS
@@ -285,32 +285,32 @@ To improve performance of dependency installation, the server can be configured 
 
 1. Add a volume for the mount path of the SSD:
 
-    ```diff
-      spec:
-    + volumes:
-    +   - hostPath:
-    +       path: /path/to/mounted/ssd
-    +     name: cache-ssd
-    ```
+   ```diff
+     spec:
+   + volumes:
+   +   - hostPath:
+   +       path: /path/to/mounted/ssd
+   +     name: cache-ssd
+   ```
 
-    For example, Google Cloud Platform mounts the first SSD disk to `/mnt/disks/ssd0`.
+   For example, Google Cloud Platform mounts the first SSD disk to `/mnt/disks/ssd0`.
 
 2. Add a volume mount to the container spec:
 
-    ```diff
-      image: sourcegraph/lang-typescript
-    + volumeMounts:
-    +   - mountPath: /mnt/cache
-    +     name: cache-ssd
-    ```
+   ```diff
+     image: sourcegraph/lang-typescript
+   + volumeMounts:
+   +   - mountPath: /mnt/cache
+   +     name: cache-ssd
+   ```
 
 3. Tell the language server to use the mount as the root for temporary directories:
 
-    ```diff
-      env:
-    +   - name: CACHE_DIR
-    +     value: /mnt/cache
-    ```
+   ```diff
+     env:
+   +   - name: CACHE_DIR
+   +     value: /mnt/cache
+   ```
 
 #### Improving performance with an npm registry proxy
 
@@ -322,66 +322,66 @@ Example deployment for Kubernetes:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: npm-proxy
+  name: npm-proxy
 spec:
-    minReadySeconds: 10
-    replicas: 1
-    revisionHistoryLimit: 10
-    strategy:
-        rollingUpdate:
-            maxSurge: 1
-            maxUnavailable: 1
-        type: RollingUpdate
-    template:
-        metadata:
-            labels:
-                app: npm-proxy
-        spec:
-            containers:
-                - image: sourcegraph/npm-proxy:latest
-                  name: npm-proxy
-                  ports:
-                      - containerPort: 8080
-                        name: http
-                  resources:
-                      limits:
-                          cpu: '1'
-                          memory: 1Gi
-                  volumeMounts:
-                      - mountPath: /cache
-                        name: npm-proxy-cache
-            volumes:
-                - name: npm-proxy-cache
-                  persistentVolumeClaim:
-                      claimName: npm-proxy
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: npm-proxy
+    spec:
+      containers:
+        - image: sourcegraph/npm-proxy:latest
+          name: npm-proxy
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              cpu: '1'
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /cache
+              name: npm-proxy-cache
+      volumes:
+        - name: npm-proxy-cache
+          persistentVolumeClaim:
+            claimName: npm-proxy
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-    annotations:
-        volume.beta.kubernetes.io/storage-class: default
-    name: npm-proxy
+  annotations:
+    volume.beta.kubernetes.io/storage-class: default
+  name: npm-proxy
 spec:
-    accessModes:
-        - ReadWriteOnce
-    resources:
-        requests:
-            storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-    labels:
-        app: npm-proxy
-    name: npm-proxy
+  labels:
+    app: npm-proxy
+  name: npm-proxy
 spec:
-    ports:
-        - name: http
-          port: 8080
-          targetPort: http
-    selector:
-        app: npm-proxy
-    type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+  selector:
+    app: npm-proxy
+  type: ClusterIP
 ```
 
 Then define a `.yarnrc` as a config map that points to the proxy:
@@ -389,17 +389,17 @@ Then define a `.yarnrc` as a config map that points to the proxy:
 ```yaml
 apiVersion: v1
 data:
-    .yarnrc: |
-        # THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.
-        # yarn lockfile v1
+  .yarnrc: |
+    # THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.
+    # yarn lockfile v1
 
 
-        https-proxy "http://npm-proxy:8080"
-        proxy "http://npm-proxy:8080"
-        strict-ssl false
+    https-proxy "http://npm-proxy:8080"
+    proxy "http://npm-proxy:8080"
+    strict-ssl false
 kind: ConfigMap
 metadata:
-    name: yarn-config
+  name: yarn-config
 ```
 
 and mount it into the container:

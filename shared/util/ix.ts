@@ -6,11 +6,7 @@ import { Observable, Observer } from 'rxjs'
 /**
  * An async generator that yields no values.
  */
-export const noopAsyncGenerator = async function*<T>(): AsyncGenerator<
-    T,
-    void,
-    undefined
-> {
+export const noopAsyncGenerator = async function* <T>(): AsyncGenerator<T, void, undefined> {
     /* no-op */
 }
 
@@ -30,9 +26,7 @@ export function createAbortError(): AbortError {
  *
  * @param factory A function returning the source iterator.
  */
-export const observableFromAsyncIterator = <T>(
-    factory: () => AsyncIterator<T>
-): Observable<T> =>
+export const observableFromAsyncIterator = <T>(factory: () => AsyncIterator<T>): Observable<T> =>
     new Observable((observer: Observer<T>) => {
         const iterator = factory()
         let unsubscribed = false
@@ -76,9 +70,7 @@ export const observableFromAsyncIterator = <T>(
  *
  * @param source The source iterable.
  */
-export async function* concat<T>(
-    source: AsyncIterable<T[] | null>
-): AsyncIterable<T[] | null> {
+export async function* concat<T>(source: AsyncIterable<T[] | null>): AsyncIterable<T[] | null> {
     let allValues: T[] = []
     for await (const values of source) {
         if (!values) {
@@ -103,12 +95,7 @@ export function flatMapConcurrent<T, R>(
 ): AsyncIterableX<R> {
     return new MergeAsyncIterable(
         new Array<AsyncIterable<R>>(concurrency).fill(
-            from(
-                of(...source).pipe(
-                    share(),
-                    flatMap(asyncGeneratorFromPromise(fn))
-                )
-            )
+            from(of(...source).pipe(share(), flatMap(asyncGeneratorFromPromise(fn))))
         )
     )
 }
@@ -122,7 +109,7 @@ export function flatMapConcurrent<T, R>(
 export function asyncGeneratorFromPromise<P extends unknown[], R>(
     fn: (...args: P) => Promise<R>
 ): (...args: P) => AsyncGenerator<R, void, unknown> {
-    return async function*(...args: P): AsyncGenerator<R, void, unknown> {
+    return async function* (...args: P): AsyncGenerator<R, void, unknown> {
         yield await fn(...args)
     }
 }

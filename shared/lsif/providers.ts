@@ -22,10 +22,7 @@ export function createProviders(logger: Logger): Providers {
         return noopProviders
     }
 
-    const providers = createGraphQLProviders(
-        sgQueryGraphQL,
-        makeRangeWindowFactory(sgQueryGraphQL)
-    )
+    const providers = createGraphQLProviders(sgQueryGraphQL, makeRangeWindowFactory(sgQueryGraphQL))
 
     logger.log('LSIF providers are active')
     return providers
@@ -43,16 +40,10 @@ export function createGraphQLProviders(
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): Providers {
     return {
-        definition: asyncGeneratorFromPromise(
-            definition(queryGraphQL, getRangeFromWindow)
-        ),
+        definition: asyncGeneratorFromPromise(definition(queryGraphQL, getRangeFromWindow)),
         references: references(queryGraphQL, getRangeFromWindow),
-        hover: asyncGeneratorFromPromise(
-            hover(queryGraphQL, getRangeFromWindow)
-        ),
-        documentHighlights: asyncGeneratorFromPromise(
-            documentHighlights(queryGraphQL, getRangeFromWindow)
-        ),
+        hover: asyncGeneratorFromPromise(hover(queryGraphQL, getRangeFromWindow)),
+        documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getRangeFromWindow)),
     }
 }
 
@@ -60,14 +51,8 @@ export function createGraphQLProviders(
 function definition(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (
-    doc: sourcegraph.TextDocument,
-    position: sourcegraph.Position
-) => Promise<sourcegraph.Definition> {
-    return async (
-        doc: sourcegraph.TextDocument,
-        position: sourcegraph.Position
-    ): Promise<sourcegraph.Definition> => {
+): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Definition> {
+    return async (doc: sourcegraph.TextDocument, position: sourcegraph.Position): Promise<sourcegraph.Definition> => {
         if (getRangeFromWindow) {
             const range = await (await getRangeFromWindow)(doc, position)
             if (range?.definitions && range.definitions.length > 0) {
@@ -88,7 +73,7 @@ function references(
     position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
     // eslint-disable-next-line @typescript-eslint/require-await
-    return async function*(
+    return async function* (
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
@@ -107,14 +92,8 @@ function references(
 function hover(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (
-    doc: sourcegraph.TextDocument,
-    position: sourcegraph.Position
-) => Promise<sourcegraph.Hover | null> {
-    return async (
-        doc: sourcegraph.TextDocument,
-        position: sourcegraph.Position
-    ): Promise<sourcegraph.Hover | null> => {
+): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Hover | null> {
+    return async (doc: sourcegraph.TextDocument, position: sourcegraph.Position): Promise<sourcegraph.Hover | null> => {
         if (getRangeFromWindow) {
             const range = await (await getRangeFromWindow)(doc, position)
             if (range?.hover) {
@@ -130,10 +109,7 @@ function hover(
 export function documentHighlights(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (
-    doc: sourcegraph.TextDocument,
-    position: sourcegraph.Position
-) => Promise<sourcegraph.DocumentHighlight[] | null> {
+): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.DocumentHighlight[] | null> {
     return async (
         doc: sourcegraph.TextDocument,
         position: sourcegraph.Position
@@ -141,10 +117,7 @@ export function documentHighlights(
         if (getRangeFromWindow) {
             const range = await (await getRangeFromWindow)(doc, position)
             if (range?.references) {
-                return filterLocationsForDocumentHighlights(
-                    doc,
-                    range?.references
-                )
+                return filterLocationsForDocumentHighlights(doc, range?.references)
             }
         }
 
@@ -152,15 +125,8 @@ export function documentHighlights(
         // of results. This may not result in precise highlights if the first page
         // does not contain any/all hovers for the current path. This is a best
         // effort attempt that we don't want to waste too many resources on.
-        const { locations } = await referencePageForPosition(
-            doc,
-            position,
-            undefined,
-            queryGraphQL
-        )
+        const { locations } = await referencePageForPosition(doc, position, undefined, queryGraphQL)
 
-        return locations
-            ? filterLocationsForDocumentHighlights(doc, locations)
-            : null
+        return locations ? filterLocationsForDocumentHighlights(doc, locations) : null
     }
 }
