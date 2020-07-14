@@ -68,21 +68,14 @@ export function createExternalReferencesProvider(
 
     const findDependents = async (packageName: string): Promise<string[]> => {
         if (gddoURL) {
-            return findReposViaGDDO(
-                gddoURL,
-                corsAnywhereURL,
-                packageName,
-                limit
-            )
+            return findReposViaGDDO(gddoURL, corsAnywhereURL, packageName, limit)
         }
 
         // TODO - support named imports
-        return api.findReposViaSearch(
-            `file:\\.go$ \t"${packageName}" max:${limit}`
-        )
+        return api.findReposViaSearch(`file:\\.go$ \t"${packageName}" max:${limit}`)
     }
 
-    return async function*(
+    return async function* (
         doc: sourcegraph.TextDocument,
         pos: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
@@ -102,9 +95,7 @@ export function createExternalReferencesProvider(
         // repository or package. These results are already covered via the default
         // LSP references provider.
 
-        const dependents = (await findDependents(symbol.package)).filter(
-            notIn([repoName, symbol.package])
-        )
+        const dependents = (await findDependents(symbol.package)).filter(notIn([repoName, symbol.package]))
 
         yield* concat(
             flatMapConcurrent(dependents, EXTERNAL_REFS_CONCURRENCY, repoName =>
@@ -131,8 +122,7 @@ function getDefinition(
 
     return client.withConnection(
         workspaceRoot,
-        async conn =>
-            (await conn.sendRequest(xdefinitionRequestType, params)) || []
+        async conn => (await conn.sendRequest(xdefinitionRequestType, params)) || []
     )
 }
 
@@ -151,17 +141,13 @@ async function findExternalRefsInDependent(
 
     const results = await client.withConnection(
         workspaceRoot,
-        async conn =>
-            (await conn.sendRequest(xdefinitionWorkspaceRequestType, params)) ||
-            []
+        async conn => (await conn.sendRequest(xdefinitionWorkspaceRequestType, params)) || []
     )
 
     return results.map(
         ({ reference: { uri, range } }) =>
             new sourcegraph.Location(
-                uri.startsWith('file:///')
-                    ? withHash(rootURI, uri.slice('file:///'.length))
-                    : new URL(uri),
+                uri.startsWith('file:///') ? withHash(rootURI, uri.slice('file:///'.length)) : new URL(uri),
                 convertRange(range)
             )
     )

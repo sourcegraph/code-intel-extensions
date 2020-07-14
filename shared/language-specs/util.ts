@@ -9,10 +9,7 @@ import { Result } from './spec'
  * @param fileContent The content of the source file.
  * @param patterns The regex patterns executed on each source line.
  */
-export function extractFromLines(
-    fileContent: string,
-    ...patterns: RegExp[]
-): string[] {
+export function extractFromLines(fileContent: string, ...patterns: RegExp[]): string[] {
     const extractMatch = (line: string): string | undefined => {
         for (const pattern of patterns) {
             const match = pattern.exec(line)
@@ -24,10 +21,7 @@ export function extractFromLines(
         return undefined
     }
 
-    return fileContent
-        .split('\n')
-        .map(extractMatch)
-        .filter(isDefined)
+    return fileContent.split('\n').map(extractMatch).filter(isDefined)
 }
 
 /**
@@ -45,9 +39,7 @@ export function filterResultsByImports<T extends Result>(
     importPaths: string[],
     fn: (result: T, importPath: string) => boolean
 ): T[] {
-    return filterResults(results, result =>
-        importPaths.some(importPath => fn(result, importPath))
-    )
+    return filterResults(results, result => importPaths.some(importPath => fn(result, importPath)))
 }
 
 /**
@@ -57,10 +49,7 @@ export function filterResultsByImports<T extends Result>(
  * @param results A list of results to filter.
  * @param fn The filter function.
  */
-export function filterResults<T extends Result>(
-    results: T[],
-    fn: (result: T) => boolean
-): T[] {
+export function filterResults<T extends Result>(results: T[], fn: (result: T) => boolean): T[] {
     const filteredResults = results.filter(result => fn(result))
 
     // If we filtered out all results, fall back to whatever fuzzy

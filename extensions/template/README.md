@@ -9,13 +9,13 @@ This extension provides LANG code intelligence on Sourcegraph.
 ## Usage
 
 1. Enable the `sourcegraph/LANGID` extension:
-    - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/LANGID) to enable it.
-    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/LANGID`, and enable it.
+   - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/LANGID) to enable it.
+   - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/LANGID`, and enable it.
 1. Visit any LANG code file on Sourcegraph.
 1. Hover over a token in the code file.
-    - See a description of the token.
-    - Click **Go to definition** (if available) to go to the token's definition.
-    - Click **Find references** to see all references to the token.
+   - See a description of the token.
+   - Click **Go to definition** (if available) to go to the token's definition.
+   - Click **Find references** to see all references to the token.
 
 ### On your code host
 
@@ -23,7 +23,7 @@ This extension adds the same features to code files and diffs on your code host 
 
 1. Follow the [usage steps](#usage) above to enable this extension.
 1. Install the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
-    - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
+   - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
 1. Visit any file on your code host and hover over a token to see a description of the token, a **Go to definition** action (if available), and a **Find references** action.
 
 ![screenshot of using LANGID on GitHub](https://user-images.githubusercontent.com/1976/50882271-0c5f3180-1399-11e9-9697-e4e4fa4e29e9.png)
@@ -32,8 +32,8 @@ This extension adds the same features to code files and diffs on your code host 
 
 This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
--   "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
--   "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
+- "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
+- "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
 
 These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
 

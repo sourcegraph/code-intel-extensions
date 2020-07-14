@@ -11,10 +11,7 @@ import { gitToRawApiUri, rawApiToGitUri } from '../../../shared/util/uri'
 import { Settings } from './settings'
 import { createExternalReferencesProvider } from './xrefs'
 
-const documentSelector: sourcegraph.DocumentSelector = [
-    { language: 'typescript' },
-    { language: 'javascript' },
-]
+const documentSelector: sourcegraph.DocumentSelector = [{ language: 'typescript' }, { language: 'javascript' }]
 
 /**
  * Register providers on the extension host.
@@ -72,8 +69,7 @@ async function registerClient({
     })
 
     const initializationOptions = { configuration: settings }
-    const clientToServerURI = (uri: URL): URL =>
-        gitToRawApiUri(sourcegraphURL, accessToken, uri)
+    const clientToServerURI = (uri: URL): URL => gitToRawApiUri(sourcegraphURL, accessToken, uri)
     const serverToClientURI = rawApiToGitUri
 
     const featureOptions = new Subject<FeatureOptions>()

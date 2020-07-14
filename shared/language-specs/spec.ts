@@ -98,10 +98,7 @@ export interface BlockCommentStyle {
 /**
  * A filter function that prunes imprecise definitions from search results.
  */
-export type FilterDefinitions = <T extends Result>(
-    results: T[],
-    context: FilterContext
-) => T[]
+export type FilterDefinitions = <T extends Result>(results: T[], context: FilterContext) => T[]
 
 /**
  * Additional context supplied when filtering search results.

@@ -34,42 +34,18 @@ describe('findReposViaGDDO', () => {
             })
         )
 
-        const repos = await findReposViaGDDO(
-            'http://gddo',
-            undefined,
-            'github.com/foo/bar',
-            5,
-            fetcher,
-            makeStubAPI()
-        )
+        const repos = await findReposViaGDDO('http://gddo', undefined, 'github.com/foo/bar', 5, fetcher, makeStubAPI())
 
         assert.deepStrictEqual(repos, ['foo/baz', 'foo/bonk', 'foo/quux'])
-        sinon.assert.calledWith(
-            fetcher,
-            new URL('http://gddo/importers/github.com/foo/bar')
-        )
+        sinon.assert.calledWith(fetcher, new URL('http://gddo/importers/github.com/foo/bar'))
     })
 
     it('requests prepends cors anywhere URL', async () => {
-        const fetcher = sinon.spy<(url: URL) => Promise<Response>>(() =>
-            Promise.resolve({ results: [] })
-        )
+        const fetcher = sinon.spy<(url: URL) => Promise<Response>>(() => Promise.resolve({ results: [] }))
 
-        await findReposViaGDDO(
-            'http://gddo',
-            'http://cors.anywhere/',
-            'github.com/foo/bar',
-            5,
-            fetcher,
-            makeStubAPI()
-        )
+        await findReposViaGDDO('http://gddo', 'http://cors.anywhere/', 'github.com/foo/bar', 5, fetcher, makeStubAPI())
 
-        sinon.assert.calledWith(
-            fetcher,
-            new URL(
-                'http://cors.anywhere/http://gddo/importers/github.com/foo/bar'
-            )
-        )
+        sinon.assert.calledWith(fetcher, new URL('http://cors.anywhere/http://gddo/importers/github.com/foo/bar'))
     })
 
     it('filters non-github repos', async () => {
@@ -98,9 +74,7 @@ describe('findReposViaGDDO', () => {
         const api = new API()
         const stub = sinon.stub(api, 'resolveRepo')
         stub.callsFake(url =>
-            url === 'github.com/foo/bonk'
-                ? Promise.reject(new Error('unknown repo'))
-                : trimGitHubPrefix(url)
+            url === 'github.com/foo/bonk' ? Promise.reject(new Error('unknown repo')) : trimGitHubPrefix(url)
         )
 
         const repos = await findReposViaGDDO(
@@ -141,13 +115,7 @@ describe('findReposViaGDDO', () => {
             api
         )
 
-        assert.deepStrictEqual(repos, [
-            'foo/1',
-            'foo/2',
-            'foo/3',
-            'foo/4',
-            'foo/5',
-        ])
+        assert.deepStrictEqual(repos, ['foo/1', 'foo/2', 'foo/3', 'foo/4', 'foo/5'])
         sinon.assert.callCount(stub, 5)
     })
 })

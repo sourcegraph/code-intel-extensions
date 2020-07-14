@@ -45,8 +45,7 @@ export class RedactingLogger {
 
 /** Removes auth info from URLs. */
 function redact(value: any): string {
-    const stringValue =
-        typeof value === 'string' ? value : inspect(value, { depth: Infinity })
+    const stringValue = typeof value === 'string' ? value : inspect(value, { depth: Infinity })
 
     return stringValue.replace(/(https?:\/\/)[^@/]+@([^\s$]+)/g, '$1$2')
 }

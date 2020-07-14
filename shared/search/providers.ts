@@ -64,9 +64,7 @@ export function createProviders(
         text?: string
     }): Promise<string | undefined> => {
         const { repo, commit, path } = parseGitURI(new URL(uri))
-        return text
-            ? Promise.resolve(text)
-            : api.getFileContent(repo, commit, path)
+        return text ? Promise.resolve(text) : api.getFileContent(repo, commit, path)
     }
 
     /**
@@ -89,9 +87,7 @@ export function createProviders(
         const tokenResult = findSearchToken({
             text,
             position: pos,
-            lineRegexes: commentStyles
-                .map(style => style.lineRegex)
-                .filter(isDefined),
+            lineRegexes: commentStyles.map(style => style.lineRegex).filter(isDefined),
             identCharPattern,
         })
         if (!tokenResult || tokenResult.isComment) {
@@ -133,14 +129,8 @@ export function createProviders(
             queryTerms,
         }
 
-        const doSearch = (
-            negateRepoFilter: boolean
-        ): Promise<sourcegraph.Location[]> =>
-            searchWithFallback(
-                args => searchAndFilterDefinitions(api, args),
-                queryArgs,
-                negateRepoFilter
-            )
+        const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
+            searchWithFallback(args => searchAndFilterDefinitions(api, args), queryArgs, negateRepoFilter)
 
         // Perform a search in the current git tree
         const sameRepoDefinitions = doSearch(false)
@@ -186,14 +176,8 @@ export function createProviders(
             queryTerms,
         }
 
-        const doSearch = (
-            negateRepoFilter: boolean
-        ): Promise<sourcegraph.Location[]> =>
-            searchWithFallback(
-                args => searchReferences(api, args),
-                queryArgs,
-                negateRepoFilter
-            )
+        const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
+            searchWithFallback(args => searchReferences(api, args), queryArgs, negateRepoFilter)
 
         // Perform a search in the current git tree
         const sameRepoReferences = doSearch(false)
@@ -201,9 +185,7 @@ export function createProviders(
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
-        const remoteRepoReferences = isSourcegraphDotCom()
-            ? Promise.resolve([])
-            : doSearch(true)
+        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
@@ -241,11 +223,7 @@ export function createProviders(
         }
 
         // Get the first definition and ensure it has a range
-        const def = asArray(
-            await (from(result) as Observable<sourcegraph.Definition>)
-                .pipe(take(1))
-                .toPromise()
-        )[0]
+        const def = asArray(await (from(result) as Observable<sourcegraph.Definition>).pipe(take(1)).toPromise())[0]
         if (!def || !def.range) {
             return null
         }
@@ -271,8 +249,7 @@ export function createProviders(
         }
 
         // Render the line as syntax-highlighted Markdown
-        const codeLineMarkdown =
-            '```' + languageID + '\n' + trimmedLine + '\n```'
+        const codeLineMarkdown = '```' + languageID + '\n' + trimmedLine + '\n```'
 
         const docstring = findDocstring({
             definitionLine: def.range.start.line,
@@ -280,15 +257,12 @@ export function createProviders(
             commentStyles,
         })
 
-        const docstringMarkdown =
-            docstring && wrapIndentationInCodeBlocks(languageID, docstring)
+        const docstringMarkdown = docstring && wrapIndentationInCodeBlocks(languageID, docstring)
 
         return {
             contents: {
                 kind: sourcegraph.MarkupKind.Markdown,
-                value: [codeLineMarkdown, docstringMarkdown]
-                    .filter(isDefined)
-                    .join('\n\n---\n\n'),
+                value: [codeLineMarkdown, docstringMarkdown].filter(isDefined).join('\n\n---\n\n'),
             },
         }
     }
@@ -345,9 +319,7 @@ async function searchAndFilterDefinitions(
     // Perform search and perform pre-filtering before passing it
     // off to the language spec for the proper filtering pass.
     const searchResults = await search(api, queryTerms)
-    const preFilteredResults = searchResults.filter(
-        result => !isExternalPrivateSymbol(doc, path, result)
-    )
+    const preFilteredResults = searchResults.filter(result => !isExternalPrivateSymbol(doc, path, result))
 
     // Filter results based on language spec
     const filteredResults = filterDefinitions(preFilteredResults, {
@@ -356,10 +328,7 @@ async function searchAndFilterDefinitions(
         fileContent: text,
     })
 
-    return sortByProximity(
-        filteredResults.map(resultToLocation),
-        new URL(doc.uri)
-    )
+    return sortByProximity(filteredResults.map(resultToLocation), new URL(doc.uri))
 }
 
 /**
@@ -408,11 +377,7 @@ export function searchWithFallback<
         queryTerms: string[]
     },
     R
->(
-    search: (args: P) => Promise<R>,
-    args: P,
-    negateRepoFilter = false
-): Promise<R> {
+>(search: (args: P) => Promise<R>, args: P, negateRepoFilter = false): Promise<R> {
     if (getConfig('basicCodeIntel.indexOnly', false)) {
         return searchIndexed(search, args, negateRepoFilter)
     }
@@ -440,11 +405,7 @@ function searchIndexed<
         queryTerms: string[]
     },
     R
->(
-    search: (args: P) => Promise<R>,
-    args: P,
-    negateRepoFilter = false
-): Promise<R> {
+>(search: (args: P) => Promise<R>, args: P, negateRepoFilter = false): Promise<R> {
     const { repo, isFork, isArchived, queryTerms } = args
 
     // Create a copy of the args so that concurrent calls to other
@@ -461,12 +422,7 @@ function searchIndexed<
     // If we're a fork, search in forks _for the same repo_. Otherwise,
     // search in forks only if it's set in the settings. This is also
     // symmetric for archived repositories.
-    queryTermsCopy.push(
-        ...repositoryKindTerms(
-            isFork && !negateRepoFilter,
-            isArchived && !negateRepoFilter
-        )
-    )
+    queryTermsCopy.push(...repositoryKindTerms(isFork && !negateRepoFilter, isArchived && !negateRepoFilter))
 
     return search({ ...args, queryTerms: queryTermsCopy })
 }
@@ -487,11 +443,7 @@ function searchUnindexed<
         queryTerms: string[]
     },
     R
->(
-    search: (args: P) => Promise<R>,
-    args: P,
-    negateRepoFilter = false
-): Promise<R> {
+>(search: (args: P) => Promise<R>, args: P, negateRepoFilter = false): Promise<R> {
     const { repo, isFork, isArchived, commit, queryTerms } = args
 
     // Create a copy of the args so that concurrent calls to other
@@ -510,12 +462,7 @@ function searchUnindexed<
     // If we're a fork, search in forks _for the same repo_. Otherwise,
     // search in forks only if it's set in the settings. This is also
     // symmetric for archived repositories.
-    queryTermsCopy.push(
-        ...repositoryKindTerms(
-            isFork && !negateRepoFilter,
-            isArchived && !negateRepoFilter
-        )
-    )
+    queryTermsCopy.push(...repositoryKindTerms(isFork && !negateRepoFilter, isArchived && !negateRepoFilter))
 
     return search({ ...args, queryTerms: queryTermsCopy })
 }
@@ -527,9 +474,7 @@ function searchUnindexed<
  * @param queryTerms The terms of the search query.
  */
 async function search(api: API, queryTerms: string[]): Promise<Result[]> {
-    return (
-        await api.search(queryTerms.join(' '), getConfig('fileLocal', false))
-    ).flatMap(searchResultToResults)
+    return (await api.search(queryTerms.join(' '), getConfig('fileLocal', false))).flatMap(searchResultToResults)
 }
 
 /**
@@ -565,17 +510,10 @@ function isExternalPrivateSymbol(
  * @param locations A list of locations to sort.
  * @param currentURI The URI of the current text document.
  */
-function sortByProximity(
-    locations: sourcegraph.Location[],
-    currentURI: URL
-): sourcegraph.Location[] {
+function sortByProximity(locations: sourcegraph.Location[], currentURI: URL): sourcegraph.Location[] {
     return sortBy(
         locations,
-        ({ uri }) =>
-            -jaccardIndex(
-                new Set(uri.hash.slice(1).split('/')),
-                new Set(currentURI.hash.slice(1).split('/'))
-            )
+        ({ uri }) => -jaccardIndex(new Set(uri.hash.slice(1).split('/')), new Set(currentURI.hash.slice(1).split('/')))
     )
 }
 
@@ -598,9 +536,7 @@ function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
  * Return true if the current Sourcegraph instance is DotCom.
  */
 function isSourcegraphDotCom(): boolean {
-    return (
-        sourcegraph.internal.sourcegraphURL.href === 'https://sourcegraph.com/'
-    )
+    return sourcegraph.internal.sourcegraphURL.href === 'https://sourcegraph.com/'
 }
 
 /**
@@ -646,10 +582,7 @@ async function delay(timeout: number): Promise<undefined> {
  * @param includeFork Whether or not the include forked repositories regardless of settings.
  * @param includeArchived Whether or not the include archived repositories regardless of settings.
  */
-function repositoryKindTerms(
-    includeFork: boolean,
-    includeArchived: boolean
-): string[] {
+function repositoryKindTerms(includeFork: boolean, includeArchived: boolean): string[] {
     const additionalTerms = []
     if (includeFork || getConfig('basicCodeIntel.includeForks', false)) {
         additionalTerms.push('fork:yes')

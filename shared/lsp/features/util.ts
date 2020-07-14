@@ -20,9 +20,7 @@ export function reregisterOnChange<T extends object>(
     return from(o)
         .pipe(
             distinctUntilChanged((x, y) =>
-                reloadOnValues !== undefined
-                    ? isEqual(pick(x, reloadOnValues), pick(y, reloadOnValues))
-                    : isEqual(x, y)
+                reloadOnValues !== undefined ? isEqual(pick(x, reloadOnValues), pick(y, reloadOnValues)) : isEqual(x, y)
             ),
             map(v => {
                 unsubscribe()

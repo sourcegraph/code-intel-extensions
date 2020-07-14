@@ -1,11 +1,6 @@
 import { cStyleComment } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
-import {
-    dotToSlash,
-    extractFromLines,
-    filterResultsByImports,
-    removeExtension,
-} from './util'
+import { dotToSlash, extractFromLines, filterResultsByImports, removeExtension } from './util'
 
 /**
  * Filter a list of candidate definitions to select those likely to be valid
@@ -18,16 +13,10 @@ import {
  * back to the raw (unfiltered) results so that the user doesn't get an empty
  * response unless there really is nothing.
  */
-function filterDefinitions<T extends Result>(
-    results: T[],
-    { fileContent }: FilterContext
-): T[] {
+function filterDefinitions<T extends Result>(results: T[], { fileContent }: FilterContext): T[] {
     // Capture user paths from #include and #import directives. Do not capture
     // system paths (e.g. <stdio.h>).
-    const importPaths = extractFromLines(
-        fileContent,
-        /^#(?:include|import) "(.*)"$/
-    )
+    const importPaths = extractFromLines(fileContent, /^#(?:include|import) "(.*)"$/)
 
     // Capture Objective-C import statements. In plain C and C++ files, this
     // should not capture anything.
@@ -37,12 +26,9 @@ function filterDefinitions<T extends Result>(
     // C and C++ paths captured above.
     const objCImportPaths = objCImports.map(dotToSlash)
 
-    return filterResultsByImports(
-        results,
-        importPaths.concat(objCImportPaths),
-        ({ file }, importPath) =>
-            // Match results with a basename suffix of an import path
-            removeExtension(file).endsWith(removeExtension(importPath))
+    return filterResultsByImports(results, importPaths.concat(objCImportPaths), ({ file }, importPath) =>
+        // Match results with a basename suffix of an import path
+        removeExtension(file).endsWith(removeExtension(importPath))
     )
 }
 

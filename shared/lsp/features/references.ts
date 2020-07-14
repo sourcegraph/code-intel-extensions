@@ -3,11 +3,7 @@ import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { ReferencesProvider } from '../../providers'
 import { concat, noopAsyncGenerator } from '../../util/ix'
-import {
-    convertLocations,
-    convertProviderParams,
-    rewriteUris,
-} from '../conversion'
+import { convertLocations, convertProviderParams, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 import { reregisterOnChange } from './util'
 
@@ -36,25 +32,16 @@ export const referencesFeature: Feature<
             position: sourcegraph.Position,
             context: sourcegraph.ReferenceContext
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-            const params = convertProviderParams(
-                textDocument,
-                position,
-                clientToServerURI
-            )
-            const result = await connection.sendRequest(
-                lsp.ReferencesRequest.type,
-                { ...params, context }
-            )
+            const params = convertProviderParams(textDocument, position, clientToServerURI)
+            const result = await connection.sendRequest(lsp.ReferencesRequest.type, { ...params, context })
             rewriteUris(result, serverToClientURI)
             yield convertLocations(result) || []
         }
 
-        const references = (
-            externalReferences: ReferencesProvider
-        ): ReferencesProvider =>
+        const references = (externalReferences: ReferencesProvider): ReferencesProvider =>
             // False positive: https://github.com/typescript-eslint/typescript-eslint/issues/1691
             // eslint-disable-next-line @typescript-eslint/require-await
-            async function*(
+            async function* (
                 textDocument: sourcegraph.TextDocument,
                 position: sourcegraph.Position,
                 context: sourcegraph.ReferenceContext
@@ -73,9 +60,7 @@ export const referencesFeature: Feature<
             ({ externalReferencesProvider = noopAsyncGenerator }) =>
                 sourcegraph.languages.registerReferenceProvider(
                     scopedDocumentSelector,
-                    providerWrapper.references(
-                        references(externalReferencesProvider)
-                    )
+                    providerWrapper.references(references(externalReferencesProvider))
                 )
         )
     },

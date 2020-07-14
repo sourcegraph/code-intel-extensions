@@ -12,10 +12,7 @@ import { extractFromLines, filterResultsByImports, slashToDot } from './util'
  * If no candidates match, fall back to the raw (unfiltered) results so that
  * the user doesn't get an empty response unless there really is nothing.
  */
-function filterDefinitions<T extends Result>(
-    results: T[],
-    { fileContent }: FilterContext
-): T[] {
+function filterDefinitions<T extends Result>(results: T[], { fileContent }: FilterContext): T[] {
     const importPaths = extractFromLines(
         fileContent,
         /^import ([\w.]+);$/,
@@ -24,12 +21,9 @@ function filterDefinitions<T extends Result>(
 
     const currentPackage = extractFromLines(fileContent, /^package ([\w.]+);$/)
 
-    return filterResultsByImports(
-        results,
-        importPaths.concat(currentPackage),
-        ({ file }, importPath) =>
-            // Match results with a dirname suffix of an import path
-            slashToDot(path.dirname(file)).endsWith(importPath)
+    return filterResultsByImports(results, importPaths.concat(currentPackage), ({ file }, importPath) =>
+        // Match results with a dirname suffix of an import path
+        slashToDot(path.dirname(file)).endsWith(importPath)
     )
 }
 

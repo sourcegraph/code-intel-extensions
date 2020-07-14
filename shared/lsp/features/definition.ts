@@ -1,10 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
-import {
-    convertLocations,
-    convertProviderParams,
-    rewriteUris,
-} from '../conversion'
+import { convertLocations, convertProviderParams, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 
 export interface DefinitionFeatureOptions {}

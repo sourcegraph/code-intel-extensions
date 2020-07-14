@@ -33,11 +33,7 @@ const referencesQuery = gql`
             commit(rev: $commit) {
                 blob(path: $path) {
                     lsif {
-                        references(
-                            line: $line
-                            character: $character
-                            after: $after
-                        ) {
+                        references(line: $line, character: $character, after: $after) {
                             nodes {
                                 resource {
                                     path
@@ -75,11 +71,9 @@ const referencesQuery = gql`
 export async function* referencesForPosition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position,
-    queryGraphQL: QueryGraphQLFn<
-        GenericLSIFResponse<ReferencesResponse | null>
-    > = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
 ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-    const queryPage = async function*(
+    const queryPage = async function* (
         requestsRemaining: number,
         after?: string
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
@@ -88,12 +82,7 @@ export async function* referencesForPosition(
         }
 
         // Make the request for the page starting at the after cursor
-        const { locations, endCursor } = await referencePageForPosition(
-            doc,
-            position,
-            after,
-            queryGraphQL
-        )
+        const { locations, endCursor } = await referencePageForPosition(doc, position, after, queryGraphQL)
 
         // Yield this page's set of results
         yield locations
@@ -112,9 +101,7 @@ export async function referencePageForPosition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     after: string | undefined,
-    queryGraphQL: QueryGraphQLFn<
-        GenericLSIFResponse<ReferencesResponse | null>
-    > = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
 ): Promise<{ locations: sourcegraph.Location[] | null; endCursor?: string }> {
     return referenceResponseToLocations(
         doc,
@@ -146,9 +133,7 @@ export function referenceResponseToLocations(
     }
 
     return {
-        locations: lsifObj.references.nodes.map(node =>
-            nodeToLocation(doc, node)
-        ),
+        locations: lsifObj.references.nodes.map(node => nodeToLocation(doc, node)),
         endCursor: lsifObj.references.pageInfo.endCursor,
     }
 }

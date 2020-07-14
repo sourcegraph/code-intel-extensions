@@ -8,8 +8,7 @@ describe('nodeToLocation', () => {
 
         const location = nodeToLocation(
             {
-                uri:
-                    'git://github.com/baz/bonk?c7ad68d72ef7b0d5aac07c22e86fef05d38b06da#source.ts',
+                uri: 'git://github.com/baz/bonk?c7ad68d72ef7b0d5aac07c22e86fef05d38b06da#source.ts',
             } as sourcegraph.TextDocument,
             {
                 resource: {
@@ -22,9 +21,7 @@ describe('nodeToLocation', () => {
         )
 
         assert.deepStrictEqual(location, {
-            uri: new URL(
-                'git://github.com/foo/bar?4a245ea3d5e0f947affb4fc65bf4af7a0c708299#baz/bonk/quux.ts'
-            ),
+            uri: new URL('git://github.com/foo/bar?4a245ea3d5e0f947affb4fc65bf4af7a0c708299#baz/bonk/quux.ts'),
             range,
         })
     })
@@ -34,8 +31,7 @@ describe('nodeToLocation', () => {
 
         const location = nodeToLocation(
             {
-                uri:
-                    'git://github.com/baz/bonk?c7ad68d72ef7b0d5aac07c22e86fef05d38b06da#source.ts',
+                uri: 'git://github.com/baz/bonk?c7ad68d72ef7b0d5aac07c22e86fef05d38b06da#source.ts',
             } as sourcegraph.TextDocument,
             {
                 resource: {
@@ -46,9 +42,7 @@ describe('nodeToLocation', () => {
         )
 
         assert.deepStrictEqual(location, {
-            uri: new URL(
-                'git://github.com/baz/bonk?c7ad68d72ef7b0d5aac07c22e86fef05d38b06da#baz/bonk/quux.ts'
-            ),
+            uri: new URL('git://github.com/baz/bonk?c7ad68d72ef7b0d5aac07c22e86fef05d38b06da#baz/bonk/quux.ts'),
             range,
         })
     })

@@ -21,9 +21,7 @@ export async function getOrCreateAccessToken(
     note: string,
     api: API = new API()
 ): Promise<string | undefined> {
-    const accessToken = sourcegraph.configuration.get().get(name) as
-        | string
-        | undefined
+    const accessToken = sourcegraph.configuration.get().get(name) as string | undefined
     if (accessToken) {
         return accessToken
     }

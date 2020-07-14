@@ -12,14 +12,8 @@ import { extractFromLines, filterResults } from './util'
  * If no candidates match, fall back to the raw (unfiltered) results so that
  * the user doesn't get an empty response unless there really is nothing.
  */
-function filterDefinitions<T extends Result>(
-    results: T[],
-    { repo, filePath, fileContent }: FilterContext
-): T[] {
-    const importPaths = extractFromLines(
-        fileContent,
-        /^(?:import |\t)(?:\w+ |\. )?"(.*)"$/
-    )
+function filterDefinitions<T extends Result>(results: T[], { repo, filePath, fileContent }: FilterContext): T[] {
+    const importPaths = extractFromLines(fileContent, /^(?:import |\t)(?:\w+ |\. )?"(.*)"$/)
 
     return filterResults(results, ({ repo: resultRepo, file }) => {
         const resultImportPath = importPath(resultRepo, file)

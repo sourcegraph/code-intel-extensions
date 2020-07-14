@@ -1,9 +1,5 @@
 import { dropWhile, takeWhile } from 'lodash'
-import {
-    BlockCommentStyle,
-    CommentStyle,
-    DocPlacement,
-} from '../language-specs/spec'
+import { BlockCommentStyle, CommentStyle, DocPlacement } from '../language-specs/spec'
 
 /**
  * Extract a docstring near the given definition.
@@ -24,16 +20,8 @@ export function findDocstring({
 }): string | undefined {
     const allLines = fileText.split('\n')
 
-    for (const {
-        lineRegex,
-        block,
-        docstringIgnore,
-        docPlacement,
-    } of commentStyles) {
-        const sameLineDocstring = findDocstringOnDefinitionLine(
-            allLines[definitionLine],
-            { lineRegex, block }
-        )
+    for (const { lineRegex, block, docstringIgnore, docPlacement } of commentStyles) {
+        const sameLineDocstring = findDocstringOnDefinitionLine(allLines[definitionLine], { lineRegex, block })
         if (sameLineDocstring) {
             return sameLineDocstring
         }
@@ -45,9 +33,7 @@ export function findDocstring({
                 docstringIgnore,
             })
             if (lineCommentDocstring) {
-                return unmungeLines(lineCommentDocstring, docPlacement).join(
-                    '\n'
-                )
+                return unmungeLines(lineCommentDocstring, docPlacement).join('\n')
             }
         }
 
@@ -70,9 +56,7 @@ export function findDocstring({
                 docstringIgnore,
             })
             if (blockCommentDocstring) {
-                return unmungeLines(blockCommentDocstring, docPlacement).join(
-                    '\n'
-                )
+                return unmungeLines(blockCommentDocstring, docPlacement).join('\n')
             }
         }
     }
@@ -86,10 +70,7 @@ export function findDocstring({
  * @param line The source line.
  * @param commentStyle The comment style of the current language.
  */
-function findDocstringOnDefinitionLine(
-    line: string,
-    { lineRegex, block }: CommentStyle
-): string | undefined {
+function findDocstringOnDefinitionLine(line: string, { lineRegex, block }: CommentStyle): string | undefined {
     if (lineRegex) {
         const match = line.match(lineRegex)
         if (match) {
@@ -101,11 +82,7 @@ function findDocstringOnDefinitionLine(
         // Match the things between the start and end regex, but not including
         // the endpoints. See https://stackoverflow.com/a/3850095/2061958.
         const blockRegex = new RegExp(
-            block.startRegex.source +
-                '((?:(?!' +
-                block.endRegex.source +
-                ').)*)' +
-                block.endRegex.source
+            block.startRegex.source + '((?:(?!' + block.endRegex.source + ').)*)' + block.endRegex.source
         )
 
         const match = line.match(blockRegex)
@@ -126,11 +103,7 @@ function findDocstringOnDefinitionLine(
  * @param docPlacement The placement of a docblock for the current language.
  * @param definitionLine The line on which the definition occurs.
  */
-function mungeLines(
-    lines: string[],
-    docPlacement: DocPlacement | undefined,
-    definitionLine: number
-): string[] {
+function mungeLines(lines: string[], docPlacement: DocPlacement | undefined, definitionLine: number): string[] {
     return docPlacement === 'below the definition'
         ? lines.slice(definitionLine + 1)
         : lines.slice(0, definitionLine).reverse()
@@ -142,10 +115,7 @@ function mungeLines(
  * @param lines The lines of the text document.
  * @param docPlacement The placement of a docblock for the current language.
  */
-function unmungeLines(
-    lines: string[],
-    docPlacement: DocPlacement | undefined
-): string[] {
+function unmungeLines(lines: string[], docPlacement: DocPlacement | undefined): string[] {
     return docPlacement === 'below the definition' ? lines : lines.reverse()
 }
 
@@ -178,9 +148,7 @@ function findDocstringInLineComments({
     )
 
     // If there were any comments, remove the prefixes
-    return docLines.length > 0
-        ? docLines.map(line => line.replace(pattern, ''))
-        : undefined
+    return docLines.length > 0 ? docLines.map(line => line.replace(pattern, '')) : undefined
 }
 
 /**
@@ -201,10 +169,7 @@ function findDocstringInBlockComment({
     /** An optional pattern to ignore before the docstring. */
     docstringIgnore?: RegExp
 }): string[] | undefined {
-    const takeWhileInclusive = <T>(
-        array: T[],
-        predicate: (t: T) => boolean
-    ): T[] => {
+    const takeWhileInclusive = <T>(array: T[], predicate: (t: T) => boolean): T[] => {
         const index = array.findIndex(value => !predicate(value))
         return index === -1 ? array : array.slice(0, index + 1)
     }
@@ -228,18 +193,13 @@ function findDocstringInBlockComment({
     // are necessary for doc blocks in languages like Python that have identical
     // open and closing delimiters.
 
-    const docLines = takeWhileInclusive(
-        cleanLines,
-        line => !endRegex.test(line)
-    )
+    const docLines = takeWhileInclusive(cleanLines, line => !endRegex.test(line))
 
     // Construct a pattern that matches the leading indentation of each
     // line of the block comment. We use the indentation of the first line
     // as a market, which seems correct in the vast majority of cases.
 
-    const indentationPattern = new RegExp(
-        `^\\s{0,${docLines[0].length - docLines[0].trimLeft().length}}`
-    )
+    const indentationPattern = new RegExp(`^\\s{0,${docLines[0].length - docLines[0].trimLeft().length}}`)
 
     return docLines.map(line =>
         line

@@ -7,11 +7,7 @@ import { Logger, RedactingLogger } from '../../../shared/logging'
 import { API } from '../../../shared/util/api'
 import { asArray, isDefined } from '../../../shared/util/helpers'
 import { concat, flatMapConcurrent } from '../../../shared/util/ix'
-import {
-    gitToRawApiUri,
-    rawApiToGitUri,
-    removeHash,
-} from '../../../shared/util/uri'
+import { gitToRawApiUri, rawApiToGitUri, removeHash } from '../../../shared/util/uri'
 import { findPackageName, resolvePackageRepo } from './package'
 import { Settings } from './settings'
 
@@ -19,10 +15,7 @@ const EXTERNAL_REFS_CONCURRENCY = 7
 
 // We use this type alias that rewrites the `Location[] | LocationLink[]` portion
 // of the DefinitionRequest result type into an type that is accepted by Array.map.
-type DefinitionResult =
-    | lsp.Location
-    | (lsp.Location | lsp.LocationLink)[]
-    | null
+type DefinitionResult = lsp.Location | (lsp.Location | lsp.LocationLink)[] | null
 
 /**
  * Return external references to the symbol at the given position.
@@ -69,23 +62,15 @@ export function createExternalReferencesProvider(
             ).filter(isDefined)
         }
 
-        return api.findReposViaSearch(
-            `file:package.json$ ${packageName} max:${limit}`
-        )
+        return api.findReposViaSearch(`file:package.json$ ${packageName} max:${limit}`)
     }
 
-    return async function*(
+    return async function* (
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
         // Get the symbol and package at the current position
-        const definitions = await getDefinition(
-            client,
-            sourcegraphServerURL,
-            accessToken,
-            textDocument,
-            position
-        )
+        const definitions = await getDefinition(client, sourcegraphServerURL, accessToken, textDocument, position)
         if (definitions.length === 0) {
             logger.error('No definitions')
             return
@@ -97,21 +82,12 @@ export function createExternalReferencesProvider(
         definitionClientUri.host = sourcegraphClientURL.host
 
         // Find dependent repositories.
-        const dependents = await findDependents(
-            await findPackageName(definitionClientUri)
-        )
+        const dependents = await findDependents(await findPackageName(definitionClientUri))
 
         yield* concat(
             flatMapConcurrent(dependents, EXTERNAL_REFS_CONCURRENCY, repoName =>
                 // Call references for the target symbol in each dependent workspace
-                findExternalRefsInDependent(
-                    api,
-                    client,
-                    sourcegraphServerURL,
-                    accessToken,
-                    repoName,
-                    definition
-                )
+                findExternalRefsInDependent(api, client, sourcegraphServerURL, accessToken, repoName, definition)
             )
         )
     }
@@ -128,22 +104,14 @@ async function getDefinition(
 
     const params = {
         textDocument: {
-            uri: gitToRawApiUri(
-                sourcegraphServerURL,
-                accessToken,
-                new URL(textDocument.uri)
-            ).href,
+            uri: gitToRawApiUri(sourcegraphServerURL, accessToken, new URL(textDocument.uri)).href,
         },
         position,
     }
 
     const result: DefinitionResult = await client.withConnection(
         workspaceRoot,
-        async connection =>
-            (await connection.sendRequest(
-                lsp.DefinitionRequest.type,
-                params
-            )) || []
+        async connection => (await connection.sendRequest(lsp.DefinitionRequest.type, params)) || []
     )
 
     return asArray(result).map(toLocation)
@@ -161,10 +129,7 @@ async function findExternalRefsInDependent(
     if (!commit) {
         return []
     }
-    const rootUri = new URL(
-        `${repoName}@${commit}/-/raw/`,
-        sourcegraphServerURL
-    )
+    const rootUri = new URL(`${repoName}@${commit}/-/raw/`, sourcegraphServerURL)
     if (accessToken) {
         rootUri.username = accessToken
     }
@@ -179,11 +144,7 @@ async function findExternalRefsInDependent(
 
     const results = await client.withConnection(
         workspaceRoot,
-        async connection =>
-            (await connection.sendRequest(
-                lsp.ReferencesRequest.type,
-                params
-            )) || []
+        async connection => (await connection.sendRequest(lsp.ReferencesRequest.type, params)) || []
     )
 
     return (

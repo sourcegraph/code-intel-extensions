@@ -11,13 +11,7 @@ export interface DefinitionResponse {
 }
 
 const definitionsQuery = gql`
-    query Definitions(
-        $repository: String!
-        $commit: String!
-        $path: String!
-        $line: Int!
-        $character: Int!
-    ) {
+    query Definitions($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
         repository(name: $repository) {
             commit(rev: $commit) {
                 blob(path: $path) {
@@ -56,9 +50,7 @@ const definitionsQuery = gql`
 export async function definitionForPosition(
     doc: sourcegraph.TextDocument,
     position: sourcegraph.Position,
-    queryGraphQL: QueryGraphQLFn<
-        GenericLSIFResponse<DefinitionResponse | null>
-    > = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>> = sgQueryGraphQL
 ): Promise<sourcegraph.Definition> {
     return definitionResponseToLocations(
         doc,
@@ -83,8 +75,5 @@ export function definitionResponseToLocations(
     doc: sourcegraph.TextDocument,
     lsifObj: DefinitionResponse | null
 ): sourcegraph.Location[] | null {
-    return (
-        lsifObj?.definitions.nodes.map(node => nodeToLocation(doc, node)) ||
-        null
-    )
+    return lsifObj?.definitions.nodes.map(node => nodeToLocation(doc, node)) || null
 }

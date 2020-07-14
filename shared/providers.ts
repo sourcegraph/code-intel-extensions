@@ -59,68 +59,36 @@ export interface ProviderWrapper {
     documentHighlights: DocumentHighlightWrapper
 }
 
-export type DefinitionWrapper = (
-    provider?: DefinitionProvider
-) => sourcegraph.DefinitionProvider
+export type DefinitionWrapper = (provider?: DefinitionProvider) => sourcegraph.DefinitionProvider
 
-export type ReferencesWrapper = (
-    provider?: ReferencesProvider
-) => sourcegraph.ReferenceProvider
+export type ReferencesWrapper = (provider?: ReferencesProvider) => sourcegraph.ReferenceProvider
 
-export type HoverWrapper = (
-    provider?: HoverProvider
-) => sourcegraph.HoverProvider
+export type HoverWrapper = (provider?: HoverProvider) => sourcegraph.HoverProvider
 
-export type DocumentHighlightWrapper = (
-    provider?: DocumentHighlightProvider
-) => sourcegraph.DocumentHighlightProvider
+export type DocumentHighlightWrapper = (provider?: DocumentHighlightProvider) => sourcegraph.DocumentHighlightProvider
 
 export class NoopProviderWrapper implements ProviderWrapper {
-    public definition = (
-        provider?: DefinitionProvider
-    ): sourcegraph.DefinitionProvider => ({
-        provideDefinition: (
-            doc: sourcegraph.TextDocument,
-            pos: sourcegraph.Position
-        ) =>
-            provider
-                ? observableFromAsyncIterator(() => provider(doc, pos))
-                : NEVER,
+    public definition = (provider?: DefinitionProvider): sourcegraph.DefinitionProvider => ({
+        provideDefinition: (doc: sourcegraph.TextDocument, pos: sourcegraph.Position) =>
+            provider ? observableFromAsyncIterator(() => provider(doc, pos)) : NEVER,
     })
 
-    public references = (
-        provider?: ReferencesProvider
-    ): sourcegraph.ReferenceProvider => ({
+    public references = (provider?: ReferencesProvider): sourcegraph.ReferenceProvider => ({
         provideReferences: (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position,
             ctx: sourcegraph.ReferenceContext
-        ) =>
-            provider
-                ? observableFromAsyncIterator(() => provider(doc, pos, ctx))
-                : NEVER,
+        ) => (provider ? observableFromAsyncIterator(() => provider(doc, pos, ctx)) : NEVER),
     })
 
     public hover = (provider?: HoverProvider): sourcegraph.HoverProvider => ({
-        provideHover: (
-            doc: sourcegraph.TextDocument,
-            pos: sourcegraph.Position
-        ) =>
-            provider
-                ? observableFromAsyncIterator(() => provider(doc, pos))
-                : NEVER,
+        provideHover: (doc: sourcegraph.TextDocument, pos: sourcegraph.Position) =>
+            provider ? observableFromAsyncIterator(() => provider(doc, pos)) : NEVER,
     })
 
-    public documentHighlights = (
-        provider?: DocumentHighlightProvider
-    ): sourcegraph.DocumentHighlightProvider => ({
-        provideDocumentHighlights: (
-            doc: sourcegraph.TextDocument,
-            pos: sourcegraph.Position
-        ) =>
-            provider
-                ? observableFromAsyncIterator(() => provider(doc, pos))
-                : NEVER,
+    public documentHighlights = (provider?: DocumentHighlightProvider): sourcegraph.DocumentHighlightProvider => ({
+        provideDocumentHighlights: (doc: sourcegraph.TextDocument, pos: sourcegraph.Position) =>
+            provider ? observableFromAsyncIterator(() => provider(doc, pos)) : NEVER,
     })
 }
 
@@ -129,10 +97,7 @@ export class NoopProviderWrapper implements ProviderWrapper {
  *
  * @param languageSpec The language spec used to provide search-based code intelligence.
  */
-export function createProviderWrapper(
-    languageSpec: LanguageSpec,
-    logger: Logger
-): ProviderWrapper {
+export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger): ProviderWrapper {
     // Create empty wrapped providers. Each provider will update the
     // appropriate field when they are fully wrapped, so this object
     // always has the "active" providers.
@@ -143,31 +108,19 @@ export function createProviderWrapper(
 
     return {
         definition: (lspProvider?: DefinitionProvider) => {
-            const provider = createDefinitionProvider(
-                lsifProviders.definition,
-                searchProviders.definition,
-                lspProvider
-            )
+            const provider = createDefinitionProvider(lsifProviders.definition, searchProviders.definition, lspProvider)
             wrapped.definition = provider
             return provider
         },
 
         references: (lspProvider?: ReferencesProvider) => {
-            const provider = createReferencesProvider(
-                lsifProviders.references,
-                searchProviders.references,
-                lspProvider
-            )
+            const provider = createReferencesProvider(lsifProviders.references, searchProviders.references, lspProvider)
             wrapped.references = provider
             return provider
         },
 
         hover: (lspProvider?: HoverProvider) => {
-            const provider = createHoverProvider(
-                lsifProviders.hover,
-                searchProviders.hover,
-                lspProvider
-            )
+            const provider = createHoverProvider(lsifProviders.hover, searchProviders.hover, lspProvider)
             wrapped.hover = provider
             return provider
         },
@@ -197,7 +150,7 @@ export function createDefinitionProvider(
     lspProvider?: DefinitionProvider
 ): sourcegraph.DefinitionProvider {
     return {
-        provideDefinition: wrapProvider(async function*(
+        provideDefinition: wrapProvider(async function* (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
@@ -261,11 +214,10 @@ export function createReferencesProvider(
 ): sourcegraph.ReferenceProvider {
     // Gets an opaque value that is the same for all locations
     // within a file but different from other files.
-    const file = (loc: sourcegraph.Location): string =>
-        `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
+    const file = (loc: sourcegraph.Location): string => `${loc.uri.host} ${loc.uri.pathname} ${loc.uri.hash}`
 
     return {
-        provideReferences: wrapProvider(async function*(
+        provideReferences: wrapProvider(async function* (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position,
             ctx: sourcegraph.ReferenceContext
@@ -308,9 +260,7 @@ export function createReferencesProvider(
                 // as LSIF results. These results are definitely incorrect and
                 // will pollute the ordering of precise and fuzzy results in
                 // the references pane.
-                const filteredResults = asArray(searchResult).filter(
-                    l => !lsifFiles.has(file(l))
-                )
+                const filteredResults = asArray(searchResult).filter(l => !lsifFiles.has(file(l)))
                 if (filteredResults.length === 0) {
                     continue
                 }
@@ -319,9 +269,7 @@ export function createReferencesProvider(
                 // do not overwrite what was emitted previously. Mark new results
                 // as imprecise.
                 await emitter.emitOnce('searchReferences')
-                yield lsifResults.concat(
-                    asArray(badgeValues(filteredResults, impreciseBadge))
-                )
+                yield lsifResults.concat(asArray(badgeValues(filteredResults, impreciseBadge)))
             }
         }),
     }
@@ -340,14 +288,10 @@ export function createHoverProvider(
     lspProvider?: HoverProvider
 ): sourcegraph.HoverProvider {
     return {
-        provideHover: wrapProvider(async function*(
+        provideHover: wrapProvider(async function* (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
-        ): AsyncGenerator<
-            sourcegraph.Badged<sourcegraph.Hover> | null | undefined,
-            void,
-            undefined
-        > {
+        ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
             const emitter = new TelemetryEmitter()
 
             let hasPreciseResult = false
@@ -403,14 +347,10 @@ export function createDocumentHighlightProvider(
     lspProvider?: DocumentHighlightProvider
 ): sourcegraph.DocumentHighlightProvider {
     return {
-        provideDocumentHighlights: wrapProvider(async function*(
+        provideDocumentHighlights: wrapProvider(async function* (
             doc: sourcegraph.TextDocument,
             pos: sourcegraph.Position
-        ): AsyncGenerator<
-            sourcegraph.DocumentHighlight[] | null | undefined,
-            void,
-            undefined
-        > {
+        ): AsyncGenerator<sourcegraph.DocumentHighlight[] | null | undefined, void, undefined> {
             const emitter = new TelemetryEmitter()
 
             for await (const lsifResult of lsifProvider(doc, pos)) {
@@ -460,9 +400,7 @@ function wrapProvider<P extends unknown[], R>(
             return previousResult
         }
         previousArgs = args
-        previousResult = observableFromAsyncIterator(() => fn(...args)).pipe(
-            shareReplay(1)
-        )
+        previousResult = observableFromAsyncIterator(() => fn(...args)).pipe(shareReplay(1))
         return previousResult
     }
 }

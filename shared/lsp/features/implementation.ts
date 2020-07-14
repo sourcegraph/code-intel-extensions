@@ -1,11 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import * as lsp from 'vscode-languageserver-protocol'
 import { observableFromAsyncIterator } from '../../util/ix'
-import {
-    convertLocations,
-    convertProviderParams,
-    rewriteUris,
-} from '../conversion'
+import { convertLocations, convertProviderParams, rewriteUris } from '../conversion'
 import { Feature } from './feature'
 import { reregisterOnChange } from './util'
 
@@ -40,23 +36,15 @@ export const implementationFeature: Feature<
             yield convertLocations(result)
         }
 
-        return reregisterOnChange(
-            featureOptions,
-            ['implementationId'],
-            options =>
-                sourcegraph.languages.registerLocationProvider(
-                    options.implementationId || 'unknown.impl',
-                    scopedDocumentSelector,
-                    {
-                        provideLocations: (
-                            textDocument: sourcegraph.TextDocument,
-                            position: sourcegraph.Position
-                        ) =>
-                            observableFromAsyncIterator(() =>
-                                implementation(textDocument, position)
-                            ),
-                    }
-                )
+        return reregisterOnChange(featureOptions, ['implementationId'], options =>
+            sourcegraph.languages.registerLocationProvider(
+                options.implementationId || 'unknown.impl',
+                scopedDocumentSelector,
+                {
+                    provideLocations: (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) =>
+                        observableFromAsyncIterator(() => implementation(textDocument, position)),
+                }
+            )
         )
     },
 }

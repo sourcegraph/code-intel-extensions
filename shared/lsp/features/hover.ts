@@ -5,11 +5,7 @@ import { Feature } from './feature'
 
 export interface HoverFeatureOptions {}
 
-export const hoverFeature: Feature<
-    typeof lsp.HoverRequest.type,
-    'hoverProvider',
-    HoverFeatureOptions
-> = {
+export const hoverFeature: Feature<typeof lsp.HoverRequest.type, 'hoverProvider', HoverFeatureOptions> = {
     capabilityName: 'hoverProvider',
     requestType: lsp.HoverRequest.type,
     register: ({
@@ -32,9 +28,6 @@ export const hoverFeature: Feature<
             yield convertHover(result)
         }
 
-        return sourcegraph.languages.registerHoverProvider(
-            scopedDocumentSelector,
-            providerWrapper.hover(hover)
-        )
+        return sourcegraph.languages.registerHoverProvider(scopedDocumentSelector, providerWrapper.hover(hover))
     },
 }

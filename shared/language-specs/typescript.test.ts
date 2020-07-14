@@ -30,11 +30,6 @@ describe('typescriptSpec', () => {
                 fileContent,
             })
 
-        assert.deepStrictEqual(filtered, [
-            results[0],
-            results[1],
-            results[2],
-            results[3],
-        ])
+        assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3]])
     })
 })

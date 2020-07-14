@@ -13,10 +13,7 @@ interface GraphQLResponseError {
 }
 
 /** The generic type of the queryGraphQL function. */
-export type QueryGraphQLFn<T> = (
-    query: string,
-    vars?: { [name: string]: unknown }
-) => Promise<T>
+export type QueryGraphQLFn<T> = (query: string, vars?: { [name: string]: unknown }) => Promise<T>
 
 /**
  * Perform a GraphQL query via the extension host.
@@ -24,20 +21,11 @@ export type QueryGraphQLFn<T> = (
  * @param query The GraphQL query string.
  * @param vars The query variables.
  */
-export async function queryGraphQL<T>(
-    query: string,
-    vars: { [name: string]: unknown } = {}
-): Promise<T> {
-    const resp = await sourcegraph.commands.executeCommand<GraphQLResponse<T>>(
-        'queryGraphQL',
-        query,
-        vars
-    )
+export async function queryGraphQL<T>(query: string, vars: { [name: string]: unknown } = {}): Promise<T> {
+    const resp = await sourcegraph.commands.executeCommand<GraphQLResponse<T>>('queryGraphQL', query, vars)
 
     if (resp.errors !== undefined) {
-        throw resp.errors.length === 1
-            ? resp.errors[0]
-            : aggregateErrors(resp.errors)
+        throw resp.errors.length === 1 ? resp.errors[0] : aggregateErrors(resp.errors)
     }
 
     return resp.data
