@@ -180,8 +180,8 @@ export function findOverlappingCodeIntelligenceRange(
     position: sourcegraph.Position,
     ranges: CodeIntelligenceRange[]
 ): CodeIntelligenceRange | null {
-    return (
-        ranges.find(
+    const overlapping =
+        ranges.filter(
             ({
                 range: {
                     start: { line: startLine, character: startCharacter },
@@ -193,7 +193,21 @@ export function findOverlappingCodeIntelligenceRange(
                 // right side check
                 (position.line < endLine || (position.line === endLine && position.character < endCharacter))
         ) || null
-    )
+
+    if (overlapping.length === 0) {
+        return null
+    }
+
+    overlapping.sort((a, b) => {
+        const cmp = b.range.start.line - a.range.start.line
+        if (cmp === 0) {
+            return b.range.start.character - a.range.start.character
+        }
+
+        return cmp
+    })
+
+    return overlapping[0]
 }
 
 const introspectionQuery = gql`
