@@ -43,13 +43,7 @@ describe('goSpec', () => {
                 fileContent,
             })
 
-        assert.deepStrictEqual(filtered, [
-            results[0],
-            results[1],
-            results[2],
-            results[3],
-            results[4],
-        ])
+        assert.deepStrictEqual(filtered, [results[0], results[1], results[2], results[3], results[4]])
     })
 
     it('filters definitions from root package', () => {

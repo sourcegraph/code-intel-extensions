@@ -27,60 +27,35 @@ import {
 describe('graphql providers', () => {
     describe('definition provider', () => {
         it('should use result from window', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
-            >(() => makeEnvelope(null))
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
+                makeEnvelope(null)
+            )
 
             const getBulkLocalIntelligence = Promise.resolve(() =>
                 Promise.resolve({
                     range: range1,
                     definitions: [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/a.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/b.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/c.ts'),
-                            range3
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
                     ],
                 })
             )
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(
-                        queryGraphQLFn,
-                        getBulkLocalIntelligence
-                    ).definition(doc, pos)
-                ),
+                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).definition(doc, pos)),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/a.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/b.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/c.ts'),
-                            range3
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
                     ],
                 ]
             )
         })
 
         it('should correctly parse result', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
-            >(() =>
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
                 makeEnvelope({
                     definitions: {
                         nodes: [
@@ -92,48 +67,27 @@ describe('graphql providers', () => {
                 })
             )
 
-            assert.deepEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn).definition(doc, pos)
-                ),
+            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(doc, pos)), [
                 [
-                    [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/a.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/b.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/c.ts'),
-                            range3
-                        ),
-                    ],
-                ]
-            )
+                    new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+                    new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+                    new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
+                ],
+            ])
         })
 
         it('should deal with empty payload', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
-            >(() => makeEnvelope())
-
-            assert.deepEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn).definition(doc, pos)
-                ),
-                [null]
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
+                makeEnvelope()
             )
+
+            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(doc, pos)), [null])
         })
     })
 
     describe('references provider', () => {
         it('should use result from window', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(() =>
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope({
                     references: {
                         nodes: [
@@ -150,66 +104,31 @@ describe('graphql providers', () => {
                 Promise.resolve({
                     range: range1,
                     references: [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/d.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/e.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/f.ts'),
-                            range3
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/d.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/e.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/f.ts'), range3),
                     ],
                 })
             )
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(
-                        queryGraphQLFn,
-                        getBulkLocalIntelligence
-                    ).references(doc, pos, { includeDeclaration: false })
+                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).references(doc, pos, {
+                        includeDeclaration: false,
+                    })
                 ),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/d.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/e.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/f.ts'),
-                            range3
-                        ),
-                    ],
-                    [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/a.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/b.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/c.ts'),
-                            range3
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
                     ],
                 ]
             )
         })
 
         it('should correctly parse result', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(() =>
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope({
                     references: {
                         nodes: [
@@ -230,27 +149,18 @@ describe('graphql providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?deadbeef1#/a.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?deadbeef2#/b.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo3?deadbeef3#/c.ts'),
-                            range3
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
                     ],
                 ]
             )
         })
 
         it('should deal with empty payload', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(() => makeEnvelope())
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
+                makeEnvelope()
+            )
 
             assert.deepEqual(
                 await gatherValues(
@@ -264,20 +174,10 @@ describe('graphql providers', () => {
 
         it('should paginate results', async () => {
             const stub = sinon.stub<
-                Parameters<
-                    QueryGraphQLFn<
-                        GenericLSIFResponse<ReferencesResponse | null>
-                    >
-                >,
-                ReturnType<
-                    QueryGraphQLFn<
-                        GenericLSIFResponse<ReferencesResponse | null>
-                    >
-                >
+                Parameters<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>,
+                ReturnType<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>
             >()
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(stub)
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(stub)
 
             stub.onCall(0).returns(
                 makeEnvelope({
@@ -304,18 +204,9 @@ describe('graphql providers', () => {
                 })
             )
 
-            const location1 = new sourcegraph.Location(
-                new URL('git://repo1?deadbeef1#/a.ts'),
-                range1
-            )
-            const location2 = new sourcegraph.Location(
-                new URL('git://repo2?deadbeef2#/b.ts'),
-                range2
-            )
-            const location3 = new sourcegraph.Location(
-                new URL('git://repo3?deadbeef3#/c.ts'),
-                range3
-            )
+            const location1 = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
+            const location2 = new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2)
+            const location3 = new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3)
 
             assert.deepEqual(
                 await gatherValues(
@@ -323,11 +214,7 @@ describe('graphql providers', () => {
                         includeDeclaration: false,
                     })
                 ),
-                [
-                    [location1],
-                    [location1, location2],
-                    [location1, location2, location3],
-                ]
+                [[location1], [location1, location2], [location1, location2, location3]]
             )
 
             assert.equal(queryGraphQLFn.getCall(0).args[1]?.after, undefined)
@@ -336,9 +223,7 @@ describe('graphql providers', () => {
         })
 
         it('should not page results indefinitely', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(() =>
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope({
                     references: {
                         nodes: [{ resource: resource1, range: range1 }],
@@ -347,10 +232,7 @@ describe('graphql providers', () => {
                 })
             )
 
-            const location = new sourcegraph.Location(
-                new URL('git://repo1?deadbeef1#/a.ts'),
-                range1
-            )
+            const location = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
 
             const values = [[location]]
             for (let i = 1; i < MAX_REFERENCE_PAGE_REQUESTS; i++) {
@@ -374,9 +256,9 @@ describe('graphql providers', () => {
 
     describe('hover provider', () => {
         it('should use result from window', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>
-            >(() => makeEnvelope(null))
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>>(() =>
+                makeEnvelope(null)
+            )
 
             const getBulkLocalIntelligence = Promise.resolve(() =>
                 Promise.resolve({
@@ -389,12 +271,7 @@ describe('graphql providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(
-                        queryGraphQLFn,
-                        getBulkLocalIntelligence
-                    ).hover(doc, pos)
-                ),
+                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).hover(doc, pos)),
                 [
                     {
                         contents: {
@@ -408,9 +285,7 @@ describe('graphql providers', () => {
         })
 
         it('should correctly parse result', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>
-            >(() =>
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>>(() =>
                 makeEnvelope({
                     hover: {
                         markdown: { text: 'foo' },
@@ -419,89 +294,56 @@ describe('graphql providers', () => {
                 })
             )
 
-            assert.deepStrictEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn).hover(doc, pos)
-                ),
-                [
-                    {
-                        contents: {
-                            value: 'foo',
-                            kind: 'markdown',
-                        },
-                        range: range1,
+            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(doc, pos)), [
+                {
+                    contents: {
+                        value: 'foo',
+                        kind: 'markdown',
                     },
-                ]
-            )
+                    range: range1,
+                },
+            ])
         })
 
         it('should deal with empty payload', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>
-            >(() => makeEnvelope())
-
-            assert.deepStrictEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn).hover(doc, pos)
-                ),
-                [null]
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>>(() =>
+                makeEnvelope()
             )
+
+            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(doc, pos)), [null])
         })
     })
 
     describe('document highlights provider', () => {
         it('should use result from window', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>
-            >(() => makeEnvelope(null))
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
+                makeEnvelope(null)
+            )
 
             const getBulkLocalIntelligence = Promise.resolve(() =>
                 Promise.resolve({
                     range: range1,
                     references: [
-                        new sourcegraph.Location(
-                            new URL('git://repo?rev#foo.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo?rev#bar.ts'),
-                            range2
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo?rev#foo.ts'),
-                            range3
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo?rev#baz.ts'),
-                            range4
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo?rev#foo.ts'),
-                            range5
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo?rev#baz.ts'),
-                            range6
-                        ),
+                        new sourcegraph.Location(new URL('git://repo?rev#foo.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo?rev#bar.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo?rev#foo.ts'), range3),
+                        new sourcegraph.Location(new URL('git://repo?rev#baz.ts'), range4),
+                        new sourcegraph.Location(new URL('git://repo?rev#foo.ts'), range5),
+                        new sourcegraph.Location(new URL('git://repo?rev#baz.ts'), range6),
                     ],
                 })
             )
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(
-                        queryGraphQLFn,
-                        getBulkLocalIntelligence
-                    ).documentHighlights(doc, pos)
+                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).documentHighlights(doc, pos)
                 ),
                 [[{ range: range1 }, { range: range3 }, { range: range5 }]]
             )
         })
 
         it('should correctly parse result', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(() =>
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
                 makeEnvelope({
                     references: {
                         nodes: [
@@ -516,24 +358,16 @@ describe('graphql providers', () => {
                     },
                 })
             )
-            assert.deepEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
-                ),
-                [[{ range: range1 }, { range: range3 }, { range: range5 }]]
-            )
+            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).documentHighlights(doc, pos)), [
+                [{ range: range1 }, { range: range3 }, { range: range5 }],
+            ])
         })
 
         it('should deal with empty payload', async () => {
-            const queryGraphQLFn = sinon.spy<
-                QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>
-            >(() => makeEnvelope())
-            assert.deepEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn).documentHighlights(doc, pos)
-                ),
-                [null]
+            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>>>(() =>
+                makeEnvelope()
             )
+            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).documentHighlights(doc, pos)), [null])
         })
     })
 })

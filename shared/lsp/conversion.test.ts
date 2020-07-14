@@ -4,11 +4,7 @@ import { rewriteUris } from './conversion'
 describe('rewriteUris', () => {
     it('rewrites values recursively', () => {
         const obj = {
-            foo: [
-                { uri: 'http://test.com/1' },
-                { uri: 'http://test.com/2' },
-                { uri: 'http://test.com/3' },
-            ],
+            foo: [{ uri: 'http://test.com/1' }, { uri: 'http://test.com/2' }, { uri: 'http://test.com/3' }],
             bar: {
                 foo: { uri: 'http://test.com/4' },
                 bar: { uri: 'http://test.com/5' },

@@ -13,10 +13,7 @@ export interface PackageJson {
  * @param rawManifest The unparsed manifest.
  * @param api The GraphQL API instance.
  */
-export async function resolvePackageRepo(
-    rawManifest: string,
-    api: API = new API()
-): Promise<string | undefined> {
+export async function resolvePackageRepo(rawManifest: string, api: API = new API()): Promise<string | undefined> {
     const packageJson: PackageJson = JSON.parse(rawManifest)
     if (!packageJson.repository) {
         return Promise.resolve(undefined)
@@ -24,9 +21,7 @@ export async function resolvePackageRepo(
 
     return (
         await safePromise(api.resolveRepo.bind(api))(
-            typeof packageJson.repository === 'string'
-                ? packageJson.repository
-                : packageJson.repository.url
+            typeof packageJson.repository === 'string' ? packageJson.repository : packageJson.repository.url
         )
     )?.name
 }
@@ -46,10 +41,7 @@ function vscodePackageName(uri: URL): string | undefined {
     return uri.pathname.endsWith('/vscode.d.ts') ? 'vscode' : undefined
 }
 
-const packageNameSpecialCases: ((urI: URL) => string | undefined)[] = [
-    definitelyTypedPackageName,
-    vscodePackageName,
-]
+const packageNameSpecialCases: ((urI: URL) => string | undefined)[] = [definitelyTypedPackageName, vscodePackageName]
 
 /**
  * Find the name of the package by reading the closest package.json to the
@@ -61,10 +53,7 @@ const packageNameSpecialCases: ((urI: URL) => string | undefined)[] = [
  */
 export async function findPackageName(
     uri: URL,
-    fetcher: (
-        url: URL,
-        headers?: Record<string, string>
-    ) => Promise<PackageJson> = fetch
+    fetcher: (url: URL, headers?: Record<string, string>) => Promise<PackageJson> = fetch
 ): Promise<string> {
     for (const specialCase of packageNameSpecialCases) {
         const packageName = specialCase(uri)
@@ -99,7 +88,5 @@ export async function findPackageName(
         }
     }
 
-    throw new Error(
-        `No package.json found for ${uri.href} under root ${rootUri.href}`
-    )
+    throw new Error(`No package.json found for ${uri.href} under root ${rootUri.href}`)
 }

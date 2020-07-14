@@ -12,9 +12,7 @@ describe('reregisterOnChange', () => {
     }
 
     it('should register with initial values', () => {
-        const register = sinon.spy<
-            (value: TestSettings) => sourcegraph.Unsubscribable
-        >(() => ({
+        const register = sinon.spy<(value: TestSettings) => sourcegraph.Unsubscribable>(() => ({
             unsubscribe: () => {
                 /* noop */
             },
@@ -35,9 +33,7 @@ describe('reregisterOnChange', () => {
     })
 
     it('should register with changed values', () => {
-        const register = sinon.spy<
-            (value: TestSettings) => sourcegraph.Unsubscribable
-        >(() => ({
+        const register = sinon.spy<(value: TestSettings) => sourcegraph.Unsubscribable>(() => ({
             unsubscribe: () => {
                 /* noop */
             },
@@ -61,9 +57,7 @@ describe('reregisterOnChange', () => {
     })
 
     it('should register only with whitelisted changes', () => {
-        const register = sinon.spy<
-            (value: TestSettings) => sourcegraph.Unsubscribable
-        >(() => ({
+        const register = sinon.spy<(value: TestSettings) => sourcegraph.Unsubscribable>(() => ({
             unsubscribe: () => {
                 /* noop */
             },

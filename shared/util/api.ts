@@ -83,10 +83,9 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(
-            (await this.hasForkField()) ? queryWithFork : queryWithoutFork,
-            { name }
-        )
+        const data = await queryGraphQL<Response>((await this.hasForkField()) ? queryWithFork : queryWithoutFork, {
+            name,
+        })
 
         // Assume repo is not a fork/archived for older instances
         return { isFork: false, isArchived: false, ...data.repository }
@@ -112,9 +111,9 @@ export class API {
             __type: { fields: { name: string }[] }
         }
 
-        return (
-            await queryGraphQL<IntrospectionResponse>(introspectionQuery)
-        ).__type.fields.some(field => field.name === 'isFork')
+        return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
+            field => field.name === 'isFork'
+        )
     }
 
     /**
@@ -125,10 +124,7 @@ export class API {
      * @param repoName The repository's name.
      * @param rev The revision.
      */
-    public async resolveRev(
-        repoName: string,
-        rev: string
-    ): Promise<string | undefined> {
+    public async resolveRev(repoName: string, rev: string): Promise<string | undefined> {
         const query = gql`
             query ResolveRev($repoName: String!, $rev: String!) {
                 repository(name: $repoName) {
@@ -186,9 +182,7 @@ export class API {
         }
 
         const data = await queryGraphQL<Response>(query, { query: searchQuery })
-        return sortUnique(
-            data.search.results.results.map(r => r.repository?.name)
-        ).filter(isDefined)
+        return sortUnique(data.search.results.results.map(r => r.repository?.name)).filter(isDefined)
     }
 
     /**
@@ -222,9 +216,7 @@ export class API {
         }
 
         const data = await queryGraphQL<Response>(query)
-        return data.extensionRegistry.extensions.nodes
-            .map(e => e.manifest?.raw)
-            .filter(isDefined)
+        return data.extensionRegistry.extensions.nodes.map(e => e.manifest?.raw).filter(isDefined)
     }
 
     /**
@@ -277,16 +269,9 @@ export class API {
      * @param user The identifier of the user for which to create an access token.
      * @param note A note to attach to the access token.
      */
-    public async createAccessToken(
-        user: string,
-        note: string
-    ): Promise<string> {
+    public async createAccessToken(user: string, note: string): Promise<string> {
         const query = gql`
-            mutation CreateAccessToken(
-                $user: ID!
-                $note: String!
-                $scopes: [String!]!
-            ) {
+            mutation CreateAccessToken($user: ID!, $note: String!, $scopes: [String!]!) {
                 createAccessToken(user: $user, note: $note, scopes: $scopes) {
                     token
                 }
@@ -317,11 +302,7 @@ export class API {
      * @param rev The revision in which the target version of the file exists.
      * @param path The path of the file.
      */
-    public async getFileContent(
-        repo: string,
-        rev: string,
-        path: string
-    ): Promise<string | undefined> {
+    public async getFileContent(repo: string, rev: string, path: string): Promise<string | undefined> {
         const query = gql`
             query FileContent($repo: String!, $rev: String!, $path: String!) {
                 repository(name: $repo) {
@@ -352,10 +333,7 @@ export class API {
      * @param searchQuery The input to the search command.
      * @param fileLocal Set to false to not request this field, which is absent in older versions of Sourcegraph.
      */
-    public async search(
-        searchQuery: string,
-        fileLocal = true
-    ): Promise<SearchResult[]> {
+    public async search(searchQuery: string, fileLocal = true): Promise<SearchResult[]> {
         const context = sourcegraph.workspace.versionContext
 
         interface Response {
@@ -367,13 +345,10 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(
-            buildSearchQuery(!!context, fileLocal),
-            {
-                query: searchQuery,
-                versionContext: context,
-            }
-        )
+        const data = await queryGraphQL<Response>(buildSearchQuery(!!context, fileLocal), {
+            query: searchQuery,
+            versionContext: context,
+        })
         return data.search.results.results.filter(isDefined)
     }
 }
@@ -444,10 +419,7 @@ function buildSearchQuery(context: boolean, fileLocal: boolean): string {
             return gql`
                 ${searchResultsFragment}
                 ${fileLocalFragment}
-                query CodeIntelSearch(
-                    $query: String!
-                    $versionContext: String
-                ) {
+                query CodeIntelSearch($query: String!, $versionContext: String) {
                     search(query: $query, versionContext: $versionContext) {
                         ...SearchResults
                         ...FileLocal

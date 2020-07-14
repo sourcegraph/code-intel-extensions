@@ -11,9 +11,7 @@ export function findLanguageSpecs(): LanguageSpec[] {
         .alias('l', 'languages')
         .strict().argv as { languages?: string }
 
-    const candidates = languageSpecs.filter(
-        s => !blacklist.includes(s.languageID)
-    )
+    const candidates = languageSpecs.filter(s => !blacklist.includes(s.languageID))
 
     if (!args.languages) {
         return candidates

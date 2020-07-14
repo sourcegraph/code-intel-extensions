@@ -12,18 +12,14 @@ import { languageID } from './language'
  * The constant in `language.ts` is updated by the generation/publish flow.
  */
 const activeLanguageSpecs =
-    languageID === 'all'
-        ? languageSpecs
-        : languageSpecs.filter(spec => spec.languageID === languageID)
+    languageID === 'all' ? languageSpecs : languageSpecs.filter(spec => spec.languageID === languageID)
 
 /**
  * Register providers on the extension host.
  *
  * @param ctx The extension context.
  */
-export async function activate(
-    ctx?: sourcegraph.ExtensionContext
-): Promise<void> {
+export async function activate(ctx?: sourcegraph.ExtensionContext): Promise<void> {
     await Promise.all(activeLanguageSpecs.map(spec => activateSpec(spec, ctx)))
 }
 
@@ -33,10 +29,7 @@ export async function activate(
  * @param spec The language spec.
  * @param ctx The extension context.
  */
-function activateSpec(
-    spec: LanguageSpec,
-    ctx?: sourcegraph.ExtensionContext
-): Promise<void> {
+function activateSpec(spec: LanguageSpec, ctx?: sourcegraph.ExtensionContext): Promise<void> {
     return activateCodeIntel(ctx, spec.fileExts.flatMap(createSelector), spec)
 }
 

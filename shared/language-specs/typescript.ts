@@ -1,11 +1,7 @@
 import * as path from 'path'
 import { cStyleComment } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
-import {
-    extractFromLines,
-    filterResultsByImports,
-    removeExtension,
-} from './util'
+import { extractFromLines, filterResultsByImports, removeExtension } from './util'
 
 /**
  * Filter a list of candidate definitions to select those likely to be valid
@@ -15,22 +11,14 @@ import {
  * If no candidates match, fall back to the raw (unfiltered) results so that
  * the user doesn't get an empty response unless there really is nothing.
  */
-function filterDefinitions<T extends Result>(
-    results: T[],
-    { filePath, fileContent }: FilterContext
-): T[] {
-    const importPaths = extractFromLines(
-        fileContent,
-        /\bfrom ['"](.*)['"];?$/,
-        /\brequire\(['"](.*)['"]\)/
-    )
+function filterDefinitions<T extends Result>(results: T[], { filePath, fileContent }: FilterContext): T[] {
+    const importPaths = extractFromLines(fileContent, /\bfrom ['"](.*)['"];?$/, /\brequire\(['"](.*)['"]\)/)
 
     return filterResultsByImports(
         results,
         importPaths,
         // Match results with a basename suffix of an import candidate
-        ({ file }, importPath) =>
-            candidates(filePath, importPath).includes(removeExtension(file))
+        ({ file }, importPath) => candidates(filePath, importPath).includes(removeExtension(file))
     )
 }
 
@@ -39,10 +27,7 @@ function filterDefinitions<T extends Result>(
  * relative to the given source path.
  */
 function candidates(sourcePath: string, importPath: string): string[] {
-    return [
-        path.join(path.dirname(sourcePath), importPath),
-        path.join(path.dirname(sourcePath), importPath, 'index'),
-    ]
+    return [path.join(path.dirname(sourcePath), importPath), path.join(path.dirname(sourcePath), importPath, 'index')]
 }
 
 export const typescriptSpec: LanguageSpec = {

@@ -6,21 +6,14 @@ import { Logger, RedactingLogger } from './logging'
 import { getOrCreateAccessToken } from './lsp/auth'
 import { LSPClient } from './lsp/client'
 import { FeatureOptions } from './lsp/registration'
-import {
-    createProviderWrapper,
-    ProviderWrapper,
-    ReferencesProvider,
-} from './providers'
+import { createProviderWrapper, ProviderWrapper, ReferencesProvider } from './providers'
 
 /**
  * A factory function that attempts to create an LSP client and register
  * providers with the given extension context. This function returns true
  * if providers are registered and false otherwise.
  */
-export type LSPFactory = (
-    ctx: sourcegraph.ExtensionContext,
-    providerWrapper: ProviderWrapper
-) => Promise<boolean>
+export type LSPFactory = (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean>
 
 /**
  * A factory function that creates an LSP client. This function returns the
@@ -149,14 +142,8 @@ export function initLSP<S extends { [key: string]: any }>(
     clientFactory: ClientFactory<S>,
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
     logger: Logger = new RedactingLogger(console)
-): (
-    ctx: sourcegraph.ExtensionContext,
-    providerWrapper: ProviderWrapper
-) => Promise<boolean> {
-    return async (
-        ctx: sourcegraph.ExtensionContext,
-        providerWrapper: ProviderWrapper
-    ): Promise<boolean> => {
+): (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean> {
+    return async (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper): Promise<boolean> => {
         const { settings, settingsSubject } = getSettings<S>(ctx)
 
         const serverURL = settings[`${languageID}.serverUrl`]
@@ -165,19 +152,12 @@ export function initLSP<S extends { [key: string]: any }>(
             return false
         }
 
-        const accessToken = await getOrCreateAccessToken(
-            `${languageID}.accessToken`,
-            languageID
-        )
+        const accessToken = await getOrCreateAccessToken(`${languageID}.accessToken`, languageID)
         if (!accessToken) {
             logger.log('No language server access token is available')
         }
 
-        const sgUrl = sourcegraphURL(
-            settings[`${languageID}.sourcegraphUrl`],
-            languageID,
-            logger
-        )
+        const sgUrl = sourcegraphURL(settings[`${languageID}.sourcegraphUrl`], languageID, logger)
 
         const { client, featureOptionsSubject } = await clientFactory({
             ctx,
@@ -223,32 +203,17 @@ function activateWithoutLSP(
     selector: sourcegraph.DocumentSelector,
     wrapper: ProviderWrapper
 ): void {
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerDefinitionProvider(
-            selector,
-            wrapper.definition()
-        )
-    )
+    ctx.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, wrapper.definition()))
 
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerReferenceProvider(
-            selector,
-            wrapper.references()
-        )
-    )
+    ctx.subscriptions.add(sourcegraph.languages.registerReferenceProvider(selector, wrapper.references()))
 
-    ctx.subscriptions.add(
-        sourcegraph.languages.registerHoverProvider(selector, wrapper.hover())
-    )
+    ctx.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, wrapper.hover()))
 
     // Do not try to register this provider on pre-3.18 instances as it
     // didn't exist.
     if (sourcegraph.languages.registerDocumentHighlightProvider) {
         ctx.subscriptions.add(
-            sourcegraph.languages.registerDocumentHighlightProvider(
-                selector,
-                wrapper.documentHighlights()
-            )
+            sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
         )
     }
 }
@@ -266,9 +231,7 @@ function getSettings<S extends { [key: string]: any }>(
     const settingsSubject: BehaviorSubject<S> = new BehaviorSubject<S>(settings)
 
     ctx.subscriptions.add(
-        sourcegraph.configuration.subscribe(() =>
-            settingsSubject.next(sourcegraph.configuration.get<S>().value)
-        )
+        sourcegraph.configuration.subscribe(() => settingsSubject.next(sourcegraph.configuration.get<S>().value))
     )
 
     return { settings, settingsSubject }
@@ -281,11 +244,7 @@ function getSettings<S extends { [key: string]: any }>(
  * @param languageID The language identifier.
  * @param logger The logger instance.
  */
-function sourcegraphURL(
-    setting: string | undefined,
-    languageID: string,
-    logger: Logger
-): URL {
+function sourcegraphURL(setting: string | undefined, languageID: string, logger: Logger): URL {
     const url = setting || sourcegraph.internal.sourcegraphURL.toString()
 
     try {
@@ -319,9 +278,7 @@ function sourcegraphURL(
  * @param featureOptionsSubject The feature options to funnel changes into.
  * @param externalReferencesProvider The external references provider to register.
  */
-function registerExternalReferenceProviderToggle<
-    S extends { [key: string]: any }
->(
+function registerExternalReferenceProviderToggle<S extends { [key: string]: any }>(
     ctx: sourcegraph.ExtensionContext,
     implementationId: string,
     settingsSubject: Observable<S>,
@@ -348,10 +305,7 @@ function registerExternalReferenceProviderToggle<
  * @param ctx The extension context.
  * @param implementationId The identifier of the registered locations provider.
  */
-function registerImplementationsPanel(
-    ctx: sourcegraph.ExtensionContext,
-    implementationId: string
-): void {
+function registerImplementationsPanel(ctx: sourcegraph.ExtensionContext, implementationId: string): void {
     const panelView = sourcegraph.app.createPanelView(implementationId)
     panelView.title = 'Implementations'
     panelView.component = { locationProvider: implementationId }

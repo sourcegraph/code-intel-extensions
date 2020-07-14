@@ -16,8 +16,7 @@ const spec: LanguageSpec = {
     fileExts: [],
     commentStyles: [cStyleComment],
     identCharPattern: /./,
-    filterDefinitions: <T extends Result>(results: T[]) =>
-        results.filter(r => r.file !== '/f.ts'),
+    filterDefinitions: <T extends Result>(results: T[]) => results.filter(r => r.file !== '/f.ts'),
 }
 
 const doc = createStubTextDocument({
@@ -124,9 +123,7 @@ describe('search providers', () => {
     } = {}): API => {
         const api = new API()
         const stub = sinon.stub(api, 'resolveRepo')
-        stub.callsFake(repo =>
-            Promise.resolve({ name: repo, isFork, isArchived })
-        )
+        stub.callsFake(repo => Promise.resolve({ name: repo, isFork, isArchived }))
         return api
     }
 
@@ -137,20 +134,8 @@ describe('search providers', () => {
             stub.resolves([searchResult1])
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(spec, {}, api).definition(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
-                [
-                    [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                    ],
-                ]
+                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 1)
@@ -167,26 +152,12 @@ describe('search providers', () => {
             const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.callsFake((searchQuery: string) =>
-                Promise.resolve(
-                    searchQuery.includes('-repo') ? [searchResult1] : []
-                )
+                Promise.resolve(searchQuery.includes('-repo') ? [searchResult1] : [])
             )
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(spec, {}, api).definition(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
-                [
-                    [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                    ],
-                ]
+                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 2)
@@ -212,22 +183,11 @@ describe('search providers', () => {
             stub.resolves([searchResult1, searchResult2, searchResult3])
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(spec, {}, api).definition(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
+                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?rev2#/d.ts'),
-                            range2
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
                     ],
                 ]
             )
@@ -240,26 +200,14 @@ describe('search providers', () => {
             const stub = sinon.stub(api, 'search')
             stub.callsFake(
                 (searchQuery: string): Promise<SearchResult[]> =>
-                    searchQuery.includes('index:only')
-                        ? Promise.resolve([searchResult1])
-                        : makeNoopPromise()
+                    searchQuery.includes('index:only') ? Promise.resolve([searchResult1]) : makeNoopPromise()
             )
 
             const values = gatherValues(
-                createProviders(spec, {}, api).definition(
-                    { ...doc, text: '\n\n\nfoobar\n' },
-                    pos
-                )
+                createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)
             )
 
-            assert.deepEqual(await values, [
-                [
-                    new sourcegraph.Location(
-                        new URL('git://repo1?rev1#/b.ts'),
-                        range1
-                    ),
-                ],
-            ])
+            assert.deepEqual(await values, [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]])
 
             assert.equal(stub.callCount, 2)
             assertQuery(stub.firstCall.args[0], [
@@ -292,20 +240,8 @@ describe('search providers', () => {
             )
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(spec, {}, api).definition(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
-                [
-                    [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                    ],
-                ]
+                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 3)
@@ -337,26 +273,12 @@ describe('search providers', () => {
             const api = newAPIWithStubResolveRepo({ isFork: true })
             const stub = sinon.stub(api, 'search')
             stub.callsFake((searchQuery: string) =>
-                Promise.resolve(
-                    searchQuery.includes('-repo') ? [searchResult1] : []
-                )
+                Promise.resolve(searchQuery.includes('-repo') ? [searchResult1] : [])
             )
 
             assert.deepEqual(
-                await gatherValues(
-                    createProviders(spec, {}, api).definition(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
-                [
-                    [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                    ],
-                ]
+                await gatherValues(createProviders(spec, {}, api).definition({ ...doc, text: '\n\n\nfoobar\n' }, pos)),
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 2)
@@ -383,31 +305,19 @@ describe('search providers', () => {
             const api = newAPIWithStubResolveRepo()
             const stub = sinon.stub(api, 'search')
             stub.callsFake((searchQuery: string) =>
-                Promise.resolve(
-                    searchQuery.includes('-repo')
-                        ? [searchResult2]
-                        : [searchResult1]
-                )
+                Promise.resolve(searchQuery.includes('-repo') ? [searchResult2] : [searchResult1])
             )
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, {}, api).references(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos,
-                        { includeDeclaration: false }
-                    )
+                    createProviders(spec, {}, api).references({ ...doc, text: '\n\n\nfoobar\n' }, pos, {
+                        includeDeclaration: false,
+                    })
                 ),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?rev2#/d.ts'),
-                            range2
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
                     ],
                 ]
             )
@@ -444,22 +354,14 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, {}, api).references(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos,
-                        { includeDeclaration: false }
-                    )
+                    createProviders(spec, {}, api).references({ ...doc, text: '\n\n\nfoobar\n' }, pos, {
+                        includeDeclaration: false,
+                    })
                 ),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?rev2#/d.ts'),
-                            range2
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
                     ],
                 ]
             )
@@ -512,22 +414,14 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(spec, {}, api).references(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos,
-                        { includeDeclaration: false }
-                    )
+                    createProviders(spec, {}, api).references({ ...doc, text: '\n\n\nfoobar\n' }, pos, {
+                        includeDeclaration: false,
+                    })
                 ),
                 [
                     [
-                        new sourcegraph.Location(
-                            new URL('git://repo1?rev1#/b.ts'),
-                            range1
-                        ),
-                        new sourcegraph.Location(
-                            new URL('git://repo2?rev2#/d.ts'),
-                            range2
-                        ),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
                     ],
                 ]
             )
@@ -573,13 +467,8 @@ describe('search providers', () => {
         const recur: Partial<SourcegraphProviders> = {}
         const providers = createProviders(spec, recur, api)
         recur.definition = {
-            provideDefinition: (
-                doc: sourcegraph.TextDocument,
-                pos: sourcegraph.Position
-            ) =>
-                observableFromAsyncIterator(() =>
-                    providers.definition(doc, pos)
-                ),
+            provideDefinition: (doc: sourcegraph.TextDocument, pos: sourcegraph.Position) =>
+                observableFromAsyncIterator(() => providers.definition(doc, pos)),
         }
 
         return providers
@@ -593,23 +482,14 @@ describe('search providers', () => {
             const getFileContentStub = sinon.stub(api, 'getFileContent')
             getFileContentStub.resolves('text\n// simple docstring\ndef')
 
-            assert.deepEqual(
-                await gatherValues(
-                    recurProviders(api).hover(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
-                [
-                    {
-                        contents: {
-                            kind: 'markdown',
-                            value:
-                                '```lang\ndef\n```\n\n---\n\nsimple docstring',
-                        },
+            assert.deepEqual(await gatherValues(recurProviders(api).hover({ ...doc, text: '\n\n\nfoobar\n' }, pos)), [
+                {
+                    contents: {
+                        kind: 'markdown',
+                        value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
                     },
-                ]
-            )
+                },
+            ])
 
             assert.equal(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
@@ -621,42 +501,27 @@ describe('search providers', () => {
             ])
 
             assert.equal(getFileContentStub.callCount, 1)
-            assert.deepEqual(getFileContentStub.firstCall.args, [
-                'repo1',
-                'rev1',
-                '/b.ts',
-            ])
+            assert.deepEqual(getFileContentStub.firstCall.args, ['repo1', 'rev1', '/b.ts'])
         })
 
         it('should fallback to index-only queries', async () => {
             const api = newAPIWithStubResolveRepo()
             const searchStub = sinon.stub(api, 'search')
             searchStub.callsFake((searchQuery: string) =>
-                searchQuery.includes('index:only')
-                    ? Promise.resolve([searchResult1])
-                    : makeNoopPromise()
+                searchQuery.includes('index:only') ? Promise.resolve([searchResult1]) : makeNoopPromise()
             )
 
             const getFileContentStub = sinon.stub(api, 'getFileContent')
             getFileContentStub.resolves('text\n// simple docstring\ndef')
 
-            assert.deepEqual(
-                await gatherValues(
-                    recurProviders(api).hover(
-                        { ...doc, text: '\n\n\nfoobar\n' },
-                        pos
-                    )
-                ),
-                [
-                    {
-                        contents: {
-                            kind: 'markdown',
-                            value:
-                                '```lang\ndef\n```\n\n---\n\nsimple docstring',
-                        },
+            assert.deepEqual(await gatherValues(recurProviders(api).hover({ ...doc, text: '\n\n\nfoobar\n' }, pos)), [
+                {
+                    contents: {
+                        kind: 'markdown',
+                        value: '```lang\ndef\n```\n\n---\n\nsimple docstring',
                     },
-                ]
-            )
+                },
+            ])
 
             assert.equal(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
@@ -676,11 +541,7 @@ describe('search providers', () => {
             ])
 
             assert.equal(getFileContentStub.callCount, 1)
-            assert.deepEqual(getFileContentStub.firstCall.args, [
-                'repo1',
-                'rev1',
-                '/b.ts',
-            ])
+            assert.deepEqual(getFileContentStub.firstCall.args, ['repo1', 'rev1', '/b.ts'])
         })
     })
 })

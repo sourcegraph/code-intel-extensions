@@ -1,10 +1,5 @@
 import * as assert from 'assert'
-import {
-    cStyleComment,
-    javaStyleComment,
-    leadingHashPattern,
-    pythonStyleComment,
-} from '../language-specs/comments'
+import { cStyleComment, javaStyleComment, leadingHashPattern, pythonStyleComment } from '../language-specs/comments'
 import { CommentStyle } from '../language-specs/spec'
 import { findDocstring } from './docstrings'
 
@@ -204,13 +199,7 @@ describe('docstrings', () => {
             },
         ]
 
-        assert.deepStrictEqual(
-            findDocstring({ fileText, definitionLine: 1, commentStyles }),
-            'Comment below the def'
-        )
-        assert.deepStrictEqual(
-            findDocstring({ fileText, definitionLine: 5, commentStyles }),
-            'Comment above the def'
-        )
+        assert.deepStrictEqual(findDocstring({ fileText, definitionLine: 1, commentStyles }), 'Comment below the def')
+        assert.deepStrictEqual(findDocstring({ fileText, definitionLine: 5, commentStyles }), 'Comment above the def')
     })
 })

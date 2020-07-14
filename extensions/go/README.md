@@ -9,13 +9,13 @@ This extension provides Go code intelligence on Sourcegraph.
 ## Usage
 
 1. Enable the `sourcegraph/go` extension:
-    - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/go) to enable it.
-    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/go`, and enable it.
+   - On Sourcegraph.com, visit the [extension page](https://sourcegraph.com/extensions/sourcegraph/go) to enable it.
+   - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/go`, and enable it.
 1. Visit any Go code file on Sourcegraph.
 1. Hover over a token in the code file.
-    - See a description of the token.
-    - Click **Go to definition** (if available) to go to the token's definition.
-    - Click **Find references** to see all references to the token.
+   - See a description of the token.
+   - Click **Go to definition** (if available) to go to the token's definition.
+   - Click **Find references** to see all references to the token.
 
 ### On your code host
 
@@ -23,15 +23,15 @@ This extension adds the same features to code files and diffs on your code host 
 
 1. Follow the [usage steps](#usage) above to enable this extension.
 1. Install the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
-    - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
+   - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
 1. Visit any file on your code host and hover over a token to see a description of the token, a **Go to definition** action (if available), and a **Find references** action.
 
 ## Basic code intelligence
 
 This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
--   "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
--   "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
+- "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
+- "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
 
 These heuristics work well for tokens with unique names, such as `render_to_view` or `TLSConfig`. They do not work well for ambiguous tokens, such as `open` or `file`.
 
@@ -116,8 +116,8 @@ http {
 }
 ```
 
--   If you're running the quickstart on Linux, change `host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
--   If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)), change `host.docker.internal` to `lang-go`.
+- If you're running the quickstart on Linux, change `host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
+- If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)), change `host.docker.internal` to `lang-go`.
 
 Add these to your Sourcegraph global settings:
 
@@ -128,11 +128,11 @@ Add these to your Sourcegraph global settings:
 
 Fill in the `PASSWORD` that you created above.
 
--   If you're running the quickstart on macOS, change `example.host.docker.internal` to `host.docker.internal`.
--   If you're running the quickstart on Linux, change `example.host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
--   If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)):
-    -   `go.serverUrl` is the address of the Go language server from the perspective of a user's browser (e.g. https://sourcegraph.example.com/go)
-    -   `go.sourcegraphUrl` is the address of the Sourcegraph instance from the perspective of the Go language server (e.g. http://sourcegraph-frontend:30080)
+- If you're running the quickstart on macOS, change `example.host.docker.internal` to `host.docker.internal`.
+- If you're running the quickstart on Linux, change `example.host.docker.internal` to the output of `ip addr show docker0 | grep -Po 'inet \K[\d.]+'`.
+- If you're using [Kubernetes](#using-kubernetes) (e.g. [deploy-sourcegraph](https://github.com/sourcegraph/deploy-sourcegraph)):
+  - `go.serverUrl` is the address of the Go language server from the perspective of a user's browser (e.g. https://sourcegraph.example.com/go)
+  - `go.sourcegraphUrl` is the address of the Sourcegraph instance from the perspective of the Go language server (e.g. http://sourcegraph-frontend:30080)
 
 Finally, restart the sourcegraph/server container (or nginx deployment if deployed to Kubernetes) to pick up the configuration change.
 
@@ -144,33 +144,33 @@ You can always revoke the `PASSWORD` by deleting the `.htpasswd` file and restar
 
 1. Run the Go language server:
 
-    ```sh
-    docker run --rm --name lang-go -p 4389:4389 sourcegraph/lang-go \
-      go-langserver -mode=websocket -addr=:4389 -usebuildserver -usebinarypkgcache=false -freeosmemory=false
-    ```
+   ```sh
+   docker run --rm --name lang-go -p 4389:4389 sourcegraph/lang-go \
+     go-langserver -mode=websocket -addr=:4389 -usebuildserver -usebinarypkgcache=false -freeosmemory=false
+   ```
 
-    You can verify it's up and running with [`ws`](https://github.com/hashrocket/ws) (run this from the same machine your browser is running on):
+   You can verify it's up and running with [`ws`](https://github.com/hashrocket/ws) (run this from the same machine your browser is running on):
 
-    ```sh
-    $ go get -u github.com/hashrocket/ws
-    $ ws ws://localhost:4389
-    >
-    ```
+   ```sh
+   $ go get -u github.com/hashrocket/ws
+   $ ws ws://localhost:4389
+   >
+   ```
 
 1. Enable this extension on your Sourcegraph https://sourcegraph.example.com/extensions/sourcegraph/go
 
 1. Add these to your Sourcegraph settings in https://sourcegraph.example.com/site-admin/global-settings and make sure the port matches either the Docker command or your Kubernetes config:
 
-    ```sh
-    "go.serverUrl": "ws://localhost:4389",
-    "go.sourcegraphUrl": "http://host.docker.internal:7080",
-    ```
+   ```sh
+   "go.serverUrl": "ws://localhost:4389",
+   "go.sourcegraphUrl": "http://host.docker.internal:7080",
+   ```
 
-    If you're running on Linux, change `go.sourcegraphUrl` to the IP given by:
+   If you're running on Linux, change `go.sourcegraphUrl` to the IP given by:
 
-    ```bash
-    ip addr show docker0 | grep -Po 'inet \K[\d.]+'
-    ```
+   ```bash
+   ip addr show docker0 | grep -Po 'inet \K[\d.]+'
+   ```
 
 Now visit a Go file and you should see code intelligence!
 
@@ -182,80 +182,80 @@ To deploy the language server with Kubernetes, use a deployment like this:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-    annotations:
-        description: Go code intelligence provided by lang-go
-    name: lang-go
-    namespace: prod
+  annotations:
+    description: Go code intelligence provided by lang-go
+  name: lang-go
+  namespace: prod
 spec:
-    minReadySeconds: 10
-    replicas: 1
-    revisionHistoryLimit: 10
-    strategy:
-        rollingUpdate:
-            maxSurge: 1
-            maxUnavailable: 1
-        type: RollingUpdate
-    template:
-        metadata:
-            labels:
-                app: lang-go
-        spec:
-            containers:
-                - args:
-                      - go-langserver
-                      - -mode=websocket
-                      - -addr=:4389
-                      - -usebuildserver
-                      - -usebinarypkgcache=false
-                      - -cachedir=$(CACHE_DIR)
-                      - -freeosmemory=false
-                  env:
-                      # TLS is optional
-                      - name: TLS_CERT
-                        valueFrom:
-                            secretKeyRef:
-                                key: cert
-                                name: tls
-                      - name: TLS_KEY
-                        valueFrom:
-                            secretKeyRef:
-                                key: key
-                                name: tls
-                      - name: POD_NAME
-                        valueFrom:
-                            fieldRef:
-                                fieldPath: metadata.name
-                      - name: CACHE_DIR
-                        value: /mnt/cache/$(POD_NAME)
-                  image: sourcegraph/lang-go:latest
-                  livenessProbe:
-                      initialDelaySeconds: 5
-                      tcpSocket:
-                          port: lsp
-                      timeoutSeconds: 5
-                  name: lang-go
-                  ports:
-                      - containerPort: 4389
-                        name: lsp
-                      - containerPort: 6060
-                        name: debug
-                  readinessProbe:
-                      tcpSocket:
-                          port: 4389
-                  resources:
-                      limits:
-                          cpu: '8'
-                          memory: 10G
-                      requests:
-                          cpu: '1'
-                          memory: 10G
-                  volumeMounts:
-                      - mountPath: /mnt/cache
-                        name: cache-ssd
-            volumes:
-                - hostPath:
-                      path: /mnt/disks/ssd0/pod-tmp
-                  name: cache-ssd
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: lang-go
+    spec:
+      containers:
+        - args:
+            - go-langserver
+            - -mode=websocket
+            - -addr=:4389
+            - -usebuildserver
+            - -usebinarypkgcache=false
+            - -cachedir=$(CACHE_DIR)
+            - -freeosmemory=false
+          env:
+            # TLS is optional
+            - name: TLS_CERT
+              valueFrom:
+                secretKeyRef:
+                  key: cert
+                  name: tls
+            - name: TLS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: key
+                  name: tls
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: CACHE_DIR
+              value: /mnt/cache/$(POD_NAME)
+          image: sourcegraph/lang-go:latest
+          livenessProbe:
+            initialDelaySeconds: 5
+            tcpSocket:
+              port: lsp
+            timeoutSeconds: 5
+          name: lang-go
+          ports:
+            - containerPort: 4389
+              name: lsp
+            - containerPort: 6060
+              name: debug
+          readinessProbe:
+            tcpSocket:
+              port: 4389
+          resources:
+            limits:
+              cpu: '8'
+              memory: 10G
+            requests:
+              cpu: '1'
+              memory: 10G
+          volumeMounts:
+            - mountPath: /mnt/cache
+              name: cache-ssd
+      volumes:
+        - hostPath:
+            path: /mnt/disks/ssd0/pod-tmp
+          name: cache-ssd
 ```
 
 With a corresponding service:
@@ -264,25 +264,25 @@ With a corresponding service:
 apiVersion: v1
 kind: Service
 metadata:
-    annotations:
-        prometheus.io/port: '6060'
-        prometheus.io/scrape: 'true'
-    labels:
-        app: lang-go
-    name: lang-go
-    namespace: prod
+  annotations:
+    prometheus.io/port: '6060'
+    prometheus.io/scrape: 'true'
+  labels:
+    app: lang-go
+  name: lang-go
+  namespace: prod
 spec:
-    loadBalancerIP: your.static.ip.address
-    ports:
-        - name: debug
-          port: 6060
-          targetPort: debug
-        - name: lsp
-          port: 443
-          targetPort: lsp
-    selector:
-        app: lang-go
-    type: LoadBalancer
+  loadBalancerIP: your.static.ip.address
+  ports:
+    - name: debug
+      port: 6060
+      targetPort: debug
+    - name: lsp
+      port: 443
+      targetPort: lsp
+  selector:
+    app: lang-go
+  type: LoadBalancer
 ```
 
 #### TLS

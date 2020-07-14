@@ -7,10 +7,10 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 
 ## Repository structure
 
--   [`src/extensions/go`](./src/extensions/go) The Go extension (supports LSP)
--   [`src/extensions/typescript`](./src/extensions/typescript) The TypeScript extension (supports LSP)
--   [`src/extensions/template`](./src/extensions/template) Template for all other languages (**does not** support LSP)
--   [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
+- [`src/extensions/go`](./src/extensions/go) The Go extension (supports LSP)
+- [`src/extensions/typescript`](./src/extensions/typescript) The TypeScript extension (supports LSP)
+- [`src/extensions/template`](./src/extensions/template) Template for all other languages (**does not** support LSP)
+- [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
 
 ## Development
 
@@ -18,15 +18,15 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 2. Run `yarn --cwd extensions/{go,typescript,template} run serve` (pick one, `template` includes all others)
 3. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
 
-    ```json
-    {
-      ...
-      "extensions": {
-          "sourcegraph/cpp": false,
-          ...
-      }
-    }
-    ```
+   ```json
+   {
+     ...
+     "extensions": {
+         "sourcegraph/cpp": false,
+         ...
+     }
+   }
+   ```
 
 4. [Sideload the extension](https://docs.sourcegraph.com/extensions/authoring/local_development) (hit OK on the alert to accept the default URL http://localhost:1234) on your Sourcegraph instance and refresh the page. Make sure you don't see two of the same language extension in the **Ext** menu.
 
@@ -45,17 +45,17 @@ If you need to manually generate/publish extensions, do so as follows:
 
 Generate:
 
--   Specific template extensions: `yarn run generate --languages=foo,bar`
--   All known template extensions: `yarn run generate`
+- Specific template extensions: `yarn run generate --languages=foo,bar`
+- All known template extensions: `yarn run generate`
 
 Publish:
 
 1. Ensure the [`src` command-line tool](https://github.com/sourcegraph/src-cli)
    is installed on your PATH, and environment variables are set:
-    - `SRC_ENDPOINT` should be the URL of your instance.
-    - `SRC_ACCESS_TOKEN` should contain an access token for your instance.
+   - `SRC_ENDPOINT` should be the URL of your instance.
+   - `SRC_ACCESS_TOKEN` should contain an access token for your instance.
 2. Publish:
-    - Specific template extensions: `yarn run publish --languages=foo,bar`
-    - All the template extensions: `yarn run publish`
-    - Go: `yarn run publish:go`
-    - TypeScript: `yarn run publish:typescript`
+   - Specific template extensions: `yarn run publish --languages=foo,bar`
+   - All the template extensions: `yarn run publish`
+   - Go: `yarn run publish:go`
+   - TypeScript: `yarn run publish:typescript`

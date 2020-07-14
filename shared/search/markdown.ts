@@ -21,10 +21,7 @@ const blacklistPatterns = [commentPattern, htmlTagPattern, markdownListPattern]
  * @param languageID The language identifier.
  * @param docstring The raw docstring.
  */
-export function wrapIndentationInCodeBlocks(
-    languageID: string,
-    docstring: string
-): string {
+export function wrapIndentationInCodeBlocks(languageID: string, docstring: string): string {
     if (blacklistPatterns.some(pattern => pattern.test(docstring))) {
         // Already formatted
         return docstring
@@ -36,26 +33,21 @@ export function wrapIndentationInCodeBlocks(
     // Create a zipped sequence of categorized lines of the form
     //    [[line1, line2], [line2, line3], ..., [line-n, undef]]
 
-    const pairs = zip(lines, lines.slice(1)) as [
-        { line: string; kind: LineKind },
-        { kind: LineKind } | undefined
-    ][]
+    const pairs = zip(lines, lines.slice(1)) as [{ line: string; kind: LineKind }, { kind: LineKind } | undefined][]
 
     return pairs
-        .flatMap(
-            ([{ line, kind }, { kind: nextKind } = { kind: undefined }]) => {
-                if (kind === 'prose' && nextKind === 'code') {
-                    // going from prose to code, start a code block
-                    return [line, '```' + languageID]
-                }
-                if (kind === 'code' && nextKind !== 'code') {
-                    // going from code to non-code, close the last code block
-                    return [line, '```']
-                }
-
-                return [line]
+        .flatMap(([{ line, kind }, { kind: nextKind } = { kind: undefined }]) => {
+            if (kind === 'prose' && nextKind === 'code') {
+                // going from prose to code, start a code block
+                return [line, '```' + languageID]
             }
-        )
+            if (kind === 'code' && nextKind !== 'code') {
+                // going from code to non-code, close the last code block
+                return [line, '```']
+            }
+
+            return [line]
+        })
         .join('\n')
 }
 
@@ -65,9 +57,7 @@ export function wrapIndentationInCodeBlocks(
  *
  * @param lines An array of lines.
  */
-function categorize(
-    lines: string[]
-): { line: string; kind: LineKind | undefined }[] {
+function categorize(lines: string[]): { line: string; kind: LineKind | undefined }[] {
     const reducer = (
         last: LineKind | undefined,
         line: { line: string; kind: LineKind | undefined }
