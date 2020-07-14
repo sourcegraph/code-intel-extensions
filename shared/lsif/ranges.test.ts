@@ -117,6 +117,18 @@ describe('findOverlappingCodeIntelligenceRange', () => {
             assert.equal(findOverlappingCodeIntelligenceRange(pos, [range]), null)
         }
     })
+
+    it('returns the inner-most range', () => {
+        const ranges = [
+            { range: new sourcegraph.Range(1, 0, 5, 10) },
+            { range: new sourcegraph.Range(2, 0, 4, 10) },
+            { range: new sourcegraph.Range(3, 2, 3, 8) },
+            { range: new sourcegraph.Range(3, 4, 3, 6) },
+        ]
+
+        const pos = new sourcegraph.Position(3, 5)
+        assert.equal(findOverlappingCodeIntelligenceRange(pos, ranges), ranges[3])
+    })
 })
 
 describe('rangesInRangeWindow', () => {
