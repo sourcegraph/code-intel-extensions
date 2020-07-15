@@ -9,7 +9,7 @@ import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
-import { HoverAlerts } from './hoverAlerts'
+import * as HoverAlerts from './hoverAlerts'
 
 export interface Providers {
     definition: DefinitionProvider
@@ -308,7 +308,7 @@ export function createHoverProvider(
                     if (hasPreciseResult) {
                         yield lsifResult
                     } else {
-                        yield { ...lsifResult, alerts: HoverAlerts.LSIF }
+                        yield { ...lsifResult, alerts: HoverAlerts.lsif }
                     }
                     hasPreciseResult = true
                 }
@@ -321,7 +321,7 @@ export function createHoverProvider(
             if (lspProvider) {
                 // Delegate to LSP if it's available.
                 let hasLSPResult = false
-                    for await (const lspResult of lspProvider(textDocument, position)) {
+                for await (const lspResult of lspProvider(textDocument, position)) {
                     if (lspResult) {
                         await emitter.emitOnce('lspHover')
                         if (hasLSPResult) {
@@ -329,7 +329,7 @@ export function createHoverProvider(
                         } else {
                             yield {
                                 ...lspResult,
-                                alerts: HoverAlerts.LSP,
+                                alerts: HoverAlerts.lsp,
                             }
                         }
                         hasLSPResult = true
@@ -352,12 +352,14 @@ export function createHoverProvider(
                         yield searchResult
                     } else {
                         let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] = []
-                        if (lsifSupport === LSIFSupport.None)
-                            alerts = HoverAlerts.SearchLSIFSupportNone
-                        else if (lsifSupport === LSIFSupport.Experimental)
-                            alerts = HoverAlerts.SearchLSIFSupportExperimental
-                        else if (lsifSupport === LSIFSupport.Robust)
-                            alerts = HoverAlerts.SearchLSIFSupportRobust
+                        if (lsifSupport === LSIFSupport.None) {
+                            alerts = HoverAlerts.searchLSIFSupportNone
+                        } else if (lsifSupport === LSIFSupport.Experimental) {
+                            alerts = HoverAlerts.searchLSIFSupportExperimental
+                        } else if (lsifSupport === LSIFSupport.Robust) {
+                            alerts = HoverAlerts.searchLSIFSupportRobust
+                        }
+
                         yield {
                             ...searchResult,
                             alerts,
