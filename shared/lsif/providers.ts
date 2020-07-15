@@ -165,7 +165,8 @@ function hover(
         return raceWithDelayOffset(
             getHoverFromRangeRequest(),
             async () => hoverForPosition(textDocument, position, queryGraphQL),
-            RANGE_RESOLUTION_DELAY
+            RANGE_RESOLUTION_DELAY,
+            results => results !== null && results.contents.value !== ''
         )
     }
 }
