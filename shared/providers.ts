@@ -9,6 +9,7 @@ import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
+import { HoverAlerts } from './hoverAlerts'
 
 export interface Providers {
     definition: DefinitionProvider
@@ -121,10 +122,10 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
 
         hover: (lspProvider?: HoverProvider) => {
             const provider = createHoverProvider(
-                languageSpec.lsifSupport,
+                languageSpec.lsifSupport || LSIFSupport.None,
                 lsifProviders.hover,
                 searchProviders.hover,
-                lspProvider,
+                lspProvider
             )
             wrapped.hover = provider
             return provider
@@ -291,7 +292,7 @@ export function createHoverProvider(
     lsifSupport: LSIFSupport,
     lsifProvider: HoverProvider,
     searchProvider: HoverProvider,
-    lspProvider?: HoverProvider,
+    lspProvider?: HoverProvider
 ): sourcegraph.HoverProvider {
     return {
         provideHover: wrapProvider(async function* (
@@ -304,7 +305,11 @@ export function createHoverProvider(
             for await (const lsifResult of lsifProvider(textDocument, position)) {
                 if (lsifResult) {
                     await emitter.emitOnce('lsifHover')
-                    yield {...lsifResult, alerts: [generateAlert('lsif', lsifSupport)]}
+                    if (hasPreciseResult) {
+                        yield lsifResult
+                    } else {
+                        yield { ...lsifResult, alerts: HoverAlerts.LSIF }
+                    }
                     hasPreciseResult = true
                 }
             }
@@ -315,10 +320,19 @@ export function createHoverProvider(
 
             if (lspProvider) {
                 // Delegate to LSP if it's available.
-                for await (const lspResult of lspProvider(textDocument, position)) {
+                let hasLSPResult = false
+                    for await (const lspResult of lspProvider(textDocument, position)) {
                     if (lspResult) {
                         await emitter.emitOnce('lspHover')
-                        yield {...lspResult, alerts: [generateAlert('lsp', lsifSupport)]}
+                        if (hasLSPResult) {
+                            yield lspResult
+                        } else {
+                            yield {
+                                ...lspResult,
+                                alerts: HoverAlerts.LSP,
+                            }
+                        }
+                        hasLSPResult = true
                     }
                 }
 
@@ -328,15 +342,28 @@ export function createHoverProvider(
                 return
             }
 
+            let hasSearchResult = false
             for await (const searchResult of searchProvider(textDocument, position)) {
                 // No results so far, fall back to search. Mark the result as
                 // imprecise.
                 if (searchResult) {
                     await emitter.emitOnce('searchHover')
-                    yield {
-                        ...searchResult,
-                        alerts: [generateAlert('search', lsifSupport)]
-                    };
+                    if (hasSearchResult) {
+                        yield searchResult
+                    } else {
+                        let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] = []
+                        if (lsifSupport === LSIFSupport.None)
+                            alerts = HoverAlerts.SearchLSIFSupportNone
+                        else if (lsifSupport === LSIFSupport.Experimental)
+                            alerts = HoverAlerts.SearchLSIFSupportExperimental
+                        else if (lsifSupport === LSIFSupport.Robust)
+                            alerts = HoverAlerts.SearchLSIFSupportRobust
+                        yield {
+                            ...searchResult,
+                            alerts,
+                        }
+                    }
+                    hasSearchResult = true
                 }
             }
         }),
@@ -426,66 +453,4 @@ function compareParameters<P extends unknown>(parameters1: P, parameters2: P): b
     const [textDocument1, position1] = parameters1 as [sourcegraph.TextDocument, sourcegraph.Position]
     const [textDocument2, position2] = parameters2 as [sourcegraph.TextDocument, sourcegraph.Position]
     return textDocument1.uri === textDocument2.uri && position1.isEqual(position2)
-}
-
-function generateAlert(providerType: 'lsif' | 'lsp' | 'search', lsifSupport: LSIFSupport) {
-    if (providerType === 'lsif') {
-        return {
-            summary: {
-                kind: sourcegraph.MarkupKind.Markdown,
-                value: 'Semantic result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/lsif)'
-            },
-            badge: {
-                kind: 'info',
-                hoverMessage: 'This hover text comes from a pre-computed semantic index of this project\'s source. Click to learn how to add this capability to all of your projects!',
-                linkURL: 'https://docs.sourcegraph.com/user/code_intelligence/lsif'
-            },
-            type: 'LSIFAvailableNoCaveat'
-        }
-    } else if (providerType === 'lsp') {
-        return {
-            summary: {
-                kind: sourcegraph.MarkupKind.Markdown,
-                value: 'Language server result. [Get LSIF.](https://docs.sourcegraph.com/user/code_intelligence/lsif)'
-            },
-            badge: {
-                kind: 'info',
-                hoverMessage: 'This hover text comes from a language server running in the cloud. Click to learn how to improve the reliability of this result by enabling semantic indexing.',
-                linkURL: 'https://docs.sourcegraph.com/user/code_intelligence/lsif'
-            }
-        }
-    } else if (providerType === 'search') {
-        var summaryMsg = 'Search-based result.'
-        if (lsifSupport === LSIFSupport.Robust)
-            summaryMsg = summaryMsg + ' [Get semantics.](https://docs.sourcegraph.com/user/code_intelligence/lsif)'
-        else
-            summaryMsg = summaryMsg + ' [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/lsif)'
-
-
-        var hoverMsg = 'This hover text is generated by a heuristic text-based search.'
-        if (lsifSupport === LSIFSupport.Robust)
-            hoverMsg = hoverMsg + ' Click to learn how to make these results precise by enabling semantic indexing for this project.'
-        else if (lsifSupport === LSIFSupport.Experimental)
-            hoverMsg = hoverMsg + ' Existing semantic indexers for this language aren\'t totally robust yet, but you can click here to learn how to give them a try.'
-        else (lsifSupport === LSIFSupport.None)
-            hoverMsg = hoverMsg + ' Click here to learn more.'
-
-
-        var type = undefined
-        if (lsifSupport !== LSIFSupport.Robust)
-            type = 'SearchResultNoLSIFSupport'
-
-        return {
-            summary: {
-                kind: sourcegraph.MarkupKind.Markdown,
-                value: summaryMsg
-            },
-            badge: {
-                kind: 'info',
-                hoverMessage: hoverMsg,
-                linkURL: 'https://docs.sourcegraph.com/user/code_intelligence/lsif',
-            },
-            type
-        }
-    }
 }
