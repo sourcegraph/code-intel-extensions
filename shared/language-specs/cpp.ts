@@ -48,6 +48,7 @@ export const cppSpec: LanguageSpec = {
     ],
     commentStyles: [cStyleComment],
     filterDefinitions,
+    lsifSupport: LSIFSupport.Experimental,
 }
 
 export const cudaSpec: LanguageSpec = {

@@ -33,4 +33,5 @@ export const javaSpec: LanguageSpec = {
     fileExts: ['java'],
     commentStyles: [javaStyleComment],
     filterDefinitions,
+    lsifSupport: LSIFSupport.Experimental,
 }

@@ -36,4 +36,5 @@ export const typescriptSpec: LanguageSpec = {
     fileExts: ['ts', 'tsx', 'js', 'jsx'],
     commentStyles: [cStyleComment],
     filterDefinitions,
+    lsifSupport: LSIFSupport.Robust,
 }
