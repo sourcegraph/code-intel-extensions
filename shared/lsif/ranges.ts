@@ -227,7 +227,7 @@ interface IntrospectionResponse {
 
 /** Determine if the LSIF query resolvers have a ranges function. */
 async function hasRangesQuery(queryGraphQL: QueryGraphQLFn<IntrospectionResponse> = sgQueryGraphQL): Promise<boolean> {
-    return (await queryGraphQL(introspectionQuery)).__type.fields.some(field => field.name === 'ranges')
+    return (await queryGraphQL(introspectionQuery)).__type?.fields.some(field => field.name === 'ranges') || false
 }
 
 const rangesQuery = gql`
