@@ -1,5 +1,5 @@
 import { cStyleComment } from './comments'
-import { FilterContext, LanguageSpec, Result } from './spec'
+import { FilterContext, LanguageSpec, Result, LSIFSupport } from './spec'
 import { dotToSlash, extractFromLines, filterResultsByImports, removeExtension } from './util'
 
 /**
@@ -48,6 +48,7 @@ export const cppSpec: LanguageSpec = {
     ],
     commentStyles: [cStyleComment],
     filterDefinitions,
+    lsifSupport: LSIFSupport.Experimental,
 }
 
 export const cudaSpec: LanguageSpec = {

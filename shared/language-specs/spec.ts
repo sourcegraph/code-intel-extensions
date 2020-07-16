@@ -35,6 +35,18 @@ export interface LanguageSpec {
      * results from non-imported files).
      */
     filterDefinitions?: FilterDefinitions
+
+    /**
+     * Affects messaging about adding LSIF indexing when hovering over symbols
+     * from this language.
+     */
+    lsifSupport?: LSIFSupport
+}
+
+export enum LSIFSupport {
+    None = 'none',
+    Experimental = 'experimental',
+    Robust = 'robust',
 }
 
 /**
