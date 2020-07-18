@@ -1,6 +1,6 @@
 import * as path from 'path'
 import { cStyleComment } from './comments'
-import { FilterContext, LanguageSpec, Result } from './spec'
+import { FilterContext, LanguageSpec, Result, LSIFSupport } from './spec'
 import { extractFromLines, filterResultsByImports, removeExtension } from './util'
 
 /**
@@ -36,4 +36,5 @@ export const typescriptSpec: LanguageSpec = {
     fileExts: ['ts', 'tsx', 'js', 'jsx'],
     commentStyles: [cStyleComment],
     filterDefinitions,
+    lsifSupport: LSIFSupport.Robust,
 }

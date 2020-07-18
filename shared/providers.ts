@@ -2,13 +2,14 @@ import { NEVER, Observable } from 'rxjs'
 import { shareReplay } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { impreciseBadge } from './badges'
-import { LanguageSpec } from './language-specs/spec'
+import { LanguageSpec, LSIFSupport } from './language-specs/spec'
 import { Logger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
+import * as HoverAlerts from './hoverAlerts'
 
 export interface Providers {
     definition: DefinitionProvider
@@ -120,7 +121,12 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
         },
 
         hover: (lspProvider?: HoverProvider) => {
-            const provider = createHoverProvider(lsifProviders.hover, searchProviders.hover, lspProvider)
+            const provider = createHoverProvider(
+                languageSpec.lsifSupport || LSIFSupport.None,
+                lsifProviders.hover,
+                searchProviders.hover,
+                lspProvider
+            )
             wrapped.hover = provider
             return provider
         },
@@ -283,6 +289,7 @@ export function createReferencesProvider(
  * @param lspProvider An optional LSP-based hover provider.
  */
 export function createHoverProvider(
+    lsifSupport: LSIFSupport,
     lsifProvider: HoverProvider,
     searchProvider: HoverProvider,
     lspProvider?: HoverProvider
@@ -298,7 +305,11 @@ export function createHoverProvider(
             for await (const lsifResult of lsifProvider(textDocument, position)) {
                 if (lsifResult) {
                     await emitter.emitOnce('lsifHover')
-                    yield lsifResult
+                    if (hasPreciseResult) {
+                        yield lsifResult
+                    } else {
+                        yield { ...lsifResult, alerts: HoverAlerts.lsif }
+                    }
                     hasPreciseResult = true
                 }
             }
@@ -309,10 +320,19 @@ export function createHoverProvider(
 
             if (lspProvider) {
                 // Delegate to LSP if it's available.
+                let hasLSPResult = false
                 for await (const lspResult of lspProvider(textDocument, position)) {
                     if (lspResult) {
                         await emitter.emitOnce('lspHover')
-                        yield lspResult
+                        if (hasLSPResult) {
+                            yield lspResult
+                        } else {
+                            yield {
+                                ...lspResult,
+                                alerts: HoverAlerts.lsp,
+                            }
+                        }
+                        hasLSPResult = true
                     }
                 }
 
@@ -322,12 +342,30 @@ export function createHoverProvider(
                 return
             }
 
+            let hasSearchResult = false
             for await (const searchResult of searchProvider(textDocument, position)) {
                 // No results so far, fall back to search. Mark the result as
                 // imprecise.
                 if (searchResult) {
                     await emitter.emitOnce('searchHover')
-                    yield { ...searchResult, badge: impreciseBadge }
+                    if (hasSearchResult) {
+                        yield searchResult
+                    } else {
+                        let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] = []
+                        if (lsifSupport === LSIFSupport.None) {
+                            alerts = HoverAlerts.searchLSIFSupportNone
+                        } else if (lsifSupport === LSIFSupport.Experimental) {
+                            alerts = HoverAlerts.searchLSIFSupportExperimental
+                        } else if (lsifSupport === LSIFSupport.Robust) {
+                            alerts = HoverAlerts.searchLSIFSupportRobust
+                        }
+
+                        yield {
+                            ...searchResult,
+                            alerts,
+                        }
+                    }
+                    hasSearchResult = true
                 }
             }
         }),
