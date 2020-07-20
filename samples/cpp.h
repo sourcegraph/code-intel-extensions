@@ -150,7 +150,7 @@ class TESS_API TessBaseAPI {
    * Supply the name of the parameter and the value as a string, just as
    * you would in a config file.
    * Returns false if the name lookup failed.
-   * Eg SetVariable("tessedit_char_blacklist", "xyz"); to ignore x, y and z.
+   * Eg SetVariable("tessedit_char_excludelist", "xyz"); to ignore x, y and z.
    * Or SetVariable("classify_bln_numeric_mode", "1"); to set numeric-only mode.
    * SetVariable may be used before Init, but settings will revert to
    * defaults on End().
