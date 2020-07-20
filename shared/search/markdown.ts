@@ -12,7 +12,7 @@ const htmlTagPattern = /<\//
 const markdownListPattern = /^(1\.|- |\* )/m
 
 /** The patterns that indicate text is already formatted */
-const blacklistPatterns = [commentPattern, htmlTagPattern, markdownListPattern]
+const excludelistPatterns = [commentPattern, htmlTagPattern, markdownListPattern]
 
 /**
  * Wrap lines that appear to be code blocks in ```fences``` tagged with the given language
@@ -22,7 +22,7 @@ const blacklistPatterns = [commentPattern, htmlTagPattern, markdownListPattern]
  * @param docstring The raw docstring.
  */
 export function wrapIndentationInCodeBlocks(languageID: string, docstring: string): string {
-    if (blacklistPatterns.some(pattern => pattern.test(docstring))) {
+    if (excludelistPatterns.some(pattern => pattern.test(docstring))) {
         // Already formatted
         return docstring
     }

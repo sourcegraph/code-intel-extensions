@@ -56,7 +56,7 @@ describe('reregisterOnChange', () => {
         })
     })
 
-    it('should register only with whitelisted changes', () => {
+    it('should register only with included changes', () => {
         const register = sinon.spy<(value: TestSettings) => sourcegraph.Unsubscribable>(() => ({
             unsubscribe: () => {
                 /* noop */
