@@ -46,21 +46,21 @@ export function referencesQuery({
     return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(path, fileExts)]
 }
 
-const blacklist = new Set(['thrift', 'proto', 'graphql'])
+const excludelist = new Set(['thrift', 'proto', 'graphql'])
 
 /**
  * Constructs a file extension term (or an empty string) if the current file end
  * in one of the extensions for the current language and does NOT end in one of
- * the blacklisted files defined above.
+ * the excluded files defined above.
  *
  * @param path The path of the current text file.
- * @param whitelist The file extensions for the current language.
+ * @param includelist The file extensions for the current language.
  */
-function fileExtensionTerm(path: string, whitelist: string[]): string {
+function fileExtensionTerm(path: string, includelist: string[]): string {
     const extension = extname(path).slice(1)
-    if (!extension || blacklist.has(extension) || !whitelist.includes(extension)) {
+    if (!extension || excludelist.has(extension) || !includelist.includes(extension)) {
         return ''
     }
 
-    return `file:\\.(${whitelist.join('|')})$`
+    return `file:\\.(${includelist.join('|')})$`
 }
