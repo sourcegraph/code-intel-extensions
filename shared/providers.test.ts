@@ -36,12 +36,11 @@ const hover1: sourcegraph.Hover = { contents: { value: 'test1' } }
 const hover2: sourcegraph.Hover = { contents: { value: 'test2' } }
 const hover3: sourcegraph.Hover = { contents: { value: 'test3' } }
 const hover4: sourcegraph.Hover = { contents: { value: 'test4' } }
-const hover5: sourcegraph.Hover = { contents: { value: 'test5' } }
 
 describe('createDefinitionProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createDefinitionProvider(
-            () => asyncGeneratorFromValues([location1, location2]),
+            () => Promise.resolve({ definition:[location1, location2],hover:null}),
             () => asyncGeneratorFromValues([location5]),
             () => asyncGeneratorFromValues([location3, location4])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
@@ -51,7 +50,7 @@ describe('createDefinitionProvider', () => {
 
     it('falls back to LSP when LSIF results are not found', async () => {
         const result = createDefinitionProvider(
-            () => asyncGeneratorFromValues([]),
+            () => Promise.resolve(null),
             () => asyncGeneratorFromValues([location3]),
             () => asyncGeneratorFromValues([location1, location2])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
@@ -61,7 +60,7 @@ describe('createDefinitionProvider', () => {
 
     it('falls back to basic when precise results are not found', async () => {
         const result = createDefinitionProvider(
-            () => asyncGeneratorFromValues([]),
+            () => Promise.resolve(null),
             () => asyncGeneratorFromValues([location3])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
@@ -177,18 +176,18 @@ describe('createHoverProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createHoverProvider(
             LSIFSupport.None,
-            () => asyncGeneratorFromValues([hover1, hover2]),
-            () => asyncGeneratorFromValues([hover5]),
-            () => asyncGeneratorFromValues([hover3, hover4])
+            () =>Promise.resolve({ definition: [], hover: hover1 }),
+            () => asyncGeneratorFromValues([hover4]),
+            () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: HoverAlerts.lsif }, hover2])
+        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: HoverAlerts.lsif }, ])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
         const result = createHoverProvider(
             LSIFSupport.None,
-            () => asyncGeneratorFromValues([]),
+            () => Promise.resolve(null),
             () => asyncGeneratorFromValues([hover3]),
             () => asyncGeneratorFromValues([hover1, hover2])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
@@ -199,7 +198,7 @@ describe('createHoverProvider', () => {
     it('falls back to basic when precise results are not found', async () => {
         const result = createHoverProvider(
             LSIFSupport.None,
-            () => asyncGeneratorFromValues([]),
+            () => Promise.resolve(null),
             () => asyncGeneratorFromValues([hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
@@ -209,7 +208,7 @@ describe('createHoverProvider', () => {
     it('alerts search results correctly with experimental LSIF support', async () => {
         const result = createHoverProvider(
             LSIFSupport.Experimental,
-            () => asyncGeneratorFromValues([]),
+            () =>Promise.resolve(null),
             () => asyncGeneratorFromValues([hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
@@ -224,7 +223,7 @@ describe('createHoverProvider', () => {
     it('alerts search results correctly with robust LSIF support', async () => {
         const result = createHoverProvider(
             LSIFSupport.Robust,
-            () => asyncGeneratorFromValues([]),
+            () => Promise.resolve(null),
             () => asyncGeneratorFromValues([hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 

@@ -18,12 +18,31 @@ export interface Providers {
     documentHighlights: DocumentHighlightProvider
 }
 
+
+export type CombinedProviders =Providers & {
+    definitionAndHover: DefinitionAndHoverProvider
+}
+
+
 export interface SourcegraphProviders {
     definition: sourcegraph.DefinitionProvider
     references: sourcegraph.ReferenceProvider
     hover: sourcegraph.HoverProvider
     documentHighlights: sourcegraph.DocumentHighlightProvider
 }
+
+
+export interface DefinitionAndHover {
+    definition: sourcegraph.Definition | null
+    hover: sourcegraph.Hover | null
+}
+
+export type DefinitionAndHoverProvider = (
+    doc: sourcegraph.TextDocument,
+    pos: sourcegraph.Position
+) => Promise<DefinitionAndHover | null>
+
+
 
 export type DefinitionProvider = (
     doc: sourcegraph.TextDocument,
@@ -47,6 +66,7 @@ export type DocumentHighlightProvider = (
 ) => AsyncGenerator<sourcegraph.DocumentHighlight[] | null, void, undefined>
 
 export const noopProviders = {
+    definitionAndHover: (): Promise<DefinitionAndHover | null> => new Promise(() => {}),
     definition: noopAsyncGenerator,
     references: noopAsyncGenerator,
     hover: noopAsyncGenerator,
@@ -109,7 +129,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
 
     return {
         definition: (lspProvider?: DefinitionProvider) => {
-            const provider = createDefinitionProvider(lsifProviders.definition, searchProviders.definition, lspProvider)
+            const provider = createDefinitionProvider(lsifProviders.definitionAndHover, searchProviders.definition, lspProvider)
             wrapped.definition = provider
             return provider
         },
@@ -123,7 +143,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
         hover: (lspProvider?: HoverProvider) => {
             const provider = createHoverProvider(
                 languageSpec.lsifSupport || LSIFSupport.None,
-                lsifProviders.hover,
+                lsifProviders.definitionAndHover,
                 searchProviders.hover,
                 lspProvider
             )
@@ -146,12 +166,12 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
 /**
  * Creates a definition provider.
  *
- * @param lsifProvider The LSIF-based definition provider.
+ * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchProvider The search-based definition provider.
  * @param lspProvider An optional LSP-based definition provider.
  */
 export function createDefinitionProvider(
-    lsifProvider: DefinitionProvider,
+    lsifProvider: DefinitionAndHoverProvider,
     searchProvider: DefinitionProvider,
     lspProvider?: DefinitionProvider
 ): sourcegraph.DefinitionProvider {
@@ -163,8 +183,9 @@ export function createDefinitionProvider(
             const emitter = new TelemetryEmitter()
 
             let hasPreciseResult = false
-            for await (const lsifResult of lsifProvider(textDocument, position)) {
-                if (nonEmpty(lsifResult)) {
+            const lsifWrapper = await lsifProvider(textDocument, position)
+            if (lsifWrapper) {
+            for await (const lsifResult of asArray(lsifWrapper.definition||[])) {
                     await emitter.emitOnce('lsifDefinitions')
                     yield lsifResult
                     hasPreciseResult = true
@@ -284,13 +305,13 @@ export function createReferencesProvider(
 /**
  * Creates a hover provider.
  *
- * @param lsifProvider The LSIF-based hover provider.
+ * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchProvider The search-based hover provider.
  * @param lspProvider An optional LSP-based hover provider.
  */
 export function createHoverProvider(
     lsifSupport: LSIFSupport,
-    lsifProvider: HoverProvider,
+    lsifProvider: DefinitionAndHoverProvider,
     searchProvider: HoverProvider,
     lspProvider?: HoverProvider
 ): sourcegraph.HoverProvider {
@@ -301,21 +322,22 @@ export function createHoverProvider(
         ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
             const emitter = new TelemetryEmitter()
 
-            let hasPreciseResult = false
-            for await (const lsifResult of lsifProvider(textDocument, position)) {
-                if (lsifResult) {
-                    await emitter.emitOnce('lsifHover')
-                    if (hasPreciseResult) {
-                        yield lsifResult
-                    } else {
-                        yield { ...lsifResult, alerts: HoverAlerts.lsif }
+            const lsifWrapper = await lsifProvider(textDocument, position)
+            if (lsifWrapper) {
+                if (lsifWrapper.hover) {
+                    if (!nonEmpty(lsifWrapper.definition)) {
+                        // TODO - precise hover, imprecise definition
                     }
-                    hasPreciseResult = true
+
+                    await emitter.emitOnce('lsifHover')
+                    yield { ...lsifWrapper.hover, alerts: HoverAlerts.lsif }
+                    // Found the best precise hover text we'll get. Stop.
+                    return
                 }
-            }
-            if (hasPreciseResult) {
-                // Found the best precise hover text we'll get. Stop.
-                return
+
+                if (nonEmpty(lsifWrapper.definition)) {
+                    // TODO - imprecise hover, precise definition
+                }
             }
 
             if (lspProvider) {
