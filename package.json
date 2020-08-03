@@ -52,7 +52,7 @@
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.1",
     "@types/node": "13.13.5",
-    "@types/node-fetch": "^2.5.7",
+    "@types/node-fetch": "2.5.7",
     "@types/uuid": "8.0.0",
     "@types/yargs": "15.0.5",
     "codecov": "^3.7.1",
