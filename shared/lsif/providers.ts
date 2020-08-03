@@ -53,7 +53,6 @@ export function createGraphQLProviders(
 /** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
 const RANGE_RESOLUTION_DELAY_MS = 25
 
-
 /** The maximum number of definition/hover responses to cache. */
 const DEFINITION_HOVER_CACHE_CAPACITY = 5
 
@@ -134,7 +133,6 @@ function definitionAndHover(
         )
     }
 }
-
 
 /** Retrieve a definition for the current hover position. */
 function definition(

@@ -40,7 +40,7 @@ const hover4: sourcegraph.Hover = { contents: { value: 'test4' } }
 describe('createDefinitionProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createDefinitionProvider(
-            () => Promise.resolve({ definition:[location1, location2],hover:null}),
+            () => Promise.resolve({ definition: [location1, location2], hover: null }),
             () => asyncGeneratorFromValues([location5]),
             () => asyncGeneratorFromValues([location3, location4])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
@@ -176,12 +176,12 @@ describe('createHoverProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createHoverProvider(
             LSIFSupport.None,
-            () =>Promise.resolve({ definition: [], hover: hover1 }),
+            () => Promise.resolve({ definition: [], hover: hover1 }),
             () => asyncGeneratorFromValues([hover4]),
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: HoverAlerts.lsif }, ])
+        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: HoverAlerts.lsif }])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
@@ -208,7 +208,7 @@ describe('createHoverProvider', () => {
     it('alerts search results correctly with experimental LSIF support', async () => {
         const result = createHoverProvider(
             LSIFSupport.Experimental,
-            () =>Promise.resolve(null),
+            () => Promise.resolve(null),
             () => asyncGeneratorFromValues([hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 

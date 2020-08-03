@@ -18,11 +18,9 @@ export interface Providers {
     documentHighlights: DocumentHighlightProvider
 }
 
-
-export type CombinedProviders =Providers & {
+export type CombinedProviders = Providers & {
     definitionAndHover: DefinitionAndHoverProvider
 }
-
 
 export interface SourcegraphProviders {
     definition: sourcegraph.DefinitionProvider
@@ -30,7 +28,6 @@ export interface SourcegraphProviders {
     hover: sourcegraph.HoverProvider
     documentHighlights: sourcegraph.DocumentHighlightProvider
 }
-
 
 export interface DefinitionAndHover {
     definition: sourcegraph.Definition | null
@@ -41,8 +38,6 @@ export type DefinitionAndHoverProvider = (
     doc: sourcegraph.TextDocument,
     pos: sourcegraph.Position
 ) => Promise<DefinitionAndHover | null>
-
-
 
 export type DefinitionProvider = (
     doc: sourcegraph.TextDocument,
@@ -129,7 +124,11 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
 
     return {
         definition: (lspProvider?: DefinitionProvider) => {
-            const provider = createDefinitionProvider(lsifProviders.definitionAndHover, searchProviders.definition, lspProvider)
+            const provider = createDefinitionProvider(
+                lsifProviders.definitionAndHover,
+                searchProviders.definition,
+                lspProvider
+            )
             wrapped.definition = provider
             return provider
         },
@@ -185,7 +184,7 @@ export function createDefinitionProvider(
             let hasPreciseResult = false
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
-            for await (const lsifResult of asArray(lsifWrapper.definition||[])) {
+                for await (const lsifResult of asArray(lsifWrapper.definition || [])) {
                     await emitter.emitOnce('lsifDefinitions')
                     yield lsifResult
                     hasPreciseResult = true
