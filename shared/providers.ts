@@ -326,7 +326,7 @@ export function createHoverProvider(
             if (lsifWrapper) {
                 if (lsifWrapper.hover) {
                     if (!nonEmpty(lsifWrapper.definition)) {
-                        // TODO - precise hover, imprecise definition
+                        // TODO(gbrik) - add tooltip to indicate a precise hover but an imprecise definition
                     }
 
                     await emitter.emitOnce('lsifHover')
@@ -336,7 +336,7 @@ export function createHoverProvider(
                 }
 
                 if (nonEmpty(lsifWrapper.definition)) {
-                    // TODO - imprecise hover, precise definition
+                    // TODO(gbrik) - add tooltip to indicate an imprecise hover but a precise definition
                 }
             }
 
