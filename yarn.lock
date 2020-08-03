@@ -975,10 +975,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/js-base64@2.3.2":
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/@types/js-base64/-/js-base64-2.3.2.tgz#266be882b28b52649b1d34db9515e54c8ef783f2"
-  integrity sha512-iGjZEnheu9n53fhlU+QLovdKHsdwPJ79iammNM0opTEp18zcJ/nNAIthuMilJoDPNUQHoqRAJdDNI5rxHY4nkA==
+"@types/js-base64@3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@types/js-base64/-/js-base64-3.0.0.tgz#b7b4c130facefefd5c57ba82664c41e2995f91be"
+  integrity sha512-BnEyOcDE4H6bkg8m84xhdbkYoAoCg8sYERmAvE4Ff50U8jTfbmOinRdJpauBn1P9XsCCQgCLuSiyz3PM4WHYOA==
 
 "@types/json-schema@^7.0.3", "@types/json-schema@^7.0.4":
   version "7.0.4"
@@ -4368,10 +4368,10 @@ ix@^3.0.2:
     "@types/node" "^13.7.4"
     tslib "^1.9.3"
 
-js-base64@^2.6.4:
-  version "2.6.4"
-  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.6.4.tgz#f4e686c5de1ea1f867dbcad3d46d969428df98c4"
-  integrity sha512-pZe//GGmwJndub7ZghVHz7vjb2LgC1m8B07Au3eYqeqv9emhESByMXxaEgkUkEqJe87oBbSniGYoQNIBklc7IQ==
+js-base64@^3.4.3:
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.4.3.tgz#75b762ad8402622bf512d17ef4bfcfc16b046883"
+  integrity sha512-SNMgYrBASovuSPsaZaoZ3g+u0ZLuSGGOIkTDT1u+WI4e8Ch7FnHdrvNqQm8CHGpoOhCmGKuDVr50Yw4VHMI/Eg==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
