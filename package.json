@@ -23,7 +23,7 @@
     "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts",
     "publish:go": "yarn --cwd extensions/go run publish",
     "publish:typescript": "yarn --cwd extensions/typescript run publish",
-    "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/master/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql",
+    "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/3a380cdd42fbe3a23ceb2680fbf4164c48c4f309/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql",
     "validate-graphql": "yarn run tsgql validate -p ./shared/tsconfig.json"
   },
   "dependencies": {
