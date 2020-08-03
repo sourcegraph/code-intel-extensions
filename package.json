@@ -30,7 +30,7 @@
     "@sourcegraph/vscode-ws-jsonrpc": "0.0.3-fork",
     "delay": "^4.4.0",
     "ix": "^3.0.2",
-    "js-base64": "^2.6.3",
+    "js-base64": "^2.6.4",
     "lodash": "^4.17.19",
     "mz": "^2.7.0",
     "path-browserify": "^1.0.1",
