@@ -4,9 +4,7 @@ import * as sourcegraph from 'sourcegraph'
 import { QueryGraphQLFn } from '../util/graphql'
 import { createGraphQLProviders as createProviders } from './providers'
 import { GenericLSIFResponse } from './api'
-import { DefinitionResponse } from './definition'
 import { ReferencesResponse, MAX_REFERENCE_PAGE_REQUESTS } from './references'
-import { HoverResponse } from './hover'
 import {
     gatherValues,
     makeEnvelope,
@@ -23,7 +21,7 @@ import {
     document,
     position,
 } from './util.test'
-import { DefinitionAndHoverResponse } from './definition-hover'
+import { DefinitionResponse, DefinitionAndHoverResponse } from './definition-hover'
 
 describe('graphql providers', () => {
     describe('combined definition and hover provider', () => {
@@ -106,68 +104,6 @@ describe('graphql providers', () => {
             )
 
             assert.deepEqual(await createProviders(queryGraphQLFn).definitionAndHover(document, position), null)
-        })
-    })
-
-    describe('definition provider', () => {
-        it('should use result from window', async () => {
-            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
-                makeEnvelope(null)
-            )
-
-            const getBulkLocalIntelligence = Promise.resolve(() =>
-                Promise.resolve({
-                    range: range1,
-                    definitions: [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
-                    ],
-                })
-            )
-
-            assert.deepEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).definition(document, position)
-                ),
-                [
-                    [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
-                    ],
-                ]
-            )
-        })
-
-        it('should correctly parse result', async () => {
-            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
-                makeEnvelope({
-                    definitions: {
-                        nodes: [
-                            { resource: resource1, range: range1 },
-                            { resource: resource2, range: range2 },
-                            { resource: resource3, range: range3 },
-                        ],
-                    },
-                })
-            )
-
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(document, position)), [
-                [
-                    new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
-                    new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
-                    new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
-                ],
-            ])
-        })
-
-        it('should deal with empty payload', async () => {
-            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<DefinitionResponse | null>>>(() =>
-                makeEnvelope()
-            )
-
-            assert.deepEqual(await gatherValues(createProviders(queryGraphQLFn).definition(document, position)), [null])
         })
     })
 
@@ -337,68 +273,6 @@ describe('graphql providers', () => {
             )
 
             assert.equal(queryGraphQLFn.callCount, MAX_REFERENCE_PAGE_REQUESTS)
-        })
-    })
-
-    describe('hover provider', () => {
-        it('should use result from window', async () => {
-            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>>(() =>
-                makeEnvelope(null)
-            )
-
-            const getBulkLocalIntelligence = Promise.resolve(() =>
-                Promise.resolve({
-                    range: range1,
-                    hover: {
-                        markdown: { text: 'foo' },
-                        range: range1,
-                    },
-                })
-            )
-
-            assert.deepEqual(
-                await gatherValues(createProviders(queryGraphQLFn, getBulkLocalIntelligence).hover(document, position)),
-                [
-                    {
-                        contents: {
-                            value: 'foo',
-                            kind: 'markdown',
-                        },
-                        range: range1,
-                    },
-                ]
-            )
-        })
-
-        it('should correctly parse result', async () => {
-            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>>(() =>
-                makeEnvelope({
-                    hover: {
-                        markdown: { text: 'foo' },
-                        range: range1,
-                    },
-                })
-            )
-
-            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(document, position)), [
-                {
-                    contents: {
-                        value: 'foo',
-                        kind: 'markdown',
-                    },
-                    range: range1,
-                },
-            ])
-        })
-
-        it('should deal with empty payload', async () => {
-            const queryGraphQLFn = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<HoverResponse | null>>>(() =>
-                makeEnvelope()
-            )
-
-            assert.deepStrictEqual(await gatherValues(createProviders(queryGraphQLFn).hover(document, position)), [
-                null,
-            ])
         })
     })
 

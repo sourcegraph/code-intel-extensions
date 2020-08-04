@@ -18,8 +18,10 @@ export interface Providers {
     documentHighlights: DocumentHighlightProvider
 }
 
-export type CombinedProviders = Providers & {
+export interface CombinedProviders {
     definitionAndHover: DefinitionAndHoverProvider
+    references: ReferencesProvider
+    documentHighlights: DocumentHighlightProvider
 }
 
 export interface SourcegraphProviders {

@@ -2,7 +2,7 @@ import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { nodeToLocation, LocationConnectionNode } from './locations'
-import { HoverPayload } from './hover'
+import { HoverPayload } from './definition-hover'
 import { GenericLSIFResponse, queryLSIF } from './api'
 
 /** The size of the bounds on each ranges request. */
