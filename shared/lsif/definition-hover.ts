@@ -5,10 +5,15 @@ import { LocationConnectionNode, nodeToLocation } from './locations'
 import { GenericLSIFResponse, queryLSIF } from './api'
 import { DefinitionAndHover } from '../providers'
 
-export interface DefinitionAndHoverResponse {
-    definitions?: {
+export type DefinitionAndHoverResponse = Partial<DefinitionResponse> & HoverResponse
+
+export interface DefinitionResponse {
+    definitions: {
         nodes: LocationConnectionNode[]
     }
+}
+
+export interface HoverResponse {
     hover?: HoverPayload
 }
 

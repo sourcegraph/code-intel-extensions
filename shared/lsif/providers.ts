@@ -4,12 +4,10 @@ import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { asyncGeneratorFromPromise } from '../util/ix'
 import { Logger } from '../logging'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
-import { hoverPayloadToHover, hoverForPosition } from './hover'
-import { definitionForPosition } from './definition'
 import { referencesForPosition, referencePageForPosition } from './references'
 import { filterLocationsForDocumentHighlights } from './highlights'
 import { raceWithDelayOffset } from '../util/promise'
-import { definitionAndHoverForPosition } from './definition-hover'
+import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition-hover'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
@@ -43,9 +41,7 @@ export function createGraphQLProviders(
 ): CombinedProviders {
     return {
         definitionAndHover: cachedDefinitionAndHover(queryGraphQL, getRangeFromWindow),
-        definition: asyncGeneratorFromPromise(definition(queryGraphQL, getRangeFromWindow)),
         references: references(queryGraphQL, getRangeFromWindow),
-        hover: asyncGeneratorFromPromise(hover(queryGraphQL, getRangeFromWindow)),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getRangeFromWindow)),
     }
 }
@@ -134,42 +130,6 @@ function definitionAndHover(
     }
 }
 
-/** Retrieve a definition for the current hover position. */
-function definition(
-    queryGraphQL: QueryGraphQLFn<any>,
-    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Definition> {
-    return async (
-        textDocument: sourcegraph.TextDocument,
-        position: sourcegraph.Position
-    ): Promise<sourcegraph.Definition> => {
-        const getDefinitionsFromRangeRequest = async (): Promise<sourcegraph.Definition> => {
-            if (getRangeFromWindow) {
-                const range = await (await getRangeFromWindow)(textDocument, position)
-                if (range?.definitions && range.definitions.length > 0) {
-                    return range.definitions
-                }
-            }
-
-            return null
-        }
-
-        // First see if we can query or resolve a window containing this
-        // target position. If we've already requested this range, it should
-        // be a synchronous return that won't trigger the fallback request.
-        // If we don't have the window in memory, wait a very small time for
-        // the window to resolve, then fall back to requesting the definition
-        // for this position explicitly. This fallback will also happen if we
-        // have an empty set of definitions for this position.
-        return raceWithDelayOffset(
-            getDefinitionsFromRangeRequest(),
-            async () => definitionForPosition(textDocument, position, queryGraphQL),
-            RANGE_RESOLUTION_DELAY_MS,
-            results => results !== null && !(Array.isArray(results) && results.length === 0)
-        )
-    }
-}
-
 /** Retrieve references for the current hover position. */
 function references(
     queryGraphQL: QueryGraphQLFn<any>,
@@ -214,43 +174,6 @@ function references(
 
         // Replace local references with actual results
         yield* referencesForPosition(textDocument, position, queryGraphQL)
-    }
-}
-
-/** Retrieve hover text for the current hover position. */
-function hover(
-    queryGraphQL: QueryGraphQLFn<any>,
-    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Hover | null> {
-    return async (
-        textDocument: sourcegraph.TextDocument,
-        position: sourcegraph.Position
-    ): Promise<sourcegraph.Hover | null> => {
-        const getHoverFromRangeRequest = async (): Promise<sourcegraph.Hover | null> => {
-            if (getRangeFromWindow) {
-                const range = await (await getRangeFromWindow)(textDocument, position)
-                if (range?.hover) {
-                    return hoverPayloadToHover(range?.hover)
-                }
-            }
-
-            return null
-        }
-
-        // First see if we can query or resolve a window containing this
-        // target position. If we've already requested this range, it should
-        // be a synchronous return that won't trigger the race request below.
-        // If we don't have the window in memory, wait a very small
-        // time for the window to resolve, then fall back to requesting
-        // the hover text for this position explicitly. This fallback will
-        // also happen if we have a range that does not contain suitable
-        // hover data for this position.
-        return raceWithDelayOffset(
-            getHoverFromRangeRequest(),
-            async () => hoverForPosition(textDocument, position, queryGraphQL),
-            RANGE_RESOLUTION_DELAY_MS,
-            results => results !== null && results.contents.value !== ''
-        )
     }
 }
 
