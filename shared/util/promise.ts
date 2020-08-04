@@ -11,17 +11,17 @@
  *
  * @param primary The in-flight happy-path promise.
  * @param makeFallback A factory that creates a fallback promise.
- * @param timeout The timeout in ms before the fallback is invoked.
+ * @param timeoutMs The timeout in ms before the fallback is invoked.
  * @param filter An optional filter function to determine if a set of results
  * should be returned immediately.
  */
 export async function raceWithDelayOffset<T>(
     primary: Promise<T>,
     makeFallback: () => Promise<T>,
-    timeout: number,
+    timeoutMs: number,
     filter: (value: T) => boolean = value => value !== null
 ): Promise<T> {
-    const primaryResults = await Promise.race([primary, delay(timeout)])
+    const primaryResults = await Promise.race([primary, delay(timeoutMs)])
     if (primaryResults !== undefined && filter(primaryResults)) {
         return primaryResults
     }
@@ -38,8 +38,8 @@ export async function raceWithDelayOffset<T>(
 /**
  * Create a promise that resolves to undefined after the given timeout.
  *
- * @param timeout The timeout in ms.
+ * @param timeoutMs The timeout in ms.
  */
-async function delay(timeout: number): Promise<undefined> {
-    return new Promise(resolve => setTimeout(resolve, timeout))
+async function delay(timeoutMs: number): Promise<undefined> {
+    return new Promise(resolve => setTimeout(resolve, timeoutMs))
 }

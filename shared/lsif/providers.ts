@@ -48,8 +48,8 @@ export function createGraphQLProviders(
     }
 }
 
-/** The time to delay between range queries and an explicit definition/reference/hover request. */
-const RANGE_RESOLUTION_DELAY = 25
+/** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
+const RANGE_RESOLUTION_DELAY_MS = 25
 
 /** Retrieve a definition for the current hover position. */
 function definition(
@@ -81,7 +81,7 @@ function definition(
         return raceWithDelayOffset(
             getDefinitionsFromRangeRequest(),
             async () => definitionForPosition(textDocument, position, queryGraphQL),
-            RANGE_RESOLUTION_DELAY,
+            RANGE_RESOLUTION_DELAY_MS,
             results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
     }
@@ -120,7 +120,7 @@ function references(
         const localReferences = await raceWithDelayOffset(
             getReferencesFromRangeRequest(),
             () => Promise.resolve(null),
-            RANGE_RESOLUTION_DELAY,
+            RANGE_RESOLUTION_DELAY_MS,
             results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
 
@@ -165,7 +165,7 @@ function hover(
         return raceWithDelayOffset(
             getHoverFromRangeRequest(),
             async () => hoverForPosition(textDocument, position, queryGraphQL),
-            RANGE_RESOLUTION_DELAY,
+            RANGE_RESOLUTION_DELAY_MS,
             results => results !== null && results.contents.value !== ''
         )
     }

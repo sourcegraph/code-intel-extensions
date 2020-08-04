@@ -352,6 +352,9 @@ async function searchReferences(
     return (await search(api, queryTerms)).map(resultToLocation)
 }
 
+/** The time in ms to delay between unindexed search request and the fallback indexed search request. */
+const DEFAULT_UNINDEXED_SEARCH_TIMEOUT_MS = 5000
+
 /**
  * Invoke the given search function by modifying the query with a term that will
  * only look in the current git tree by appending a repo filter with the repo name
@@ -386,7 +389,7 @@ export function searchWithFallback<
     return raceWithDelayOffset(
         searchUnindexed(search, args, negateRepoFilter),
         () => searchIndexed(search, args, negateRepoFilter),
-        getConfig<number>('basicCodeIntel.unindexedSearchTimeout', 5000)
+        getConfig<number>('basicCodeIntel.unindexedSearchTimeout', DEFAULT_UNINDEXED_SEARCH_TIMEOUT_MS)
     )
 }
 
