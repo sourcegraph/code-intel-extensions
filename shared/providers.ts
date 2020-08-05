@@ -63,7 +63,7 @@ export type DocumentHighlightProvider = (
 ) => AsyncGenerator<sourcegraph.DocumentHighlight[] | null, void, undefined>
 
 export const noopProviders = {
-    definitionAndHover: (): Promise<DefinitionAndHover | null> => new Promise(() => {}),
+    definitionAndHover: (): Promise<DefinitionAndHover | null> => Promise.resolve(null),
     definition: noopAsyncGenerator,
     references: noopAsyncGenerator,
     hover: noopAsyncGenerator,
