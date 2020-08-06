@@ -47,7 +47,7 @@
     "@sourcegraph/tsconfig": "^4.0.1",
     "@types/fs-extra": "9.0.1",
     "@types/js-base64": "3.0.0",
-    "@types/lodash": "4.14.158",
+    "@types/lodash": "4.14.159",
     "@types/mocha": "8.0.1",
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.1",
