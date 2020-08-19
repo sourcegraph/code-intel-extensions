@@ -9,7 +9,7 @@ import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
-import * as HoverAlerts from './hoverAlerts'
+import * as HoverAlerts from './hover-alerts'
 
 export interface Providers {
     definition: DefinitionProvider
@@ -331,7 +331,7 @@ export function createHoverProvider(
                     }
 
                     await emitter.emitOnce('lsifHover')
-                    yield { ...lsifWrapper.hover, alerts: HoverAlerts.lsif }
+                    yield { ...lsifWrapper.hover, alerts: [HoverAlerts.lsif] }
                     // Found the best precise hover text we'll get. Stop.
                     return
                 }
@@ -352,7 +352,7 @@ export function createHoverProvider(
                         } else {
                             yield {
                                 ...lspResult,
-                                alerts: HoverAlerts.lsp,
+                                alerts: [HoverAlerts.lsp],
                             }
                         }
                         hasLSPResult = true
@@ -376,11 +376,11 @@ export function createHoverProvider(
                     } else {
                         let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] = []
                         if (lsifSupport === LSIFSupport.None) {
-                            alerts = HoverAlerts.searchLSIFSupportNone
+                            alerts = [HoverAlerts.searchLSIFSupportNone]
                         } else if (lsifSupport === LSIFSupport.Experimental) {
-                            alerts = HoverAlerts.searchLSIFSupportExperimental
+                            alerts = [HoverAlerts.searchLSIFSupportExperimental]
                         } else if (lsifSupport === LSIFSupport.Robust) {
-                            alerts = HoverAlerts.searchLSIFSupportRobust
+                            alerts = [HoverAlerts.searchLSIFSupportRobust]
                         }
 
                         yield {
