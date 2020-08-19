@@ -4,7 +4,8 @@ export const lsif: sourcegraph.Badged<sourcegraph.HoverAlert>[] = [
     {
         summary: {
             kind: sourcegraph.MarkupKind.Markdown,
-            value: 'Semantic result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
+            value:
+                'Semantic result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
         },
         badge: {
             kind: 'info',
@@ -20,7 +21,8 @@ export const lsp: sourcegraph.Badged<sourcegraph.HoverAlert>[] = [
     {
         summary: {
             kind: sourcegraph.MarkupKind.Markdown,
-            value: 'Language server result. [Get LSIF.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
+            value:
+                'Language server result. [Get LSIF.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
         },
         badge: {
             kind: 'info',
@@ -35,7 +37,8 @@ export const searchLSIFSupportRobust: sourcegraph.Badged<sourcegraph.HoverAlert>
     {
         summary: {
             kind: sourcegraph.MarkupKind.Markdown,
-            value: 'Search-based result. [Get semantics.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
+            value:
+                'Search-based result. [Get semantics.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
         },
         badge: {
             kind: 'info',
@@ -50,7 +53,8 @@ export const searchLSIFSupportExperimental: sourcegraph.Badged<sourcegraph.Hover
     {
         summary: {
             kind: sourcegraph.MarkupKind.Markdown,
-            value: 'Search-based result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
+            value:
+                'Search-based result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
         },
         badge: {
             kind: 'info',
@@ -66,7 +70,8 @@ export const searchLSIFSupportNone: sourcegraph.Badged<sourcegraph.HoverAlert>[]
     {
         summary: {
             kind: sourcegraph.MarkupKind.Markdown,
-            value: 'Search-based result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
+            value:
+                'Search-based result. [Learn more.](https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence)',
         },
         type: 'SearchResultNoLSIFSupport',
     },
