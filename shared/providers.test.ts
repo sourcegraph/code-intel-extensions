@@ -176,12 +176,23 @@ describe('createHoverProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createHoverProvider(
             LSIFSupport.None,
-            () => Promise.resolve({ definition: [], hover: hover1 }),
+            () => Promise.resolve({ definition: [location1], hover: hover1 }),
             () => asyncGeneratorFromValues([hover4]),
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
         assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsif] }])
+    })
+
+    it('uses tags partial LSIF results', async () => {
+        const result = createHoverProvider(
+            LSIFSupport.None,
+            () => Promise.resolve({ definition: [], hover: hover1 }),
+            () => asyncGeneratorFromValues([hover4]),
+            () => asyncGeneratorFromValues([hover2, hover3])
+        ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
+
+        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsifPartialHoverOnly] }])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
@@ -192,7 +203,9 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover1, hover2])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsp] }, hover2])
+        const mmm = await gatherValues(result)
+        console.log({ mmm })
+        assert.deepStrictEqual(mmm, [{ ...hover1, alerts: [HoverAlerts.lsp] }, hover2])
     })
 
     it('falls back to basic when precise results are not found', async () => {

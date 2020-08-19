@@ -316,46 +316,51 @@ export function createHoverProvider(
     searchProvider: HoverProvider,
     lspProvider?: HoverProvider
 ): sourcegraph.HoverProvider {
+    const searchAlerts =
+        lsifSupport === LSIFSupport.None
+            ? [HoverAlerts.searchLSIFSupportNone]
+            : lsifSupport === LSIFSupport.Experimental
+            ? [HoverAlerts.searchLSIFSupportExperimental]
+            : lsifSupport === LSIFSupport.Robust
+            ? [HoverAlerts.searchLSIFSupportRobust]
+            : undefined
+
     return {
         provideHover: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
             const emitter = new TelemetryEmitter()
+            let hasPreciseDefinition = false
 
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
                 if (lsifWrapper.hover) {
-                    if (!nonEmpty(lsifWrapper.definition)) {
-                        // TODO(gbrik) - add tooltip to indicate a precise hover but an imprecise definition
-                    }
+                    // Determine if we have both a hover and a definition, or just a hover.
+                    // This can happen if we haven't indexed the target repository.
+                    const alerts = nonEmpty(lsifWrapper.definition)
+                        ? [HoverAlerts.lsif]
+                        : [HoverAlerts.lsifPartialHoverOnly]
 
-                    await emitter.emitOnce('lsifHover')
-                    yield { ...lsifWrapper.hover, alerts: [HoverAlerts.lsif] }
                     // Found the best precise hover text we'll get. Stop.
+                    await emitter.emitOnce('lsifHover')
+                    yield { ...lsifWrapper.hover, alerts }
                     return
                 }
 
                 if (nonEmpty(lsifWrapper.definition)) {
-                    // TODO(gbrik) - add tooltip to indicate an imprecise hover but a precise definition
+                    hasPreciseDefinition = true
                 }
             }
 
             if (lspProvider) {
-                // Delegate to LSP if it's available.
-                let hasLSPResult = false
+                let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] | undefined = [HoverAlerts.lsp]
                 for await (const lspResult of lspProvider(textDocument, position)) {
                     if (lspResult) {
+                        // Delegate to LSP if it's available.
                         await emitter.emitOnce('lspHover')
-                        if (hasLSPResult) {
-                            yield lspResult
-                        } else {
-                            yield {
-                                ...lspResult,
-                                alerts: [HoverAlerts.lsp],
-                            }
-                        }
-                        hasLSPResult = true
+                        yield { ...lspResult, ...(alerts ? { alerts } : {}) }
+                        alerts = undefined
                     }
                 }
 
@@ -365,30 +370,14 @@ export function createHoverProvider(
                 return
             }
 
-            let hasSearchResult = false
-            for await (const searchResult of searchProvider(textDocument, position)) {
-                // No results so far, fall back to search. Mark the result as
-                // imprecise.
-                if (searchResult) {
-                    await emitter.emitOnce('searchHover')
-                    if (hasSearchResult) {
-                        yield searchResult
-                    } else {
-                        let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] = []
-                        if (lsifSupport === LSIFSupport.None) {
-                            alerts = [HoverAlerts.searchLSIFSupportNone]
-                        } else if (lsifSupport === LSIFSupport.Experimental) {
-                            alerts = [HoverAlerts.searchLSIFSupportExperimental]
-                        } else if (lsifSupport === LSIFSupport.Robust) {
-                            alerts = [HoverAlerts.searchLSIFSupportRobust]
-                        }
+            let alerts = hasPreciseDefinition ? [HoverAlerts.lsifPartialDefinitionOnly] : searchAlerts
 
-                        yield {
-                            ...searchResult,
-                            alerts,
-                        }
-                    }
-                    hasSearchResult = true
+            for await (const searchResult of searchProvider(textDocument, position)) {
+                if (searchResult) {
+                    // No results so far, fall back to search. Mark the result as imprecise.
+                    await emitter.emitOnce('searchHover')
+                    yield { ...searchResult, ...(alerts ? { alerts } : {}) }
+                    alerts = undefined
                 }
             }
         }),
