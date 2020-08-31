@@ -895,10 +895,10 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.1.tgz#8da5c6530915653f3a1f38fd5f101d8c3f8079c5"
   integrity sha512-+iTbntw2IZPb/anVDbypzfQa+ay64MW0Zo8aJ8gZPWMMK6/OubMVb6lUPMagqjOPnmtauXnFCACVl3O7ogjeqQ==
 
-"@sourcegraph/eslint-config@^0.20.7":
-  version "0.20.7"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.20.7.tgz#5b1ea2d276f4b4cd742851d589a85728d49f4687"
-  integrity sha512-gmNOZ4Z1r55zUOEY2N5I2OCLoyjkea2UEoOso30SZ22KwSl9vBuwOMFskTz6OTOml5YjvTF0U1iLIv0QHbGTLg==
+"@sourcegraph/eslint-config@^0.20.8":
+  version "0.20.8"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/eslint-config/-/eslint-config-0.20.8.tgz#bc1162e0d663c40b609a60269ca1987a93c33e91"
+  integrity sha512-rzu/qzTAKTBJdofdoZlIN8Sqd6BWQqC41acb7QkU1yhPewracpfyub6BYc2VFzI+w3sM2v0cw0NsRDkxSQ+KFw==
   dependencies:
     "@sourcegraph/prettierrc" "^3.0.3"
     "@typescript-eslint/eslint-plugin" "^3.10.0"
@@ -911,7 +911,7 @@
     eslint-plugin-react "^7.20.5"
     eslint-plugin-react-hooks "^4.0.8"
     eslint-plugin-rxjs "^0.0.2-beta.29"
-    eslint-plugin-unicorn "^20.1.0"
+    eslint-plugin-unicorn "^21.0.0"
 
 "@sourcegraph/extension-api-classes@^1.1.0":
   version "1.1.0"
@@ -3005,16 +3005,16 @@ eslint-plugin-rxjs@^0.0.2-beta.29:
     tsutils "^3.0.0"
     tsutils-etc "^1.0.0"
 
-eslint-plugin-unicorn@^20.1.0:
-  version "20.1.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-unicorn/-/eslint-plugin-unicorn-20.1.0.tgz#a43f60ffc98406d72ec2a5fcc6dad24ba0192bc9"
-  integrity sha512-XQxLBJT/gnwyRR6cfYsIK1AdekQchAt5tmcsnldevGjgR2xoZsRUa5/i6e0seNHy2RoT57CkTnbVHwHF8No8LA==
+eslint-plugin-unicorn@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-unicorn/-/eslint-plugin-unicorn-21.0.0.tgz#7e3a8b0f725f003619e1f40d769939ecd8d708d0"
+  integrity sha512-S8v7+v4gZTQPj4pKKvexhgSUaLQSyItvxW2SVZDaX9Iu5IjlAmF2eni+L6w8a2aqshxgU8Lle4FIAVDtuejSKQ==
   dependencies:
     ci-info "^2.0.0"
     clean-regexp "^1.0.0"
     eslint-ast-utils "^1.1.0"
     eslint-template-visitor "^2.0.0"
-    eslint-utils "^2.0.0"
+    eslint-utils "^2.1.0"
     import-modules "^2.0.0"
     lodash "^4.17.15"
     pluralize "^8.0.0"
