@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { noopProviders, CombinedProviders, DefinitionAndHover } from '../providers'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { asyncGeneratorFromPromise } from '../util/ix'
+import { asyncGeneratorFromPromise, cacheProviderPromise } from '../util/ix'
 import { Logger } from '../logging'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
@@ -40,7 +40,7 @@ export function createGraphQLProviders(
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): CombinedProviders {
     return {
-        definitionAndHover: cachedDefinitionAndHover(queryGraphQL, getRangeFromWindow),
+        definitionAndHover: cacheProviderPromise(definitionAndHover(queryGraphQL, getRangeFromWindow)),
         references: references(queryGraphQL, getRangeFromWindow),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getRangeFromWindow)),
     }
@@ -48,51 +48,6 @@ export function createGraphQLProviders(
 
 /** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
 const RANGE_RESOLUTION_DELAY_MS = 25
-
-/** The maximum number of definition/hover responses to cache. */
-const DEFINITION_HOVER_CACHE_CAPACITY = 5
-
-/** Retrieve definitions and hover text for the current hover position. */
-function cachedDefinitionAndHover(
-    queryGraphQL: QueryGraphQLFn<any>,
-    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<DefinitionAndHover | null> {
-    interface CacheEntry {
-        uri: string
-        position: sourcegraph.Position
-        value: Promise<DefinitionAndHover | null>
-    }
-
-    const cache: CacheEntry[] = []
-    const provider = definitionAndHover(queryGraphQL, getRangeFromWindow)
-
-    return async (
-        textDocument: sourcegraph.TextDocument,
-        position: sourcegraph.Position
-    ): Promise<DefinitionAndHover | null> => {
-        for (const [index, entry] of cache.entries()) {
-            if (
-                entry.uri === textDocument.uri &&
-                entry.position.line === position.line &&
-                entry.position.character === position.character
-            ) {
-                if (index !== 0) {
-                    cache.splice(index, 1)
-                    cache.unshift(entry)
-                }
-
-                return entry.value
-            }
-        }
-
-        const value = provider(textDocument, position)
-        cache.unshift({ uri: textDocument.uri, position, value })
-        while (cache.length > DEFINITION_HOVER_CACHE_CAPACITY) {
-            cache.pop()
-        }
-        return value
-    }
-}
 
 /** Retrieve definitions and hover text for the current hover position. */
 function definitionAndHover(

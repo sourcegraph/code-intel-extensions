@@ -6,7 +6,7 @@ import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers, SourcegraphProviders } from '../providers'
 import { API, RepoMeta } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
-import { asyncGeneratorFromPromise } from '../util/ix'
+import { asyncGeneratorFromPromise, cacheProviderPromise } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
@@ -74,7 +74,7 @@ export function createProviders(
     }
 
     /**
-     * Return the text document content adn the search token found under the
+     * Return the text document content and the search token found under the
      * current hover position. Returns undefined if either piece of data could
      * not be determined.
      *
@@ -274,7 +274,7 @@ export function createProviders(
     }
 
     return {
-        definition: asyncGeneratorFromPromise(definition),
+        definition: asyncGeneratorFromPromise(cacheProviderPromise(definition)),
         references: asyncGeneratorFromPromise(references),
         hover: asyncGeneratorFromPromise(hover),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights),

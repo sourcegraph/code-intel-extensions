@@ -203,9 +203,7 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover1, hover2])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        const mmm = await gatherValues(result)
-        console.log({ mmm })
-        assert.deepStrictEqual(mmm, [{ ...hover1, alerts: [HoverAlerts.lsp] }, hover2])
+        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsp] }, hover2])
     })
 
     it('falls back to basic when precise results are not found', async () => {
