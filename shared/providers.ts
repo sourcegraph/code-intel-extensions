@@ -144,6 +144,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
             const provider = createHoverProvider(
                 languageSpec.lsifSupport || LSIFSupport.None,
                 lsifProviders.definitionAndHover,
+                searchProviders.definition,
                 searchProviders.hover,
                 lspProvider
             )
@@ -306,13 +307,15 @@ export function createReferencesProvider(
  * Creates a hover provider.
  *
  * @param lsifProvider The LSIF-based definition and hover provider.
- * @param searchProvider The search-based hover provider.
+ * @param searchDefinitionProvider The search-based definition provider.
+ * @param searchHoverProvider The search-based hover provider.
  * @param lspProvider An optional LSP-based hover provider.
  */
 export function createHoverProvider(
     lsifSupport: LSIFSupport,
     lsifProvider: DefinitionAndHoverProvider,
-    searchProvider: HoverProvider,
+    searchDefinitionProvider: DefinitionProvider,
+    searchHoverProvider: HoverProvider,
     lspProvider?: HoverProvider
 ): sourcegraph.HoverProvider {
     const searchAlerts =
@@ -335,11 +338,20 @@ export function createHoverProvider(
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
                 if (lsifWrapper.hover) {
+                    let hasSearchDefinition = false
+                    for await (const searchResult of searchDefinitionProvider(textDocument, position)) {
+                        if (nonEmpty(searchResult)) {
+                            hasSearchDefinition = true
+                            break
+                        }
+                    }
+
                     // Determine if we have both a hover and a definition, or just a hover.
                     // This can happen if we haven't indexed the target repository.
-                    const alerts = nonEmpty(lsifWrapper.definition)
-                        ? [HoverAlerts.lsif]
-                        : [HoverAlerts.lsifPartialHoverOnly]
+                    const alerts =
+                        nonEmpty(lsifWrapper.definition) || !hasSearchDefinition
+                            ? [HoverAlerts.lsif]
+                            : [HoverAlerts.lsifPartialHoverOnly]
 
                     // Found the best precise hover text we'll get. Stop.
                     await emitter.emitOnce('lsifHover')
@@ -371,7 +383,7 @@ export function createHoverProvider(
 
             let alerts = hasPreciseDefinition ? [HoverAlerts.lsifPartialDefinitionOnly] : searchAlerts
 
-            for await (const searchResult of searchProvider(textDocument, position)) {
+            for await (const searchResult of searchHoverProvider(textDocument, position)) {
                 if (searchResult) {
                     // No results so far, fall back to search. Mark the result as imprecise.
                     await emitter.emitOnce('searchHover')
