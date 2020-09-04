@@ -434,5 +434,5 @@ export function badgeValues<T extends object>(
 function wrapProvider<P extends unknown[], R>(
     func: (...args: P) => AsyncGenerator<R, void, void>
 ): (...args: P) => Observable<R> {
-    return (...args) =>  observableFromAsyncIterator(() => func(...args))
+    return (...args) => observableFromAsyncIterator(() => func(...args))
 }
