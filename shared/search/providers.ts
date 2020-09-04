@@ -6,7 +6,7 @@ import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers, SourcegraphProviders } from '../providers'
 import { API, RepoMeta } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
-import { asyncGeneratorFromPromise, cacheProviderPromise } from '../util/ix'
+import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
 import { parseGitURI } from '../util/uri'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
@@ -274,7 +274,7 @@ export function createProviders(
     }
 
     return {
-        definition: asyncGeneratorFromPromise(cacheProviderPromise(definition)),
+        definition: asyncGeneratorFromPromise(cachePromiseProvider(definition)),
         references: asyncGeneratorFromPromise(references),
         hover: asyncGeneratorFromPromise(hover),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights),

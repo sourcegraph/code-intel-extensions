@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { noopProviders, CombinedProviders, DefinitionAndHover } from '../providers'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { asyncGeneratorFromPromise, cacheProviderPromise } from '../util/ix'
+import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
 import { Logger } from '../logging'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
@@ -40,7 +40,7 @@ export function createGraphQLProviders(
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): CombinedProviders {
     return {
-        definitionAndHover: cacheProviderPromise(definitionAndHover(queryGraphQL, getRangeFromWindow)),
+        definitionAndHover: cachePromiseProvider(definitionAndHover(queryGraphQL, getRangeFromWindow)),
         references: references(queryGraphQL, getRangeFromWindow),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getRangeFromWindow)),
     }

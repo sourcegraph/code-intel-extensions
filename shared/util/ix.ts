@@ -124,7 +124,7 @@ export const PROMISE_CACHE_CAPACITY = 5
  *
  * @param func The promise function.
  */
-export function cacheProviderPromise<P extends unknown[], R>(
+export function cachePromiseProvider<P extends unknown[], R>(
     func: (...args: P) => Promise<R>,
     cacheCapacity: number = PROMISE_CACHE_CAPACITY
 ): (...args: P) => Promise<R> {

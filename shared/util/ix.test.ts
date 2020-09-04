@@ -6,7 +6,7 @@ import {
     concat,
     flatMapConcurrent,
     observableFromAsyncIterator,
-    cacheProviderPromise,
+    cachePromiseProvider,
     PROMISE_CACHE_CAPACITY,
 } from './ix'
 
@@ -117,7 +117,7 @@ describe('cachePromiseProvider', () => {
         let calls = 0
         let resolutions = 0
 
-        const cachedPromise = cacheProviderPromise(
+        const cachedPromise = cachePromiseProvider(
             (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) => {
                 calls++
 
@@ -142,7 +142,7 @@ describe('cachePromiseProvider', () => {
     it('is bounded', async () => {
         let calls = 0
 
-        const cachedPromise = cacheProviderPromise(
+        const cachedPromise = cachePromiseProvider(
             (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) => {
                 calls++
                 return new Promise<number>(resolve => resolve(position.line + position.character * 2))
