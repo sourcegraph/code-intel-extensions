@@ -119,9 +119,10 @@ export function asyncGeneratorFromPromise<P extends unknown[], R>(
 export const PROMISE_CACHE_CAPACITY = 5
 
 /**
- * TODO
+ * Memoizes a function that returns a promise. Internally, this maintains a simple
+ * bounded LRU cache.
  *
- * @param func TODO
+ * @param func The promise function.
  */
 export function cacheProviderPromise<P extends unknown[], R>(
     func: (...args: P) => Promise<R>,
