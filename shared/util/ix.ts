@@ -1,3 +1,4 @@
+import * as sourcegraph from 'sourcegraph'
 import { AsyncIterableX, from, of } from 'ix/asynciterable'
 import { MergeAsyncIterable } from 'ix/asynciterable/merge'
 import { flatMap, share } from 'ix/asynciterable/operators'
@@ -112,4 +113,57 @@ export function asyncGeneratorFromPromise<P extends unknown[], R>(
     return async function* (...args: P): AsyncGenerator<R, void, unknown> {
         yield await func(...args)
     }
+}
+
+/** The maximum number of promise results to cache. */
+export const PROMISE_CACHE_CAPACITY = 5
+
+/**
+ * Memoizes a function that returns a promise. Internally, this maintains a simple
+ * bounded LRU cache.
+ *
+ * @param func The promise function.
+ */
+export function cachePromiseProvider<P extends unknown[], R>(
+    func: (...args: P) => Promise<R>,
+    cacheCapacity: number = PROMISE_CACHE_CAPACITY
+): (...args: P) => Promise<R> {
+    interface CacheEntry {
+        args: P
+        value: Promise<R>
+    }
+    const cache: CacheEntry[] = []
+
+    return (...args) => {
+        for (const [index, entry] of cache.entries()) {
+            if (compareProviderArguments(entry.args, args)) {
+                if (index !== 0) {
+                    cache.splice(index, 1)
+                    cache.unshift(entry)
+                }
+                return entry.value
+            }
+        }
+
+        const value = func(...args)
+        cache.unshift({ args, value })
+        while (cache.length > cacheCapacity) {
+            cache.pop()
+        }
+        return value
+    }
+}
+
+/**
+ * Compare the arguments of definition, reference, and hover providers. This
+ * will only compare the document and position arguments and will ignore the
+ * third parameter on the references provider.
+ *
+ * @param arguments1 The first set of arguments to compare.
+ * @param arguments2 The second set of arguments to compare.
+ */
+function compareProviderArguments<P extends unknown>(arguments1: P, arguments2: P): boolean {
+    const [textDocument1, position1] = arguments1 as [sourcegraph.TextDocument, sourcegraph.Position]
+    const [textDocument2, position2] = arguments2 as [sourcegraph.TextDocument, sourcegraph.Position]
+    return textDocument1.uri === textDocument2.uri && position1.isEqual(position2)
 }

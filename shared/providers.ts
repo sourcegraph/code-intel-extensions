@@ -1,5 +1,4 @@
 import { NEVER, Observable } from 'rxjs'
-import { shareReplay } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { impreciseBadge } from './badges'
 import { LanguageSpec, LSIFSupport } from './language-specs/spec'
@@ -428,43 +427,12 @@ export function badgeValues<T extends object>(
 }
 
 /**
- * Converts an async generator provider into an observable provider. This
- * also memoizes the previous result. This reduces the number of definition
- * requests from two to one on each hover.
+ * Converts an async generator provider into an observable provider.
  *
- * The memoization was originally a workaround for #1321 (below), but should
- * now be kept as relying on memoization here is an efficient replacement for
- * a local cache of search results.
- *
- * [^1]: https://github.com/sourcegraph/sourcegraph/issues/1321
- *
- * @param func A factory to create the provider.
+ * @param func A function that returns a the provider.
  */
 function wrapProvider<P extends unknown[], R>(
     func: (...args: P) => AsyncGenerator<R, void, void>
 ): (...args: P) => Observable<R> {
-    let previousResult: Observable<R>
-    let previousArguments: P
-    return (...args) => {
-        if (previousArguments && compareParameters(previousArguments, args)) {
-            return previousResult
-        }
-        previousArguments = args
-        previousResult = observableFromAsyncIterator(() => func(...args)).pipe(shareReplay(1))
-        return previousResult
-    }
-}
-
-/**
- * Compare the parameters of definition, reference, and hover providers. This
- * will only compare the document and position parameters and will ignore the
- * third parameter on the references provider.
- *
- * @param x The first set of parameters to compare.
- * @param y The second set of parameters to compare.
- */
-function compareParameters<P extends unknown>(parameters1: P, parameters2: P): boolean {
-    const [textDocument1, position1] = parameters1 as [sourcegraph.TextDocument, sourcegraph.Position]
-    const [textDocument2, position2] = parameters2 as [sourcegraph.TextDocument, sourcegraph.Position]
-    return textDocument1.uri === textDocument2.uri && position1.isEqual(position2)
+    return (...args) => observableFromAsyncIterator(() => func(...args))
 }
