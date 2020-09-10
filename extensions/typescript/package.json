@@ -41,10 +41,10 @@
     "onLanguage:javascript"
   ],
   "scripts": {
-    "build": "tsc -b . && parcel build --out-file extension.js src/extension.ts && dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-typescript@$(git rev-parse HEAD)/-/raw/extension/src/",
-    "config-types": "dot-json package.json contributes.configuration | json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/settings.ts",
-    "symlink-package": "mkdirp dist && lnfs ./package.json ./dist/package.json",
-    "serve": "yarn run symlink-package && parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
+    "build": "../../node_modules/.bin/tsc -b . && ../../node_modules/.bin/parcel build --out-file extension.js src/extension.ts && ../../node_modules/.bin/dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-typescript@$(git rev-parse HEAD)/-/raw/extension/src/",
+    "config-types": "../../node_modules/.bin/dot-json package.json contributes.configuration | ../../node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/settings.ts",
+    "symlink-package": "../../node_modules/.bin/mkdirp dist && ../../node_modules/.bin/lnfs ./package.json ./dist/package.json",
+    "serve": "yarn run symlink-package && ../../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
     "publish": "yarn -s && src -config \"${SRC_CONFIG}\" ext publish"
   },
