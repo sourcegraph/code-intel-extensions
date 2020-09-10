@@ -167,19 +167,29 @@ describe('rangesInRangeWindow', () => {
             })
         )
 
-        assert.deepEqual(await rangesInRangeWindow(document, 10, 20, queryGraphQLFn), [
-            {
-                range: range1,
-                definitions: [new sourcegraph.Location(new URL('git://repo?rev#/bar.ts'), range2)],
-                references: [new sourcegraph.Location(new URL('git://repo?rev#/baz.ts'), range3)],
-                hover: {
-                    markdown: {
-                        text: 'foo',
-                    },
+        const results = await rangesInRangeWindow(document, 10, 20, queryGraphQLFn)
+
+        assert.deepEqual(
+            (results || []).map(result => ({
+                range: result?.range,
+                definitions: result.definitions?.(),
+                references: result.references?.(),
+                hover: result?.hover,
+            })),
+            [
+                {
                     range: range1,
+                    definitions: [new sourcegraph.Location(new URL('git://repo?rev#/bar.ts'), range2)],
+                    references: [new sourcegraph.Location(new URL('git://repo?rev#/baz.ts'), range3)],
+                    hover: {
+                        markdown: {
+                            text: 'foo',
+                        },
+                        range: range1,
+                    },
                 },
-            },
-        ])
+            ]
+        )
     })
 
     it('should deal with empty payload', async () => {

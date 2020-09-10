@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { nodeToLocation, LocationConnectionNode } from './locations'
+import { LocationConnectionNode, nodeToLocation } from './locations'
 import { HoverPayload } from './definition-hover'
 import { GenericLSIFResponse, queryLSIF } from './api'
 
@@ -31,8 +31,8 @@ export type RangeWindowFactoryFn = (
 /** A range and a subset of its intelligence data. */
 export interface CodeIntelligenceRange {
     range: sourcegraph.Range
-    definitions?: sourcegraph.Location[]
-    references?: sourcegraph.Location[]
+    definitions?: () => sourcegraph.Location[]
+    references?: () => sourcegraph.Location[]
     hover?: HoverPayload
 }
 
@@ -345,8 +345,28 @@ export function nodeToCodeIntelligenceRange(
 ): CodeIntelligenceRange {
     return {
         range,
-        definitions: (definitions?.nodes || []).map(node => nodeToLocation(textDocument, node)),
-        references: (references?.nodes || []).map(node => nodeToLocation(textDocument, node)),
+        definitions: definitions && lazyValue(() => definitions.nodes.map(node => nodeToLocation(textDocument, node))),
+        references: references && lazyValue(() => references.nodes.map(node => nodeToLocation(textDocument, node))),
         hover,
+    }
+}
+
+/**
+ * Return a function that invokes the given constructor function once and returns
+ * the same value for all subsequent invocations.
+ *
+ * @param constructor The value constructor function.
+ */
+function lazyValue<T>(constructor: () => T): () => T {
+    let called = false
+    let result: T
+
+    return () => {
+        if (!called) {
+            called = true
+            result = constructor()
+        }
+
+        return result
     }
 }
