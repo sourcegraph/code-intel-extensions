@@ -29,7 +29,7 @@
   "dependencies": {
     "@sourcegraph/vscode-ws-jsonrpc": "0.0.3-fork",
     "delay": "^4.4.0",
-    "ix": "^3.0.2",
+    "ix": "^4.0.0",
     "js-base64": "^3.4.5",
     "lodash": "^4.17.20",
     "mz": "^2.7.0",
