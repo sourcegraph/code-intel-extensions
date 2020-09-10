@@ -11,6 +11,10 @@ export interface Settings {
      */
     'codeIntel.lsif'?: boolean
     /**
+     * Whether to fetch multiple precise definitions and references on hover.
+     */
+    'codeIntel.disableRangeQueries'?: boolean
+    /**
      * Whether to include forked repositories in search results.
      */
     'basicCodeIntel.includeForks'?: boolean
@@ -58,7 +62,7 @@ export interface Settings {
      * Settings to be written into an npmrc in key/value format. Can be used to specify custom registries and tokens.
      */
     'typescript.npmrc'?: {
-        [k: string]: any
+        [k: string]: unknown
     }
     /**
      * Whether to restart the language server after dependencies were installed (default true)

@@ -3,7 +3,5 @@ import { BasicCodeIntelligenceSettings } from './settings'
 
 /** Retrieves a config value by key. */
 export function getConfig<T>(key: string, defaultValue: T): T {
-    const configuredValue = sourcegraph.configuration.get<BasicCodeIntelligenceSettings>().get(key)
-
-    return configuredValue || defaultValue
+    return (sourcegraph.configuration.get<BasicCodeIntelligenceSettings>().get(key) as T | undefined) || defaultValue
 }

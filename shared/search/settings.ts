@@ -11,6 +11,10 @@ export interface BasicCodeIntelligenceSettings {
      */
     'codeIntel.lsif'?: boolean
     /**
+     * Whether to fetch multiple precise definitions and references on hover.
+     */
+    'codeIntel.disableRangeQueries'?: boolean
+    /**
      * Whether to include forked repositories in search results.
      */
     'basicCodeIntel.includeForks'?: boolean
@@ -26,5 +30,5 @@ export interface BasicCodeIntelligenceSettings {
      * The timeout (in milliseconds) for un-indexed search requests.
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
-    [k: string]: any
+    [k: string]: unknown
 }
