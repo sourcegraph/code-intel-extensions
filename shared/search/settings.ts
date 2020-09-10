@@ -30,5 +30,5 @@ export interface BasicCodeIntelligenceSettings {
      * The timeout (in milliseconds) for un-indexed search requests.
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
-    [k: string]: any
+    [k: string]: unknown
 }

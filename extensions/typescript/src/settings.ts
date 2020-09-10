@@ -62,7 +62,7 @@ export interface Settings {
      * Settings to be written into an npmrc in key/value format. Can be used to specify custom registries and tokens.
      */
     'typescript.npmrc'?: {
-        [k: string]: any
+        [k: string]: unknown
     }
     /**
      * Whether to restart the language server after dependencies were installed (default true)
