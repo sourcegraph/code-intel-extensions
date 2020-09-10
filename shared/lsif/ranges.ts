@@ -59,6 +59,12 @@ interface RangeWindow {
 export async function makeRangeWindowFactory(
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL
 ): Promise<RangeWindowFactoryFn> {
+    const disabled = !!sourcegraph.configuration.get().get('codeIntel.disableRangeQueries')
+    if (disabled) {
+        // No-op if the user has explicitly disabled bulk loading
+        return () => Promise.resolve(null)
+    }
+
     if (!(await hasRangesQuery(queryGraphQL))) {
         // No-op if the instance doesn't support bulk loading
         return () => Promise.resolve(null)
