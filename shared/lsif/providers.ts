@@ -61,10 +61,13 @@ function definitionAndHover(
         const getDefinitionAndHoverFromRangeRequest = async (): Promise<DefinitionAndHover | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
-                if (range?.definitions && range.definitions.length > 0 && range?.hover) {
-                    return {
-                        definition: range.definitions,
-                        hover: hoverPayloadToHover(range.hover),
+                if (range?.definitions && range?.hover) {
+                    const definitions = range.definitions()
+                    if (definitions.length > 0) {
+                        return {
+                            definition: definitions,
+                            hover: hoverPayloadToHover(range.hover),
+                        }
                     }
                 }
             }
@@ -100,8 +103,11 @@ function references(
         const getReferencesFromRangeRequest = async (): Promise<sourcegraph.Location[] | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
-                if (range?.references && range.references.length > 0) {
-                    return range.references
+                if (range?.references) {
+                    const references = range.references()
+                    if (references.length > 0) {
+                        return range.references()
+                    }
                 }
             }
 
@@ -144,7 +150,10 @@ export function documentHighlights(
         if (getRangeFromWindow) {
             const range = await (await getRangeFromWindow)(textDocument, position)
             if (range?.references) {
-                return filterLocationsForDocumentHighlights(textDocument, range?.references)
+                const references = range?.references()
+                if (references.length > 0) {
+                    return filterLocationsForDocumentHighlights(textDocument, references)
+                }
             }
         }
 
