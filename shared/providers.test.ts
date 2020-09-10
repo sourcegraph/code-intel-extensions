@@ -1,4 +1,5 @@
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+import * as sinon from 'sinon'
 import * as assert from 'assert'
 import { Observable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
@@ -174,27 +175,37 @@ describe('createReferencesProvider', () => {
 
 describe('createHoverProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
+        const searchDefinitionProvider = sinon.spy(() => asyncGeneratorFromValues([]))
+
         const result = createHoverProvider(
             LSIFSupport.None,
             () => Promise.resolve({ definition: [location1], hover: hover1 }),
-            () => asyncGeneratorFromValues([]),
+            searchDefinitionProvider,
             () => asyncGeneratorFromValues([hover4]),
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
         assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsif] }])
+
+        // Search providers not called at all
+        assert.strictEqual(searchDefinitionProvider.called, false)
     })
 
     it('tags partial LSIF results', async () => {
+        const searchDefinitionProvider = sinon.spy(() => asyncGeneratorFromValues([[location1]]))
+
         const result = createHoverProvider(
             LSIFSupport.None,
             () => Promise.resolve({ definition: [], hover: hover1 }),
-            () => asyncGeneratorFromValues([[location1]]),
+            searchDefinitionProvider,
             () => asyncGeneratorFromValues([hover4]),
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
         assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsifPartialHoverOnly] }])
+
+        // Search providers called to determine if there's search hover text
+        assert.strictEqual(searchDefinitionProvider.called, true)
     })
 
     it('does not tag partial LSIF results without search definition', async () => {
