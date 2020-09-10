@@ -351,9 +351,7 @@ export function createHoverProvider(
                     // Display a partial data tooltip when there is a precise hover
                     // text but a search definition. This can happen if we haven't
                     // indexed the target repository.
-                    const alerts = !partialPreciseData
-                            ? [HoverAlerts.lsif]
-                            : [HoverAlerts.lsifPartialHoverOnly]
+                    const alerts = !partialPreciseData ? [HoverAlerts.lsif] : [HoverAlerts.lsifPartialHoverOnly]
 
                     // Found the best precise hover text we'll get. Stop.
                     await emitter.emitOnce('lsifHover')
