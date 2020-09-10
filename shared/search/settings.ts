@@ -11,6 +11,10 @@ export interface BasicCodeIntelligenceSettings {
      */
     'codeIntel.lsif'?: boolean
     /**
+     * Whether to fetch multiple precise definitions and references on hover.
+     */
+    'codeIntel.disableRangeQueries'?: boolean
+    /**
      * Whether to include forked repositories in search results.
      */
     'basicCodeIntel.includeForks'?: boolean
