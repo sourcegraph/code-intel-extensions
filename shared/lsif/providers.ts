@@ -61,9 +61,9 @@ function definitionAndHover(
         const getDefinitionAndHoverFromRangeRequest = async (): Promise<DefinitionAndHover | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
-                if (range?.definitions && range?.hover) {
+                if (range?.definitions) {
                     const definitions = range.definitions()
-                    if (definitions.length > 0) {
+                    if (definitions.length > 0 && range?.hover) {
                         return {
                             definition: definitions,
                             hover: hoverPayloadToHover(range.hover),
