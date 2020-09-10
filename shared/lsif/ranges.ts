@@ -6,7 +6,7 @@ import { HoverPayload } from './definition-hover'
 import { GenericLSIFResponse, queryLSIF } from './api'
 
 /** The size of the bounds on each ranges request. */
-const RANGE_WINDOW_SIZE = 100
+const RANGE_WINDOW_SIZE = 50
 
 /**
  * The maximum number of documents to store windows for. This value can be
@@ -20,7 +20,7 @@ const RANGE_WINDOW_SIZE = 100
  * good enough v1 to stop things from slowing to a crawl in the vast majority
  * of circumstances.
  */
-const WINDOW_CACHE_CAPACITY = 5
+const WINDOW_CACHE_CAPACITY = 10
 
 /** The type returned by makeRangeWindowFactory. */
 export type RangeWindowFactoryFn = (
@@ -158,9 +158,15 @@ export async function findOverlappingWindows(
  * @param line The target window center.
  * @param lowerBound The minimum lower bound of the window.
  * @param upperBound The maximum upper bound of the window.
+ * @param windowSize The target number of lines in the calculated window.
  */
-export function calculateRangeWindow(line: number, lowerBound: number, upperBound?: number): [number, number] {
-    const radius = RANGE_WINDOW_SIZE / 2
+export function calculateRangeWindow(
+    line: number,
+    lowerBound: number,
+    upperBound?: number,
+    windowSize = RANGE_WINDOW_SIZE
+): [number, number] {
+    const radius = windowSize / 2
     const candidateStartLine = line - radius
     const candidateEndLine = line + radius
     const lowerSlack = lowerBound - candidateStartLine
