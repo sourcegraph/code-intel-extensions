@@ -75,7 +75,7 @@
     "tslint": "^6.1.2",
     "typescript": "^3.9.7",
     "yargs": "^15.4.1",
-    "yarn": "^1.22.4",
+    "yarn": "^1.22.5",
     "yarn-deduplicate": "^2.1.1"
   },
   "resolutions": {
