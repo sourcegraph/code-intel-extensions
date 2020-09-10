@@ -49,22 +49,24 @@ describe('findOverlappingWindows', () => {
 })
 
 describe('calculateRangeWindow', () => {
+    const testWindowSize = 100
+
     it('centers window around line', () => {
-        assert.deepEqual(calculateRangeWindow(200, 0, undefined), [150, 250])
+        assert.deepEqual(calculateRangeWindow(200, 0, undefined, testWindowSize), [150, 250])
     })
 
     it('respects lower and upper bounds', () => {
-        assert.deepEqual(calculateRangeWindow(200, 175, 225), [175, 225])
+        assert.deepEqual(calculateRangeWindow(200, 175, 225, testWindowSize), [175, 225])
     })
 
     it('gives upper slack to start line', () => {
-        assert.deepEqual(calculateRangeWindow(200, 0, 225), [125, 225])
-        assert.deepEqual(calculateRangeWindow(200, 140, 225), [140, 225])
+        assert.deepEqual(calculateRangeWindow(200, 0, 225, testWindowSize), [125, 225])
+        assert.deepEqual(calculateRangeWindow(200, 140, 225, testWindowSize), [140, 225])
     })
 
     it('gives lower slack to end line', () => {
-        assert.deepEqual(calculateRangeWindow(200, 175, undefined), [175, 275])
-        assert.deepEqual(calculateRangeWindow(200, 175, 260), [175, 260])
+        assert.deepEqual(calculateRangeWindow(200, 175, undefined, testWindowSize), [175, 275])
+        assert.deepEqual(calculateRangeWindow(200, 175, 260, testWindowSize), [175, 260])
     })
 })
 
