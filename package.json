@@ -9,7 +9,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "github:sourcegraph/code-intel-extensions"
+    "url": "https://github.com/sourcegraph/code-intel-extensions"
   },
   "scripts": {
     "prettier": "prettier --write --list-different '**/*.{ts,js?(on),md,yml}'",
