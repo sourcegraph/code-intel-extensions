@@ -28,6 +28,10 @@ export function findSearchToken({
     identCharPattern?: RegExp
 }): { searchToken: string; isComment: boolean } | undefined {
     const line = text.split('\n')[position.line]
+    if (line === undefined) {
+        // Weird case where the position is bogus relative to the text
+        return undefined
+    }
 
     // Scan from the current hover position to the right while the characters
     // still match the identifier pattern. If no characters match the pattern
