@@ -6,10 +6,12 @@ import * as sourcegraph from 'sourcegraph'
  * latency tracking.
  */
 export class TelemetryEmitter {
+    private languageID: string
     private started: number
     private emitted = new Set<string>()
 
-    constructor() {
+    constructor(languageID: string) {
+        this.languageID = languageID
         this.started = Date.now()
     }
 
@@ -27,13 +29,14 @@ export class TelemetryEmitter {
     }
 
     /**
-     * Emit a telemetry event with a durationMs attribute.
+     * Emit a telemetry event with durationMs and languageId attributes.
      */
     public async emit(action: string, args: object = {}): Promise<void> {
         try {
             await sourcegraph.commands.executeCommand('logTelemetryEvent', `codeintel.${action}`, {
                 ...args,
                 durationMs: this.elapsed(),
+                languageId: this.languageID,
             })
         } catch {
             // Older version of Sourcegraph may have not registered this
