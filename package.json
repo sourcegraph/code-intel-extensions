@@ -57,7 +57,7 @@
     "@types/yargs": "15.0.5",
     "codecov": "^3.7.2",
     "dot-json": "^1.2.0",
-    "eslint": "^7.8.1",
+    "eslint": "^7.10.0",
     "fs-extra": "^9.0.1",
     "graphql": "^15.3.0",
     "json-schema-to-typescript": "^9.1.1",
