@@ -45,6 +45,8 @@ export const cppSpec: LanguageSpec = {
         'hpp',
         'ino', // Arduino
         'm', // Objective-C
+        'pc', // Pro-C by Oracle RDBMS
+        'pcc', // Pro-C by Oracle RDBMS
     ],
     commentStyles: [cStyleComment],
     filterDefinitions,
