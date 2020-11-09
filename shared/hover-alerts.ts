@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 
-const linkURL = 'https://docs.sourcegraph.com/user/code_intelligence/precise_code_intelligence'
+const linkURL = 'https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence'
 
 function makeSummary(message: string, ctaMessage: string): sourcegraph.MarkupContent {
     return { kind: sourcegraph.MarkupKind.Markdown, value: `${message} [${ctaMessage}](${linkURL})` }

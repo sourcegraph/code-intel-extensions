@@ -28,7 +28,7 @@ This extension adds the same features to code files and diffs on your code host 
 
 ## Basic code intelligence
 
-This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/user/code_intelligence/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
+This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/code_intelligence/explanations/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
 - "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
 - "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
@@ -60,7 +60,7 @@ For organizations that organize code in a monorepo, it may never be useful to pe
 
 ## LSIF
 
-To enable [LSIF support](https://docs.sourcegraph.com/user/code_intelligence/lsif), add these to your Sourcegraph global settings:
+To enable [LSIF support](https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence), add these to your Sourcegraph global settings:
 
 ```json
   "codeIntel.lsif": true
