@@ -128,14 +128,20 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
             const provider = createDefinitionProvider(
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
-                lspProvider
+                lspProvider,
+                languageSpec.languageID
             )
             wrapped.definition = provider
             return provider
         },
 
         references: (lspProvider?: ReferencesProvider) => {
-            const provider = createReferencesProvider(lsifProviders.references, searchProviders.references, lspProvider)
+            const provider = createReferencesProvider(
+                lsifProviders.references,
+                searchProviders.references,
+                lspProvider,
+                languageSpec.languageID
+            )
             wrapped.references = provider
             return provider
         },
@@ -146,18 +152,15 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 searchProviders.hover,
-                lspProvider
+                lspProvider,
+                languageSpec.languageID
             )
             wrapped.hover = provider
             return provider
         },
 
-        documentHighlights: (lspProvider?: DocumentHighlightProvider) => {
-            const provider = createDocumentHighlightProvider(
-                lsifProviders.documentHighlights,
-                searchProviders.documentHighlights,
-                lspProvider
-            )
+        documentHighlights: () => {
+            const provider = createDocumentHighlightProvider(lsifProviders.documentHighlights, languageSpec.languageID)
             wrapped.documentHighlights = provider
             return provider
         },
@@ -170,18 +173,20 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
  * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchProvider The search-based definition provider.
  * @param lspProvider An optional LSP-based definition provider.
+ * @param languageID The language the extension recognizes.
  */
 export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
     searchProvider: DefinitionProvider,
-    lspProvider?: DefinitionProvider
+    lspProvider?: DefinitionProvider,
+    languageID: string = ''
 ): sourcegraph.DefinitionProvider {
     return {
         provideDefinition: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter()
+            const emitter = new TelemetryEmitter(languageID)
 
             let hasPreciseResult = false
             const lsifWrapper = await lsifProvider(textDocument, position)
@@ -238,11 +243,13 @@ const file = (location_: sourcegraph.Location): string =>
  * @param lsifProvider The LSIF-based references provider.
  * @param searchProvider The search-based references provider.
  * @param lspProvider An optional LSP-based references provider.
+ * @param languageID The language the extension recognizes.
  */
 export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
-    lspProvider?: ReferencesProvider
+    lspProvider?: ReferencesProvider,
+    languageID: string = ''
 ): sourcegraph.ReferenceProvider {
     return {
         provideReferences: wrapProvider(async function* (
@@ -250,7 +257,7 @@ export function createReferencesProvider(
             position: sourcegraph.Position,
             context: sourcegraph.ReferenceContext
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-            const emitter = new TelemetryEmitter()
+            const emitter = new TelemetryEmitter(languageID)
 
             let lsifResults: sourcegraph.Location[] = []
             for await (const lsifResult of lsifProvider(textDocument, position, context)) {
@@ -310,13 +317,15 @@ export function createReferencesProvider(
  * @param searchDefinitionProvider The search-based definition provider.
  * @param searchHoverProvider The search-based hover provider.
  * @param lspProvider An optional LSP-based hover provider.
+ * @param languageID The language the extension recognizes.
  */
 export function createHoverProvider(
     lsifSupport: LSIFSupport,
     lsifProvider: DefinitionAndHoverProvider,
     searchDefinitionProvider: DefinitionProvider,
     searchHoverProvider: HoverProvider,
-    lspProvider?: HoverProvider
+    lspProvider?: HoverProvider,
+    languageID: string = ''
 ): sourcegraph.HoverProvider {
     const searchAlerts =
         lsifSupport === LSIFSupport.None
@@ -332,7 +341,7 @@ export function createHoverProvider(
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter()
+            const emitter = new TelemetryEmitter(languageID)
             let hasPreciseDefinition = false
 
             const lsifWrapper = await lsifProvider(textDocument, position)
@@ -399,20 +408,18 @@ export function createHoverProvider(
  * Creates a document highlight provider.
  *
  * @param lsifProvider The LSIF-based document highlight provider.
- * @param searchProvider The search-based document highlight provider.
- * @param lspProvider An optional LSP-based document highlight provider.
+ * @param languageID The language the extension recognizes.
  */
 export function createDocumentHighlightProvider(
     lsifProvider: DocumentHighlightProvider,
-    searchProvider: DocumentHighlightProvider,
-    lspProvider?: DocumentHighlightProvider
+    languageID: string = ''
 ): sourcegraph.DocumentHighlightProvider {
     return {
         provideDocumentHighlights: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.DocumentHighlight[] | null | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter()
+            const emitter = new TelemetryEmitter(languageID)
 
             for await (const lsifResult of lsifProvider(textDocument, position)) {
                 if (lsifResult) {
