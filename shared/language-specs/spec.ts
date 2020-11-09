@@ -16,7 +16,9 @@ export interface LanguageSpec {
     stylized: string
 
     /**
-     * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`).
+     * The part of the filename after the `.` (e.g. `cpp` in `main.cpp`). This
+     * used to restrict the definition and reference searches to filenames within
+     * the same "ecosystem".
      */
     fileExts: string[]
 
