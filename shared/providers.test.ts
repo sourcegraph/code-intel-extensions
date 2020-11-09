@@ -275,8 +275,8 @@ describe('createHoverProvider', () => {
 
 describe('createDocumentHighlightProvider', () => {
     it('uses LSIF document highlights', async () => {
-        const result = createDocumentHighlightProvider(
-            () => asyncGeneratorFromValues([[{ range: range1 }, { range: range2 }]]),
+        const result = createDocumentHighlightProvider(() =>
+            asyncGeneratorFromValues([[{ range: range1 }, { range: range2 }]])
         ).provideDocumentHighlights(textDocument, position) as Observable<sourcegraph.DocumentHighlight[]>
 
         assert.deepStrictEqual(await gatherValues(result), [[{ range: range1 }, { range: range2 }]])
