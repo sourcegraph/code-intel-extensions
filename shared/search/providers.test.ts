@@ -137,7 +137,7 @@ describe('search providers', () => {
                 await gatherValues(
                     createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
                 ),
-                [[new sourcegraph.Location(new URL('git://repo1?rev1b.ts'), range1)]]
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 1)
