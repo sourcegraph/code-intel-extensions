@@ -417,46 +417,46 @@ function buildSearchQuery(context: boolean, fileLocal: boolean): string {
     if (fileLocal) {
         if (context) {
             return gql`
-                ${searchResultsFragment}
-                ${fileLocalFragment}
                 query CodeIntelSearch($query: String!, $versionContext: String) {
                     search(query: $query, versionContext: $versionContext) {
                         ...SearchResults
                         ...FileLocal
                     }
                 }
+                ${searchResultsFragment}
+                ${fileLocalFragment}
             `
         }
 
         return gql`
-            ${searchResultsFragment}
-            ${fileLocalFragment}
             query CodeIntelSearch($query: String!) {
                 search(query: $query) {
                     ...SearchResults
                     ...FileLocal
                 }
             }
+            ${searchResultsFragment}
+            ${fileLocalFragment}
         `
     }
 
     if (context) {
         return gql`
-            ${searchResultsFragment}
             query CodeIntelSearch($query: String!, $versionContext: String) {
                 search(query: $query, versionContext: $versionContext) {
                     ...SearchResults
                 }
             }
+            ${searchResultsFragment}
         `
     }
 
     return gql`
-        ${searchResultsFragment}
         query CodeIntelSearch($query: String!) {
             search(query: $query) {
                 ...SearchResults
             }
         }
+        ${searchResultsFragment}
     `
 }
