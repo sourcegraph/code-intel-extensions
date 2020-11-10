@@ -49,11 +49,11 @@ const excludelist = new Set(['thrift', 'proto', 'graphql'])
  * text document path has an excluded extension or an extension absent from the
  * include list, an empty file term will be returned.
  *
- * @param doc The current text document.
+ * @param textDocument The current text document.
  * @param includelist The file extensions for the current language.
  */
-function fileExtensionTerm(doc: sourcegraph.TextDocument, includelist: string[]): string {
-    const { path } = parseGitURI(new URL(doc.uri))
+function fileExtensionTerm(textDocument: sourcegraph.TextDocument, includelist: string[]): string {
+    const { path } = parseGitURI(new URL(textDocument.uri))
     const extension = extname(path).slice(1)
     if (!extension || excludelist.has(extension) || !includelist.includes(extension)) {
         return ''

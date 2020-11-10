@@ -634,7 +634,7 @@ function assertQuery(searchQuery: string, expectedTerms: string[]): void {
         .replace(/\\ /g, '---')
         .split(' ')
         .filter(part => !!part)
-        .map(v => v.replace(/---/g, '\\ '))
+        .map(term => term.replace(/---/g, '\\ '))
     actualTerms.sort()
     expectedTerms.sort()
     assert.deepEqual(actualTerms, expectedTerms)
