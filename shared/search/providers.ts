@@ -3,7 +3,7 @@ import { from, Observable, isObservable } from 'rxjs'
 import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
-import { Providers, SourcegraphProviders } from '../providers'
+import { Providers } from '../providers'
 import { API, RepoMeta } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
@@ -36,7 +36,7 @@ export function createProviders(
         identCharPattern,
         filterDefinitions = results => results,
     }: LanguageSpec,
-    wrappedProviders: Partial<SourcegraphProviders>,
+    wrappedProviders: { definition?: sourcegraph.DefinitionProvider },
     api: API = new API()
 ): Providers {
     /** Small never-evict map from repo names to their meta. */
