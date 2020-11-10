@@ -181,8 +181,8 @@ describe('rangesInRangeWindow', () => {
             [
                 {
                     range: range1,
-                    definitions: [new sourcegraph.Location(new URL('git://repo?rev#/bar.ts'), range2)],
-                    references: [new sourcegraph.Location(new URL('git://repo?rev#/baz.ts'), range3)],
+                    definitions: [new sourcegraph.Location(new URL('git://repo?rev#bar.ts'), range2)],
+                    references: [new sourcegraph.Location(new URL('git://repo?rev#baz.ts'), range3)],
                     hover: {
                         markdown: {
                             text: 'foo',

@@ -20,7 +20,7 @@ const spec: LanguageSpec = {
 }
 
 const textDocument = createStubTextDocument({
-    uri: 'git://sourcegraph.test/repo?rev#/foo.ts',
+    uri: 'git://sourcegraph.test/repo?rev#foo.ts',
     languageId: 'typescript',
     text: undefined,
 })
@@ -137,7 +137,7 @@ describe('search providers', () => {
                 await gatherValues(
                     createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
                 ),
-                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 1)
@@ -161,7 +161,7 @@ describe('search providers', () => {
                 await gatherValues(
                     createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
                 ),
-                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 2)
@@ -192,8 +192,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
                     ],
                 ]
             )
@@ -213,7 +213,7 @@ describe('search providers', () => {
                 createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
             )
 
-            assert.deepEqual(await values, [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]])
+            assert.deepEqual(await values, [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]])
 
             assert.equal(stub.callCount, 2)
             assertQuery(stub.firstCall.args[0], [
@@ -249,7 +249,7 @@ describe('search providers', () => {
                 await gatherValues(
                     createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
                 ),
-                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 3)
@@ -288,7 +288,7 @@ describe('search providers', () => {
                 await gatherValues(
                     createProviders(spec, {}, api).definition({ ...textDocument, text: '\n\n\nfoobar\n' }, position)
                 ),
-                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
+                [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]]
             )
 
             assert.equal(stub.callCount, 2)
@@ -326,8 +326,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
                     ],
                 ]
             )
@@ -370,8 +370,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
                     ],
                 ]
             )
@@ -430,8 +430,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
+                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
+                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
                     ],
                 ]
             )
