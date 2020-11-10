@@ -8,11 +8,13 @@ import * as sourcegraph from 'sourcegraph'
 export class TelemetryEmitter {
     private languageID: string
     private started: number
+    private enabled: boolean
     private emitted = new Set<string>()
 
-    constructor(languageID: string) {
+    constructor(languageID: string, enabled = true) {
         this.languageID = languageID
         this.started = Date.now()
+        this.enabled = enabled
     }
 
     /**
@@ -32,6 +34,10 @@ export class TelemetryEmitter {
      * Emit a telemetry event with durationMs and languageId attributes.
      */
     public async emit(action: string, args: object = {}): Promise<void> {
+        if (!this.enabled) {
+            return
+        }
+
         try {
             await sourcegraph.commands.executeCommand('logTelemetryEvent', `codeintel.${action}`, {
                 ...args,
