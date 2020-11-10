@@ -21,6 +21,9 @@ const documentHighlights = (
     position: sourcegraph.Position
 ): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
 
+/** The number of files whose content can be cached at once. */
+const FILE_CONTENT_CACHE_CAPACITY = 20
+
 /**
  * Creates providers powered by search-based code intelligence.
  *
@@ -54,23 +57,29 @@ export function createProviders(
         return meta
     }
 
-    /**
-     * Retrieve the text of the current text document. This may be cached on the
-     * text document itself. If it's not, we fetch it from the Raw API.
-     *
-     * @param uri The URI of the text document to fetch.
-     */
-    const getFileContent = ({
-        uri,
-        text,
-    }: {
-        /** The URI of the text document to fetch. */
-        uri: string
-        /** Possibly cached text from a previous query. */
-        text?: string
-    }): Promise<string | undefined> => {
+    /* A small (randomly evicting) cache from URIs to file contents. */
+    const cachedFileContents = new Map<string, Promise<string | undefined>>()
+
+    /** Retrieves the text of the current text document. */
+    const getFileContent = (uri: string): Promise<string | undefined> => {
+        const cachedFileContent = cachedFileContents.get(uri)
+        if (cachedFileContent !== undefined) {
+            return cachedFileContent
+        }
+
+        if (cachedFileContents.size > FILE_CONTENT_CACHE_CAPACITY) {
+            // Remove a random entry from map. This saves us from having to
+            // keep track of frequency or recency information and is likely
+            // to be a decent heuristic (with rare back-to-back evictions).
+            cachedFileContents.delete(
+                Array.from(cachedFileContents.keys())[Math.floor(Math.random() * cachedFileContents.size)]
+            )
+        }
+
         const { repo, commit, path } = parseGitURI(new URL(uri))
-        return text ? Promise.resolve(text) : api.getFileContent(repo, commit, path)
+        const fileContent = api.getFileContent(repo, commit, path)
+        cachedFileContents.set(uri, fileContent)
+        return fileContent
     }
 
     /**
@@ -85,7 +94,7 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<{ text: string; searchToken: string } | undefined> => {
-        const text = await getFileContent(textDocument)
+        const text = await getFileContent(textDocument.uri)
         if (!text) {
             return undefined
         }
@@ -234,7 +243,7 @@ export function createProviders(
             return null
         }
 
-        const text = await getFileContent({ uri: def.uri.href })
+        const text = await getFileContent(def.uri.href)
         if (!text) {
             return null
         }
