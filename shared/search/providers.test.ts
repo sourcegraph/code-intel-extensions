@@ -630,11 +630,7 @@ describe('search providers', () => {
 
 function assertQuery(searchQuery: string, expectedTerms: string[]): void {
     // Split terms in a way that preserved escaped spaces
-    const actualTerms = searchQuery
-        .replace(/\\ /g, '---')
-        .split(' ')
-        .filter(part => !!part)
-        .map(term => term.replace(/---/g, '\\ '))
+    const actualTerms = searchQuery.split(/(?<!\\) /).filter(part => !!part)
     actualTerms.sort()
     expectedTerms.sort()
     assert.deepEqual(actualTerms, expectedTerms)
