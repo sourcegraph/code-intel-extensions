@@ -71,9 +71,8 @@ export function createProviders(
             // Remove a random entry from map. This saves us from having to
             // keep track of frequency or recency information and is likely
             // to be a decent heuristic (with rare back-to-back evictions).
-            cachedFileContents.delete(
-                Array.from(cachedFileContents.keys())[Math.floor(Math.random() * cachedFileContents.size)]
-            )
+            const index = Math.floor(Math.random() * cachedFileContents.size)
+            cachedFileContents.delete([...cachedFileContents.keys()][index])
         }
 
         const { repo, commit, path } = parseGitURI(new URL(uri))
