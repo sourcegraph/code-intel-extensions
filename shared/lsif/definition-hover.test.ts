@@ -26,9 +26,9 @@ describe('definitionAndHoverForPosition', () => {
 
         assert.deepEqual(await definitionAndHoverForPosition(document, position, queryGraphQLFn), {
             definition: [
-                new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
-                new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
-                new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
+                new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
+                new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
+                new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
             ],
             hover: {
                 contents: {
@@ -77,9 +77,9 @@ describe('definitionAndHoverForPosition', () => {
 
         assert.deepEqual(await definitionAndHoverForPosition(document, position, queryGraphQLFn), {
             definition: [
-                new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
-                new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
-                new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
+                new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
+                new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
+                new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
             ],
             hover: null,
         })

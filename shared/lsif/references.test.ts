@@ -34,9 +34,9 @@ describe('referencesForPosition', () => {
 
         assert.deepEqual(await gatherValues(referencesForPosition(document, position, queryGraphQLFn)), [
             [
-                new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1),
-                new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2),
-                new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3),
+                new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
+                new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
+                new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
             ],
         ])
     })
@@ -81,9 +81,9 @@ describe('referencesForPosition', () => {
             })
         )
 
-        const location1 = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
-        const location2 = new sourcegraph.Location(new URL('git://repo2?deadbeef2#/b.ts'), range2)
-        const location3 = new sourcegraph.Location(new URL('git://repo3?deadbeef3#/c.ts'), range3)
+        const location1 = new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1)
+        const location2 = new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2)
+        const location3 = new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3)
 
         assert.deepEqual(await gatherValues(referencesForPosition(document, position, queryGraphQLFn)), [
             [location1],
@@ -106,7 +106,7 @@ describe('referencesForPosition', () => {
             })
         )
 
-        const location = new sourcegraph.Location(new URL('git://repo1?deadbeef1#/a.ts'), range1)
+        const location = new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1)
 
         const values = [[location]]
         for (let index = 1; index < MAX_REFERENCE_PAGE_REQUESTS; index++) {

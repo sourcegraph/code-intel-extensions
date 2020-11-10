@@ -9,6 +9,7 @@ import { TelemetryEmitter } from './telemetry'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
 import * as HoverAlerts from './hover-alerts'
+import { parseGitURI } from './util/uri'
 
 export interface Providers {
     definition: DefinitionProvider
@@ -115,55 +116,55 @@ export class NoopProviderWrapper implements ProviderWrapper {
  * @param languageSpec The language spec used to provide search-based code intelligence.
  */
 export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger): ProviderWrapper {
-    // Create empty wrapped providers. Each provider will update the
-    // appropriate field when they are fully wrapped, so this object
-    // always has the "active" providers.
-    const wrapped: Partial<SourcegraphProviders> = {}
-
+    const wrapped: { definition?: sourcegraph.DefinitionProvider } = {}
     const lsifProviders = createLSIFProviders(logger)
     const searchProviders = createSearchProviders(languageSpec, wrapped)
 
     return {
+        // Note: this wrapper only exists during initialization where we
+        // determine if we're supporting LSP or not for this session.
         definition: (lspProvider?: DefinitionProvider) => {
-            const provider = createDefinitionProvider(
+            // Register visible definition provider that does not
+            // have any active telemetry. This is to reduce the double
+            // count of definitions, which are triggered for search-based
+            // hover text.
+            wrapped.definition = createDefinitionProvider(
+                lsifProviders.definitionAndHover,
+                searchProviders.definition,
+                lspProvider,
+                languageSpec.languageID,
+                true
+            )
+
+            // Return the provider with telemetry to use from the root
+            return createDefinitionProvider(
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 lspProvider,
                 languageSpec.languageID
             )
-            wrapped.definition = provider
-            return provider
         },
 
-        references: (lspProvider?: ReferencesProvider) => {
-            const provider = createReferencesProvider(
+        references: (lspProvider?: ReferencesProvider) =>
+            createReferencesProvider(
                 lsifProviders.references,
                 searchProviders.references,
                 lspProvider,
                 languageSpec.languageID
-            )
-            wrapped.references = provider
-            return provider
-        },
+            ),
 
-        hover: (lspProvider?: HoverProvider) => {
-            const provider = createHoverProvider(
+        hover: (lspProvider?: HoverProvider) =>
+            createHoverProvider(
                 languageSpec.lsifSupport || LSIFSupport.None,
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 searchProviders.hover,
                 lspProvider,
                 languageSpec.languageID
-            )
-            wrapped.hover = provider
-            return provider
-        },
+            ),
 
-        documentHighlights: () => {
-            const provider = createDocumentHighlightProvider(lsifProviders.documentHighlights, languageSpec.languageID)
-            wrapped.documentHighlights = provider
-            return provider
-        },
+        documentHighlights: () =>
+            createDocumentHighlightProvider(lsifProviders.documentHighlights, languageSpec.languageID),
     }
 }
 
@@ -174,27 +175,30 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
  * @param searchProvider The search-based definition provider.
  * @param lspProvider An optional LSP-based definition provider.
  * @param languageID The language the extension recognizes.
+ * @param quiet Disable telemetry from this provider.
  */
 export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
     searchProvider: DefinitionProvider,
     lspProvider?: DefinitionProvider,
-    languageID: string = ''
+    languageID: string = '',
+    quiet = false
 ): sourcegraph.DefinitionProvider {
     return {
         provideDefinition: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter(languageID)
+            const emitter = new TelemetryEmitter(languageID, !quiet)
+            const { repo } = parseGitURI(new URL(textDocument.uri))
 
             let hasPreciseResult = false
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
                 for await (const lsifResult of asArray(lsifWrapper.definition || [])) {
                     await emitter.emitOnce('lsifDefinitions')
-                    yield lsifResult
                     hasPreciseResult = true
+                    yield emitCrossRepositoryEvent(emitter, 'lsifDefinitions', repo, lsifResult)
                 }
             }
             if (hasPreciseResult) {
@@ -212,7 +216,7 @@ export function createDefinitionProvider(
                     // Always emit the result regardless if it's interesting. If we return
                     // without emitting anything here we may indefinitely show an empty hover
                     // on identifiers with no interesting data indefinitely.
-                    yield lspResult
+                    yield emitCrossRepositoryEvent(emitter, 'lspDefinitions', repo, lspResult)
                 }
 
                 // Do not try to supplement with additional search results as we have all the
@@ -227,7 +231,12 @@ export function createDefinitionProvider(
                 }
 
                 // Mark the result as imprecise
-                yield badgeValues(searchResult, impreciseBadge)
+                yield emitCrossRepositoryEvent(
+                    emitter,
+                    'searchDefinitions',
+                    repo,
+                    badgeValues(searchResult, impreciseBadge)
+                )
             }
         }),
     }
@@ -258,13 +267,14 @@ export function createReferencesProvider(
             context: sourcegraph.ReferenceContext
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
             const emitter = new TelemetryEmitter(languageID)
+            const { repo } = parseGitURI(new URL(textDocument.uri))
 
             let lsifResults: sourcegraph.Location[] = []
             for await (const lsifResult of lsifProvider(textDocument, position, context)) {
                 if (nonEmpty(lsifResult)) {
                     await emitter.emitOnce('lsifReferences')
-                    yield lsifResult
                     lsifResults = lsifResult
+                    yield emitCrossRepositoryEvent(emitter, 'lsifReferences', repo, lsifResult)
                 }
             }
 
@@ -279,7 +289,7 @@ export function createReferencesProvider(
                     // Re-emit the last results from the previous provider
                     // so we do not overwrite what was emitted previously.
                     await emitter.emitOnce('lspReferences')
-                    yield lsifResults.concat(filteredResults)
+                    yield emitCrossRepositoryEvent(emitter, 'lspReferences', repo, lsifResults.concat(filteredResults))
                 }
 
                 // Do not try to supplement with additional search results
@@ -304,7 +314,12 @@ export function createReferencesProvider(
                 // do not overwrite what was emitted previously. Mark new results
                 // as imprecise.
                 await emitter.emitOnce('searchReferences')
-                yield lsifResults.concat(asArray(badgeValues(filteredResults, impreciseBadge)))
+                yield emitCrossRepositoryEvent(
+                    emitter,
+                    'searchReferences',
+                    repo,
+                    lsifResults.concat(asArray(badgeValues(filteredResults, impreciseBadge)))
+                )
             }
         }),
     }
@@ -454,4 +469,19 @@ function wrapProvider<P extends unknown[], R>(
     func: (...args: P) => AsyncGenerator<R, void, void>
 ): (...args: P) => Observable<R> {
     return (...args) => observableFromAsyncIterator(() => func(...args))
+}
+
+async function emitCrossRepositoryEvent<T extends { uri: URL }, R extends T | T[] | null>(
+    emitter: TelemetryEmitter,
+    action: string,
+    repo: string,
+    results: R
+): Promise<R> {
+    for (const result of asArray(results)) {
+        if (parseGitURI(result.uri).repo !== repo) {
+            await emitter.emitOnce(action + '.xrepo')
+        }
+    }
+
+    return results
 }
