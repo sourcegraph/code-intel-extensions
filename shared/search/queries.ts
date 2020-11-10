@@ -19,9 +19,7 @@ export function definitionQuery({
     /** File extensions used by the current extension. */
     fileExts: string[]
 }): string[] {
-    const { path } = parseGitURI(new URL(doc.uri))
-
-    return [`^${searchToken}$`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(path, fileExts)]
+    return [`^${searchToken}$`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
 }
 
 /**
@@ -41,22 +39,21 @@ export function referencesQuery({
     /** File extensions used by the current extension. */
     fileExts: string[]
 }): string[] {
-    const { path } = parseGitURI(new URL(doc.uri))
-
-    return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(path, fileExts)]
+    return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
 }
 
 const excludelist = new Set(['thrift', 'proto', 'graphql'])
 
 /**
- * Constructs a file extension term (or an empty string) if the current file end
- * in one of the extensions for the current language and does NOT end in one of
- * the excluded files defined above.
+ * Constructs a file term containing include-listed extensions. If the current
+ * text document path has an excluded extension or an extension absent from the
+ * include list, an empty file term will be returned.
  *
- * @param path The path of the current text file.
+ * @param textDocument The current text document.
  * @param includelist The file extensions for the current language.
  */
-function fileExtensionTerm(path: string, includelist: string[]): string {
+function fileExtensionTerm(textDocument: sourcegraph.TextDocument, includelist: string[]): string {
+    const { path } = parseGitURI(new URL(textDocument.uri))
     const extension = extname(path).slice(1)
     if (!extension || excludelist.has(extension) || !includelist.includes(extension)) {
         return ''
