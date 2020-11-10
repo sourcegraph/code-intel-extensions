@@ -420,7 +420,7 @@ function searchIndexed<
     // Unlike unindexed search, we can't supply a commit as that particular
     // commit may not be indexed. We force index and look inside/outside
     // the repo at _whatever_ commit happens to be indexed at the time.
-    queryTermsCopy.push((negateRepoFilter ? '-' : '') + `repo:^${repo}$`)
+    queryTermsCopy.push((negateRepoFilter ? '-' : '') + `repo:${makeRepositoryPattern(repo)}`)
     queryTermsCopy.push('index:only')
 
     // If we're a fork, search in forks _for the same repo_. Otherwise,
@@ -457,10 +457,10 @@ function searchUnindexed<
 
     if (!negateRepoFilter) {
         // Look in this commit only
-        queryTermsCopy.push(`repo:^${repo}$@${commit}`)
+        queryTermsCopy.push(`repo:${makeRepositoryPattern(repo)}@${commit}`)
     } else {
         // Look outside the repo (not outside the commit)
-        queryTermsCopy.push(`-repo:^${repo}$`)
+        queryTermsCopy.push(`-repo:${makeRepositoryPattern(repo)}`)
     }
 
     // If we're a fork, search in forks _for the same repo_. Otherwise,
@@ -560,4 +560,9 @@ function repositoryKindTerms(includeFork: boolean, includeArchived: boolean): st
     }
 
     return additionalTerms
+}
+
+/** Returns a regular expression matching the given repository. */
+function makeRepositoryPattern(repo: string): string {
+    return `^${repo.replace(/ /g, '\\ ')}$`
 }

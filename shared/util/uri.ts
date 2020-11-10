@@ -66,7 +66,7 @@ export function rawApiToGitUri(rawApiUrl: URL): URL {
  */
 export function parseGitURI({ hostname, pathname, search, hash }: URL): { repo: string; commit: string; path: string } {
     return {
-        repo: hostname + pathname,
+        repo: hostname + decodeURIComponent(pathname),
         commit: decodeURIComponent(search.slice(1)),
         path: decodeURIComponent(hash.slice(1)),
     }
