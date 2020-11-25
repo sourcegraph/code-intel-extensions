@@ -26,7 +26,7 @@ This extension adds the same features to code files and diffs on your code host 
    - If you're using it with a self-hosted Sourcegraph instance, enter the Sourcegraph instance URL into the Sourcegraph browser extension options menu. Then click the gear icon and enable _Experimental features: Use extensions_.
 1. Visit any file on your code host and hover over a token to see a description of the token, a **Go to definition** action (if available), and a **Find references** action.
 
-## Basic code intelligence
+## Search-based code intelligence
 
 This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/code_intelligence/explanations/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
@@ -46,7 +46,7 @@ To include indexed and/or archived repositories in search results, add the follo
 
 ### Large repositories
 
-Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
+Search-based code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
 
 ```json
   "basicCodeIntel.unindexedSearchTimeout": 1000
