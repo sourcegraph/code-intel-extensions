@@ -28,9 +28,9 @@ This extension adds the same features to code files and diffs on your code host 
 
 ![screenshot of using LANGID on GitHub](https://user-images.githubusercontent.com/1976/50882271-0c5f3180-1399-11e9-9697-e4e4fa4e29e9.png)
 
-## Basic code intelligence
+## Search-based code intelligence
 
-This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/code_intelligence/explanations/basic_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
+This extension comes with built-in code intelligence provided by [search-based heuristics](https://docs.sourcegraph.com/code_intelligence/explanations/search_based_code_intelligence). Because this extension uses text-based heuristics, its definition and reference results are not precise:
 
 - "Go to definition" on a token goes to the definition found by [universal-ctags](https://github.com/universal-ctags/ctags), a cross-language parsing suite.
 - "Find references" on a token finds all instances of token (with the same case) in the current repository and other repositories.
@@ -48,7 +48,7 @@ To include indexed and/or archived repositories in search results, add the follo
 
 ### Large repositories
 
-Basic code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
+Search-based code intelligence will perform a search query in the commit you are viewing. This may cause performance issues if the commit is not indexed and the repository is large. After a timeout period with no results, an index-only search will be performed. This type of query may return results for a commit other than the one you are currently viewing. The default timeout period is five seconds, but can be lowered by adding the following to your Sourcegraph global settings (units are milliseconds):
 
 ```json
   "basicCodeIntel.unindexedSearchTimeout": 1000
