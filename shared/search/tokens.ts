@@ -26,7 +26,7 @@ export function findSearchToken({
     lineRegexes: RegExp[]
     /** The pattern that identifies identifiers in this language. */
     identCharPattern?: RegExp
-}): { searchToken: string; isComment: boolean } | undefined {
+}): { searchToken: string; isString: boolean, isComment: boolean } | undefined {
     const line = text.split('\n')[position.line]
     if (line === undefined) {
         // Weird case where the position is bogus relative to the text
@@ -74,7 +74,7 @@ export function findSearchToken({
     })
 
     if (!insideComment) {
-        return { searchToken, isComment: false }
+        return { searchToken, isString: false, isComment: false }
     }
 
     const blessedPatterns = [
@@ -88,6 +88,7 @@ export function findSearchToken({
 
     return {
         searchToken,
+        isString: false,
         // Ensure that we don't have a "blessed" case that we shouldn't
         // count as a comment. These are useful circumstances we do want
         // to search for such as docstring usages.

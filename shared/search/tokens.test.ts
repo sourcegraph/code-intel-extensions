@@ -13,6 +13,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'skip-ws!',
+                isString: false,
                 isComment: false,
             }
         )
@@ -27,6 +28,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'bar',
+                isString: false,
                 isComment: false,
             }
         )
@@ -41,6 +43,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'bar',
+                isString: false,
                 isComment: true,
             }
         )
@@ -55,6 +58,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'bar',
+                isString: false,
                 isComment: false,
             }
         )
@@ -69,6 +73,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'bar',
+                isString: false,
                 isComment: false,
             }
         )
@@ -83,6 +88,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'bar',
+                isString: false,
                 isComment: false,
             }
         )
@@ -97,6 +103,7 @@ describe('findSearchToken', () => {
             }),
             {
                 searchToken: 'bar',
+                isString: false,
                 isComment: true,
             }
         )
