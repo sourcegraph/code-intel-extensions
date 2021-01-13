@@ -102,6 +102,7 @@ export function createProviders(
             text,
             position,
             lineRegexes: commentStyles.map(style => style.lineRegex).filter(isDefined),
+            blockCommentStyles: commentStyles.map(style => style.block).filter(isDefined),
             identCharPattern,
         })
         if (!tokenResult || tokenResult.isString || tokenResult.isComment) {
