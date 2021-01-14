@@ -16,7 +16,7 @@ import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition
  * @param logger The logger instance.
  */
 export function createProviders(logger: Logger): CombinedProviders {
-    const enabled = !!sourcegraph.configuration.get().get('codeIntel.lsif')
+    const enabled = sourcegraph.configuration.get().get('codeIntel.lsif') ?? true
     if (!enabled) {
         logger.log('LSIF is not enabled in global settings')
         return noopProviders
