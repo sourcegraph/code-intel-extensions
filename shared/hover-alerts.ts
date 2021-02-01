@@ -23,20 +23,20 @@ const partialBadge = makeBadge([
     'Click to learn how to make these results precise by enabling semantic indexing for that project.',
 ])
 
+// note: used to have type: 'LSIFAvailableNoCaveat'
 export const lsif: sourcegraph.Badged<sourcegraph.HoverAlert> = {
-    type: 'LSIFAvailableNoCaveat',
     summary: makeSummary('Semantic result.', 'Learn more.'),
     badge: lsifBadge,
 }
 
+// note: used to have type: 'LSIFAvailableNoCaveat'
 export const lsifPartialHoverOnly: sourcegraph.Badged<sourcegraph.HoverAlert> = {
-    type: 'LSIFAvailableNoCaveat',
     summary: makeSummary('Partial semantic result: Go to definition may be imprecise.', 'Learn more.'),
     badge: partialBadge,
 }
 
+// note: used to have type: 'LSIFAvailableNoCaveat'
 export const lsifPartialDefinitionOnly: sourcegraph.Badged<sourcegraph.HoverAlert> = {
-    type: 'LSIFAvailableNoCaveat',
     summary: makeSummary('Partial semantic result: this hover text may be imprecise.', 'Learn more.'),
     badge: partialBadge,
 }
@@ -72,13 +72,13 @@ export const searchLSIFSupportRobust: sourcegraph.Badged<sourcegraph.HoverAlert>
     badge: robustSupportBadge,
 }
 
+// note: used to have type: 'SearchResultExperimentalLSIFSupport'
 export const searchLSIFSupportExperimental: sourcegraph.Badged<sourcegraph.HoverAlert> = {
-    type: 'SearchResultExperimentalLSIFSupport',
     summary: makeSummary('Search-based result.', 'Learn more.'),
     badge: experimentalSupportBadge,
 }
 
+// note: used to have type: 'SearchResultNoLSIFSupport'
 export const searchLSIFSupportNone: sourcegraph.Badged<sourcegraph.HoverAlert> = {
-    type: 'SearchResultNoLSIFSupport',
     summary: makeSummary('Search-based result.', 'Learn more.'),
 }
