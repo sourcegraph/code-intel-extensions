@@ -7521,10 +7521,10 @@ trim-newlines@^1.0.0:
   resolved "https://registry.yarnpkg.com/trim-newlines/-/trim-newlines-1.0.0.tgz#5887966bb582a4503a41eb524f7d35011815a613"
   integrity sha1-WIeWa7WCpFA6QetST301ARgVphM=
 
-ts-graphql-plugin@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/ts-graphql-plugin/-/ts-graphql-plugin-2.1.2.tgz#c77f472b20c4b54520e93899c677628a4a4e8f86"
-  integrity sha512-gzpy6lvlFj7u6n9HAMGGfVokYuGOduo9yVqLI7d8i0No3rCvu6kcGqtXBLziROXy5SAuMxYrL6r3P6UaEBFSLQ==
+ts-graphql-plugin@^2.1.3:
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/ts-graphql-plugin/-/ts-graphql-plugin-2.1.3.tgz#a0c72ed5dafa1f1fd65d42759d5e4cdd71ae9662"
+  integrity sha512-yum0h2fWbcmac8X0YVtBITfpLkpLRx+KEQPly02VN3HUGElhtUmoJWuStm5ae2oyjZjOmjcq88VEG8D9R5OePA==
   dependencies:
     graphql-language-service-interface "^2.4.1"
     graphql-language-service-types "^1.6.1"
