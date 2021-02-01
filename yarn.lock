@@ -4378,10 +4378,10 @@ istanbul-reports@^3.0.2:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
 
-ix@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/ix/-/ix-4.0.0.tgz#5907ff780c8ce0190c2199326ace499b100aedaa"
-  integrity sha512-uLV4o/iCaRifFOTwPIj9ZRrBq25j7UG5tgSPxrndeZsCfsFx5NlnEwaGI45ndOziz3azAKeYVbWw/rzloAwzGA==
+ix@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/ix/-/ix-4.2.0.tgz#e5beefa4661de6bba86374a33c028482b7e9c2a6"
+  integrity sha512-vd0NivnV0PbWmwEBhrNffOhUqHZc+ct5C84cikUNDaQsglTz+sO7mcrhiqwHHnLBLtVAtiqguX+nhhT2g1rKjg==
   dependencies:
     "@types/node" "^13.7.4"
     tslib "2.0.0"
