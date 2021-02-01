@@ -54,7 +54,7 @@
     "@types/node": "13.13.5",
     "@types/node-fetch": "2.5.7",
     "@types/uuid": "8.3.0",
-    "@types/yargs": "15.0.12",
+    "@types/yargs": "16.0.0",
     "codecov": "^3.8.1",
     "dot-json": "^1.2.1",
     "eslint": "^7.17.0",
