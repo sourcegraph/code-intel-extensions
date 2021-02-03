@@ -179,7 +179,7 @@ function findDocstringInBlockComment({
     docstringIgnore?: RegExp
 }): string[] | undefined {
     // Drop any leading ignored content between the definition and the docstring
-    const cleanLines = dropWhile(lines, line => docstringIgnore?.test(line))
+    const cleanLines = dropWhile(lines, line => docstringIgnore?.test(line) || line.trim() === '')
 
     // Check for starting delimiter
     if (!cleanLines[0] || !startRegex.test(cleanLines[0])) {
