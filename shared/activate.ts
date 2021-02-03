@@ -13,7 +13,7 @@ import { createProviderWrapper, ProviderWrapper, ReferencesProvider } from './pr
  * providers with the given extension context. This function returns true
  * if providers are registered and false otherwise.
  */
-export type LSPFactory = (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean>
+export type LSPFactory = (context: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean>
 
 /**
  * A factory function that creates an LSP client. This function returns the
@@ -142,7 +142,7 @@ export function initLSP<S extends { [key: string]: any }>(
     clientFactory: ClientFactory<S>,
     externalReferencesProviderFactory: ExternalReferencesProviderFactory<S>,
     logger: Logger = new RedactingLogger(console)
-): (ctx: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean> {
+): (context: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper) => Promise<boolean> {
     return async (context: sourcegraph.ExtensionContext, providerWrapper: ProviderWrapper): Promise<boolean> => {
         const { settings, settingsSubject } = getSettings<S>(context)
 

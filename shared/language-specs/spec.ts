@@ -73,7 +73,7 @@ export interface CommentStyle {
      * Defaults to `'above the definition'`. In Python, documentation is placed
      * `'below the definition'`.
      */
-    docPlacement?: DocPlacement
+    docPlacement?: TextDocumentPlacement
 
     /**
      * Regex that matches lines between a definition and the docstring that
@@ -85,7 +85,7 @@ export interface CommentStyle {
 /**
  * Where a docstring is located relative to a definition.
  */
-export type DocPlacement = 'above the definition' | 'below the definition'
+export type TextDocumentPlacement = 'above the definition' | 'below the definition'
 
 /**
  * Block comment delimiter patterns for a particular language.

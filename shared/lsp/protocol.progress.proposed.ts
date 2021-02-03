@@ -20,7 +20,7 @@ export interface WindowProgressClientCapabilities {
     }
 }
 
-export interface ProgressParams {
+export interface ProgressParameters {
     /**
      * A unique identifier to associate multiple progress notifications with the same progress.
      */
@@ -56,6 +56,6 @@ export interface ProgressParams {
  * to ask the client to indicate progress.
  */
 export namespace WindowProgressNotification {
-    export const type = new NotificationType<ProgressParams, void>('window/progress')
-    export type HandlerSignature = NotificationHandler<ProgressParams>
+    export const type = new NotificationType<ProgressParameters, void>('window/progress')
+    export type HandlerSignature = NotificationHandler<ProgressParameters>
 }

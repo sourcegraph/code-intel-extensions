@@ -24,7 +24,7 @@ const WINDOW_CACHE_CAPACITY = 10
 
 /** The type returned by makeRangeWindowFactory. */
 export type RangeWindowFactoryFn = (
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ) => Promise<CodeIntelligenceRange | null>
 

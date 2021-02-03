@@ -53,7 +53,7 @@ const RANGE_RESOLUTION_DELAY_MS = 25
 function definitionAndHover(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<DefinitionAndHover | null> {
+): (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<DefinitionAndHover | null> {
     return async (
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
@@ -93,7 +93,7 @@ function references(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (
-    doc: sourcegraph.TextDocument,
+    textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
     return async function* (
@@ -142,7 +142,10 @@ function references(
 export function documentHighlights(
     queryGraphQL: QueryGraphQLFn<any>,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
-): (doc: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.DocumentHighlight[] | null> {
+): (
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+) => Promise<sourcegraph.DocumentHighlight[] | null> {
     return async (
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
