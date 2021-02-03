@@ -64,7 +64,7 @@ export function notIn<T>(excludelist: T[]): (value: T) => boolean {
  *
  * @param p The promise.
  */
-export function safePromise<P, R>(promise: (arg: P) => Promise<R>): (arg: P) => Promise<R | undefined> {
+export function safePromise<P, R>(promise: (argument: P) => Promise<R>): (argument: P) => Promise<R | undefined> {
     return async (argument: P): Promise<R | undefined> => {
         try {
             return await promise(argument)

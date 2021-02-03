@@ -1,5 +1,5 @@
 import { dropWhile, takeWhile } from 'lodash'
-import { BlockCommentStyle, CommentStyle, DocPlacement } from '../language-specs/spec'
+import { BlockCommentStyle, CommentStyle, TextDocumentPlacement } from '../language-specs/spec'
 
 /**
  * Extract a docstring near the given definition.
@@ -105,7 +105,7 @@ function findDocstringOnDefinitionLine(line: string, { lineRegex, block }: Comme
  */
 function mungeLines(
     lines: string[],
-    textDocumentPlacement: DocPlacement | undefined,
+    textDocumentPlacement: TextDocumentPlacement | undefined,
     definitionLine: number
 ): string[] {
     return textDocumentPlacement === 'below the definition'
@@ -119,7 +119,7 @@ function mungeLines(
  * @param lines The lines of the text document.
  * @param docPlacement The placement of a docblock for the current language.
  */
-function unmungeLines(lines: string[], textDocumentPlacement: DocPlacement | undefined): string[] {
+function unmungeLines(lines: string[], textDocumentPlacement: TextDocumentPlacement | undefined): string[] {
     return textDocumentPlacement === 'below the definition' ? lines : lines.reverse()
 }
 

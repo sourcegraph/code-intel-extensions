@@ -16,7 +16,7 @@ import { register } from './registration'
 const logger = new NoopLogger()
 const providerWrapper = new NoopProviderWrapper()
 
-const stubTransport = (server: Record<string, (params: any) => any>) =>
+const stubTransport = (server: Record<string, (parameters: any) => any>) =>
     sinon.spy(() => {
         const closeEvent = new Subject<void>()
         let closed = false

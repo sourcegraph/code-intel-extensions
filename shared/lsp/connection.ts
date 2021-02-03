@@ -8,8 +8,8 @@ import { Logger, RedactingLogger } from '../logging'
 export interface LSPConnection extends sourcegraph.Unsubscribable {
     closed: boolean
     closeEvent: sourcegraph.Subscribable<void>
-    sendRequest<P, R>(type: jsonrpc.RequestType<P, R, any, any>, params: P): Promise<R>
-    sendNotification<P>(type: jsonrpc.NotificationType<P, any>, params: P): void
+    sendRequest<P, R>(type: jsonrpc.RequestType<P, R, any, any>, parameters: P): Promise<R>
+    sendNotification<P>(type: jsonrpc.NotificationType<P, any>, parameters: P): void
     observeNotification<P>(type: jsonrpc.NotificationType<P, any>): sourcegraph.Subscribable<P>
     setRequestHandler<P, R>(type: jsonrpc.RequestType<P, R, any, any>, handler: jsonrpc.RequestHandler<P, R, any>): void
 }

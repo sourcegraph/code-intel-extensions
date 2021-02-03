@@ -37,29 +37,29 @@ export interface DefinitionAndHover {
 }
 
 export type DefinitionAndHoverProvider = (
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
 ) => Promise<DefinitionAndHover | null>
 
 export type DefinitionProvider = (
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Definition, void, undefined>
 
 export type ReferencesProvider = (
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position,
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position,
     context: sourcegraph.ReferenceContext
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
 
 export type HoverProvider = (
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Hover | null, void, undefined>
 
 export type DocumentHighlightProvider = (
-    doc: sourcegraph.TextDocument,
-    pos: sourcegraph.Position
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.DocumentHighlight[] | null, void, undefined>
 
 export const noopProviders = {
