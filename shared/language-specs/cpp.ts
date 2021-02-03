@@ -48,7 +48,17 @@ export const cppSpec: LanguageSpec = {
         'pc', // Pro-C by Oracle RDBMS
         'pcc', // Pro-C by Oracle RDBMS
     ],
-    commentStyles: [cStyleComment],
+    commentStyles: [
+        {
+            ...cStyleComment,
+            // Ignore identifiers between definition line and doc block. This enables
+            // correctly finding doc strings for function definitions that span multiple
+            // lines (return type and function name separated by a newline). We'll only
+            // enable this for C-family languages as it seems to be the most pervasive
+            // language with this style.
+            ...{ docstringIgnore: /^[\s\w]+/ },
+        },
+    ],
     filterDefinitions,
     lsifSupport: LSIFSupport.Experimental,
 }
