@@ -24,7 +24,7 @@ describe('observableFromAsyncIterator', () => {
         )
 
         const values: number[] = []
-        await new Promise(complete => observable.subscribe({ next: value => values.push(value), complete }))
+        await new Promise<void>(complete => observable.subscribe({ next: value => values.push(value), complete }))
         assert.deepStrictEqual(values, [1, 2, 3, 4, 5])
     })
 
