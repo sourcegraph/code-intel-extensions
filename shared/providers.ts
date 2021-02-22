@@ -2,7 +2,7 @@ import { NEVER, Observable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
 import { impreciseBadge } from './badges'
 import { LanguageSpec, LSIFSupport } from './language-specs/spec'
-import { Logger } from './logging'
+import { Logger, NoopLogger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
@@ -120,6 +120,9 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
     const lsifProviders = createLSIFProviders(logger)
     const searchProviders = createSearchProviders(languageSpec, wrapped)
 
+    const providerLogger =
+        sourcegraph.configuration.get().get('codeIntel.traceExtension') ?? false ? console : new NoopLogger()
+
     return {
         // Note: this wrapper only exists during initialization where we
         // determine if we're supporting LSP or not for this session.
@@ -132,6 +135,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 lspProvider,
+                providerLogger,
                 languageSpec.languageID,
                 true
             )
@@ -141,6 +145,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 lspProvider,
+                providerLogger,
                 languageSpec.languageID
             )
         },
@@ -150,6 +155,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 lsifProviders.references,
                 searchProviders.references,
                 lspProvider,
+                providerLogger,
                 languageSpec.languageID
             ),
 
@@ -160,11 +166,12 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 searchProviders.definition,
                 searchProviders.hover,
                 lspProvider,
+                providerLogger,
                 languageSpec.languageID
             ),
 
         documentHighlights: () =>
-            createDocumentHighlightProvider(lsifProviders.documentHighlights, languageSpec.languageID),
+            createDocumentHighlightProvider(lsifProviders.documentHighlights, logger, languageSpec.languageID),
     }
 }
 
@@ -174,6 +181,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
  * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchProvider The search-based definition provider.
  * @param lspProvider An optional LSP-based definition provider.
+ * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  * @param quiet Disable telemetry from this provider.
  */
@@ -181,6 +189,7 @@ export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
     searchProvider: DefinitionProvider,
     lspProvider?: DefinitionProvider,
+    logger?: Logger,
     languageID: string = '',
     quiet = false
 ): sourcegraph.DefinitionProvider {
@@ -196,9 +205,12 @@ export function createDefinitionProvider(
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
                 for await (const lsifResult of asArray(lsifWrapper.definition || [])) {
-                    await emitter.emitOnce('lsifDefinitions')
                     hasPreciseResult = true
-                    yield emitCrossRepositoryEvent(emitter, 'lsifDefinitions', repo, lsifResult)
+
+                    await emitter.emitOnce('lsifDefinitions')
+                    await emitCrossRepositoryEventForLocations(emitter, 'lsifDefinitions', repo, lsifResult)
+                    traceLocations('definition', textDocument, position, lsifResult, logger)
+                    yield lsifResult
                 }
             }
             if (hasPreciseResult) {
@@ -208,15 +220,17 @@ export function createDefinitionProvider(
 
             if (lspProvider) {
                 for await (const lspResult of lspProvider(textDocument, position)) {
+                    // Do not emit definition events for empty location arrays
                     if (nonEmpty(lspResult)) {
-                        // Do not emit definition events for empty location arrays
                         await emitter.emitOnce('lspDefinitions')
+                        await emitCrossRepositoryEventForLocations(emitter, 'lspDefinitions', repo, lspResult)
+                        traceLocations('definition', textDocument, position, lspResult, logger)
                     }
 
                     // Always emit the result regardless if it's interesting. If we return
                     // without emitting anything here we may indefinitely show an empty hover
                     // on identifiers with no interesting data indefinitely.
-                    yield emitCrossRepositoryEvent(emitter, 'lspDefinitions', repo, lspResult)
+                    yield lspResult
                 }
 
                 // Do not try to supplement with additional search results as we have all the
@@ -226,17 +240,17 @@ export function createDefinitionProvider(
 
             // No results so far, fall back to search
             for await (const searchResult of searchProvider(textDocument, position)) {
-                if (nonEmpty(searchResult)) {
-                    await emitter.emitOnce('searchDefinitions')
+                if (!nonEmpty(searchResult)) {
+                    continue
                 }
 
                 // Mark the result as imprecise
-                yield emitCrossRepositoryEvent(
-                    emitter,
-                    'searchDefinitions',
-                    repo,
-                    badgeValues(searchResult, impreciseBadge)
-                )
+                const results = badgeValues(searchResult, impreciseBadge)
+
+                await emitter.emitOnce('searchDefinitions')
+                await emitCrossRepositoryEventForLocations(emitter, 'searchDefinitions', repo, results)
+                traceLocations('definition', textDocument, position, results, logger)
+                yield results
             }
         }),
     }
@@ -252,12 +266,14 @@ const file = (location_: sourcegraph.Location): string =>
  * @param lsifProvider The LSIF-based references provider.
  * @param searchProvider The search-based references provider.
  * @param lspProvider An optional LSP-based references provider.
+ * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  */
 export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
     lspProvider?: ReferencesProvider,
+    logger?: Logger,
     languageID: string = ''
 ): sourcegraph.ReferenceProvider {
     return {
@@ -272,15 +288,17 @@ export function createReferencesProvider(
             let lsifResults: sourcegraph.Location[] = []
             for await (const lsifResult of lsifProvider(textDocument, position, context)) {
                 if (nonEmpty(lsifResult)) {
-                    await emitter.emitOnce('lsifReferences')
                     lsifResults = lsifResult
-                    yield emitCrossRepositoryEvent(emitter, 'lsifReferences', repo, lsifResult)
+
+                    await emitter.emitOnce('lsifReferences')
+                    await emitCrossRepositoryEventForLocations(emitter, 'lsifReferences', repo, lsifResult)
+                    traceLocations('references', textDocument, position, lsifResult, logger)
+                    yield lsifResult
                 }
             }
 
             if (lspProvider) {
                 for await (const lspResult of lspProvider(textDocument, position, context)) {
-                    // TODO - reduce duplicates between LSIF and LSP
                     const filteredResults = asArray(lspResult)
                     if (filteredResults.length === 0) {
                         continue
@@ -288,8 +306,12 @@ export function createReferencesProvider(
 
                     // Re-emit the last results from the previous provider
                     // so we do not overwrite what was emitted previously.
+                    const results = lsifResults.concat(filteredResults)
+
                     await emitter.emitOnce('lspReferences')
-                    yield emitCrossRepositoryEvent(emitter, 'lspReferences', repo, lsifResults.concat(filteredResults))
+                    await emitCrossRepositoryEventForLocations(emitter, 'lspReferences', repo, results)
+                    traceLocations('references', textDocument, position, results, logger)
+                    yield results
                 }
 
                 // Do not try to supplement with additional search results
@@ -313,13 +335,12 @@ export function createReferencesProvider(
                 // Re-emit the last results from the previous provider so we
                 // do not overwrite what was emitted previously. Mark new results
                 // as imprecise.
+                const results = lsifResults.concat(asArray(badgeValues(filteredResults, impreciseBadge)))
+
                 await emitter.emitOnce('searchReferences')
-                yield emitCrossRepositoryEvent(
-                    emitter,
-                    'searchReferences',
-                    repo,
-                    lsifResults.concat(asArray(badgeValues(filteredResults, impreciseBadge)))
-                )
+                await emitCrossRepositoryEventForLocations(emitter, 'searchReferences', repo, results)
+                traceLocations('references', textDocument, position, results, logger)
+                yield results
             }
         }),
     }
@@ -332,6 +353,7 @@ export function createReferencesProvider(
  * @param searchDefinitionProvider The search-based definition provider.
  * @param searchHoverProvider The search-based hover provider.
  * @param lspProvider An optional LSP-based hover provider.
+ * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  */
 export function createHoverProvider(
@@ -340,6 +362,7 @@ export function createHoverProvider(
     searchDefinitionProvider: DefinitionProvider,
     searchHoverProvider: HoverProvider,
     lspProvider?: HoverProvider,
+    logger?: Logger,
     languageID: string = ''
 ): sourcegraph.HoverProvider {
     const searchAlerts =
@@ -358,6 +381,8 @@ export function createHoverProvider(
         ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
             const emitter = new TelemetryEmitter(languageID)
             let hasPreciseDefinition = false
+            const { path } = parseGitURI(new URL(textDocument.uri))
+            const commonLogFields = { path, line: position.line, character: position.character }
 
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
@@ -379,6 +404,7 @@ export function createHoverProvider(
 
                     // Found the best precise hover text we'll get. Stop.
                     await emitter.emitOnce('lsifHover')
+                    logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
                     yield { ...lsifWrapper.hover, alerts }
                     return
                 }
@@ -394,6 +420,7 @@ export function createHoverProvider(
                     if (lspResult) {
                         // Delegate to LSP if it's available.
                         await emitter.emitOnce('lspHover')
+                        logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
                         yield { ...lspResult, ...(alerts ? { alerts } : {}) }
                         alerts = undefined
                     }
@@ -411,6 +438,7 @@ export function createHoverProvider(
                 if (searchResult) {
                     // No results so far, fall back to search. Mark the result as imprecise.
                     await emitter.emitOnce('searchHover')
+                    logger?.log({ provider: 'hover', precise: false, ...commonLogFields })
                     yield { ...searchResult, ...(alerts ? { alerts } : {}) }
                     alerts = undefined
                 }
@@ -423,10 +451,12 @@ export function createHoverProvider(
  * Creates a document highlight provider.
  *
  * @param lsifProvider The LSIF-based document highlight provider.
+ * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  */
 export function createDocumentHighlightProvider(
     lsifProvider: DocumentHighlightProvider,
+    logger?: Logger,
     languageID: string = ''
 ): sourcegraph.DocumentHighlightProvider {
     return {
@@ -471,17 +501,68 @@ function wrapProvider<P extends unknown[], R>(
     return (...args) => observableFromAsyncIterator(() => func(...args))
 }
 
-async function emitCrossRepositoryEvent<T extends { uri: URL }, R extends T | T[] | null>(
-    emitter: TelemetryEmitter,
-    action: string,
-    repo: string,
-    results: R
-): Promise<R> {
+/**
+ * Emits an {action}.xrepo event if the given result contains a location for a different repository.
+ *
+ * @param emitter The telemetry emitter.
+ * @param action The base name of the event to emit.
+ * @param repo The source repository.
+ * @param results Location results from the provider.
+ */
+async function emitCrossRepositoryEventForLocations<
+    T extends sourcegraph.Badged<sourcegraph.Location>,
+    R extends T | T[] | null
+>(emitter: TelemetryEmitter, action: string, repo: string, results: R): Promise<void> {
     for (const result of asArray(results)) {
         if (parseGitURI(result.uri).repo !== repo) {
+            // Emit xrepo event
             await emitter.emitOnce(action + '.xrepo')
         }
     }
+}
 
-    return results
+/**
+ * Emits each location result to the given logger.
+ *
+ * @param provider The name of the provider.
+ * @param textDocument The input text document.
+ * @param position The input position.
+ * @param results Location results from the provider.
+ * @param logger The logger instance.
+ */
+function traceLocations<T extends sourcegraph.Badged<sourcegraph.Location>, R extends T | T[] | null>(
+    provider: string,
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position,
+    results: R,
+    logger?: Logger
+): void {
+    if (!logger) {
+        return
+    }
+
+    let arrayResults = asArray(results)
+    const totalCount = arrayResults.length
+    const preciseCount = arrayResults.reduce((count, result) => count + (result.badge === undefined ? 1 : 0), 0)
+
+    if (arrayResults.length > 500) {
+        arrayResults = arrayResults.slice(0, 500)
+    }
+
+    const { path } = parseGitURI(new URL(textDocument.uri))
+    const { line, character } = position
+
+    logger.log({
+        provider,
+        path,
+        line,
+        character,
+        preciseCount,
+        searchCount: totalCount - preciseCount,
+        results: arrayResults.map(result => ({
+            uri: result.uri.toString(),
+            badged: result.badge !== undefined,
+            ...result.range,
+        })),
+    })
 }
