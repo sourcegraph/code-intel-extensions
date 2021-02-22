@@ -11,6 +11,10 @@ export interface Settings {
      */
     'codeIntel.lsif'?: boolean
     /**
+     * Whether to enable trace logging on the extension.
+     */
+    'codeIntel.traceExtension'?: boolean
+    /**
      * Whether to fetch multiple precise definitions and references on hover.
      */
     'codeIntel.disableRangeQueries'?: boolean
