@@ -57,7 +57,7 @@
       {
         "id": "externalReferences.toggle",
         "command": "updateConfiguration",
-        "title": "${config.go.showExternalReferences && \"Hide references from other repositories\" || \"Show references from other repositories\"}",
+        "title": "${config.go.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}",
         "commandArguments": [
           [
             "go.showExternalReferences"
@@ -67,7 +67,7 @@
           "json"
         ],
         "actionItem": {
-          "label": "${config.go.showExternalReferences && \"Hide references from other repositories\" || \"Show references from other repositories\"}"
+          "label": "${config.go.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}"
         }
       }
     ],
