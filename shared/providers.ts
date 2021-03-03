@@ -204,10 +204,11 @@ export function createDefinitionProvider(
             let hasPreciseResult = false
             const lsifWrapper = await lsifProvider(textDocument, position)
             if (lsifWrapper) {
-                for await (const lsifResult of asArray(lsifWrapper.definition || [])) {
+                for await (const rawResult of asArray(lsifWrapper.definition || [])) {
                     hasPreciseResult = true
 
                     await emitter.emitOnce('lsifDefinitions')
+                    const lsifResult = { ...rawResult, aggregableTags: ['semantic'] } // TODO - update package
                     await emitCrossRepositoryEventForLocations(emitter, 'lsifDefinitions', repo, lsifResult)
                     traceLocations('definition', textDocument, position, lsifResult, logger)
                     yield lsifResult
@@ -286,8 +287,11 @@ export function createReferencesProvider(
             const { repo } = parseGitURI(new URL(textDocument.uri))
 
             let lsifResults: sourcegraph.Location[] = []
-            for await (const lsifResult of lsifProvider(textDocument, position, context)) {
-                if (nonEmpty(lsifResult)) {
+            for await (const rawResult of lsifProvider(textDocument, position, context)) {
+                if (nonEmpty(rawResult)) {
+                    const lsifResult = asArray(rawResult).map(
+                        result => (({ ...result, aggregableTags: ['semantic'] } as any) as sourcegraph.Location)
+                    ) // TODO - update package
                     lsifResults = lsifResult
 
                     await emitter.emitOnce('lsifReferences')
@@ -405,7 +409,11 @@ export function createHoverProvider(
                     // Found the best precise hover text we'll get. Stop.
                     await emitter.emitOnce('lsifHover')
                     logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
-                    yield { ...lsifWrapper.hover, alerts }
+                    yield {
+                        ...lsifWrapper.hover,
+                        alerts,
+                        aggregableTags: [partialPreciseData ? 'partial-semantic' : 'semantic'],
+                    } as any // TODO - update package
                     return
                 }
 
@@ -439,7 +447,11 @@ export function createHoverProvider(
                     // No results so far, fall back to search. Mark the result as imprecise.
                     await emitter.emitOnce('searchHover')
                     logger?.log({ provider: 'hover', precise: false, ...commonLogFields })
-                    yield { ...searchResult, ...(alerts ? { alerts } : {}) }
+                    yield {
+                        ...searchResult,
+                        ...(alerts ? { alerts } : {}),
+                        aggregableTags: [hasPreciseDefinition ? 'partial-semantic' : 'semantic'],
+                    } as any // TODO - update package
                     alerts = undefined
                 }
             }
@@ -487,7 +499,7 @@ export function badgeValues<T extends object>(
     value: T | T[] | null,
     badge: sourcegraph.BadgeAttachmentRenderOptions
 ): sourcegraph.Badged<T> | sourcegraph.Badged<T>[] | null {
-    return mapArrayish(value, element => ({ ...element, badge }))
+    return mapArrayish(value, element => ({ ...element, badge, aggregableTags: ['search-based'] })) // TODO - update package
 }
 
 /**
