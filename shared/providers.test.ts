@@ -46,7 +46,10 @@ describe('createDefinitionProvider', () => {
             () => asyncGeneratorFromValues([location3, location4])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
-        assert.deepStrictEqual(await gatherValues(result), [location1, location2])
+        assert.deepStrictEqual(await gatherValues(result), [
+            { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+        ])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
@@ -65,7 +68,13 @@ describe('createDefinitionProvider', () => {
             () => asyncGeneratorFromValues([location3])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...location3, badge: impreciseBadge }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...location3,
+                badge: impreciseBadge,
+                aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+            },
+        ])
     })
 })
 
@@ -83,8 +92,15 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
         ])
     })
 
@@ -121,9 +137,22 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
-            [location1, location2, location3, location4, location5],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                location4,
+                location5,
+            ],
         ])
     })
 
@@ -140,9 +169,25 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
-            [location1, location2, location3, { ...location4, badge: impreciseBadge }],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                {
+                    ...location4,
+                    badge: impreciseBadge,
+                    aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                },
+            ],
         ])
     })
 
@@ -159,15 +204,39 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
-            [location1, location2, location3, { ...location4, badge: impreciseBadge }],
             [
-                location1,
-                location2,
-                location3,
-                { ...location4, badge: impreciseBadge },
-                { ...location9, badge: impreciseBadge },
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                {
+                    ...location4,
+                    badge: impreciseBadge,
+                    aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                },
+            ],
+            [
+                { ...location1, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                {
+                    ...location4,
+                    badge: impreciseBadge,
+                    aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                },
+                {
+                    ...location9,
+                    badge: impreciseBadge,
+                    aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                },
             ],
         ])
     })
@@ -185,7 +254,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsif] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [HoverAlerts.lsif],
+                aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+            },
+        ])
 
         // Search providers not called at all
         assert.strictEqual(searchDefinitionProvider.called, false)
@@ -202,7 +277,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsifPartialHoverOnly] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [HoverAlerts.lsifPartialHoverOnly],
+                aggregableTags: [{ text: 'partial semantic', linkURL: HoverAlerts.linkURL }],
+            },
+        ])
 
         // Search providers called to determine if there's search hover text
         assert.strictEqual(searchDefinitionProvider.called, true)
@@ -217,7 +298,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsif] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [HoverAlerts.lsif],
+                aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+            },
+        ])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
@@ -229,7 +316,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover1, hover2])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsp] }, hover2])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [HoverAlerts.lsp],
+            },
+            hover2,
+        ])
     })
 
     it('falls back to basic when precise results are not found', async () => {
@@ -240,7 +333,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover3, alerts: [HoverAlerts.searchLSIFSupportNone] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover3,
+                alerts: [HoverAlerts.searchLSIFSupportNone],
+                aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+            },
+        ])
     })
 
     it('alerts search results correctly with experimental LSIF support', async () => {
@@ -255,6 +354,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover3,
                 alerts: [HoverAlerts.searchLSIFSupportExperimental],
+                aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
             },
         ])
     })
@@ -268,7 +368,11 @@ describe('createHoverProvider', () => {
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            { ...hover3, alerts: [HoverAlerts.searchLSIFSupportRobust] },
+            {
+                ...hover3,
+                alerts: [HoverAlerts.searchLSIFSupportRobust],
+                aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+            },
         ])
     })
 })
