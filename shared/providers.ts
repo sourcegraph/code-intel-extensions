@@ -464,7 +464,7 @@ export function createHoverProvider(
                         ...(alerts ? { alerts } : {}),
                         aggregableTags: [
                             {
-                                text: hasPreciseDefinition ? 'partial-semantic' : 'semantic',
+                                text: hasPreciseDefinition ? 'partial-semantic' : 'search-based',
                                 linkURL: HoverAlerts.linkURL,
                             },
                         ],
