@@ -208,7 +208,10 @@ export function createDefinitionProvider(
                     hasPreciseResult = true
 
                     await emitter.emitOnce('lsifDefinitions')
-                    const lsifResult = { ...rawResult, aggregableTags: ['semantic'] } // TODO - update package
+                    const lsifResult = {
+                        ...rawResult,
+                        aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+                    }
                     await emitCrossRepositoryEventForLocations(emitter, 'lsifDefinitions', repo, lsifResult)
                     traceLocations('definition', textDocument, position, lsifResult, logger)
                     yield lsifResult
@@ -290,7 +293,11 @@ export function createReferencesProvider(
             for await (const rawResult of lsifProvider(textDocument, position, context)) {
                 if (nonEmpty(rawResult)) {
                     const lsifResult = asArray(rawResult).map(
-                        result => (({ ...result, aggregableTags: ['semantic'] } as any) as sourcegraph.Location)
+                        result =>
+                            (({
+                                ...result,
+                                aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+                            } as any) as sourcegraph.Location)
                     ) // TODO - update package
                     lsifResults = lsifResult
 
@@ -412,7 +419,12 @@ export function createHoverProvider(
                     yield {
                         ...lsifWrapper.hover,
                         alerts,
-                        aggregableTags: [partialPreciseData ? 'partial-semantic' : 'semantic'],
+                        aggregableTags: [
+                            {
+                                text: partialPreciseData ? 'partial-semantic' : 'semantic',
+                                linkURL: HoverAlerts.linkURL,
+                            },
+                        ],
                     } as any // TODO - update package
                     return
                 }
@@ -450,7 +462,12 @@ export function createHoverProvider(
                     yield {
                         ...searchResult,
                         ...(alerts ? { alerts } : {}),
-                        aggregableTags: [hasPreciseDefinition ? 'partial-semantic' : 'semantic'],
+                        aggregableTags: [
+                            {
+                                text: hasPreciseDefinition ? 'partial-semantic' : 'semantic',
+                                linkURL: HoverAlerts.linkURL,
+                            },
+                        ],
                     } as any // TODO - update package
                     alerts = undefined
                 }
@@ -499,7 +516,11 @@ export function badgeValues<T extends object>(
     value: T | T[] | null,
     badge: sourcegraph.BadgeAttachmentRenderOptions
 ): sourcegraph.Badged<T> | sourcegraph.Badged<T>[] | null {
-    return mapArrayish(value, element => ({ ...element, badge, aggregableTags: ['search-based'] })) // TODO - update package
+    return mapArrayish(value, element => ({
+        ...element,
+        badge,
+        aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+    })) // TODO - update package
 }
 
 /**
