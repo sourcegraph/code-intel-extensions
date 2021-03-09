@@ -210,7 +210,7 @@ export function createDefinitionProvider(
                     await emitter.emitOnce('lsifDefinitions')
                     const lsifResult = {
                         ...rawResult,
-                        aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+                        aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
                     }
                     await emitCrossRepositoryEventForLocations(emitter, 'lsifDefinitions', repo, lsifResult)
                     traceLocations('definition', textDocument, position, lsifResult, logger)
@@ -296,7 +296,7 @@ export function createReferencesProvider(
                         result =>
                             (({
                                 ...result,
-                                aggregableTags: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+                                aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
                             } as any) as sourcegraph.Location)
                     ) // TODO - update package
                     lsifResults = lsifResult
@@ -419,7 +419,7 @@ export function createHoverProvider(
                     yield {
                         ...lsifWrapper.hover,
                         alerts,
-                        aggregableTags: [
+                        aggregableLabels: [
                             {
                                 text: partialPreciseData ? 'partial semantic' : 'semantic',
                                 linkURL: HoverAlerts.linkURL,
@@ -462,7 +462,7 @@ export function createHoverProvider(
                     yield {
                         ...searchResult,
                         ...(alerts ? { alerts } : {}),
-                        aggregableTags: [
+                        aggregableLabels: [
                             {
                                 text: hasPreciseDefinition ? 'partial semantic' : 'search-based',
                                 linkURL: HoverAlerts.linkURL,
@@ -519,7 +519,7 @@ export function badgeValues<T extends object>(
     return mapArrayish(value, element => ({
         ...element,
         badge,
-        aggregableTags: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+        aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
     })) // TODO - update package
 }
 
