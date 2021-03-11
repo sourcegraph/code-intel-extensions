@@ -280,7 +280,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover1,
                 alerts: [indicators.lsifPartialHoverOnly],
-                aggregableBadges: [indicators.partialHoverBadge],
+                aggregableBadges: [indicators.partialHoverNoDefinitionBadge],
             },
         ])
 

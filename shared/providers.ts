@@ -452,11 +452,11 @@ export function createHoverProvider(
                 // the user to an unrelated location without making it obvious that it's
                 // not a precise result.
 
-                let partialPreciseData = false
+                let hasSearchBasedDefinition = false
                 if (!nonEmpty(lsifWrapper.definition)) {
                     for await (const searchResult of searchDefinitionProvider(textDocument, position)) {
                         if (nonEmpty(searchResult)) {
-                            partialPreciseData = true
+                            hasSearchBasedDefinition = true
                             break
                         }
                     }
@@ -470,8 +470,8 @@ export function createHoverProvider(
                     // search definition. This can happen if we haven't indexed the target
                     // repository, but the dependent repository still has hover information for
                     // externally defined symbols.
-                    [!partialPreciseData ? indicators.lsif : indicators.lsifPartialHoverOnly],
-                    [!partialPreciseData ? indicators.semanticBadge : indicators.partialHoverBadge]
+                    [!hasSearchBasedDefinition ? indicators.lsif : indicators.lsifPartialHoverOnly],
+                    [!hasSearchBasedDefinition ? indicators.semanticBadge : indicators.partialHoverNoDefinitionBadge]
                 )
 
                 // Found the best precise hover text we'll get. Stop.
@@ -515,7 +515,7 @@ export function createHoverProvider(
                 if (hasPreciseDefinition) {
                     // We have a precise definition but imprecise hover text
                     const alerts = first ? [indicators.lsifPartialDefinitionOnly] : undefined
-                    const aggregableBadges = [indicators.partialDefinitionBadge]
+                    const aggregableBadges = [indicators.partialDefinitionNoHoverBadge]
                     yield badgeHoverResult(searchResult, alerts, aggregableBadges)
                     continue
                 }
