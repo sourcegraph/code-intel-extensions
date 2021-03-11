@@ -47,8 +47,8 @@ describe('createDefinitionProvider', () => {
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-            { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+            { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
         ])
     })
 
@@ -72,7 +72,7 @@ describe('createDefinitionProvider', () => {
             {
                 ...location3,
                 badge: impreciseBadge,
-                aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
             },
         ])
     })
@@ -93,13 +93,13 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
         ])
     })
@@ -138,18 +138,18 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
                 location4,
                 location5,
             ],
@@ -170,22 +170,22 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
                 {
                     ...location4,
                     badge: impreciseBadge,
-                    aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                    aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
                 },
             ],
         ])
@@ -205,37 +205,37 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
                 {
                     ...location4,
                     badge: impreciseBadge,
-                    aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                    aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
                 },
             ],
             [
-                { ...location1, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location2, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
-                { ...location3, aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location1, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location2, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
+                { ...location3, aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }] },
                 {
                     ...location4,
                     badge: impreciseBadge,
-                    aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                    aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
                 },
                 {
                     ...location9,
                     badge: impreciseBadge,
-                    aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                    aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
                 },
             ],
         ])
@@ -258,7 +258,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover1,
                 alerts: [HoverAlerts.lsif],
-                aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
             },
         ])
 
@@ -281,7 +281,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover1,
                 alerts: [HoverAlerts.lsifPartialHoverOnly],
-                aggregableLabels: [{ text: 'partial semantic', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'partial semantic', linkURL: HoverAlerts.linkURL }],
             },
         ])
 
@@ -302,7 +302,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover1,
                 alerts: [HoverAlerts.lsif],
-                aggregableLabels: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'semantic', linkURL: HoverAlerts.linkURL }],
             },
         ])
     })
@@ -337,7 +337,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover3,
                 alerts: [HoverAlerts.searchLSIFSupportNone],
-                aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
             },
         ])
     })
@@ -354,7 +354,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover3,
                 alerts: [HoverAlerts.searchLSIFSupportExperimental],
-                aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
             },
         ])
     })
@@ -371,7 +371,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover3,
                 alerts: [HoverAlerts.searchLSIFSupportRobust],
-                aggregableLabels: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
+                aggregableBadges: [{ text: 'search-based', linkURL: HoverAlerts.linkURL }],
             },
         ])
     })
