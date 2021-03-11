@@ -344,10 +344,7 @@ export function createReferencesProvider(
     }
 }
 
-//
-//
-
-// TODO - document
+/** logLocationResults emits telemetry events and emits location counts to the debug logger. */
 async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, R extends T | T[] | null>({
     provider,
     action,
@@ -367,16 +364,11 @@ async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Locat
     emitter?: TelemetryEmitter
     logger?: Logger
 }): Promise<void> {
-    if (emitter) {
-        await emitter.emitOnce(action)
+    await emitter?.emitOnce(action)
 
-        // TODO - don't loop
-        for (const result of asArray(results)) {
-            if (parseGitURI(result.uri).repo !== repo) {
-                // Emit xrepo event
-                await emitter.emitOnce(action + '.xrepo')
-            }
-        }
+    // Emit xrepo event if we contain a result from another repository
+    if (asArray(results).some(location => parseGitURI(location.uri).repo !== repo)) {
+        await emitter?.emitOnce(action + '.xrepo')
     }
 
     if (logger) {
