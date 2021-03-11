@@ -19,7 +19,8 @@ export class TelemetryEmitter {
 
     /**
      * Emit a telemetry event with a durationMs attribute only if the
-     * same action has not yet emitted for this instance.
+     * same action has not yet emitted for this instance. This method
+     * returns true if an event was emitted and false otherwise.
      */
     public emitOnce(action: string, args: object = {}): Promise<boolean> {
         if (this.emitted.has(action)) {

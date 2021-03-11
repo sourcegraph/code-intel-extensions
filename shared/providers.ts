@@ -532,7 +532,7 @@ export function createHoverProvider(
 function badgeHoverResult(
     hover: sourcegraph.Hover,
     alerts?: sourcegraph.HoverAlert[],
-    aggregableBadges?: indicators.Badge[]
+    aggregableBadges?: indicators.AggregableBadge[]
 ): sourcegraph.Badged<sourcegraph.Hover> {
     return { ...hover, ...(alerts ? { alerts } : {}), ...(aggregableBadges ? { aggregableBadges } : {}) } as any // TODO - update package
 }
