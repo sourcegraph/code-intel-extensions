@@ -28,7 +28,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=11.1.0"
+    "node": ">=v14.16.0"
   },
   "browserslist": [
     "last 1 Chrome versions",
@@ -61,7 +61,7 @@
       {
         "id": "externalReferences.toggle",
         "command": "updateConfiguration",
-        "title": "${config.typescript.showExternalReferences && \"Hide references from other repositories\" || \"Show references from other repositories\"}",
+        "title": "${config.typescript.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}",
         "commandArguments": [
           [
             "typescript.showExternalReferences"
@@ -71,7 +71,7 @@
           "json"
         ],
         "actionItem": {
-          "label": "${config.typescript.showExternalReferences && \"Hide references from other repositories\" || \"Show references from other repositories\"}"
+          "label": "${config.typescript.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}"
         }
       }
     ],
