@@ -372,10 +372,12 @@ async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Locat
     }
 
     if (logger) {
-        // TODO - extract some of this
         let arrayResults = asArray(results)
         const totalCount = arrayResults.length
-        const preciseCount = arrayResults.reduce((count, result) => count + (result.badge === undefined ? 1 : 0), 0)
+        const searchCount = arrayResults.reduce(
+            (count, result) => count + (result.aggregableBadges?.some(badge => badge.text === 'search-based') ? 1 : 0),
+            0
+        )
 
         if (arrayResults.length > 500) {
             arrayResults = arrayResults.slice(0, 500)
@@ -389,11 +391,11 @@ async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Locat
             path,
             line,
             character,
-            preciseCount,
-            searchCount: totalCount - preciseCount,
+            preciseCount: totalCount - searchCount,
+            searchCount,
             results: arrayResults.map(result => ({
                 uri: result.uri.toString(),
-                badged: result.badge !== undefined,
+                badges: result.aggregableBadges?.map(badge => badge.text),
                 ...result.range,
             })),
         })
@@ -524,9 +526,9 @@ export function createHoverProvider(
 function badgeHoverResult(
     hover: sourcegraph.Hover,
     alerts?: sourcegraph.HoverAlert[],
-    aggregableBadges?: indicators.AggregableBadge[]
+    aggregableBadges?: sourcegraph.AggregableBadge[]
 ): sourcegraph.Badged<sourcegraph.Hover> {
-    return { ...hover, ...(alerts ? { alerts } : {}), ...(aggregableBadges ? { aggregableBadges } : {}) } as any // TODO - update package
+    return { ...hover, ...(alerts ? { alerts } : {}), ...(aggregableBadges ? { aggregableBadges } : {}) }
 }
 
 /**
