@@ -1,6 +1,6 @@
 import { NEVER, Observable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
-import { impreciseBadge } from './badges'
+import * as indicators from './indicators'
 import { LanguageSpec, LSIFSupport } from './language-specs/spec'
 import { Logger, NoopLogger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
@@ -8,7 +8,6 @@ import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
-import * as HoverAlerts from './hover-alerts'
 import { parseGitURI } from './util/uri'
 
 export interface Providers {
@@ -183,7 +182,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
  * @param lspProvider An optional LSP-based definition provider.
  * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
- * @param quiet Disable telemetry from this provider.
+ * @param quiet Disable telemetry from this provider. Used for recursive calls from the hover provider when a definition location is required.
  */
 export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
@@ -200,18 +199,17 @@ export function createDefinitionProvider(
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
             const emitter = new TelemetryEmitter(languageID, !quiet)
             const { repo } = parseGitURI(new URL(textDocument.uri))
-
-            let hasPreciseResult = false
+            const commonFields = { provider: 'definition', repo, textDocument, position, emitter, logger }
             const lsifWrapper = await lsifProvider(textDocument, position)
-            if (lsifWrapper) {
-                for await (const lsifResult of asArray(lsifWrapper.definition || [])) {
-                    hasPreciseResult = true
+            let hasPreciseResult = false
 
-                    await emitter.emitOnce('lsifDefinitions')
-                    await emitCrossRepositoryEventForLocations(emitter, 'lsifDefinitions', repo, lsifResult)
-                    traceLocations('definition', textDocument, position, lsifResult, logger)
-                    yield lsifResult
-                }
+            for await (const rawResults of asArray(lsifWrapper?.definition || [])) {
+                // Mark new results as precise
+                const aggregableBadges = [indicators.semanticBadge]
+                const results = { ...rawResults, aggregableBadges }
+                await logLocationResults({ ...commonFields, action: 'lsifDefinitions', results })
+                yield results
+                hasPreciseResult = true
             }
             if (hasPreciseResult) {
                 // Found the best precise definition we'll get. Stop.
@@ -219,18 +217,22 @@ export function createDefinitionProvider(
             }
 
             if (lspProvider) {
-                for await (const lspResult of lspProvider(textDocument, position)) {
+                // No results so far, fall back to language servers
+                for await (const results of lspProvider(textDocument, position)) {
                     // Do not emit definition events for empty location arrays
-                    if (nonEmpty(lspResult)) {
-                        await emitter.emitOnce('lspDefinitions')
-                        await emitCrossRepositoryEventForLocations(emitter, 'lspDefinitions', repo, lspResult)
-                        traceLocations('definition', textDocument, position, lspResult, logger)
+                    if (!nonEmpty(results)) {
+                        continue
                     }
 
-                    // Always emit the result regardless if it's interesting. If we return
+                    await logLocationResults({ ...commonFields, action: 'lspDefinitions', results })
+                    yield results
+                    hasPreciseResult = true
+                }
+                if (!hasPreciseResult) {
+                    // Always emit _something_ regardless if it's interesting. If we return
                     // without emitting anything here we may indefinitely show an empty hover
                     // on identifiers with no interesting data indefinitely.
-                    yield lspResult
+                    yield []
                 }
 
                 // Do not try to supplement with additional search results as we have all the
@@ -239,17 +241,16 @@ export function createDefinitionProvider(
             }
 
             // No results so far, fall back to search
-            for await (const searchResult of searchProvider(textDocument, position)) {
-                if (!nonEmpty(searchResult)) {
+            for await (const rawResult of searchProvider(textDocument, position)) {
+                if (!nonEmpty(rawResult)) {
                     continue
                 }
 
-                // Mark the result as imprecise
-                const results = badgeValues(searchResult, impreciseBadge)
-
-                await emitter.emitOnce('searchDefinitions')
-                await emitCrossRepositoryEventForLocations(emitter, 'searchDefinitions', repo, results)
-                traceLocations('definition', textDocument, position, results, logger)
+                // Mark new results as imprecise
+                const badge = indicators.impreciseBadge
+                const aggregableBadges = [indicators.searchBasedBadge]
+                const results = mapArrayish(rawResult, location => ({ ...location, badge, aggregableBadges }))
+                await logLocationResults({ ...commonFields, action: 'searchDefinitions', results })
                 yield results
             }
         }),
@@ -284,65 +285,120 @@ export function createReferencesProvider(
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
             const emitter = new TelemetryEmitter(languageID)
             const { repo } = parseGitURI(new URL(textDocument.uri))
+            const commonFields = { repo, textDocument, position, emitter, logger, provider: 'references' }
 
             let lsifResults: sourcegraph.Location[] = []
-            for await (const lsifResult of lsifProvider(textDocument, position, context)) {
-                if (nonEmpty(lsifResult)) {
-                    lsifResults = lsifResult
-
-                    await emitter.emitOnce('lsifReferences')
-                    await emitCrossRepositoryEventForLocations(emitter, 'lsifReferences', repo, lsifResult)
-                    traceLocations('references', textDocument, position, lsifResult, logger)
-                    yield lsifResult
+            for await (const rawResult of lsifProvider(textDocument, position, context)) {
+                if (!nonEmpty(rawResult)) {
+                    continue
                 }
+
+                // Mark results as precise
+                const aggregableBadges = [indicators.semanticBadge]
+                lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
+                await logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
+                yield lsifResults
             }
 
             if (lspProvider) {
-                for await (const lspResult of lspProvider(textDocument, position, context)) {
-                    const filteredResults = asArray(lspResult)
-                    if (filteredResults.length === 0) {
+                for await (const rawResults of lspProvider(textDocument, position, context)) {
+                    const lspResults = asArray(rawResults)
+                    if (lspResults.length === 0) {
                         continue
                     }
 
-                    // Re-emit the last results from the previous provider
-                    // so we do not overwrite what was emitted previously.
-                    const results = lsifResults.concat(filteredResults)
-
-                    await emitter.emitOnce('lspReferences')
-                    await emitCrossRepositoryEventForLocations(emitter, 'lspReferences', repo, results)
-                    traceLocations('references', textDocument, position, results, logger)
+                    // Re-emit the last results from the previous provider so that we do not overwrite
+                    // what was emitted previously.
+                    const results = lsifResults.concat(lspResults)
+                    await logLocationResults({ ...commonFields, action: 'lspReferences', results })
                     yield results
                 }
 
-                // Do not try to supplement with additional search results
-                // as we have all the context we need for complete and precise
-                // results here.
+                // Do not try to supplement with additional search results as we have all the context
+                // we need for complete and precise results here.
                 return
             }
 
             const lsifFiles = new Set(lsifResults.map(file))
 
-            for await (const searchResult of searchProvider(textDocument, position, context)) {
-                // Filter out any search results that occur in the same file
-                // as LSIF results. These results are definitely incorrect and
-                // will pollute the ordering of precise and fuzzy results in
-                // the references pane.
-                const filteredResults = asArray(searchResult).filter(location => !lsifFiles.has(file(location)))
-                if (filteredResults.length === 0) {
+            for await (const rawResults of searchProvider(textDocument, position, context)) {
+                // Filter out any search results that occur in the same file as LSIF results. These
+                // results are definitely incorrect and will pollute the ordering of precise and fuzzy
+                // results in the references pane.
+                const searchResults = asArray(rawResults).filter(location => !lsifFiles.has(file(location)))
+                if (searchResults.length === 0) {
                     continue
                 }
 
-                // Re-emit the last results from the previous provider so we
-                // do not overwrite what was emitted previously. Mark new results
-                // as imprecise.
-                const results = lsifResults.concat(asArray(badgeValues(filteredResults, impreciseBadge)))
-
-                await emitter.emitOnce('searchReferences')
-                await emitCrossRepositoryEventForLocations(emitter, 'searchReferences', repo, results)
-                traceLocations('references', textDocument, position, results, logger)
+                // Mark new results as imprecise, then append them to the previous result set. We need
+                // to append here so that we do not overwrite what was emitted previously.
+                const badge = indicators.impreciseBadge
+                const aggregableBadges = [indicators.searchBasedBadge]
+                const results = lsifResults.concat(
+                    searchResults.map(location => ({ ...location, badge, aggregableBadges }))
+                )
+                await logLocationResults({ ...commonFields, action: 'searchReferences', results })
                 yield results
             }
         }),
+    }
+}
+
+/** logLocationResults emits telemetry events and emits location counts to the debug logger. */
+async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, R extends T | T[] | null>({
+    provider,
+    action,
+    repo,
+    textDocument,
+    position,
+    results,
+    emitter,
+    logger,
+}: {
+    provider: string
+    action: string
+    repo: string
+    textDocument: sourcegraph.TextDocument
+    position: sourcegraph.Position
+    results: R
+    emitter?: TelemetryEmitter
+    logger?: Logger
+}): Promise<void> {
+    await emitter?.emitOnce(action)
+
+    // Emit xrepo event if we contain a result from another repository
+    if (asArray(results).some(location => parseGitURI(location.uri).repo !== repo)) {
+        await emitter?.emitOnce(action + '.xrepo')
+    }
+
+    if (logger) {
+        let arrayResults = asArray(results)
+        const totalCount = arrayResults.length
+        const searchCount = arrayResults.reduce(
+            (count, result) => count + (result.aggregableBadges?.some(badge => badge.text === 'search-based') ? 1 : 0),
+            0
+        )
+
+        if (arrayResults.length > 500) {
+            arrayResults = arrayResults.slice(0, 500)
+        }
+
+        const { path } = parseGitURI(new URL(textDocument.uri))
+        const { line, character } = position
+
+        logger.log({
+            provider,
+            path,
+            line,
+            character,
+            preciseCount: totalCount - searchCount,
+            searchCount,
+            results: arrayResults.map(result => ({
+                uri: result.uri.toString(),
+                badges: result.aggregableBadges?.map(badge => badge.text),
+                ...result.range,
+            })),
+        })
     }
 }
 
@@ -367,11 +423,11 @@ export function createHoverProvider(
 ): sourcegraph.HoverProvider {
     const searchAlerts =
         lsifSupport === LSIFSupport.None
-            ? [HoverAlerts.searchLSIFSupportNone]
+            ? [indicators.searchLSIFSupportNone]
             : lsifSupport === LSIFSupport.Experimental
-            ? [HoverAlerts.searchLSIFSupportExperimental]
+            ? [indicators.searchLSIFSupportExperimental]
             : lsifSupport === LSIFSupport.Robust
-            ? [HoverAlerts.searchLSIFSupportRobust]
+            ? [indicators.searchLSIFSupportRobust]
             : undefined
 
     return {
@@ -380,50 +436,57 @@ export function createHoverProvider(
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
             const emitter = new TelemetryEmitter(languageID)
-            let hasPreciseDefinition = false
             const { path } = parseGitURI(new URL(textDocument.uri))
             const commonLogFields = { path, line: position.line, character: position.character }
-
             const lsifWrapper = await lsifProvider(textDocument, position)
-            if (lsifWrapper) {
-                if (lsifWrapper.hover) {
-                    let partialPreciseData = false
-                    if (!nonEmpty(lsifWrapper.definition)) {
-                        for await (const searchResult of searchDefinitionProvider(textDocument, position)) {
-                            if (nonEmpty(searchResult)) {
-                                partialPreciseData = true
-                                break
-                            }
+
+            if (lsifWrapper?.hover) {
+                // We have a precise hover, but we might not have a precise definition.
+                // We want to tell the difference here, otherwise the definition may take
+                // the user to an unrelated location without making it obvious that it's
+                // not a precise result.
+
+                let hasSearchBasedDefinition = false
+                if (!nonEmpty(lsifWrapper.definition)) {
+                    for await (const searchResult of searchDefinitionProvider(textDocument, position)) {
+                        if (nonEmpty(searchResult)) {
+                            hasSearchBasedDefinition = true
+                            break
                         }
                     }
-
-                    // Display a partial data tooltip when there is a precise hover
-                    // text but a search definition. This can happen if we haven't
-                    // indexed the target repository.
-                    const alerts = !partialPreciseData ? [HoverAlerts.lsif] : [HoverAlerts.lsifPartialHoverOnly]
-
-                    // Found the best precise hover text we'll get. Stop.
-                    await emitter.emitOnce('lsifHover')
-                    logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
-                    yield { ...lsifWrapper.hover, alerts }
-                    return
                 }
 
-                if (nonEmpty(lsifWrapper.definition)) {
-                    hasPreciseDefinition = true
-                }
+                await emitter.emitOnce('lsifHover')
+                logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
+                yield badgeHoverResult(
+                    lsifWrapper.hover,
+                    // Display a partial data tooltip when there is a precise hover text but a
+                    // search definition. This can happen if we haven't indexed the target
+                    // repository, but the dependent repository still has hover information for
+                    // externally defined symbols.
+                    [!hasSearchBasedDefinition ? indicators.lsif : indicators.lsifPartialHoverOnly],
+                    [!hasSearchBasedDefinition ? indicators.semanticBadge : indicators.partialHoverNoDefinitionBadge]
+                )
+
+                // Found the best precise hover text we'll get. Stop.
+                return
             }
 
             if (lspProvider) {
-                let alerts: sourcegraph.Badged<sourcegraph.HoverAlert>[] | undefined = [HoverAlerts.lsp]
+                // Delegate to LSP if it's available.
                 for await (const lspResult of lspProvider(textDocument, position)) {
-                    if (lspResult) {
-                        // Delegate to LSP if it's available.
-                        await emitter.emitOnce('lspHover')
-                        logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
-                        yield { ...lspResult, ...(alerts ? { alerts } : {}) }
-                        alerts = undefined
+                    if (!lspResult) {
+                        continue
                     }
+
+                    const first = await emitter.emitOnce('lspHover')
+                    logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
+                    yield badgeHoverResult(
+                        lspResult,
+                        // We only want to add an alert for the first result in the case
+                        // that there are many hover results from the language server.
+                        first ? [indicators.lsp] : undefined
+                    )
                 }
 
                 // Do not try to supplement with additional search results
@@ -432,19 +495,40 @@ export function createHoverProvider(
                 return
             }
 
-            let alerts = hasPreciseDefinition ? [HoverAlerts.lsifPartialDefinitionOnly] : searchAlerts
+            const hasPreciseDefinition = nonEmpty(lsifWrapper?.definition)
 
+            // No results so far, fall back to search.
             for await (const searchResult of searchHoverProvider(textDocument, position)) {
-                if (searchResult) {
-                    // No results so far, fall back to search. Mark the result as imprecise.
-                    await emitter.emitOnce('searchHover')
-                    logger?.log({ provider: 'hover', precise: false, ...commonLogFields })
-                    yield { ...searchResult, ...(alerts ? { alerts } : {}) }
-                    alerts = undefined
+                if (!searchResult) {
+                    continue
                 }
+
+                const first = await emitter.emitOnce('searchHover')
+                logger?.log({ provider: 'hover', precise: false, ...commonLogFields })
+
+                if (hasPreciseDefinition) {
+                    // We have a precise definition but imprecise hover text
+                    const alerts = first ? [indicators.lsifPartialDefinitionOnly] : undefined
+                    const aggregableBadges = [indicators.partialDefinitionNoHoverBadge]
+                    yield badgeHoverResult(searchResult, alerts, aggregableBadges)
+                    continue
+                }
+
+                // Only search results for this token
+                const alerts = first ? searchAlerts : undefined
+                const aggregableBadges = [indicators.searchBasedBadge]
+                yield badgeHoverResult(searchResult, alerts, aggregableBadges)
             }
         }),
     }
+}
+
+function badgeHoverResult(
+    hover: sourcegraph.Hover,
+    alerts?: sourcegraph.HoverAlert[],
+    aggregableBadges?: sourcegraph.AggregableBadge[]
+): sourcegraph.Badged<sourcegraph.Hover> {
+    return { ...hover, ...(alerts ? { alerts } : {}), ...(aggregableBadges ? { aggregableBadges } : {}) }
 }
 
 /**
@@ -477,20 +561,6 @@ export function createDocumentHighlightProvider(
 }
 
 /**
- * Add a badge property to a single value or to a list of values. Returns the
- * modified result in the same shape as the input.
- *
- * @param value The list of values, a single value, or null.
- * @param badge The badge attachment.
- */
-export function badgeValues<T extends object>(
-    value: T | T[] | null,
-    badge: sourcegraph.BadgeAttachmentRenderOptions
-): sourcegraph.Badged<T> | sourcegraph.Badged<T>[] | null {
-    return mapArrayish(value, element => ({ ...element, badge }))
-}
-
-/**
  * Converts an async generator provider into an observable provider.
  *
  * @param func A function that returns a the provider.
@@ -499,70 +569,4 @@ function wrapProvider<P extends unknown[], R>(
     func: (...args: P) => AsyncGenerator<R, void, void>
 ): (...args: P) => Observable<R> {
     return (...args) => observableFromAsyncIterator(() => func(...args))
-}
-
-/**
- * Emits an {action}.xrepo event if the given result contains a location for a different repository.
- *
- * @param emitter The telemetry emitter.
- * @param action The base name of the event to emit.
- * @param repo The source repository.
- * @param results Location results from the provider.
- */
-async function emitCrossRepositoryEventForLocations<
-    T extends sourcegraph.Badged<sourcegraph.Location>,
-    R extends T | T[] | null
->(emitter: TelemetryEmitter, action: string, repo: string, results: R): Promise<void> {
-    for (const result of asArray(results)) {
-        if (parseGitURI(result.uri).repo !== repo) {
-            // Emit xrepo event
-            await emitter.emitOnce(action + '.xrepo')
-        }
-    }
-}
-
-/**
- * Emits each location result to the given logger.
- *
- * @param provider The name of the provider.
- * @param textDocument The input text document.
- * @param position The input position.
- * @param results Location results from the provider.
- * @param logger The logger instance.
- */
-function traceLocations<T extends sourcegraph.Badged<sourcegraph.Location>, R extends T | T[] | null>(
-    provider: string,
-    textDocument: sourcegraph.TextDocument,
-    position: sourcegraph.Position,
-    results: R,
-    logger?: Logger
-): void {
-    if (!logger) {
-        return
-    }
-
-    let arrayResults = asArray(results)
-    const totalCount = arrayResults.length
-    const preciseCount = arrayResults.reduce((count, result) => count + (result.badge === undefined ? 1 : 0), 0)
-
-    if (arrayResults.length > 500) {
-        arrayResults = arrayResults.slice(0, 500)
-    }
-
-    const { path } = parseGitURI(new URL(textDocument.uri))
-    const { line, character } = position
-
-    logger.log({
-        provider,
-        path,
-        line,
-        character,
-        preciseCount,
-        searchCount: totalCount - preciseCount,
-        results: arrayResults.map(result => ({
-            uri: result.uri.toString(),
-            badged: result.badge !== undefined,
-            ...result.range,
-        })),
-    })
 }

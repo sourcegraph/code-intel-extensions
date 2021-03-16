@@ -1,17 +1,16 @@
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
-import * as sinon from 'sinon'
 import * as assert from 'assert'
 import { Observable } from 'rxjs'
+import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
-import { impreciseBadge } from './badges'
+import * as indicators from './indicators'
+import { LSIFSupport } from './language-specs/spec'
 import {
     createDefinitionProvider,
+    createDocumentHighlightProvider,
     createHoverProvider,
     createReferencesProvider,
-    createDocumentHighlightProvider,
 } from './providers'
-import * as HoverAlerts from './hover-alerts'
-import { LSIFSupport } from './language-specs/spec'
 
 const textDocument = createStubTextDocument({
     uri: 'https://sourcegraph.test/repo@rev/-/raw/foo.ts',
@@ -46,7 +45,10 @@ describe('createDefinitionProvider', () => {
             () => asyncGeneratorFromValues([location3, location4])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
-        assert.deepStrictEqual(await gatherValues(result), [location1, location2])
+        assert.deepStrictEqual(await gatherValues(result), [
+            { ...location1, aggregableBadges: [indicators.semanticBadge] },
+            { ...location2, aggregableBadges: [indicators.semanticBadge] },
+        ])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
@@ -65,7 +67,13 @@ describe('createDefinitionProvider', () => {
             () => asyncGeneratorFromValues([location3])
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...location3, badge: impreciseBadge }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...location3,
+                badge: indicators.impreciseBadge,
+                aggregableBadges: [indicators.searchBasedBadge],
+            },
+        ])
     })
 })
 
@@ -83,8 +91,15 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+            ],
         ])
     })
 
@@ -121,9 +136,22 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
-            [location1, location2, location3, location4, location5],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                location4,
+                location5,
+            ],
         ])
     })
 
@@ -140,9 +168,25 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
-            [location1, location2, location3, { ...location4, badge: impreciseBadge }],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                {
+                    ...location4,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
+            ],
         ])
     })
 
@@ -159,15 +203,39 @@ describe('createReferencesProvider', () => {
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            [location1, location2],
-            [location1, location2, location3],
-            [location1, location2, location3, { ...location4, badge: impreciseBadge }],
             [
-                location1,
-                location2,
-                location3,
-                { ...location4, badge: impreciseBadge },
-                { ...location9, badge: impreciseBadge },
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                {
+                    ...location4,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                {
+                    ...location4,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
+                {
+                    ...location9,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
             ],
         ])
     })
@@ -185,7 +253,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsif] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [indicators.lsif],
+                aggregableBadges: [indicators.semanticBadge],
+            },
+        ])
 
         // Search providers not called at all
         assert.strictEqual(searchDefinitionProvider.called, false)
@@ -202,7 +276,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsifPartialHoverOnly] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [indicators.lsifPartialHoverOnly],
+                aggregableBadges: [indicators.partialHoverNoDefinitionBadge],
+            },
+        ])
 
         // Search providers called to determine if there's search hover text
         assert.strictEqual(searchDefinitionProvider.called, true)
@@ -217,7 +297,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover2, hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsif] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [indicators.lsif],
+                aggregableBadges: [indicators.semanticBadge],
+            },
+        ])
     })
 
     it('falls back to LSP when LSIF results are not found', async () => {
@@ -229,7 +315,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover1, hover2])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover1, alerts: [HoverAlerts.lsp] }, hover2])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover1,
+                alerts: [indicators.lsp],
+            },
+            hover2,
+        ])
     })
 
     it('falls back to basic when precise results are not found', async () => {
@@ -240,7 +332,13 @@ describe('createHoverProvider', () => {
             () => asyncGeneratorFromValues([hover3])
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
-        assert.deepStrictEqual(await gatherValues(result), [{ ...hover3, alerts: [HoverAlerts.searchLSIFSupportNone] }])
+        assert.deepStrictEqual(await gatherValues(result), [
+            {
+                ...hover3,
+                alerts: [indicators.searchLSIFSupportNone],
+                aggregableBadges: [indicators.searchBasedBadge],
+            },
+        ])
     })
 
     it('alerts search results correctly with experimental LSIF support', async () => {
@@ -254,7 +352,8 @@ describe('createHoverProvider', () => {
         assert.deepStrictEqual(await gatherValues(result), [
             {
                 ...hover3,
-                alerts: [HoverAlerts.searchLSIFSupportExperimental],
+                alerts: [indicators.searchLSIFSupportExperimental],
+                aggregableBadges: [indicators.searchBasedBadge],
             },
         ])
     })
@@ -268,7 +367,11 @@ describe('createHoverProvider', () => {
         ).provideHover(textDocument, position) as Observable<sourcegraph.Badged<sourcegraph.Hover>>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            { ...hover3, alerts: [HoverAlerts.searchLSIFSupportRobust] },
+            {
+                ...hover3,
+                alerts: [indicators.searchLSIFSupportRobust],
+                aggregableBadges: [indicators.searchBasedBadge],
+            },
         ])
     })
 })
