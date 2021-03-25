@@ -3,6 +3,10 @@ import * as fs from 'mz/fs'
 import * as path from 'path'
 import { LanguageSpec } from '../../shared/language-specs/spec'
 import { findLanguageSpecs } from './args'
+import { exec as _exec } from 'child_process'
+import { promisify } from 'util'
+
+const exec = promisify(_exec)
 
 async function main(): Promise<void> {
     const specs = findLanguageSpecs()
@@ -39,6 +43,7 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
                 description: `Provides search-based code intelligence for ${stylized} using the Sourcegraph search API`,
                 activationEvents: [`onLanguage:${languageID}`],
                 icon: `data:image/png;base64,${(await fs.readFile(iconFilename)).toString('base64')}`,
+                commit: (await exec('git rev-parse head')).stdout.trimEnd(),
             },
             null,
             2
