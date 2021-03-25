@@ -87,6 +87,7 @@ export async function makeRangeWindowFactory(
             // Add fresh entry
             cacheEntry = { lasthit: new Date(), windows: [] }
             cache.set(textDocument.uri, cacheEntry)
+
             // Remove oldest entries to keep the cache under capacity
             while (cache.size > WINDOW_CACHE_CAPACITY) {
                 cache.delete(
@@ -151,10 +152,26 @@ export async function findOverlappingWindows(
         index + 1 < rangeWindows.length ? rangeWindows[index + 1].startLine : undefined
     )
 
-    // Query this range and insert it into the current index to keep the
-    // array of windows sorted.
+    // Query this range and get back a promise. We're going to insert this index
+    // into the range windows before it resolves. This means we won't make duplicate
+    // requests while the user hovers over another token while the original range
+    // request is still in-flight.
+
     const ranges = rangesInRangeWindow(textDocument, startLine, endLine, queryGraphQL)
     rangeWindows.splice(index + 1, 0, { startLine, endLine, ranges })
+
+    // Caching a promise is tricky when the promise may not resolve successfully. In
+    // the case of a transient network or other backend error, we'd like to have the
+    // client retry the request (where it can succeed in the future). If the promise
+    // is rejected, we'll remove it from the cache.
+
+    ranges.catch(() => {
+        const index = rangeWindows.findIndex(window => window.ranges === ranges)
+        if (index !== -1) {
+            rangeWindows.splice(index, 1)
+        }
+    })
+
     return ranges
 }
 
