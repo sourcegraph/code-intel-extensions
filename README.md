@@ -33,8 +33,8 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 ## Adding a language extension
 
 1. Add an entry to the [`shared/language-specs`](shared/language-specs) directory. For languages with a trivial configuration add a new entry (in alphabetical order) to [`languages.ts`](shared/language-specs/languages.ts). Otherwise, add additional files following the existing examples.
-2. (optional, to enable jump to definition) Ensure the language is present in the command line arguments to universal-ctags https://github.com/sourcegraph/sourcegraph/blob/21efc6844838e773b9a8f4a7ba1d5628e8076984/cmd/symbols/internal/pkg/ctags/parser.go#L71
-3. Make sure there is a mapping entry for the `languageID` in https://github.com/sourcegraph/sourcegraph/blob/master/shared/src/languages.ts#L40
+2. (optional, to enable jump to definition) Ensure the language is present in the command line arguments to universal-ctags https://github.com/sourcegraph/go-ctags/blob/main/ctags.go#L69
+3. Make sure there is a mapping entry for the `languageID` in https://sourcegraph.com/github.com/sourcegraph/sourcegraph/-/blob/client/shared/src/languages.ts#L40
 4. Generate and publish the extension as described below.
 
 ## Generating & publishing extensions
