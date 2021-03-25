@@ -22,13 +22,14 @@ export class TelemetryEmitter {
      * same action has not yet emitted for this instance. This method
      * returns true if an event was emitted and false otherwise.
      */
-    public emitOnce(action: string, args: object = {}): Promise<boolean> {
+    public emitOnce(action: string, args: object = {}): boolean {
         if (this.emitted.has(action)) {
-            return Promise.resolve(false)
+            return false
         }
 
         this.emitted.add(action)
-        return this.emit(action, args).then(() => true)
+        this.emit(action, args).catch(error => console.error(error))
+        return true
     }
 
     /**

@@ -364,11 +364,11 @@ async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Locat
     emitter?: TelemetryEmitter
     logger?: Logger
 }): Promise<void> {
-    await emitter?.emitOnce(action)
+    emitter?.emitOnce(action)
 
     // Emit xrepo event if we contain a result from another repository
     if (asArray(results).some(location => parseGitURI(location.uri).repo !== repo)) {
-        await emitter?.emitOnce(action + '.xrepo')
+        emitter?.emitOnce(action + '.xrepo')
     }
 
     if (logger) {
@@ -456,7 +456,7 @@ export function createHoverProvider(
                     }
                 }
 
-                await emitter.emitOnce('lsifHover')
+                emitter.emitOnce('lsifHover')
                 logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
                 yield badgeHoverResult(
                     lsifWrapper.hover,
@@ -479,7 +479,7 @@ export function createHoverProvider(
                         continue
                     }
 
-                    const first = await emitter.emitOnce('lspHover')
+                    const first = emitter.emitOnce('lspHover')
                     logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
                     yield badgeHoverResult(
                         lspResult,
@@ -503,7 +503,7 @@ export function createHoverProvider(
                     continue
                 }
 
-                const first = await emitter.emitOnce('searchHover')
+                const first = emitter.emitOnce('searchHover')
                 logger?.log({ provider: 'hover', precise: false, ...commonLogFields })
 
                 if (hasPreciseDefinition) {
@@ -552,7 +552,7 @@ export function createDocumentHighlightProvider(
 
             for await (const lsifResult of lsifProvider(textDocument, position)) {
                 if (lsifResult) {
-                    await emitter.emitOnce('lsifDocumentHighlight')
+                    emitter.emitOnce('lsifDocumentHighlight')
                     yield lsifResult
                 }
             }
