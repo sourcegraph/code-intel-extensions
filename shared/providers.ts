@@ -207,7 +207,7 @@ export function createDefinitionProvider(
                 // Mark new results as precise
                 const aggregableBadges = [indicators.semanticBadge]
                 const results = { ...rawResults, aggregableBadges }
-                await logLocationResults({ ...commonFields, action: 'lsifDefinitions', results })
+                logLocationResults({ ...commonFields, action: 'lsifDefinitions', results })
                 yield results
                 hasPreciseResult = true
             }
@@ -224,7 +224,7 @@ export function createDefinitionProvider(
                         continue
                     }
 
-                    await logLocationResults({ ...commonFields, action: 'lspDefinitions', results })
+                    logLocationResults({ ...commonFields, action: 'lspDefinitions', results })
                     yield results
                     hasPreciseResult = true
                 }
@@ -250,7 +250,7 @@ export function createDefinitionProvider(
                 const badge = indicators.impreciseBadge
                 const aggregableBadges = [indicators.searchBasedBadge]
                 const results = mapArrayish(rawResult, location => ({ ...location, badge, aggregableBadges }))
-                await logLocationResults({ ...commonFields, action: 'searchDefinitions', results })
+                logLocationResults({ ...commonFields, action: 'searchDefinitions', results })
                 yield results
             }
         }),
@@ -296,7 +296,7 @@ export function createReferencesProvider(
                 // Mark results as precise
                 const aggregableBadges = [indicators.semanticBadge]
                 lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
-                await logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
+                logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
                 yield lsifResults
             }
 
@@ -310,7 +310,7 @@ export function createReferencesProvider(
                     // Re-emit the last results from the previous provider so that we do not overwrite
                     // what was emitted previously.
                     const results = lsifResults.concat(lspResults)
-                    await logLocationResults({ ...commonFields, action: 'lspReferences', results })
+                    logLocationResults({ ...commonFields, action: 'lspReferences', results })
                     yield results
                 }
 
@@ -337,7 +337,7 @@ export function createReferencesProvider(
                 const results = lsifResults.concat(
                     searchResults.map(location => ({ ...location, badge, aggregableBadges }))
                 )
-                await logLocationResults({ ...commonFields, action: 'searchReferences', results })
+                logLocationResults({ ...commonFields, action: 'searchReferences', results })
                 yield results
             }
         }),
@@ -345,7 +345,7 @@ export function createReferencesProvider(
 }
 
 /** logLocationResults emits telemetry events and emits location counts to the debug logger. */
-async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, R extends T | T[] | null>({
+function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, R extends T | T[] | null>({
     provider,
     action,
     repo,
@@ -363,7 +363,7 @@ async function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Locat
     results: R
     emitter?: TelemetryEmitter
     logger?: Logger
-}): Promise<void> {
+}): void {
     emitter?.emitOnce(action)
 
     // Emit xrepo event if we contain a result from another repository
