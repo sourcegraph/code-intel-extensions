@@ -10,10 +10,3 @@ steps:
     label: ':jest: :codecov:'
 
   - wait
-
-  - command: ./.buildkite/yarn-run-config.sh publish:go
-    label: ':go: :rocket:'
-    branches: master
-  - command: ./.buildkite/yarn-run-config.sh publish:typescript
-    label: ':typescript: :rocket:'
-    branches: master

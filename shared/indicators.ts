@@ -5,8 +5,7 @@ export const linkURL = 'https://docs.sourcegraph.com/code_intelligence/explanati
 
 // Aggregable badges
 //
-// These indicators are the new hotness, and are tagged on each result that we send
-// back (except for LSP as we're still trying to sunset all of that related code).
+// These indicators are the new hotness, and are tagged on each result that we send back.
 // These will be displayed aggregated at the file level to determine result precision.
 
 export const semanticBadge: sourcegraph.AggregableBadge = {
@@ -89,13 +88,6 @@ export const lsifPartialDefinitionOnly = makeAlert({
     message: 'Partial semantic result.',
     hoverMessage:
         'It looks like this symbol is defined in another repository that does not have a pre-computed semantic index. Click to learn how to make these results precise by enabling semantic indexing for that project.',
-})
-
-// Note: non-dismissable
-export const lsp = makeAlert({
-    message: 'Language server result.',
-    hoverMessage:
-        'This data comes from a language server running in the cloud. Click to learn how to improve the reliability of this result by enabling semantic indexing.',
 })
 
 // Note: non-dismissable

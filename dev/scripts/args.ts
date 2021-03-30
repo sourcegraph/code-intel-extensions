@@ -2,8 +2,6 @@ import yargs from 'yargs'
 import { languageSpecs } from '../../shared/language-specs/languages'
 import { LanguageSpec } from '../../shared/language-specs/spec'
 
-const excludelist = new Set(['go', 'typescript'])
-
 export function findLanguageSpecs(): LanguageSpec[] {
     const args = yargs
         .nargs('languages', 1)
@@ -11,19 +9,17 @@ export function findLanguageSpecs(): LanguageSpec[] {
         .alias('l', 'languages')
         .strict().argv as { languages?: string }
 
-    const candidates = languageSpecs.filter(spec => !excludelist.has(spec.languageID))
-
     if (!args.languages) {
-        return candidates
+        return languageSpecs
     }
 
     // Verify that each flagged language matches a candidate, and filter the
-    // candidates to only those selected.
+    // languageSpecs to only those selected.
     const ids = args.languages.split(',')
     for (const id of ids) {
-        if (!candidates.find(spec => spec.languageID === id)) {
+        if (!languageSpecs.find(spec => spec.languageID === id)) {
             throw new Error(`Unknown language ${id}.`)
         }
     }
-    return candidates.filter(spec => ids.includes(spec.languageID))
+    return languageSpecs.filter(spec => ids.includes(spec.languageID))
 }
