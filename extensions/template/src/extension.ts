@@ -19,8 +19,10 @@ const activeLanguageSpecs =
  *
  * @param ctx The extension context.
  */
-export async function activate(context: sourcegraph.ExtensionContext): Promise<void> {
-    await Promise.all(activeLanguageSpecs.map(spec => activateSpec(spec, context)))
+export function activate(context: sourcegraph.ExtensionContext): void {
+    for (const spec of activeLanguageSpecs) {
+        activateSpec(spec, context)
+    }
 }
 
 /**
@@ -29,8 +31,8 @@ export async function activate(context: sourcegraph.ExtensionContext): Promise<v
  * @param spec The language spec.
  * @param ctx The extension context.
  */
-function activateSpec(spec: LanguageSpec, context: sourcegraph.ExtensionContext): Promise<void> {
-    return activateCodeIntel(context, spec.fileExts.flatMap(createSelector), spec)
+function activateSpec(spec: LanguageSpec, context: sourcegraph.ExtensionContext): void {
+    activateCodeIntel(context, spec.fileExts.flatMap(createSelector), spec)
 }
 
 function createSelector(extension: string): sourcegraph.DocumentSelector {
