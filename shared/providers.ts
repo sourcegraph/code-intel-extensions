@@ -216,30 +216,6 @@ export function createDefinitionProvider(
                 return
             }
 
-            if (lspProvider) {
-                // No results so far, fall back to language servers
-                for await (const results of lspProvider(textDocument, position)) {
-                    // Do not emit definition events for empty location arrays
-                    if (!nonEmpty(results)) {
-                        continue
-                    }
-
-                    logLocationResults({ ...commonFields, action: 'lspDefinitions', results })
-                    yield results
-                    hasPreciseResult = true
-                }
-                if (!hasPreciseResult) {
-                    // Always emit _something_ regardless if it's interesting. If we return
-                    // without emitting anything here we may indefinitely show an empty hover
-                    // on identifiers with no interesting data indefinitely.
-                    yield []
-                }
-
-                // Do not try to supplement with additional search results as we have all the
-                // context we need for complete and precise results here.
-                return
-            }
-
             // No results so far, fall back to search
             for await (const rawResult of searchProvider(textDocument, position)) {
                 if (!nonEmpty(rawResult)) {
@@ -298,25 +274,6 @@ export function createReferencesProvider(
                 lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
                 logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
                 yield lsifResults
-            }
-
-            if (lspProvider) {
-                for await (const rawResults of lspProvider(textDocument, position, context)) {
-                    const lspResults = asArray(rawResults)
-                    if (lspResults.length === 0) {
-                        continue
-                    }
-
-                    // Re-emit the last results from the previous provider so that we do not overwrite
-                    // what was emitted previously.
-                    const results = lsifResults.concat(lspResults)
-                    logLocationResults({ ...commonFields, action: 'lspReferences', results })
-                    yield results
-                }
-
-                // Do not try to supplement with additional search results as we have all the context
-                // we need for complete and precise results here.
-                return
             }
 
             const lsifFiles = new Set(lsifResults.map(file))
@@ -469,29 +426,6 @@ export function createHoverProvider(
                 )
 
                 // Found the best precise hover text we'll get. Stop.
-                return
-            }
-
-            if (lspProvider) {
-                // Delegate to LSP if it's available.
-                for await (const lspResult of lspProvider(textDocument, position)) {
-                    if (!lspResult) {
-                        continue
-                    }
-
-                    const first = emitter.emitOnce('lspHover')
-                    logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
-                    yield badgeHoverResult(
-                        lspResult,
-                        // We only want to add an alert for the first result in the case
-                        // that there are many hover results from the language server.
-                        first ? [indicators.lsp] : undefined
-                    )
-                }
-
-                // Do not try to supplement with additional search results
-                // as we have all the context we need for complete and precise
-                // results here.
                 return
             }
 
