@@ -1,7 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
-import { createProviderWrapper } from './providers'
+import { createProviders } from './providers'
 
 /**
  * A dummy context that is used for versions of Sourcegraph to 3.0.
@@ -29,16 +29,16 @@ export function activateCodeIntel(
     languageSpec: LanguageSpec,
     logger: Logger = new RedactingLogger(console)
 ): void {
-    const wrapper = createProviderWrapper(languageSpec, logger)
+    const providers = createProviders(languageSpec, logger)
 
-    context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, wrapper.definition()))
-    context.subscriptions.add(sourcegraph.languages.registerReferenceProvider(selector, wrapper.references()))
-    context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, wrapper.hover()))
+    context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, providers.definition))
+    context.subscriptions.add(sourcegraph.languages.registerReferenceProvider(selector, providers.references))
+    context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, providers.hover))
 
     // Do not try to register this provider on pre-3.18 instances as it didn't exist.
     if (sourcegraph.languages.registerDocumentHighlightProvider) {
         context.subscriptions.add(
-            sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
+            sourcegraph.languages.registerDocumentHighlightProvider(selector, providers.documentHighlights)
         )
     }
 }
