@@ -315,6 +315,16 @@ const rangesQuery = gql`
                                     markdown {
                                         text
                                     }
+                                    range {
+                                        start {
+                                            line
+                                            character
+                                        }
+                                        end {
+                                            line
+                                            character
+                                        }
+                                    }
                                 }
                             }
                         }
