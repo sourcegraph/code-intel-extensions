@@ -334,8 +334,8 @@ export class API {
      * @param fileLocal Set to false to not request this field, which is absent in older versions of Sourcegraph.
      */
     public async search(searchQuery: string, fileLocal = true): Promise<SearchResult[]> {
+        const versionContext = sourcegraph.workspace.versionContext
         const searchContext = sourcegraph.workspace.searchContext
-        const versionContext = searchContext ? sourcegraph.workspace.versionContext : undefined
         const query = searchContext ? `context:${searchContext} ${searchQuery}` : searchQuery
 
         interface Response {
