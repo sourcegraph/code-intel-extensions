@@ -321,6 +321,9 @@ export function createReferencesProvider(
 
             const lsifFiles = new Set(lsifResults.map(file))
 
+            const disableMixedResults = sourcegraph.configuration.get().get('codeIntel.disableMixedResults') ?? false
+            if (disableMixedResults && lsifFiles.size > 0) return
+
             for await (const rawResults of searchProvider(textDocument, position, context)) {
                 // Filter out any search results that occur in the same file as LSIF results. These
                 // results are definitely incorrect and will pollute the ordering of precise and fuzzy

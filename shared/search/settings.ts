@@ -6,33 +6,37 @@
  */
 
 export interface SearchBasedCodeIntelligenceSettings {
-    /**
-     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence.
-     */
-    'codeIntel.lsif'?: boolean
-    /**
-     * Whether to enable trace logging on the extension.
-     */
-    'codeIntel.traceExtension'?: boolean
-    /**
-     * Whether to fetch multiple precise definitions and references on hover.
-     */
-    'codeIntel.disableRangeQueries'?: boolean
-    /**
-     * Whether to include forked repositories in search results.
-     */
-    'basicCodeIntel.includeForks'?: boolean
-    /**
-     * Whether to include archived repositories in search results.
-     */
-    'basicCodeIntel.includeArchives'?: boolean
-    /**
-     * Whether to use only indexed requests to the search API.
-     */
-    'basicCodeIntel.indexOnly'?: boolean
-    /**
-     * The timeout (in milliseconds) for un-indexed search requests.
-     */
-    'basicCodeIntel.unindexedSearchTimeout'?: number
-    [k: string]: unknown
+  /**
+   * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence.
+   */
+  'codeIntel.lsif'?: boolean
+  /**
+   * Whether to enable trace logging on the extension.
+   */
+  'codeIntel.traceExtension'?: boolean
+  /**
+   * Whether to fetch multiple precise definitions and references on hover.
+   */
+  'codeIntel.disableRangeQueries'?: boolean
+  /**
+   * If true, do not show 'search-based' results alongside LSIF results.
+   */
+  'codeIntel.disableMixedResults'?: boolean
+  /**
+   * Whether to include forked repositories in search results.
+   */
+  'basicCodeIntel.includeForks'?: boolean
+  /**
+   * Whether to include archived repositories in search results.
+   */
+  'basicCodeIntel.includeArchives'?: boolean
+  /**
+   * Whether to use only indexed requests to the search API.
+   */
+  'basicCodeIntel.indexOnly'?: boolean
+  /**
+   * The timeout (in milliseconds) for un-indexed search requests.
+   */
+  'basicCodeIntel.unindexedSearchTimeout'?: number
+  [k: string]: unknown
 }

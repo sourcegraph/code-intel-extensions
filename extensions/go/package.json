@@ -88,6 +88,10 @@
           "description": "Whether to fetch multiple precise definitions and references on hover.",
           "type": "boolean"
         },
+        "codeIntel.disableMixedResults": {
+          "description": "If true, do not show 'search-based' results alongside LSIF results.",
+          "type": "boolean"
+        },
         "basicCodeIntel.includeForks": {
           "description": "Whether to include forked repositories in search results.",
           "type": "boolean"
