@@ -307,6 +307,9 @@ export function createReferencesProvider(
                         continue
                     }
 
+
+
+
                     // Re-emit the last results from the previous provider so that we do not overwrite
                     // what was emitted previously.
                     const results = lsifResults.concat(lspResults)
@@ -317,6 +320,18 @@ export function createReferencesProvider(
                 // Do not try to supplement with additional search results as we have all the context
                 // we need for complete and precise results here.
                 return
+            }
+
+            // If we have precise results and supplementReferencesWithSearchResults is disabled, do not
+            // fall back to display any additional search-based results, regardless if it's from a file
+            // with no precise results.
+            if (lsifResults.length > 0) {
+                const supplementReferencesWithSearchResults =
+                    sourcegraph.configuration.get().get('codeIntel.supplementReferencesWithSearchResults') ?? true
+
+                if (!supplementReferencesWithSearchResults) {
+                    return
+                }
             }
 
             const lsifFiles = new Set(lsifResults.map(file))

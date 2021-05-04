@@ -54,6 +54,10 @@
         {
           "action": "externalReferences.toggle",
           "when": "panel.activeView.id == 'references'"
+        },
+        {
+          "action": "supplementReferencesWithSearchResults.toggle",
+          "when": "panel.activeView.id == 'references'"
         }
       ]
     },
@@ -73,6 +77,22 @@
         "actionItem": {
           "label": "${config.typescript.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}"
         }
+      },
+      {
+        "id": "supplementReferencesWithSearchResults.toggle",
+        "command": "updateConfiguration",
+        "title": "${!!config.codeIntel.supplementReferencesWithSearchResults && \"Hide search results\" || \"Show search results\"}",
+        "commandArguments": [
+          [
+            "codeIntel.supplementReferencesWithSearchResults"
+          ],
+          "${!config.codeIntel.supplementReferencesWithSearchResults}",
+          null,
+          "json"
+        ],
+        "actionItem": {
+          "label": "${!!config.codeIntel.supplementReferencesWithSearchResults && \"Hide search results\" || \"Show search results\"}"
+        }
       }
     ],
     "configuration": {
@@ -90,6 +110,10 @@
         },
         "codeIntel.disableRangeQueries": {
           "description": "Whether to fetch multiple precise definitions and references on hover.",
+          "type": "boolean"
+        },
+        "codeIntel.supplementReferencesWithSearchResults": {
+          "description": "Whether to supplement precise references with search-based results.",
           "type": "boolean"
         },
         "basicCodeIntel.includeForks": {
