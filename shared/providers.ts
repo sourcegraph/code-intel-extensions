@@ -307,9 +307,6 @@ export function createReferencesProvider(
                         continue
                     }
 
-
-
-
                     // Re-emit the last results from the previous provider so that we do not overwrite
                     // what was emitted previously.
                     const results = lsifResults.concat(lspResults)
