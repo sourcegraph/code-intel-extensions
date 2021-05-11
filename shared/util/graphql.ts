@@ -1,3 +1,4 @@
+import { fromBase64 } from 'js-base64'
 import * as sourcegraph from 'sourcegraph'
 
 type GraphQLResponse<T> = GraphQLResponseSuccess<T> | GraphQLResponseError
@@ -36,4 +37,9 @@ function aggregateErrors(errors: Error[]): Error {
         name: 'AggregateError',
         errors,
     })
+}
+
+export function graphqlIdToRepoId(id: string): number {
+    const decodedId = fromBase64(id)
+    return parseInt(decodedId.split(':')[1], 10)
 }

@@ -11,6 +11,7 @@ import { API } from '../../../shared/util/api'
 describe('findReposViaGDDO', () => {
     const trimGitHubPrefix = (url: string) =>
         Promise.resolve({
+            id: 5,
             name: url.slice('github.com/'.length),
             isFork: false,
             isArchived: false,

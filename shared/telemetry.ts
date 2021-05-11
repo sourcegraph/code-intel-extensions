@@ -7,13 +7,24 @@ import * as sourcegraph from 'sourcegraph'
  */
 export class TelemetryEmitter {
     private languageID: string
+    private repoID: number
     private started: number
     private enabled: boolean
     private emitted = new Set<string>()
 
-    constructor(languageID: string, enabled = true) {
+    /**
+     * Creates a new telemetry emitter object for a given
+     * language ID and repository ID.
+     * Emitting is enabled by default
+     *
+     * @param languageID The language identifier e.g. 'java'.
+     * @param repoID numeric repository identifier.
+     * @param enabled Whether telemetry is enabled.
+     */
+    constructor(languageID: string, repoID: number, enabled = true) {
         this.languageID = languageID
         this.started = Date.now()
+        this.repoID = repoID
         this.enabled = enabled
     }
 
@@ -45,6 +56,7 @@ export class TelemetryEmitter {
                 ...args,
                 durationMs: this.elapsed(),
                 languageId: this.languageID,
+                repositoryId: this.repoID,
             })
         } catch {
             // Older version of Sourcegraph may have not registered this
