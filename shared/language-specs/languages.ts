@@ -202,7 +202,7 @@ const powershellSpec: LanguageSpec = {
     languageID: 'powershell',
     stylized: 'PowerShell',
     fileExts: ['ps1', 'psd1', 'psm1'],
-    identCharPattern: createIdentCharPattern('?'),
+    identCharPattern: createIdentCharPattern('?-'),
     commentStyles: [
         {
             // <# doc comment #>
