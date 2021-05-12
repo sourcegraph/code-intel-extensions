@@ -58,7 +58,7 @@
     "codecov": "^3.8.2",
     "dot-json": "^1.2.2",
     "eslint": "^7.26.0",
-    "fs-extra": "^9.1.0",
+    "fs-extra": "^10.0.0",
     "graphql": "^15.5.0",
     "json-schema-to-typescript": "^10.1.4",
     "lnfs-cli": "^2.1.0",
