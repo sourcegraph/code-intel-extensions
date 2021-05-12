@@ -123,13 +123,15 @@ describe('search providers', () => {
     const newAPIWithStubResolveRepo = ({
         isFork = false,
         isArchived = false,
+        id = 1,
     }: {
         isFork?: boolean
         isArchived?: boolean
+        id?: number
     } = {}): API => {
         const api = new API()
         const stub = sinon.stub(api, 'resolveRepo')
-        stub.callsFake(repo => Promise.resolve({ name: repo, isFork, isArchived }))
+        stub.callsFake(repo => Promise.resolve({ name: repo, isFork, isArchived, id }))
         return api
     }
 

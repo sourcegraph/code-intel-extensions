@@ -7,7 +7,7 @@ describe('resolvePackageRepo', () => {
     it('resolves string repo', async () => {
         const api = new API()
         const mock = sinon.stub(api, 'resolveRepo')
-        mock.callsFake(repo => Promise.resolve({ name: repo, isFork: false, isArchived: false }))
+        mock.callsFake(repo => Promise.resolve({ id: 1, name: repo, isFork: false, isArchived: false }))
         const name = await resolvePackageRepo('{"repository": "foo"}', api)
         assert.equal(name, 'foo')
         sinon.assert.calledWith(mock, 'foo')
@@ -16,7 +16,7 @@ describe('resolvePackageRepo', () => {
     it('resolves repos with url', async () => {
         const api = new API()
         const mock = sinon.stub(api, 'resolveRepo')
-        mock.callsFake(repo => Promise.resolve({ name: repo, isFork: false, isArchived: false }))
+        mock.callsFake(repo => Promise.resolve({ id: 1, name: repo, isFork: false, isArchived: false }))
         const name = await resolvePackageRepo('{"repository": {"url": "foo"}}', api)
         assert.equal(name, 'foo')
         sinon.assert.calledWith(mock, 'foo')
@@ -25,7 +25,7 @@ describe('resolvePackageRepo', () => {
     it('resolves repos without repo field', async () => {
         const api = new API()
         const mock = sinon.stub(api, 'resolveRepo')
-        mock.callsFake(repo => Promise.resolve({ name: repo, isFork: false, isArchived: false }))
+        mock.callsFake(repo => Promise.resolve({ id: 1, name: repo, isFork: false, isArchived: false }))
         const name = await resolvePackageRepo('{}', api)
         assert.equal(name, undefined)
         sinon.assert.notCalled(mock)
