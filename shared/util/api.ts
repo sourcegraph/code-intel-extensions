@@ -1,6 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
-import { queryGraphQL } from './graphql'
+import { graphqlIdToRepoId, queryGraphQL } from './graphql'
 import { isDefined, sortUnique } from './helpers'
 
 /**
@@ -44,12 +44,15 @@ export interface LineMatch {
 
 /** Metadata about a resolved repository. */
 export interface RepoMeta {
+    id: number
     name: string
     isFork: boolean
     isArchived: boolean
 }
 
 export class API {
+    /** Small never-evict map from repo names to their meta. */
+    private cachedMetas = new Map<string, RepoMeta>()
     /**
      * Retrieves the name and fork/archive status of a repository. This method
      * throws an error if the repository is not known to the Sourcegraph instance.
@@ -57,9 +60,15 @@ export class API {
      * @param name The repository's name.
      */
     public async resolveRepo(name: string): Promise<RepoMeta> {
+        const cachedMeta = this.cachedMetas.get(name)
+        if (cachedMeta !== undefined) {
+            return cachedMeta
+        }
+
         const queryWithFork = gql`
             query ResolveRepo($name: String!) {
                 repository(name: $name) {
+                    id
                     name
                     isFork
                     isArchived
@@ -77,6 +86,7 @@ export class API {
 
         interface Response {
             repository: {
+                id: string
                 name: string
                 isFork?: boolean
                 isArchived?: boolean
@@ -88,7 +98,11 @@ export class API {
         })
 
         // Assume repo is not a fork/archived for older instances
-        return { isFork: false, isArchived: false, ...data.repository }
+        const meta = { isFork: false, isArchived: false, ...data.repository, id: graphqlIdToRepoId(data.repository.id) }
+
+        this.cachedMetas.set(name, meta)
+
+        return meta
     }
 
     /**
@@ -334,7 +348,9 @@ export class API {
      * @param fileLocal Set to false to not request this field, which is absent in older versions of Sourcegraph.
      */
     public async search(searchQuery: string, fileLocal = true): Promise<SearchResult[]> {
-        const context = sourcegraph.workspace.versionContext
+        const versionContext = sourcegraph.workspace.versionContext
+        const searchContext = sourcegraph.workspace.searchContext
+        const query = searchContext ? `context:${searchContext} ${searchQuery}` : searchQuery
 
         interface Response {
             search: {
@@ -345,9 +361,9 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(buildSearchQuery(!!context, fileLocal), {
-            query: searchQuery,
-            versionContext: context,
+        const data = await queryGraphQL<Response>(buildSearchQuery(!!versionContext, fileLocal), {
+            query,
+            versionContext,
         })
         return data.search.results.results.filter(isDefined)
     }

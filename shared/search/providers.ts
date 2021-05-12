@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
-import { API, RepoMeta } from '../util/api'
+import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
 import { parseGitURI } from '../util/uri'
@@ -42,21 +42,6 @@ export function createProviders(
     wrappedProviders: { definition?: sourcegraph.DefinitionProvider },
     api: API = new API()
 ): Providers {
-    /** Small never-evict map from repo names to their meta. */
-    const cachedMetas = new Map<string, Promise<RepoMeta>>()
-
-    /** Retrieves the name and fork/archive status of a repository. */
-    const resolveRepo = (name: string): Promise<RepoMeta> => {
-        const cachedMeta = cachedMetas.get(name)
-        if (cachedMeta !== undefined) {
-            return cachedMeta
-        }
-
-        const meta = api.resolveRepo(name)
-        cachedMetas.set(name, meta)
-        return meta
-    }
-
     /* A small (randomly evicting) cache from URIs to file contents. */
     const cachedFileContents = new Map<string, Promise<string | undefined>>()
 
@@ -128,7 +113,7 @@ export function createProviders(
         }
         const { text, searchToken } = contentAndToken
         const { repo, commit, path } = parseGitURI(new URL(textDocument.uri))
-        const { isFork, isArchived } = await resolveRepo(repo)
+        const { isFork, isArchived } = await api.resolveRepo(repo)
 
         // Construct base definition query without scoping terms
         const queryTerms = definitionQuery({ searchToken, doc: textDocument, fileExts: fileExtensions })
@@ -179,7 +164,7 @@ export function createProviders(
         }
         const { searchToken } = contentAndToken
         const { repo, commit } = parseGitURI(new URL(textDocument.uri))
-        const { isFork, isArchived } = await resolveRepo(repo)
+        const { isFork, isArchived } = await api.resolveRepo(repo)
 
         // Construct base references query without scoping terms
         const queryTerms = referencesQuery({ searchToken, doc: textDocument, fileExts: fileExtensions })

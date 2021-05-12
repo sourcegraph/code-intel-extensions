@@ -6,6 +6,7 @@ import { Logger, NoopLogger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
 import { TelemetryEmitter } from './telemetry'
+import { API } from './util/api'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
 import { noopAsyncGenerator, observableFromAsyncIterator } from './util/ix'
 import { parseGitURI } from './util/uri'
@@ -76,8 +77,9 @@ export const noopProviders = {
  */
 export function createProviders(languageSpec: LanguageSpec, logger: Logger): SourcegraphProviders {
     const wrapped: { definition?: sourcegraph.DefinitionProvider } = {}
+    const api = new API()
     const lsifProviders = createLSIFProviders(logger)
-    const searchProviders = createSearchProviders(languageSpec, wrapped)
+    const searchProviders = createSearchProviders(languageSpec, wrapped, api)
 
     const providerLogger =
         sourcegraph.configuration.get().get('codeIntel.traceExtension') ?? false ? console : new NoopLogger()
@@ -141,15 +143,17 @@ export function createDefinitionProvider(
     searchProvider: DefinitionProvider,
     logger?: Logger,
     languageID: string = '',
-    quiet = false
+    quiet = false,
+    api = new API()
 ): sourcegraph.DefinitionProvider {
     return {
         provideDefinition: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Definition | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter(languageID, !quiet)
             const { repo } = parseGitURI(new URL(textDocument.uri))
+            const repoId = (await api.resolveRepo(repo)).id
+            const emitter = new TelemetryEmitter(languageID, repoId, !quiet)
             const commonFields = { provider: 'definition', repo, textDocument, position, emitter, logger }
             const lsifWrapper = await lsifProvider(textDocument, position)
             let hasPreciseResult = false
@@ -200,7 +204,8 @@ export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
     logger?: Logger,
-    languageID: string = ''
+    languageID: string = '',
+    api = new API()
 ): sourcegraph.ReferenceProvider {
     return {
         provideReferences: wrapProvider(async function* (
@@ -208,8 +213,9 @@ export function createReferencesProvider(
             position: sourcegraph.Position,
             context: sourcegraph.ReferenceContext
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-            const emitter = new TelemetryEmitter(languageID)
             const { repo } = parseGitURI(new URL(textDocument.uri))
+            const repoId = (await api.resolveRepo(repo)).id
+            const emitter = new TelemetryEmitter(languageID, repoId)
             const commonFields = { repo, textDocument, position, emitter, logger, provider: 'references' }
 
             let lsifResults: sourcegraph.Location[] = []
@@ -323,7 +329,8 @@ export function createHoverProvider(
     searchDefinitionProvider: DefinitionProvider,
     searchHoverProvider: HoverProvider,
     logger?: Logger,
-    languageID: string = ''
+    languageID: string = '',
+    api = new API()
 ): sourcegraph.HoverProvider {
     const searchAlerts =
         lsifSupport === LSIFSupport.None
@@ -339,8 +346,9 @@ export function createHoverProvider(
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Badged<sourcegraph.Hover> | null | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter(languageID)
-            const { path } = parseGitURI(new URL(textDocument.uri))
+            const { repo, path } = parseGitURI(new URL(textDocument.uri))
+            const repoId = (await api.resolveRepo(repo)).id
+            const emitter = new TelemetryEmitter(languageID, repoId)
             const commonLogFields = { path, line: position.line, character: position.character }
             const lsifWrapper = await lsifProvider(textDocument, position)
 
@@ -422,14 +430,17 @@ function badgeHoverResult(
 export function createDocumentHighlightProvider(
     lsifProvider: DocumentHighlightProvider,
     logger?: Logger,
-    languageID: string = ''
+    languageID: string = '',
+    api = new API()
 ): sourcegraph.DocumentHighlightProvider {
     return {
         provideDocumentHighlights: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.DocumentHighlight[] | null | undefined, void, undefined> {
-            const emitter = new TelemetryEmitter(languageID)
+            const { repo } = parseGitURI(new URL(textDocument.uri))
+            const repoId = (await api.resolveRepo(repo)).id
+            const emitter = new TelemetryEmitter(languageID, repoId)
 
             for await (const lsifResult of lsifProvider(textDocument, position)) {
                 if (lsifResult) {

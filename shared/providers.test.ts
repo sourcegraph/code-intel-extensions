@@ -11,6 +11,7 @@ import {
     createHoverProvider,
     createReferencesProvider,
 } from './providers'
+import { API } from './util/api'
 
 const textDocument = createStubTextDocument({
     uri: 'https://sourcegraph.test/repo@rev/-/raw/foo.ts',
@@ -35,6 +36,21 @@ const hover1: sourcegraph.Hover = { contents: { value: 'test1' } }
 const hover2: sourcegraph.Hover = { contents: { value: 'test2' } }
 const hover3: sourcegraph.Hover = { contents: { value: 'test3' } }
 
+const trimGitHubPrefix = (url: string) =>
+    Promise.resolve({
+        id: 5,
+        name: url.slice('github.com/'.length),
+        isFork: false,
+        isArchived: false,
+    })
+
+const makeStubAPI = (): API => {
+    const api = new API()
+    const stub = sinon.stub(api, 'resolveRepo')
+    stub.callsFake(trimGitHubPrefix)
+    return api
+}
+
 describe('createDefinitionProvider', () => {
     it('uses LSIF definitions as source of truth', async () => {
         const result = createDefinitionProvider(
@@ -51,7 +67,12 @@ describe('createDefinitionProvider', () => {
     it('falls back to basic when precise results are not found', async () => {
         const result = createDefinitionProvider(
             () => Promise.resolve(null),
-            () => asyncGeneratorFromValues([location3])
+            () => asyncGeneratorFromValues([location3]),
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            makeStubAPI()
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
         assert.deepStrictEqual(await gatherValues(result), [
@@ -72,7 +93,11 @@ describe('createReferencesProvider', () => {
                     [location1, location2],
                     [location1, location2, location3],
                 ]),
-            () => asyncGeneratorFromValues([])
+            () => asyncGeneratorFromValues([]),
+            undefined,
+            undefined,
+            undefined,
+            makeStubAPI()
         ).provideReferences(textDocument, position, {
             includeDeclaration: false,
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
@@ -97,7 +122,11 @@ describe('createReferencesProvider', () => {
                     [location1, location2],
                     [location1, location2, location3],
                 ]),
-            () => asyncGeneratorFromValues([[location4]])
+            () => asyncGeneratorFromValues([[location4]]),
+            undefined,
+            undefined,
+            undefined,
+            makeStubAPI()
         ).provideReferences(textDocument, position, {
             includeDeclaration: false,
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
@@ -292,8 +321,11 @@ describe('createHoverProvider', () => {
 
 describe('createDocumentHighlightProvider', () => {
     it('uses LSIF document highlights', async () => {
-        const result = createDocumentHighlightProvider(() =>
-            asyncGeneratorFromValues([[{ range: range1 }, { range: range2 }]])
+        const result = createDocumentHighlightProvider(
+            () => asyncGeneratorFromValues([[{ range: range1 }, { range: range2 }]]),
+            undefined,
+            undefined,
+            makeStubAPI()
         ).provideDocumentHighlights(textDocument, position) as Observable<sourcegraph.DocumentHighlight[]>
 
         assert.deepStrictEqual(await gatherValues(result), [[{ range: range1 }, { range: range2 }]])
