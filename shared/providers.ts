@@ -262,6 +262,26 @@ const file = (location_: sourcegraph.Location): string =>
     `${location_.uri.host} ${location_.uri.pathname} ${location_.uri.hash}`
 
 /**
+ * A cache of precise results from the previous references provider request. This is used to quick-start
+ * the request that occurs after re-registering the references provider when the user config setting
+ * mixPreciseAndSearchBasedReferences changes value.
+ */
+let lsifReferenceResultCache:
+    | {
+          textDocumentUri: string
+          position: sourcegraph.Position
+          lsifResults: sourcegraph.Location[]
+      }
+    | undefined
+
+/**
+ * Unsets lsifReferenceResultCache. Exported for testing.
+ */
+export function clearReferenceResultCache() {
+    lsifReferenceResultCache = undefined
+}
+
+/**
  * Creates a reference provider.
  *
  * @param lsifProvider The LSIF-based references provider.
@@ -291,16 +311,30 @@ export function createReferencesProvider(
             const commonFields = { repo, textDocument, position, emitter, logger, provider: 'references' }
 
             let lsifResults: sourcegraph.Location[] = []
-            for await (const rawResult of lsifProvider(textDocument, position, context)) {
-                if (!nonEmpty(rawResult)) {
-                    continue
+            if (
+                lsifReferenceResultCache?.textDocumentUri === textDocument.uri &&
+                lsifReferenceResultCache?.position.isEqual(position)
+            ) {
+                // If we just made this request we can just return the results from the previous
+                // invocation immediately. These results have already been badged and don't need
+                // to be logged twice.
+                lsifResults = lsifReferenceResultCache.lsifResults
+                yield lsifResults
+            } else {
+                for await (const rawResult of lsifProvider(textDocument, position, context)) {
+                    if (!nonEmpty(rawResult)) {
+                        continue
+                    }
+
+                    // Mark results as precise
+                    const aggregableBadges = [indicators.semanticBadge]
+                    lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
+                    logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
+                    yield lsifResults
                 }
 
-                // Mark results as precise
-                const aggregableBadges = [indicators.semanticBadge]
-                lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
-                logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
-                yield lsifResults
+                // Cache new precise results
+                lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
             }
 
             if (lspProvider) {

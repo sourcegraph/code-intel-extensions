@@ -10,6 +10,7 @@ import {
     createDocumentHighlightProvider,
     createHoverProvider,
     createReferencesProvider,
+    clearReferenceResultCache,
 } from './providers'
 
 const textDocument = createStubTextDocument({
@@ -78,6 +79,8 @@ describe('createDefinitionProvider', () => {
 })
 
 describe('createReferencesProvider', () => {
+    beforeEach(clearReferenceResultCache)
+
     it('uses LSIF definitions as source of truth', async () => {
         const result = createReferencesProvider(
             () =>
