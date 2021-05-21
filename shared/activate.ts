@@ -1,5 +1,5 @@
 import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
-import { distinctUntilChanged, map } from 'rxjs/operators'
+import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
@@ -227,7 +227,8 @@ function activateWithoutLSP(
     context.subscriptions.add(
         from(sourcegraph.configuration)
             .pipe(
-                map(() => sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ?? true),
+                startWith(true),
+                map(() => sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ??false),
                 distinctUntilChanged(),
                 map(registerReferencesProvider)
             )
