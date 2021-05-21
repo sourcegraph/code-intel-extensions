@@ -206,8 +206,16 @@ function activateWithoutLSP(
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, wrapper.definition()))
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, wrapper.hover()))
 
-    //
-    // Re-register references provider whenever settings change
+    // Do not try to register this provider on pre-3.18 instances as
+    // it didn't exist.
+    if (sourcegraph.languages.registerDocumentHighlightProvider) {
+        context.subscriptions.add(
+            sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
+        )
+    }
+
+    // Re-register the references provider whenever the value of the
+    // mixPreciseAndSearchReferences setting changes.
 
     let unsubscribeReferencesProvider: sourcegraph.Unsubscribable
     const registerReferencesProvider = (): void => {
@@ -225,14 +233,6 @@ function activateWithoutLSP(
             )
             .subscribe()
     )
-    registerReferencesProvider()
-
-    // Do not try to register this provider on pre-3.18 instances as it didn't exist.
-    if (sourcegraph.languages.registerDocumentHighlightProvider) {
-        context.subscriptions.add(
-            sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
-        )
-    }
 }
 
 /**
