@@ -227,7 +227,7 @@ function activateWithoutLSP(
     context.subscriptions.add(
         from(sourcegraph.configuration)
             .pipe(
-                startWith(true),
+                startWith(false),
                 map(() => sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ?? false),
                 distinctUntilChanged(),
                 map(registerReferencesProvider)
