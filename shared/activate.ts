@@ -1,5 +1,5 @@
-import { BehaviorSubject, from, Observable, pipe, Subject, UnsubscriptionError } from 'rxjs'
-import { distinctUntilChanged, first, map, observeOn, tap } from 'rxjs/operators'
+import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
+import { distinctUntilChanged, map } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
