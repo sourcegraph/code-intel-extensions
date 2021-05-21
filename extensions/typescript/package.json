@@ -81,7 +81,7 @@
       {
         "id": "mixPreciseAndSearchBasedReferences.toggle",
         "command": "updateConfiguration",
-        "title": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search results when precise results are available\" || \"Mix precise and search results\"}",
+        "title": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}",
         "commandArguments": [
           [
             "codeIntel.mixPreciseAndSearchBasedReferences"
@@ -91,7 +91,7 @@
           "json"
         ],
         "actionItem": {
-          "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search results when precise results are available\" || \"Mix precise and search results\"}"
+          "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}"
         }
       }
     ],
