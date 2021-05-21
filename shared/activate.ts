@@ -215,7 +215,7 @@ function activateWithoutLSP(
     }
 
     // Re-register the references provider whenever the value of the
-    // mixPreciseAndSearchReferences setting changes.
+    // mixPreciseAndSearchBasedReferences setting changes.
 
     let unsubscribeReferencesProvider: sourcegraph.Unsubscribable
     const registerReferencesProvider = (): void => {
@@ -227,7 +227,7 @@ function activateWithoutLSP(
     context.subscriptions.add(
         from(sourcegraph.configuration)
             .pipe(
-                map(() => sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchReferences') ?? true),
+                map(() => sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ?? true),
                 distinctUntilChanged(),
                 map(registerReferencesProvider)
             )

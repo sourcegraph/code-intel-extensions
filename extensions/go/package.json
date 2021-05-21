@@ -52,7 +52,7 @@
           "when": "panel.activeView.id == 'references'"
         },
         {
-          "action": "mixPreciseAndSearchReferences.toggle",
+          "action": "mixPreciseAndSearchBasedReferences.toggle",
           "when": "panel.activeView.id == 'references'"
         }
       ]
@@ -75,19 +75,19 @@
         }
       },
       {
-        "id": "mixPreciseAndSearchReferences.toggle",
+        "id": "mixPreciseAndSearchBasedReferences.toggle",
         "command": "updateConfiguration",
-        "title": "${!!config.codeIntel.mixPreciseAndSearchReferences && \"Hide search results when precise results are available\" || \"Mix precise and search results\"}",
+        "title": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search results when precise results are available\" || \"Mix precise and search results\"}",
         "commandArguments": [
           [
-            "codeIntel.mixPreciseAndSearchReferences"
+            "codeIntel.mixPreciseAndSearchBasedReferences"
           ],
-          "${!config.codeIntel.mixPreciseAndSearchReferences}",
+          "${!config.codeIntel.mixPreciseAndSearchBasedReferences}",
           null,
           "json"
         ],
         "actionItem": {
-          "label": "${!!config.codeIntel.mixPreciseAndSearchReferences && \"Hide search results when precise results are available\" || \"Mix precise and search results\"}"
+          "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search results when precise results are available\" || \"Mix precise and search results\"}"
         }
       }
     ],
@@ -108,7 +108,7 @@
           "description": "Whether to fetch multiple precise definitions and references on hover.",
           "type": "boolean"
         },
-        "codeIntel.mixPreciseAndSearchReferences": {
+        "codeIntel.mixPreciseAndSearchBasedReferences": {
           "description": "Whether to supplement precise references with search-based results.",
           "type": "boolean"
         },
