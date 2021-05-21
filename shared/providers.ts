@@ -289,17 +289,18 @@ export function clearReferenceResultCache(): void {
  * @param lspProvider An optional LSP-based references provider.
  * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
+ * @param shouldMixPreciseAndSearchBasedReferences is a function that returns whether
+ * or not search-based results should be displayed when precise results are available.
  */
 export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
     lspProvider?: ReferencesProvider,
     logger?: Logger,
-    languageID: string = ''
+    languageID: string = '',
+    shouldMixPreciseAndSearchBasedReferences = (): boolean =>
+        Boolean(sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ?? false)
 ): sourcegraph.ReferenceProvider {
-    const mixPreciseAndSearchBasedReferences =
-        sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ?? false
-
     return {
         provideReferences: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
@@ -366,7 +367,7 @@ export function createReferencesProvider(
             // If we have precise results and mixPreciseAndSearchBasedReferences is disabled, do not fall
             // back to display any additional search-based results, regardless if it's from a file with
             // no precise results.
-            if (lsifResults.length > 0 && !mixPreciseAndSearchBasedReferences) {
+            if (lsifResults.length > 0 && !shouldMixPreciseAndSearchBasedReferences()) {
                 if (cached) {
                     // If we haven't emitted lsif results yet, do so now
                     yield lsifResults

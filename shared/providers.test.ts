@@ -62,7 +62,7 @@ describe('createDefinitionProvider', () => {
         assert.deepStrictEqual(await gatherValues(result), [location1, location2])
     })
 
-    it('falls back to basic when precise results are not found', async () => {
+    it('falls back to search when precise results are not found', async () => {
         const result = createDefinitionProvider(
             () => Promise.resolve(null),
             () => asyncGeneratorFromValues([location3])
@@ -165,7 +165,11 @@ describe('createReferencesProvider', () => {
                     [location1, location2],
                     [location1, location2, location3],
                 ]),
-            () => asyncGeneratorFromValues([[location4]])
+            () => asyncGeneratorFromValues([[location4]]),
+            undefined,
+            undefined,
+            undefined,
+            () => true
         ).provideReferences(textDocument, position, {
             includeDeclaration: false,
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
@@ -200,7 +204,11 @@ describe('createReferencesProvider', () => {
                     [location1, location2],
                     [location1, location2, location3],
                 ]),
-            () => asyncGeneratorFromValues([[location4], [location4, location7, location8, location9]])
+            () => asyncGeneratorFromValues([[location4], [location4, location7, location8, location9]]),
+            undefined,
+            undefined,
+            undefined,
+            () => true
         ).provideReferences(textDocument, position, {
             includeDeclaration: false,
         }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
@@ -239,6 +247,113 @@ describe('createReferencesProvider', () => {
                     badge: indicators.impreciseBadge,
                     aggregableBadges: [indicators.searchBasedBadge],
                 },
+            ],
+        ])
+    })
+
+    it('supplements LSIF results with search results (disabled)', async () => {
+        const result = createReferencesProvider(
+            () =>
+                asyncGeneratorFromValues([
+                    [location1, location2],
+                    [location1, location2, location3],
+                ]),
+            () => asyncGeneratorFromValues([[location4], [location4, location7, location8, location9]]),
+            undefined,
+            undefined,
+            undefined,
+            () => false
+        ).provideReferences(textDocument, position, {
+            includeDeclaration: false,
+        }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
+
+        assert.deepStrictEqual(await gatherValues(result), [
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+            ],
+        ])
+    })
+
+    it('supplements LSIF results with search results (toggled)', async () => {
+        const mixedResults = createReferencesProvider(
+            () =>
+                asyncGeneratorFromValues([
+                    [location1, location2],
+                    [location1, location2, location3],
+                ]),
+            () => asyncGeneratorFromValues([[location4], [location4, location7, location8, location9]]),
+            undefined,
+            undefined,
+            undefined,
+            () => true
+        ).provideReferences(textDocument, position, {
+            includeDeclaration: false,
+        }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
+
+        assert.deepStrictEqual(await gatherValues(mixedResults), [
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                {
+                    ...location4,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
+            ],
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                {
+                    ...location4,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
+                {
+                    ...location9,
+                    badge: indicators.impreciseBadge,
+                    aggregableBadges: [indicators.searchBasedBadge],
+                },
+            ],
+        ])
+
+        const preciseResults = createReferencesProvider(
+            () =>
+                asyncGeneratorFromValues([
+                    [location1, location2],
+                    [location1, location2, location3],
+                ]),
+            () => asyncGeneratorFromValues([[location4], [location4, location7, location8, location9]]),
+            undefined,
+            undefined,
+            undefined,
+            () => false
+        ).provideReferences(textDocument, position, {
+            includeDeclaration: false,
+        }) as Observable<sourcegraph.Badged<sourcegraph.Location>[]>
+
+        // Should immediately return all precise results from previous call
+        assert.deepStrictEqual(await gatherValues(preciseResults), [
+            [
+                { ...location1, aggregableBadges: [indicators.semanticBadge] },
+                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location3, aggregableBadges: [indicators.semanticBadge] },
             ],
         ])
     })
@@ -327,7 +442,7 @@ describe('createHoverProvider', () => {
         ])
     })
 
-    it('falls back to basic when precise results are not found', async () => {
+    it('falls back to search when precise results are not found', async () => {
         const result = createHoverProvider(
             LSIFSupport.None,
             () => Promise.resolve(null),
