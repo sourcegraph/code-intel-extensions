@@ -21,7 +21,7 @@ export interface SearchBasedCodeIntelligenceSettings {
     /**
      * Whether to supplement precise references with search-based results.
      */
-    'codeIntel.supplementReferencesWithSearchResults'?: boolean
+    'codeIntel.mixPreciseAndSearchReferences'?: boolean
     /**
      * Whether to include forked repositories in search results.
      */

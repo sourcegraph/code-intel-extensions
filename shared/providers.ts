@@ -277,6 +277,9 @@ export function createReferencesProvider(
     logger?: Logger,
     languageID: string = ''
 ): sourcegraph.ReferenceProvider {
+    const mixPreciseAndSearchReferences =
+        sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchReferences') ?? true
+
     return {
         provideReferences: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
@@ -319,16 +322,11 @@ export function createReferencesProvider(
                 return
             }
 
-            // If we have precise results and supplementReferencesWithSearchResults is disabled, do not
-            // fall back to display any additional search-based results, regardless if it's from a file
-            // with no precise results.
-            if (lsifResults.length > 0) {
-                const supplementReferencesWithSearchResults =
-                    sourcegraph.configuration.get().get('codeIntel.supplementReferencesWithSearchResults') ?? true
-
-                if (!supplementReferencesWithSearchResults) {
-                    return
-                }
+            // If we have precise results and mixPreciseAndSearchReferences is disabled, do not fall
+            // back to display any additional search-based results, regardless if it's from a file with
+            // no precise results.
+            if (lsifResults.length > 0 && !mixPreciseAndSearchReferences) {
+                return
             }
 
             const lsifFiles = new Set(lsifResults.map(file))
