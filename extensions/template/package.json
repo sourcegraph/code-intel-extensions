@@ -23,7 +23,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=v14.16.0"
+    "node": ">=v14.17.0"
   },
   "browserslist": [
     "last 1 Chrome versions",
@@ -40,7 +40,7 @@
     "symlink-package": "../../node_modules/.bin/mkdirp dist && ../../node_modules/.bin/lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && ../../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
-    "publish": "yarn -s && src -config \"${SRC_CONFIG}\" ext publish"
+    "publish": "yarn -s && src -config \"${SRC_CONFIG}\" ext publish -git-head \"${BUILDKITE_COMMIT}\""
   },
   "contributes": {
     "menus": {
