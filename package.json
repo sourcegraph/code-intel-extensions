@@ -51,7 +51,7 @@
     "@types/mocha": "8.2.2",
     "@types/mock-require": "2.0.0",
     "@types/mz": "2.7.3",
-    "@types/node": "13.13.51",
+    "@types/node": "14.17.1",
     "@types/node-fetch": "2.5.10",
     "@types/uuid": "8.3.0",
     "@types/yargs": "16.0.3",
