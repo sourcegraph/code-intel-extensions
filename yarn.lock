@@ -969,13 +969,13 @@
   dependencies:
     "@sourcegraph/extension-api-types" "^2.1.0"
 
-"@sourcegraph/extension-api-stubs@^1.5.2":
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-stubs/-/extension-api-stubs-1.5.2.tgz#b3d2bd3a629c510e15e63ee02a96111caf87134a"
-  integrity sha512-YtVaca1n52FQuhLD6t8tr/PswUlIVM+npn1dQ4pl1I+2o6DXmWVrKKZDfOr1mUOybgszQ0I3vXOkEAEdXznfTg==
+"@sourcegraph/extension-api-stubs@^1.5.3":
+  version "1.5.3"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-stubs/-/extension-api-stubs-1.5.3.tgz#1fe96b5090dfaa0a56a3da1359a32039277fe8e9"
+  integrity sha512-1QeiDLK9KcUOPkeoOe19ieHZN4Uz5GsY9qEwtM/n2e9Ew4kNJMvfid+8MFAo8MVcoLMtbMxJbs03LqwJTB1shg==
   dependencies:
     "@sourcegraph/extension-api-classes" "^1.1.0"
-    "@types/sinon" "10.0.1"
+    "@types/sinon" "10.0.2"
     rxjs "^6.5.1"
     sinon "^10.0.0"
     sourcegraph "^25.3.0"
@@ -1142,10 +1142,10 @@
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
   integrity sha512-ce5d3q03Ex0sy4R14722Rmt6MT07Ua+k4FwDfdcToYJcMKNtRVQvJ6JCAPdAmAnbRb6CsX6aYb9m96NGod9uTw==
 
-"@types/sinon@10.0.1":
-  version "10.0.1"
-  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-10.0.1.tgz#97ccb0482b750f5140ffdc661240ebbbe6e28d75"
-  integrity sha512-tZulsvuJwif5ddTBtscflI7gJcd+RpENcNZ7QCp0jKEl0bZY3Pu6PbJs4GR3SfQkGgsUa+FrlKsKQ0XyGNvDuA==
+"@types/sinon@10.0.2":
+  version "10.0.2"
+  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-10.0.2.tgz#f360d2f189c0fd433d14aeb97b9d705d7e4cc0e4"
+  integrity sha512-BHn8Bpkapj8Wdfxvh2jWIUoaYB/9/XhsL0oOvBfRagJtKlSl9NWPcFOz2lRukI9szwGxFtYZCTejJSqsGDbdmw==
   dependencies:
     "@sinonjs/fake-timers" "^7.1.0"
 
