@@ -64,7 +64,7 @@ const makeAlert = ({
         iconKind: 'info',
         summary: {
             kind: sourcegraph.MarkupKind.Markdown,
-            value: `${message} [Learn more about precise code intelligence](${linkURL})`,
+            value: `${message}<br /> [Learn more about precise code intelligence](${linkURL})`,
         },
         ...legacyFields,
     }
