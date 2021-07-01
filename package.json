@@ -59,7 +59,7 @@
     "dot-json": "^1.2.2",
     "eslint": "^7.28.0",
     "fs-extra": "^10.0.0",
-    "graphql": "^15.5.0",
+    "graphql": "^15.5.1",
     "json-schema-to-typescript": "^10.1.4",
     "lnfs-cli": "^2.1.0",
     "mkdirp": "^1.0.4",
