@@ -1,5 +1,5 @@
 import { BehaviorSubject, from, Observable, Subject } from 'rxjs'
-import { distinctUntilChanged, map } from 'rxjs/operators'
+import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
@@ -204,18 +204,36 @@ function activateWithoutLSP(
     wrapper: ProviderWrapper
 ): void {
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, wrapper.definition()))
-
-    context.subscriptions.add(sourcegraph.languages.registerReferenceProvider(selector, wrapper.references()))
-
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, wrapper.hover()))
 
-    // Do not try to register this provider on pre-3.18 instances as it
-    // didn't exist.
+    // Do not try to register this provider on pre-3.18 instances as
+    // it didn't exist.
     if (sourcegraph.languages.registerDocumentHighlightProvider) {
         context.subscriptions.add(
             sourcegraph.languages.registerDocumentHighlightProvider(selector, wrapper.documentHighlights())
         )
     }
+
+    // Re-register the references provider whenever the value of the
+    // mixPreciseAndSearchBasedReferences setting changes.
+
+    let unsubscribeReferencesProvider: sourcegraph.Unsubscribable
+    const registerReferencesProvider = (): void => {
+        unsubscribeReferencesProvider?.unsubscribe()
+        unsubscribeReferencesProvider = sourcegraph.languages.registerReferenceProvider(selector, wrapper.references())
+        context.subscriptions.add(unsubscribeReferencesProvider)
+    }
+
+    context.subscriptions.add(
+        from(sourcegraph.configuration)
+            .pipe(
+                startWith(false),
+                map(() => sourcegraph.configuration.get().get('codeIntel.mixPreciseAndSearchBasedReferences') ?? false),
+                distinctUntilChanged(),
+                map(registerReferencesProvider)
+            )
+            .subscribe()
+    )
 }
 
 /**

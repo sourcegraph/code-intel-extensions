@@ -19,6 +19,10 @@ export interface Settings {
      */
     'codeIntel.disableRangeQueries'?: boolean
     /**
+     * Whether to supplement precise references with search-based results.
+     */
+    'codeIntel.mixPreciseAndSearchBasedReferences'?: boolean
+    /**
      * Whether to include forked repositories in search results.
      */
     'basicCodeIntel.includeForks'?: boolean

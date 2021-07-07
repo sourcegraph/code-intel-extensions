@@ -50,6 +50,10 @@
         {
           "action": "externalReferences.toggle",
           "when": "panel.activeView.id == 'references'"
+        },
+        {
+          "action": "mixPreciseAndSearchBasedReferences.toggle",
+          "when": "panel.activeView.id == 'references'"
         }
       ]
     },
@@ -69,6 +73,22 @@
         "actionItem": {
           "label": "${config.go.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}"
         }
+      },
+      {
+        "id": "mixPreciseAndSearchBasedReferences.toggle",
+        "command": "updateConfiguration",
+        "title": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}",
+        "commandArguments": [
+          [
+            "codeIntel.mixPreciseAndSearchBasedReferences"
+          ],
+          "${!config.codeIntel.mixPreciseAndSearchBasedReferences}",
+          null,
+          "json"
+        ],
+        "actionItem": {
+          "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}"
+        }
       }
     ],
     "configuration": {
@@ -86,6 +106,10 @@
         },
         "codeIntel.disableRangeQueries": {
           "description": "Whether to fetch multiple precise definitions and references on hover.",
+          "type": "boolean"
+        },
+        "codeIntel.mixPreciseAndSearchBasedReferences": {
+          "description": "Whether to supplement precise references with search-based results.",
           "type": "boolean"
         },
         "basicCodeIntel.includeForks": {
