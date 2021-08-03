@@ -34,11 +34,11 @@ trap '{ rm -f "$tmpfile"; }' EXIT
 mapfile -t icons < <(ls icons)
 
 for lang in "${icons[@]%.*}"; do
-cat << EOF >> ${tmpfile}
-  - command: ./.buildkite/gen-and-publish.sh "${lang}"
+cat << EOF >> "${tmpfile}"
+  - command: ./.buildkite/generate-and-publish.sh "${lang}"
     label: ':${special_icons[$lang]:-$lang}: :rocket:'
     branches: master
 EOF
 done
 
-cat ./.buildkite/base-pipeline.yml ${tmpfile}
+cat ./.buildkite/base-pipeline.yml "${tmpfile}"

@@ -8,5 +8,4 @@ steps:
     label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
     label: ':jest: :codecov:'
-
   - wait
