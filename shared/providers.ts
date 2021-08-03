@@ -214,7 +214,7 @@ export function createDefinitionProvider(
 
             for await (const rawResults of asArray(lsifWrapper?.definition || [])) {
                 // Mark new results as precise
-                const aggregableBadges = [indicators.semanticBadge]
+                const aggregableBadges = [indicators.preciseBadge]
                 const results = { ...rawResults, aggregableBadges }
                 logLocationResults({ ...commonFields, action: 'lsifDefinitions', results })
                 yield results
@@ -347,7 +347,7 @@ export function createReferencesProvider(
                     }
 
                     // Mark results as precise
-                    const aggregableBadges = [indicators.semanticBadge]
+                    const aggregableBadges = [indicators.preciseBadge]
                     lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
                     logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
                     yield lsifResults
@@ -545,7 +545,7 @@ export function createHoverProvider(
                     // repository, but the dependent repository still has hover information for
                     // externally defined symbols.
                     [!hasSearchBasedDefinition ? indicators.lsif : indicators.lsifPartialHoverOnly],
-                    [!hasSearchBasedDefinition ? indicators.semanticBadge : indicators.partialHoverNoDefinitionBadge]
+                    [!hasSearchBasedDefinition ? indicators.preciseBadge : indicators.partialHoverNoDefinitionBadge]
                 )
 
                 // Found the best precise hover text we'll get. Stop.

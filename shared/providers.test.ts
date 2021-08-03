@@ -67,8 +67,8 @@ describe('createDefinitionProvider', () => {
         ).provideDefinition(textDocument, position) as Observable<sourcegraph.Definition>
 
         assert.deepStrictEqual(await gatherValues(result), [
-            { ...location1, aggregableBadges: [indicators.semanticBadge] },
-            { ...location2, aggregableBadges: [indicators.semanticBadge] },
+            { ...location1, aggregableBadges: [indicators.preciseBadge] },
+            { ...location2, aggregableBadges: [indicators.preciseBadge] },
         ])
     })
 
@@ -128,13 +128,13 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
         ])
     })
@@ -179,18 +179,18 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
                 location4,
                 location5,
             ],
@@ -216,18 +216,18 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
                 {
                     ...location4,
                     badge: indicators.impreciseBadge,
@@ -256,18 +256,18 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
                 {
                     ...location4,
                     badge: indicators.impreciseBadge,
@@ -275,9 +275,9 @@ describe('createReferencesProvider', () => {
                 },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
                 {
                     ...location4,
                     badge: indicators.impreciseBadge,
@@ -311,13 +311,13 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(result), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
         ])
     })
@@ -341,18 +341,18 @@ describe('createReferencesProvider', () => {
 
         assert.deepStrictEqual(await gatherValues(mixedResults), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
                 {
                     ...location4,
                     badge: indicators.impreciseBadge,
@@ -360,9 +360,9 @@ describe('createReferencesProvider', () => {
                 },
             ],
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
                 {
                     ...location4,
                     badge: indicators.impreciseBadge,
@@ -395,9 +395,9 @@ describe('createReferencesProvider', () => {
         // Should immediately return all precise results from previous call
         assert.deepStrictEqual(await gatherValues(preciseResults), [
             [
-                { ...location1, aggregableBadges: [indicators.semanticBadge] },
-                { ...location2, aggregableBadges: [indicators.semanticBadge] },
-                { ...location3, aggregableBadges: [indicators.semanticBadge] },
+                { ...location1, aggregableBadges: [indicators.preciseBadge] },
+                { ...location2, aggregableBadges: [indicators.preciseBadge] },
+                { ...location3, aggregableBadges: [indicators.preciseBadge] },
             ],
         ])
     })
@@ -422,7 +422,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover1,
                 alerts: [indicators.lsif],
-                aggregableBadges: [indicators.semanticBadge],
+                aggregableBadges: [indicators.preciseBadge],
             },
         ])
 
@@ -472,7 +472,7 @@ describe('createHoverProvider', () => {
             {
                 ...hover1,
                 alerts: [indicators.lsif],
-                aggregableBadges: [indicators.semanticBadge],
+                aggregableBadges: [indicators.preciseBadge],
             },
         ])
     })
