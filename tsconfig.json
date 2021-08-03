@@ -1,6 +1,6 @@
 {
   "extends": "@sourcegraph/tsconfig",
-  "references": [{ "path": "template" }, { "path": "dev/scripts" }],
+  "references": [{ "path": "template" }],
   "compilerOptions": {
     "target": "es2019",
     "module": "commonjs",
@@ -12,6 +12,8 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "typeRoots": ["./node_modules/@types"],
+    "outDir": "dist",
   },
-  "include": [],
+  "include": ["./**/*"],
+  "exclude": ["generated"],
 }

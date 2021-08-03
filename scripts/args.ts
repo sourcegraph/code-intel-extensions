@@ -1,6 +1,6 @@
 import yargs from 'yargs'
-import { languageSpecs } from '../../template/src/language-specs/languages'
-import { LanguageSpec } from '../../template/src/language-specs/spec'
+import { languageSpecs } from '../template/src/language-specs/languages'
+import { LanguageSpec } from '../template/src/language-specs/spec'
 
 export function findLanguageSpecs(): LanguageSpec[] {
     const args = yargs

@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "references": [{ "path": "../../template/src" }],
-  "compilerOptions": {
-    "outDir": "dist",
-  },
-  "include": ["./**/*"],
-  "exclude": ["dist"],
-}
