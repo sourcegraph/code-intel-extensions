@@ -34,7 +34,7 @@ trap '{ rm -f "$tmpfile"; }' EXIT
 mapfile -t icons < <(ls icons)
 
 for lang in "${icons[@]%.*}"; do
-    # Skip lsp-backed extensions
+    # Skip custom extensions
     if [ "${lang}" = "go" ] || [ "${lang}" = "typescript" ]; then
         continue
     fi
