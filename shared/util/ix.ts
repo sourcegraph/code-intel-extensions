@@ -1,7 +1,4 @@
 import * as sourcegraph from 'sourcegraph'
-import { AsyncIterableX, from, of } from 'ix/asynciterable'
-import { MergeAsyncIterable } from 'ix/asynciterable/merge'
-import { flatMap, share } from 'ix/asynciterable/operators'
 import { Observable, Observer } from 'rxjs'
 
 /**
@@ -80,25 +77,6 @@ export async function* concat<T>(source: AsyncIterable<T[] | null>): AsyncIterab
         allValues = allValues.concat(values)
         yield allValues
     }
-}
-
-/**
- * Invoke a map function on each source value concurrently and flatten the results.
- *
- * @param source A list of source values.
- * @param concurrency The number of map functions that can be in-flight at once.
- * @param fn The map function.
- */
-export function flatMapConcurrent<T, R>(
-    source: T[],
-    concurrency: number,
-    func: (value: T) => Promise<R>
-): AsyncIterableX<R> {
-    return new MergeAsyncIterable(
-        new Array<AsyncIterable<R>>(concurrency).fill(
-            from(of(...source).pipe(share(), flatMap(asyncGeneratorFromPromise(func))))
-        )
-    )
 }
 
 /**

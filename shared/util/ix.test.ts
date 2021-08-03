@@ -4,7 +4,6 @@ import * as assert from 'assert'
 import {
     asyncGeneratorFromPromise,
     concat,
-    flatMapConcurrent,
     observableFromAsyncIterator,
     cachePromiseProvider,
     PROMISE_CACHE_CAPACITY,
@@ -72,14 +71,6 @@ describe('concat', () => {
         )
 
         assert.deepStrictEqual(await gatherValues(iterable), [[1], [1, 2, 3], [1, 2, 3, 4, 5]])
-    })
-})
-
-describe('flatMapConcurrent', () => {
-    it('yields mapped source values', async () => {
-        const iterable = flatMapConcurrent([1, 2, 3, 4, 5], 5, async value => Promise.resolve(value * 2))
-
-        assert.deepStrictEqual(await gatherValues(iterable), [2, 4, 6, 8, 10])
     })
 })
 
