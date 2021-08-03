@@ -7,7 +7,7 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 
 ## Repository structure
 
-- [`src/template`](./src/template) Template used to create extensions for specific languages
+- [`template`](./template) Template used to create extensions for specific languages
 - [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
 
 ## Development
