@@ -42,7 +42,6 @@
   ],
   "scripts": {
     "build": "../../node_modules/.bin/tsc -b . && ../../node_modules/.bin/parcel build --out-file extension.js src/extension.ts && ../../node_modules/.bin/dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-typescript@$(git rev-parse HEAD)/-/raw/extension/src/",
-    "config-types": "../../node_modules/.bin/dot-json package.json contributes.configuration | ../../node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/settings.ts",
     "symlink-package": "../../node_modules/.bin/mkdirp dist && ../../node_modules/.bin/lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && ../../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
@@ -52,32 +51,12 @@
     "menus": {
       "panel/toolbar": [
         {
-          "action": "externalReferences.toggle",
-          "when": "panel.activeView.id == 'references'"
-        },
-        {
           "action": "mixPreciseAndSearchBasedReferences.toggle",
           "when": "panel.activeView.id == 'references'"
         }
       ]
     },
     "actions": [
-      {
-        "id": "externalReferences.toggle",
-        "command": "updateConfiguration",
-        "title": "${config.typescript.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}",
-        "commandArguments": [
-          [
-            "typescript.showExternalReferences"
-          ],
-          "${!config.typescript.showExternalReferences}",
-          null,
-          "json"
-        ],
-        "actionItem": {
-          "label": "${config.typescript.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}"
-        }
-      },
       {
         "id": "mixPreciseAndSearchBasedReferences.toggle",
         "command": "updateConfiguration",
@@ -131,64 +110,6 @@
         "basicCodeIntel.unindexedSearchTimeout": {
           "description": "The timeout (in milliseconds) for un-indexed search requests.",
           "type": "number"
-        },
-        "typescript.serverUrl": {
-          "description": "The address of the WebSocket language server to connect to (e.g. ws://host:8080).",
-          "type": "string",
-          "format": "url"
-        },
-        "typescript.sourcegraphUrl": {
-          "description": "The address of the Sourcegraph instance from the perspective of the TypeScript language server.",
-          "type": "string",
-          "format": "url"
-        },
-        "typescript.accessToken": {
-          "description": "The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.",
-          "type": "string"
-        },
-        "typescript.showExternalReferences": {
-          "description": "Whether or not a second references provider for external references will be registered (defaults to false).",
-          "type": "boolean"
-        },
-        "typescript.maxExternalReferenceRepos": {
-          "description": "The maximum number of dependent packages to look in when searching for external references for a symbol (defaults to 20).",
-          "type": "number"
-        },
-        "typescript.progress": {
-          "description": "Whether to report progress while fetching sources, installing dependencies etc. (Default: true)",
-          "type": "boolean"
-        },
-        "typescript.diagnostics.enable": {
-          "description": "Whether to show compile errors on lines (Default: false)",
-          "type": "boolean"
-        },
-        "typescript.npmrc": {
-          "description": "Settings to be written into an npmrc in key/value format. Can be used to specify custom registries and tokens.",
-          "type": "object"
-        },
-        "typescript.restartAfterDependencyInstallation": {
-          "description": "Whether to restart the language server after dependencies were installed (default true)",
-          "type": "boolean"
-        },
-        "typescript.langserver.log": {
-          "description": "The log level to pass to the TypeScript language server. Logs will be forwarded to the browser console with the prefix [langserver].",
-          "enum": [
-            false,
-            "log",
-            "info",
-            "warn",
-            "error"
-          ]
-        },
-        "typescript.tsserver.log": {
-          "description": "The log level to pass to tsserver. Logs will be forwarded to the browser console with the prefix [tsserver].",
-          "enum": [
-            false,
-            "terse",
-            "normal",
-            "requestTime",
-            "verbose"
-          ]
         }
       }
     }

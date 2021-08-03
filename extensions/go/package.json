@@ -38,7 +38,6 @@
   ],
   "scripts": {
     "build": "../../node_modules/.bin/tsc -b . && ../../node_modules/.bin/parcel build --out-file extension.js src/extension.ts && ../../node_modules/.bin/dot-json dist/extension.map sourceRoot https://sourcegraph.com/github.com/sourcegraph/sourcegraph-go@$(git rev-parse HEAD)/-/raw/extension/src/",
-    "config-types": "../../node_modules/.bin/dot-json package.json contributes.configuration | ../../node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o src/settings.ts",
     "symlink-package": "../../node_modules/.bin/mkdirp dist && ../../node_modules/.bin/lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && ../../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
@@ -48,32 +47,12 @@
     "menus": {
       "panel/toolbar": [
         {
-          "action": "externalReferences.toggle",
-          "when": "panel.activeView.id == 'references'"
-        },
-        {
           "action": "mixPreciseAndSearchBasedReferences.toggle",
           "when": "panel.activeView.id == 'references'"
         }
       ]
     },
     "actions": [
-      {
-        "id": "externalReferences.toggle",
-        "command": "updateConfiguration",
-        "title": "${config.go.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}",
-        "commandArguments": [
-          [
-            "go.showExternalReferences"
-          ],
-          "${!config.go.showExternalReferences}",
-          null,
-          "json"
-        ],
-        "actionItem": {
-          "label": "${config.go.showExternalReferences && \"Hide other repositories\" || \"Show other repositories\"}"
-        }
-      },
       {
         "id": "mixPreciseAndSearchBasedReferences.toggle",
         "command": "updateConfiguration",
@@ -127,36 +106,6 @@
         "basicCodeIntel.unindexedSearchTimeout": {
           "description": "The timeout (in milliseconds) for un-indexed search requests.",
           "type": "number"
-        },
-        "go.serverUrl": {
-          "description": "The address of the WebSocket language server to connect to (e.g. ws://host:4389).",
-          "type": "string",
-          "format": "url"
-        },
-        "go.sourcegraphUrl": {
-          "description": "The address of the Sourcegraph instance from the perspective of the Go language server.",
-          "type": "string",
-          "format": "url"
-        },
-        "go.accessToken": {
-          "description": "The access token for the language server to use to fetch files from the Sourcegraph API. The extension will create this token and save it in your settings automatically.",
-          "type": "string"
-        },
-        "go.showExternalReferences": {
-          "description": "Whether or not a second references provider for external references will be registered (defaults to false).",
-          "type": "boolean"
-        },
-        "go.maxExternalReferenceRepos": {
-          "description": "The maximum number of repositories to look in when searching for external references for a symbol (defaults to 20).",
-          "type": "number"
-        },
-        "go.gddoURL": {
-          "description": "The address to Go Doc Dot Org or a proxy that speaks the same API (only used on Sourcegraph.com).",
-          "type": "string"
-        },
-        "go.corsAnywhereURL": {
-          "description": "Address of a cors-anywhere service. This will cause the extension to send GDDO requests to this service instead of directly to api.godoc.org. For example: https://cors-anywhere.sourcegraph.com/https://api.godoc.org/importersgithub.com/sourcegraph/go-lsp. This would not be necessary if godoc.org set CORS headers.",
-          "type": "string"
         }
       }
     }
