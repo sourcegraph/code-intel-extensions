@@ -8,7 +8,7 @@ yarn --mutex network --frozen-lockfile --network-timeout 60000
 yarn run build
 
 # Validate existing schema
-yarn validate-graphql-schema
+yarn validate-graphql
 
 # Validate schema is not out of date
 yarn update-graphql-schema
