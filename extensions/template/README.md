@@ -4,7 +4,7 @@ This extension provides LANG code intelligence on Sourcegraph.
 
 [**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/tree/master/extensions/template)
 
-![Python code intelligence](https://user-images.githubusercontent.com/1976/50882679-68768580-139a-11e9-8e58-a756c5bf4fb0.png)
+![Go code intelligence](https://user-images.githubusercontent.com/1387653/49856504-ce281f80-fda4-11e8-933b-f8fc67c98daf.png)
 
 ## Usage
 
