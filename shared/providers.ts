@@ -1,4 +1,4 @@
-import { NEVER, Observable } from 'rxjs'
+import { Observable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
 import * as indicators from './indicators'
 import { LanguageSpec, LSIFSupport } from './language-specs/spec'
@@ -70,52 +70,12 @@ export const noopProviders = {
     documentHighlights: noopAsyncGenerator,
 }
 
-export interface ProviderWrapper {
-    definition: DefinitionWrapper
-    references: ReferencesWrapper
-    hover: HoverWrapper
-    documentHighlights: DocumentHighlightWrapper
-}
-
-export type DefinitionWrapper = (provider?: DefinitionProvider) => sourcegraph.DefinitionProvider
-
-export type ReferencesWrapper = (provider?: ReferencesProvider) => sourcegraph.ReferenceProvider
-
-export type HoverWrapper = (provider?: HoverProvider) => sourcegraph.HoverProvider
-
-export type DocumentHighlightWrapper = (provider?: DocumentHighlightProvider) => sourcegraph.DocumentHighlightProvider
-
-export class NoopProviderWrapper implements ProviderWrapper {
-    public definition = (provider?: DefinitionProvider): sourcegraph.DefinitionProvider => ({
-        provideDefinition: (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) =>
-            provider ? observableFromAsyncIterator(() => provider(textDocument, position)) : NEVER,
-    })
-
-    public references = (provider?: ReferencesProvider): sourcegraph.ReferenceProvider => ({
-        provideReferences: (
-            textDocument: sourcegraph.TextDocument,
-            position: sourcegraph.Position,
-            context: sourcegraph.ReferenceContext
-        ) => (provider ? observableFromAsyncIterator(() => provider(textDocument, position, context)) : NEVER),
-    })
-
-    public hover = (provider?: HoverProvider): sourcegraph.HoverProvider => ({
-        provideHover: (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) =>
-            provider ? observableFromAsyncIterator(() => provider(textDocument, position)) : NEVER,
-    })
-
-    public documentHighlights = (provider?: DocumentHighlightProvider): sourcegraph.DocumentHighlightProvider => ({
-        provideDocumentHighlights: (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) =>
-            provider ? observableFromAsyncIterator(() => provider(textDocument, position)) : NEVER,
-    })
-}
-
 /**
- * Creates a provider wrapper that decorates a given provider with LSIF and search-based behaviors.
+ * Creates a SourcegraphProviders with LSIF and search-based behaviors.
  *
  * @param languageSpec The language spec used to provide search-based code intelligence.
  */
-export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger): ProviderWrapper {
+export function createProviders(languageSpec: LanguageSpec, logger: Logger): SourcegraphProviders {
     const wrapped: { definition?: sourcegraph.DefinitionProvider } = {}
     const api = new API()
     const lsifProviders = createLSIFProviders(logger)
@@ -124,35 +84,32 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
     const providerLogger =
         sourcegraph.configuration.get().get('codeIntel.traceExtension') ?? false ? console : new NoopLogger()
 
-    return {
-        // Note: this wrapper only exists during initialization where we
-        // determine if we're supporting LSP or not for this session.
-        definition: () => {
-            // Register visible definition provider that does not
-            // have any active telemetry. This is to reduce the double
-            // count of definitions, which are triggered for search-based
-            // hover text.
-            wrapped.definition = createDefinitionProvider(
-                lsifProviders.definitionAndHover,
-                searchProviders.definition,
-                providerLogger,
-                languageSpec.languageID,
-                true,
-                api
-            )
+    // Register visible definition provider that does not
+    // have any active telemetry. This is to reduce the double
+    // count of definitions, which are triggered for search-based
+    // hover text.
+    wrapped.definition = createDefinitionProvider(
+        lsifProviders.definitionAndHover,
+        searchProviders.definition,
+        providerLogger,
+        languageSpec.languageID,
+        true,
+        api
+    )
 
+    return {
             // Return the provider with telemetry to use from the root
-            return createDefinitionProvider(
+        definition:
+            createDefinitionProvider(
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 providerLogger,
                 languageSpec.languageID,
                 false,
                 api
-            )
-        },
+            ),
 
-        references: () =>
+        references:
             createReferencesProvider(
                 lsifProviders.references,
                 searchProviders.references,
@@ -161,7 +118,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 api
             ),
 
-        hover: () =>
+        hover:
             createHoverProvider(
                 languageSpec.lsifSupport || LSIFSupport.None,
                 lsifProviders.definitionAndHover,
@@ -172,7 +129,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
                 api
             ),
 
-        documentHighlights: () =>
+        documentHighlights:
             createDocumentHighlightProvider(lsifProviders.documentHighlights, logger, languageSpec.languageID, api),
     }
 }
