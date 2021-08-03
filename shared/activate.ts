@@ -84,18 +84,15 @@ const DUMMY_CTX = {
  * @param lspFactory An optional factory that registers an LSP client.
  * @param logger An optional logger instance.
  */
-export async function activateCodeIntel(
+export function activateCodeIntel(
     context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     lspFactory?: LSPFactory,
     logger: Logger = new RedactingLogger(console)
-): Promise<void> {
+): void {
     const wrapper = createProviderWrapper(languageSpec, logger)
-
-    if (!(await tryInitLSP(context, wrapper, lspFactory, logger))) {
-        activateWithoutLSP(context, selector, wrapper)
-    }
+    activateWithoutLSP(context, selector, wrapper)
 }
 
 /**

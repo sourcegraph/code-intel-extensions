@@ -29,7 +29,7 @@ export async function activate(context: sourcegraph.ExtensionContext): Promise<v
  * @param spec The language spec.
  * @param ctx The extension context.
  */
-function activateSpec(spec: LanguageSpec, context: sourcegraph.ExtensionContext): Promise<void> {
+function activateSpec(spec: LanguageSpec, context: sourcegraph.ExtensionContext): void {
     return activateCodeIntel(context, spec.fileExts.flatMap(createSelector), spec)
 }
 

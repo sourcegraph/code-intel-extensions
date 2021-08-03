@@ -9,7 +9,7 @@ const documentSelector = [{ language: 'go' }]
  *
  * @param ctx The extension context.
  */
-export function activate(context: sourcegraph.ExtensionContext): Promise<void> {
+export function activate(context: sourcegraph.ExtensionContext): void {
     return activateCodeIntel(
         context,
         documentSelector,
