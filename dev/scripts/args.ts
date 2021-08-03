@@ -2,7 +2,6 @@ import yargs from 'yargs'
 import { languageSpecs } from '../../shared/language-specs/languages'
 import { LanguageSpec } from '../../shared/language-specs/spec'
 
-
 export function findLanguageSpecs(): LanguageSpec[] {
     const args = yargs
         .nargs('languages', 1)

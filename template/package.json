@@ -10,7 +10,7 @@
   "repository": {
     "type": "git",
     "url": "github:sourcegraph/code-intel-extensions",
-    "directory": "extensions/template"
+    "directory": "template"
   },
   "categories": [
     "Programming languages"

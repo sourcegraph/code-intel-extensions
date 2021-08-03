@@ -2,7 +2,7 @@
 
 This extension provides LANG code intelligence on Sourcegraph.
 
-[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/tree/master/extensions/template)
+[**🗃️ Source code**](https://github.com/sourcegraph/code-intel-extensions/tree/master/template)
 
 ![Go code intelligence](https://user-images.githubusercontent.com/1387653/49856504-ce281f80-fda4-11e8-933b-f8fc67c98daf.png)
 

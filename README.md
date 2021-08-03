@@ -7,13 +7,13 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 
 ## Repository structure
 
-- [`src/extensions/template`](./src/extensions/template) Template used to create extensions for specific languages
+- [`src/template`](./src/template) Template used to create extensions for specific languages
 - [`shared/language-specs`](./shared/language-specs) Language definitions, which are fed into the template to instantiate many language extensions
 
 ## Development
 
 1. Run `yarn`
-2. Run `yarn --cwd extensions/template run serve`
+2. Run `yarn --cwd template run serve`
 3. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
 
    ```json
