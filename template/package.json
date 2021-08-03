@@ -35,10 +35,9 @@
     "*"
   ],
   "scripts": {
-    "build": "../../node_modules/.bin/tsc -b . && ../../node_modules/.bin/parcel build --out-file extension.js src/extension.ts",
-    "config-types": "../../node_modules/.bin/dot-json package.json contributes.configuration | ../../node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o ../../shared/search/settings.ts",
-    "symlink-package": "../../node_modules/.bin/mkdirp dist && ../../node_modules/.bin/lnfs ./package.json ./dist/package.json",
-    "serve": "yarn run symlink-package && ../../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
+    "build": "../node_modules/.bin/tsc -b . && ../node_modules/.bin/parcel build --out-file extension.js src/extension.ts",
+    "symlink-package": "../node_modules/.bin/mkdirp dist && ../node_modules/.bin/lnfs ./package.json ./dist/package.json",
+    "serve": "yarn run symlink-package && ../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
     "publish": "yarn -s && src -config \"${SRC_CONFIG}\" ext publish -git-head \"${BUILDKITE_COMMIT}\""
   },

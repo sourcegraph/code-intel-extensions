@@ -9,12 +9,10 @@ async function main(): Promise<void> {
     await Promise.all(specs.map(spec => generate(spec)))
 }
 
-const templateDirectory = path.join('extensions', 'template')
-
 async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     console.log(`Generating ${languageID} extension`)
 
-    const langDirectory = path.join('temp', languageID)
+    const langDirectory = path.join('generated', languageID)
     const iconFilename = path.join('icons', `${languageID}.png`)
     const packageFilename = path.join(langDirectory, 'package.json')
     const readmeFilename = path.join(langDirectory, 'README.md')
@@ -22,7 +20,7 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
 
     await ensureDir(langDirectory)
     await emptyDir(langDirectory)
-    await copy(templateDirectory, langDirectory)
+    await copy('template', langDirectory)
 
     // Update package.json contents
     const packageContents = (await fs.readFile(packageFilename)).toString()

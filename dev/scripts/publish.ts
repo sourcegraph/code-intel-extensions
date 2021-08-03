@@ -8,7 +8,7 @@ async function main(): Promise<void> {
 
     await Promise.all(
         languageIDs.map(async languageID => {
-            if (!(await fs.exists(path.join('temp', languageID)))) {
+            if (!(await fs.exists(path.join('generated', languageID)))) {
                 throw new Error(`No extension generated for ${languageID}`)
             }
         })
@@ -21,7 +21,7 @@ async function main(): Promise<void> {
 
 async function publish(languageID: string): Promise<void> {
     console.log(`Publishing ${languageID} extension`)
-    const langDirectory = path.join('temp', languageID)
+    const langDirectory = path.join('generated', languageID)
     await child_process.exec(`yarn --cwd ${langDirectory} run publish`)
 }
 
