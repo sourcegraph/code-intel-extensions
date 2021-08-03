@@ -98,39 +98,40 @@ export function createProviders(languageSpec: LanguageSpec, logger: Logger): Sou
     )
 
     return {
-            // Return the provider with telemetry to use from the root
-        definition:
-            createDefinitionProvider(
-                lsifProviders.definitionAndHover,
-                searchProviders.definition,
-                providerLogger,
-                languageSpec.languageID,
-                false,
-                api
-            ),
+        // Return the provider with telemetry to use from the root
+        definition: createDefinitionProvider(
+            lsifProviders.definitionAndHover,
+            searchProviders.definition,
+            providerLogger,
+            languageSpec.languageID,
+            false,
+            api
+        ),
 
-        references:
-            createReferencesProvider(
-                lsifProviders.references,
-                searchProviders.references,
-                providerLogger,
-                languageSpec.languageID,
-                api
-            ),
+        references: createReferencesProvider(
+            lsifProviders.references,
+            searchProviders.references,
+            providerLogger,
+            languageSpec.languageID,
+            api
+        ),
 
-        hover:
-            createHoverProvider(
-                languageSpec.lsifSupport || LSIFSupport.None,
-                lsifProviders.definitionAndHover,
-                searchProviders.definition,
-                searchProviders.hover,
-                providerLogger,
-                languageSpec.languageID,
-                api
-            ),
+        hover: createHoverProvider(
+            languageSpec.lsifSupport || LSIFSupport.None,
+            lsifProviders.definitionAndHover,
+            searchProviders.definition,
+            searchProviders.hover,
+            providerLogger,
+            languageSpec.languageID,
+            api
+        ),
 
-        documentHighlights:
-            createDocumentHighlightProvider(lsifProviders.documentHighlights, logger, languageSpec.languageID, api),
+        documentHighlights: createDocumentHighlightProvider(
+            lsifProviders.documentHighlights,
+            logger,
+            languageSpec.languageID,
+            api
+        ),
     }
 }
 
