@@ -8,7 +8,7 @@ describe('all defined languages', () => {
         const languageIDs = (
             await Promise.all(
                 languageSpecs.map(async ({ languageID }) => {
-                    const filePath = path.join(__dirname, '..', '..', 'icons', `${languageID}.png`)
+                    const filePath = path.join(__dirname, '..', '..', '..', 'icons', `${languageID}.png`)
 
                     return {
                         languageID,

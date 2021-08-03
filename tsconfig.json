@@ -1,6 +1,6 @@
 {
   "extends": "@sourcegraph/tsconfig",
-  "references": [{ "path": "shared" }, { "path": "template" }, { "path": "dev/scripts" }],
+  "references": [{ "path": "template" }, { "path": "dev/scripts" }],
   "compilerOptions": {
     "target": "es2019",
     "module": "commonjs",

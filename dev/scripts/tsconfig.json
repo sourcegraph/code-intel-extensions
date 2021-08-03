@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "references": [{ "path": "../../shared" }],
+  "references": [{ "path": "../../template/src" }],
   "compilerOptions": {
     "outDir": "dist",
   },
