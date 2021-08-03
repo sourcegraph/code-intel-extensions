@@ -127,7 +127,7 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
     return {
         // Note: this wrapper only exists during initialization where we
         // determine if we're supporting LSP or not for this session.
-        definition: (lspProvider?: DefinitionProvider) => {
+        definition: () => {
             // Register visible definition provider that does not
             // have any active telemetry. This is to reduce the double
             // count of definitions, which are triggered for search-based
@@ -135,7 +135,6 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
             wrapped.definition = createDefinitionProvider(
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
-                lspProvider,
                 providerLogger,
                 languageSpec.languageID,
                 true,
@@ -146,7 +145,6 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
             return createDefinitionProvider(
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
-                lspProvider,
                 providerLogger,
                 languageSpec.languageID,
                 false,
@@ -154,23 +152,21 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
             )
         },
 
-        references: (lspProvider?: ReferencesProvider) =>
+        references: () =>
             createReferencesProvider(
                 lsifProviders.references,
                 searchProviders.references,
-                lspProvider,
                 providerLogger,
                 languageSpec.languageID,
                 api
             ),
 
-        hover: (lspProvider?: HoverProvider) =>
+        hover: () =>
             createHoverProvider(
                 languageSpec.lsifSupport || LSIFSupport.None,
                 lsifProviders.definitionAndHover,
                 searchProviders.definition,
                 searchProviders.hover,
-                lspProvider,
                 providerLogger,
                 languageSpec.languageID,
                 api
@@ -186,7 +182,6 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
  *
  * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchProvider The search-based definition provider.
- * @param lspProvider An optional LSP-based definition provider.
  * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  * @param quiet Disable telemetry from this provider. Used for recursive calls from the hover provider when a definition location is required.
@@ -194,7 +189,6 @@ export function createProviderWrapper(languageSpec: LanguageSpec, logger: Logger
 export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
     searchProvider: DefinitionProvider,
-    lspProvider?: DefinitionProvider,
     logger?: Logger,
     languageID: string = '',
     quiet = false,
@@ -222,30 +216,6 @@ export function createDefinitionProvider(
             }
             if (hasPreciseResult) {
                 // Found the best precise definition we'll get. Stop.
-                return
-            }
-
-            if (lspProvider) {
-                // No results so far, fall back to language servers
-                for await (const results of lspProvider(textDocument, position)) {
-                    // Do not emit definition events for empty location arrays
-                    if (!nonEmpty(results)) {
-                        continue
-                    }
-
-                    logLocationResults({ ...commonFields, action: 'lspDefinitions', results })
-                    yield results
-                    hasPreciseResult = true
-                }
-                if (!hasPreciseResult) {
-                    // Always emit _something_ regardless if it's interesting. If we return
-                    // without emitting anything here we may indefinitely show an empty hover
-                    // on identifiers with no interesting data indefinitely.
-                    yield []
-                }
-
-                // Do not try to supplement with additional search results as we have all the
-                // context we need for complete and precise results here.
                 return
             }
 
@@ -295,7 +265,6 @@ export function clearReferenceResultCache(): void {
  *
  * @param lsifProvider The LSIF-based references provider.
  * @param searchProvider The search-based references provider.
- * @param lspProvider An optional LSP-based references provider.
  * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  * @param api The Sourcegraph API instance.
@@ -305,7 +274,6 @@ export function clearReferenceResultCache(): void {
 export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
-    lspProvider?: ReferencesProvider,
     logger?: Logger,
     languageID: string = '',
     api = new API(),
@@ -355,25 +323,6 @@ export function createReferencesProvider(
 
                 // Cache new precise results
                 lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
-            }
-
-            if (lspProvider) {
-                for await (const rawResults of lspProvider(textDocument, position, context)) {
-                    const lspResults = asArray(rawResults)
-                    if (lspResults.length === 0) {
-                        continue
-                    }
-
-                    // Re-emit the last results from the previous provider so that we do not overwrite
-                    // what was emitted previously.
-                    const results = lsifResults.concat(lspResults)
-                    logLocationResults({ ...commonFields, action: 'lspReferences', results })
-                    yield results
-                }
-
-                // Do not try to supplement with additional search results as we have all the context
-                // we need for complete and precise results here.
-                return
             }
 
             // If we have precise results and mixPreciseAndSearchBasedReferences is disabled, do not fall
@@ -486,7 +435,6 @@ function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, 
  * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchDefinitionProvider The search-based definition provider.
  * @param searchHoverProvider The search-based hover provider.
- * @param lspProvider An optional LSP-based hover provider.
  * @param logger The logger instance.
  * @param languageID The language the extension recognizes.
  */
@@ -495,7 +443,6 @@ export function createHoverProvider(
     lsifProvider: DefinitionAndHoverProvider,
     searchDefinitionProvider: DefinitionProvider,
     searchHoverProvider: HoverProvider,
-    lspProvider?: HoverProvider,
     logger?: Logger,
     languageID: string = '',
     api = new API()
@@ -549,29 +496,6 @@ export function createHoverProvider(
                 )
 
                 // Found the best precise hover text we'll get. Stop.
-                return
-            }
-
-            if (lspProvider) {
-                // Delegate to LSP if it's available.
-                for await (const lspResult of lspProvider(textDocument, position)) {
-                    if (!lspResult) {
-                        continue
-                    }
-
-                    const first = emitter.emitOnce('lspHover')
-                    logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
-                    yield badgeHoverResult(
-                        lspResult,
-                        // We only want to add an alert for the first result in the case
-                        // that there are many hover results from the language server.
-                        first ? [indicators.lsp] : undefined
-                    )
-                }
-
-                // Do not try to supplement with additional search results
-                // as we have all the context we need for complete and precise
-                // results here.
                 return
             }
 
