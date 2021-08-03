@@ -20,7 +20,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # Validate dependencies
-yarn "yarn-deduplicate --fail --list --strategy fewer ./yarn.lock" || {
+yarn yarn-deduplicate --fail --list --strategy fewer ./yarn.lock || {
     # shellcheck disable=SC2016
     echo 'yarn.lock contains duplicate dependencies. Please run `yarn deduplicate` and commit the result.'
     exit 1
