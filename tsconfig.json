@@ -12,8 +12,5 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "typeRoots": ["./node_modules/@types"],
-    "outDir": "dist",
   },
-  "include": ["./**/*"],
-  "exclude": ["generated"],
 }

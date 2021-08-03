@@ -36,6 +36,7 @@
   ],
   "scripts": {
     "build": "../node_modules/.bin/tsc -b . && ../node_modules/.bin/parcel build --out-file extension.js src/extension.ts",
+    "test": "../node_modules/.bin/nyc --reporter=lcov mocha '**/*.test.ts'",
     "symlink-package": "../node_modules/.bin/mkdirp dist && ../node_modules/.bin/lnfs ./package.json ./dist/package.json",
     "serve": "yarn run symlink-package && ../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
     "sourcegraph:prepublish": "yarn run build",
