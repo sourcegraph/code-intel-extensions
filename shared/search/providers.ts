@@ -175,7 +175,7 @@ export function createProviders(
         const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
             searchWithFallback(args => searchReferences(api, args), queryArguments, negateRepoFilter)
 
-        // Resolve then merge all local and remote references and sort them by 
+        // Resolve then merge all local and remote references and sort them by
         // proximity to the current text document path.
         const mergedReferences = flatten(await Promise.all([doSearch(false), doSearch(true)]))
         return sortByProximity(mergedReferences, new URL(textDocument.uri))
