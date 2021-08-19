@@ -141,7 +141,11 @@ export function createProviders(
             return results
         }
 
-        return doSearch(true)
+        // Fallback to definitions found in any other repository. This performs
+        // an indexed search over all repositories. Do not do this on the DotCom
+        // instance as we are unlikely to have indexed the relevant definition
+        // and we'd end up jumping to what would seem like a random line of code.
+        return isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
     }
 
     /**
@@ -175,9 +179,18 @@ export function createProviders(
         const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
             searchWithFallback(args => searchReferences(api, args), queryArguments, negateRepoFilter)
 
-        // Resolve then merge all local and remote references and sort them by
-        // proximity to the current text document path.
-        const mergedReferences = flatten(await Promise.all([doSearch(false), doSearch(true)]))
+        // Perform a search in the current git tree
+        const sameRepoReferences = doSearch(false)
+
+        // Perform an indexed search over all _other_ repositories. This
+        // query is ineffective on DotCom as we do not keep repositories
+        // in the index permanently.
+        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
+
+        // Resolve then merge all references and sort them by proximity
+        // to the current text document path.
+        const referenceChunk = [sameRepoReferences, remoteRepoReferences]
+        const mergedReferences = flatten(await Promise.all(referenceChunk))
         return sortByProximity(mergedReferences, new URL(textDocument.uri))
     }
 
@@ -515,6 +528,13 @@ function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
         // Get the size of the union
         new Set([...a, ...b]).size
     )
+}
+
+/**
+ * Return true if the current Sourcegraph instance is DotCom.
+ */
+function isSourcegraphDotCom(): boolean {
+    return sourcegraph.internal.sourcegraphURL.href === 'https://sourcegraph.com/'
 }
 
 /**
