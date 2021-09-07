@@ -1,0 +1,110 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sourcegraph/sourcegraph/master/shared/src/schema/extension.schema.json",
+  "name": "template",
+  "description": "Template code intelligence",
+  "private": true,
+  "sideEffects": false,
+  "publisher": "sourcegraph",
+  "version": "0.0.0-DEVELOPMENT",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "github:sourcegraph/code-intel-extensions",
+    "directory": "template"
+  },
+  "categories": [
+    "Programming languages"
+  ],
+  "tags": [
+    "fuzzy"
+  ],
+  "main": "dist/extension.js",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=v14.17.4"
+  },
+  "browserslist": [
+    "last 1 Chrome versions",
+    "last 1 Firefox versions",
+    "last 1 Edge versions",
+    "last 1 Safari versions"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "scripts": {
+    "build": "../node_modules/.bin/tsc -b . && ../node_modules/.bin/parcel build --out-file extension.js src/extension.ts",
+    "test": "../node_modules/.bin/nyc --reporter=lcov mocha '**/*.test.ts'",
+    "symlink-package": "../node_modules/.bin/mkdirp dist && ../node_modules/.bin/lnfs ./package.json ./dist/package.json",
+    "serve": "yarn run symlink-package && ../node_modules/.bin/parcel serve --no-hmr --out-file dist/extension.js src/extension.ts",
+    "sourcegraph:prepublish": "yarn run build",
+    "publish": "yarn -s && src -config \"${SRC_CONFIG}\" ext publish -git-head \"${BUILDKITE_COMMIT}\""
+  },
+  "contributes": {
+    "menus": {
+      "panel/toolbar": [
+        {
+          "action": "mixPreciseAndSearchBasedReferences.toggle",
+          "when": "panel.activeView.id == 'references'"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "id": "mixPreciseAndSearchBasedReferences.toggle",
+        "command": "updateConfiguration",
+        "title": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}",
+        "commandArguments": [
+          [
+            "codeIntel.mixPreciseAndSearchBasedReferences"
+          ],
+          "${!config.codeIntel.mixPreciseAndSearchBasedReferences}",
+          null,
+          "json"
+        ],
+        "actionItem": {
+          "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Search-based code intelligence settings",
+      "properties": {
+        "codeIntel.lsif": {
+          "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence.",
+          "type": "boolean"
+        },
+        "codeIntel.traceExtension": {
+          "description": "Whether to enable trace logging on the extension.",
+          "type": "boolean"
+        },
+        "codeIntel.disableRangeQueries": {
+          "description": "Whether to fetch multiple precise definitions and references on hover.",
+          "type": "boolean"
+        },
+        "codeIntel.mixPreciseAndSearchBasedReferences": {
+          "description": "Whether to supplement precise references with search-based results.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.includeForks": {
+          "description": "Whether to include forked repositories in search results.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.includeArchives": {
+          "description": "Whether to include archived repositories in search results.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.indexOnly": {
+          "description": "Whether to use only indexed requests to the search API.",
+          "type": "boolean"
+        },
+        "basicCodeIntel.unindexedSearchTimeout": {
+          "description": "The timeout (in milliseconds) for un-indexed search requests.",
+          "type": "number"
+        }
+      }
+    }
+  }
+}
