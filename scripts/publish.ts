@@ -1,6 +1,5 @@
 import * as child_process from 'mz/child_process'
 import * as fs from 'mz/fs'
-import * as path from 'path'
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {
@@ -8,7 +7,7 @@ async function main(): Promise<void> {
 
     await Promise.all(
         languageIDs.map(async languageID => {
-            if (!(await fs.exists(path.join('generated', languageID)))) {
+            if (!(await fs.exists(`generated-${languageID}`))) {
                 throw new Error(`No extension generated for ${languageID}`)
             }
         })
@@ -21,7 +20,7 @@ async function main(): Promise<void> {
 
 async function publish(languageID: string): Promise<void> {
     console.log(`Publishing ${languageID} extension`)
-    const langDirectory = path.join('generated', languageID)
+    const langDirectory = `generated-${languageID}`
     await child_process.exec(`yarn --cwd ${langDirectory} run publish`)
 }
 

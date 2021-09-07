@@ -7,6 +7,6 @@ module.exports = {
   parserOptions: {
     project: ['template/tsconfig.json', 'dev/scripts/tsconfig.json'],
   },
-  ignorePatterns: ['generated', '**/dist', 'samples'],
+  ignorePatterns: ['generated-*', '**/dist', 'samples'],
   rules: {},
 }
