@@ -9,7 +9,6 @@
         "tag": "gql",
       },
     ],
-    "downlevelIteration": true,
   },
   "include": ["src/**/*"],
   "exclude": ["dist"],

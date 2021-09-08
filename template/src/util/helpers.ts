@@ -43,7 +43,7 @@ export function mapArrayish<T, R>(value: T | T[] | null, func: (value: T) => R):
  * @param values The input values.
  */
 export function sortUnique<T>(values: T[]): T[] {
-    const sorted = [...new Set(values)]
+    const sorted = Array.from(new Set(values))
     sorted.sort()
     return sorted
 }

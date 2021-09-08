@@ -8,5 +8,9 @@ module.exports = {
     project: ['template/tsconfig.json', 'dev/scripts/tsconfig.json'],
   },
   ignorePatterns: ['generated-*', '**/dist', 'samples'],
-  rules: {},
+  rules: {
+    // [...a] breaks when Array.from(a) works
+    // when a is not an array but an iterable
+    "unicorn/prefer-spread": 0
+  },
 }
