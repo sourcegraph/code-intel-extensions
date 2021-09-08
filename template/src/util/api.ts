@@ -1,5 +1,6 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
+
 import { graphqlIdToRepoId, queryGraphQL } from './graphql'
 import { isDefined, sortUnique } from './helpers'
 

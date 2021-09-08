@@ -91,7 +91,7 @@ export async function makeRangeWindowFactory(
             // Remove oldest entries to keep the cache under capacity
             while (cache.size > WINDOW_CACHE_CAPACITY) {
                 cache.delete(
-                    [...cache.entries()].reduce((entry1, entry2) =>
+                    Array.from(cache.entries()).reduce((entry1, entry2) =>
                         entry1[1].lasthit < entry2[1].lasthit ? entry1 : entry2
                     )[0]
                 )

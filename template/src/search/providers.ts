@@ -57,7 +57,7 @@ export function createProviders(
             // keep track of frequency or recency information and is likely
             // to be a decent heuristic (with rare back-to-back evictions).
             const index = Math.floor(Math.random() * cachedFileContents.size)
-            cachedFileContents.delete([...cachedFileContents.keys()][index])
+            cachedFileContents.delete(Array.from(cachedFileContents.keys())[index])
         }
 
         const { repo, commit, path } = parseGitURI(new URL(uri))
@@ -522,11 +522,14 @@ function sortByProximity(locations: sourcegraph.Location[], currentURI: URL): so
  * @param b The second set.
  */
 function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
+    const aArray = Array.from(a)
+    const bArray = Array.from(b)
+
     return (
         // Get the size of the intersection
-        new Set([...a].filter(value => b.has(value))).size /
+        new Set(aArray.filter(value => b.has(value))).size /
         // Get the size of the union
-        new Set([...a, ...b]).size
+        new Set(aArray.concat(bArray)).size
     )
 }
 
