@@ -37,7 +37,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@sourcegraph/eslint-config": "^0.25.1",
+    "@sourcegraph/eslint-config": "^0.23.0",
     "@sourcegraph/extension-api-stubs": "^1.5.3",
     "@sourcegraph/prettierrc": "^3.0.3",
     "@sourcegraph/tsconfig": "^4.0.1",
