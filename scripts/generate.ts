@@ -12,7 +12,7 @@ async function main(): Promise<void> {
 async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     console.log(`Generating ${languageID} extension`)
 
-    const langDirectory = `generated-${languageID}`
+    const langDirectory = path.join('generated', languageID)
     const iconFilename = path.join('icons', `${languageID}.png`)
     const packageFilename = path.join(langDirectory, 'package.json')
     const readmeFilename = path.join(langDirectory, 'README.md')
