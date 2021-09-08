@@ -1,6 +1,12 @@
 {
   "extends": "@sourcegraph/tsconfig",
-  "references": [{ "path": "template" }],
+  "references": [
+    { "path": "shared" },
+    { "path": "extensions/go" },
+    { "path": "extensions/template" },
+    { "path": "extensions/typescript" },
+    { "path": "dev/scripts" },
+  ],
   "compilerOptions": {
     "target": "es2019",
     "module": "commonjs",
@@ -13,4 +19,5 @@
     "esModuleInterop": true,
     "typeRoots": ["./node_modules/@types"],
   },
+  "include": [],
 }

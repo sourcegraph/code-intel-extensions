@@ -15,26 +15,30 @@
     "prettier": "prettier --write --list-different '**/*.{ts,js?(on),md,yml}'",
     "prettier-check": "yarn run prettier --write=false",
     "eslint": "eslint '**/*.ts?(x)'",
-    "build": "yarn --cwd template build",
-    "test": "yarn --cwd template test",
+    "build": "tsc -b .",
+    "test": "nyc --reporter=lcov mocha '**/*.test.ts'",
     "coverage": "codecov",
     "deduplicate": "yarn-deduplicate -s fewer",
-    "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./scripts/generate.ts",
-    "publish": "yarn run ts-node -P tsconfig.json ./scripts/publish.ts",
-    "config-types": "./node_modules/.bin/dot-json template/package.json contributes.configuration | ./node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o ./template/src/search/settings.ts && yarn prettier",
-    "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/bf541a3299ca7c59fa875850c7f2332bd084a8b7/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql && curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/bf541a3299ca7c59fa875850c7f2332bd084a8b7/cmd/frontend/graphqlbackend/codeintel.graphql >> ./schema/schema.graphql",
-    "validate-graphql": "yarn run tsgql validate -p ./template/tsconfig.json"
+    "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./dev/scripts/generate.ts",
+    "publish": "yarn run ts-node -P tsconfig.json ./dev/scripts/publish.ts",
+    "publish:go": "yarn --cwd extensions/go run publish",
+    "publish:typescript": "yarn --cwd extensions/typescript run publish",
+    "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/3a380cdd42fbe3a23ceb2680fbf4164c48c4f309/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql",
+    "validate-graphql": "yarn run tsgql validate -p ./shared/tsconfig.json"
   },
   "dependencies": {
-    "dot-json": "^1.2.2",
+    "@sourcegraph/vscode-ws-jsonrpc": "0.0.3-fork",
+    "delay": "^5.0.0",
+    "ix": "^4.3.1",
     "js-base64": "^3.6.1",
-    "json2ts": "^0.0.7",
     "lodash": "^4.17.21",
     "mz": "^2.7.0",
+    "path-browserify": "^1.0.1",
     "rxjs": "^6.6.7",
     "sourcegraph": "25.3.0",
     "tagged-template-noop": "^2.1.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "vscode-languageserver-protocol": "3.14.1"
   },
   "devDependencies": {
     "@sourcegraph/eslint-config": "^0.23.0",
@@ -52,6 +56,7 @@
     "@types/uuid": "8.3.1",
     "@types/yargs": "17.0.2",
     "codecov": "^3.8.3",
+    "dot-json": "^1.2.2",
     "eslint": "^7.32.0",
     "fs-extra": "^10.0.0",
     "graphql": "^15.5.1",
@@ -72,5 +77,8 @@
     "yargs": "^17.0.1",
     "yarn": "^1.22.11",
     "yarn-deduplicate": "^3.1.0"
+  },
+  "resolutions": {
+    "vscode-languageserver-protocol": "3.14.1"
   }
 }
