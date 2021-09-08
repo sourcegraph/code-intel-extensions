@@ -92,7 +92,10 @@ function isInsideString({
     /** The offset and length of the identifier in the target line. */
     end: number
 }): boolean {
-    return checkMatchIntersection([...line.matchAll(/'.*?'|".*?"/gs)], { start, end })
+    // Need to use Array.from here as the spread operator fails on IterableIterator
+    // with an illegal range.
+    // eslint-disable-next-line unicorn/prefer-spread
+    return checkMatchIntersection(Array.from(line.matchAll(/'.*?'|".*?"/gs)), { start, end })
 }
 
 /**
@@ -218,7 +221,10 @@ function isInsideBlockComment({
     // in a match's range then it is nested inside of a comment.
     return blockCommentStyles.some(block =>
         checkMatchIntersection(
-            [...context.matchAll(new RegExp(`${block.startRegex.source}.*?${block.endRegex.source}`, 'gs'))],
+            // Need to use Array.from here as the spread operator fails on IterableIterator
+            // with an illegal range.
+            // eslint-disable-next-line unicorn/prefer-spread
+            Array.from(context.matchAll(new RegExp(`${block.startRegex.source}.*?${block.endRegex.source}`, 'gs'))),
             { start: start + offset, end: end + offset }
         )
     )
