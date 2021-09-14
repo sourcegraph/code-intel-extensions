@@ -73,6 +73,8 @@ const activateCodeIntel = (
         context.subscriptions.add(unsubscribeReferencesProvider)
     }
 
+    context.subscriptions.add(sourcegraph.languages.registerImplementationProvider(selector, providers.implementations))
+
     context.subscriptions.add(
         from(sourcegraph.configuration)
             .pipe(

@@ -15,6 +15,7 @@ import { parseGitURI } from './util/uri'
 export interface Providers {
     definition: DefinitionProvider
     references: ReferencesProvider
+    implementations: ImplementationsProvider
     hover: HoverProvider
     documentHighlights: DocumentHighlightProvider
 }
@@ -22,12 +23,14 @@ export interface Providers {
 export interface CombinedProviders {
     definitionAndHover: DefinitionAndHoverProvider
     references: ReferencesProvider
+    implementations: ImplementationsProvider
     documentHighlights: DocumentHighlightProvider
 }
 
 export interface SourcegraphProviders {
     definition: sourcegraph.DefinitionProvider
     references: sourcegraph.ReferenceProvider
+    implementations: sourcegraph.ImplementationProvider
     hover: sourcegraph.HoverProvider
     documentHighlights: sourcegraph.DocumentHighlightProvider
 }
@@ -53,6 +56,11 @@ export type ReferencesProvider = (
     context: sourcegraph.ReferenceContext
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
 
+export type ImplementationsProvider = (
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
+
 export type HoverProvider = (
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position
@@ -67,6 +75,7 @@ export const noopProviders = {
     definitionAndHover: (): Promise<DefinitionAndHover | null> => Promise.resolve(null),
     definition: noopAsyncGenerator,
     references: noopAsyncGenerator,
+    implementations: noopAsyncGenerator,
     hover: noopAsyncGenerator,
     documentHighlights: noopAsyncGenerator,
 }
@@ -112,6 +121,13 @@ export function createProviders(languageSpec: LanguageSpec, logger: Logger): Sou
         references: createReferencesProvider(
             lsifProviders.references,
             searchProviders.references,
+            providerLogger,
+            languageSpec.languageID,
+            api
+        ),
+
+        implementations: createImplementationsProvider(
+            lsifProviders.implementations,
             providerLogger,
             languageSpec.languageID,
             api
@@ -324,6 +340,48 @@ export function createReferencesProvider(
             if (cached && !hasSearchResults) {
                 // if lsifResults came from the cache and we never had any results come from
                 // the search provider above, then we need to emit our cached precise results.
+                yield lsifResults
+            }
+        }),
+    }
+}
+
+/**
+ * Creates a implementation provider.
+ *
+ * @param lsifProvider The LSIF-based implementations provider.
+ * @param logger The logger instance.
+ * @param languageID The language the extension recognizes.
+ * @param api The Sourcegraph API instance.
+ * or not search-based results should be displayed when precise results are available.
+ */
+export function createImplementationsProvider(
+    lsifProvider: ImplementationsProvider,
+    logger?: Logger,
+    languageID: string = '',
+    api = new API()
+): sourcegraph.ImplementationProvider {
+    return {
+        provideImplementations: wrapProvider(async function* (
+            textDocument: sourcegraph.TextDocument,
+            position: sourcegraph.Position
+        ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+            console.log('providing implementation')
+            const { repo } = parseGitURI(new URL(textDocument.uri))
+            const repoId = (await api.resolveRepo(repo)).id
+            const emitter = new TelemetryEmitter(languageID, repoId)
+            const commonFields = { repo, textDocument, position, emitter, logger, provider: 'implementations' }
+
+            let lsifResults: sourcegraph.Location[] = []
+            for await (const rawResult of lsifProvider(textDocument, position)) {
+                if (!nonEmpty(rawResult)) {
+                    continue
+                }
+
+                // Mark results as precise
+                const aggregableBadges = [indicators.preciseBadge]
+                lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
+                logLocationResults({ ...commonFields, action: 'lsifImplementations', results: lsifResults })
                 yield lsifResults
             }
         }),

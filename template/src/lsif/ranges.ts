@@ -35,6 +35,7 @@ export interface CodeIntelligenceRange {
     range: sourcegraph.Range
     definitions?: () => sourcegraph.Location[]
     references?: () => sourcegraph.Location[]
+    implementations?: () => sourcegraph.Location[]
     hover?: HoverPayload
 }
 
@@ -313,6 +314,23 @@ const rangesQuery = gql`
                                         }
                                     }
                                 }
+                                implementations {
+                                    nodes {
+                                        resource {
+                                            path
+                                        }
+                                        range {
+                                            start {
+                                                line
+                                                character
+                                            }
+                                            end {
+                                                line
+                                                character
+                                            }
+                                        }
+                                    }
+                                }
                                 hover {
                                     markdown {
                                         text
@@ -358,6 +376,7 @@ export interface CodeIntelligenceRangeConnectionNode {
     range: sourcegraph.Range
     definitions?: { nodes: LocationConnectionNode[] }
     references?: { nodes: LocationConnectionNode[] }
+    implementations?: { nodes: LocationConnectionNode[] }
     hover?: HoverPayload
 }
 
@@ -382,12 +401,13 @@ export function rangesResponseToCodeIntelligenceRangeNodes(
  */
 export function nodeToCodeIntelligenceRange(
     textDocument: sourcegraph.TextDocument,
-    { range, definitions, references, hover }: CodeIntelligenceRangeConnectionNode
+    { range, definitions, references, implementations, hover }: CodeIntelligenceRangeConnectionNode
 ): CodeIntelligenceRange {
     return {
         range,
         definitions: definitions && lazyValue(() => definitions.nodes.map(node => nodeToLocation(textDocument, node))),
         references: references && lazyValue(() => references.nodes.map(node => nodeToLocation(textDocument, node))),
+        implementations: implementations && lazyValue(() => implementations.nodes.map(node => nodeToLocation(textDocument, node))),
         hover,
     }
 }
