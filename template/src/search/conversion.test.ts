@@ -1,5 +1,7 @@
 import * as assert from 'assert'
+
 import * as sourcegraph from 'sourcegraph'
+
 import { resultToLocation, searchResultToResults } from './conversion'
 
 describe('resultToLocation', () => {

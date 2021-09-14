@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+
 import { parseGitURI } from './uri'
 
 describe('parseGitURI', () => {

@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+
 import { goSpec } from './go'
 import { nilFilterContext, nilResult } from './spec.test'
 

@@ -1,13 +1,15 @@
 import * as sourcegraph from 'sourcegraph'
+
+import { Logger } from '../logging'
 import { noopProviders, CombinedProviders, DefinitionAndHover } from '../providers'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
-import { Logger } from '../logging'
+import { raceWithDelayOffset } from '../util/promise'
+
+import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition-hover'
+import { filterLocationsForDocumentHighlights } from './highlights'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
-import { filterLocationsForDocumentHighlights } from './highlights'
-import { raceWithDelayOffset } from '../util/promise'
-import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition-hover'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular

@@ -1,9 +1,11 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
+
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { LocationConnectionNode, nodeToLocation } from './locations'
-import { HoverPayload } from './definition-hover'
+
 import { GenericLSIFResponse, queryLSIF } from './api'
+import { HoverPayload } from './definition-hover'
+import { LocationConnectionNode, nodeToLocation } from './locations'
 
 /** The size of the bounds on each ranges request. */
 const RANGE_WINDOW_SIZE = 50
@@ -117,7 +119,7 @@ export async function makeRangeWindowFactory(
  * bounds calculations are efficient and early-out contains conditions are ensured
  * to be correct.
  *
- * @param doc The current document.
+ * @param textDocument The current document.
  * @param position The target position.
  * @param rangeWindows The set of windows known to the document.
  * @param queryGraphQL The function used to query the GraphQL API.
@@ -362,8 +364,8 @@ export interface CodeIntelligenceRangeConnectionNode {
 /**
  * Convert a GraphQL ranges response into a list of code intelligence ranges.
  *
- * @param doc The current document.
- * @param lsifObj The resolved LSIF object.
+ * @param textDocument The current document.
+ * @param lsifObject The resolved LSIF object.
  */
 export function rangesResponseToCodeIntelligenceRangeNodes(
     textDocument: sourcegraph.TextDocument,
@@ -375,7 +377,7 @@ export function rangesResponseToCodeIntelligenceRangeNodes(
 /**
  * Convert LSIF response node into a CodeIntelligenceRange.
  *
- * @param doc The current document.
+ * @param textDocument The current document.
  * @param node A code intelligence range connection node.
  */
 export function nodeToCodeIntelligenceRange(

@@ -1,25 +1,24 @@
 import { flatten, sortBy } from 'lodash'
-import { from, Observable, isObservable } from 'rxjs'
+import { from, isObservable, Observable } from 'rxjs'
 import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
+
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
 import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
+import { raceWithDelayOffset } from '../util/promise'
 import { parseGitURI } from '../util/uri'
+
+import { getConfig } from './config'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
 import { findSearchToken } from './tokens'
-import { getConfig } from './config'
-import { raceWithDelayOffset } from '../util/promise'
 
-const documentHighlights = (
-    textDocument: sourcegraph.TextDocument,
-    position: sourcegraph.Position
-): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
+const documentHighlights = (): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
 
 /** The number of files whose content can be cached at once. */
 const FILE_CONTENT_CACHE_CAPACITY = 20
@@ -71,8 +70,8 @@ export function createProviders(
      * current hover position. Returns undefined if either piece of data could
      * not be determined.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const getContentAndToken = async (
         textDocument: sourcegraph.TextDocument,
@@ -100,8 +99,8 @@ export function createProviders(
     /**
      * Retrieve a definition for the current hover position.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const definition = async (
         textDocument: sourcegraph.TextDocument,
@@ -151,8 +150,8 @@ export function createProviders(
     /**
      * Retrieve references for the current hover position.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const references = async (
         textDocument: sourcegraph.TextDocument,
@@ -197,8 +196,8 @@ export function createProviders(
     /**
      * Retrieve hover text for the current hover position.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const hover = async (
         textDocument: sourcegraph.TextDocument,
@@ -479,7 +478,7 @@ async function search(api: API, queryTerms: string[]): Promise<Result[]> {
  * Report whether the given symbol is both private and does not belong to
  * the current text document.
  *
- * @param doc The current text document.
+ * @param textDocument The current text document.
  * @param path The path of the document.
  * @param result The search result.
  */

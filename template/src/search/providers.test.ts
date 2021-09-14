@@ -1,14 +1,18 @@
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import * as assert from 'assert'
+
 import { afterEach, beforeEach } from 'mocha'
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
+import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+
 import { cStyleComment } from '../language-specs/comments'
 import { LanguageSpec, Result } from '../language-specs/spec'
-import { API, SearchResult } from '../util/api'
-import { createProviders } from './providers'
 import { Providers, SourcegraphProviders } from '../providers'
+import { API, SearchResult } from '../util/api'
 import { observableFromAsyncIterator } from '../util/ix'
+
+import { createProviders } from './providers'
 
 const spec: LanguageSpec = {
     stylized: 'Lang',
@@ -148,7 +152,7 @@ describe('search providers', () => {
                 [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
             ])
 
-            assert.equal(searchStub.callCount, 1)
+            assert.strictEqual(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -171,7 +175,7 @@ describe('search providers', () => {
                 [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
             )
 
-            assert.equal(searchStub.callCount, 1)
+            assert.strictEqual(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -195,7 +199,7 @@ describe('search providers', () => {
                 [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
             ])
 
-            assert.equal(searchStub.callCount, 2)
+            assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -227,7 +231,7 @@ describe('search providers', () => {
                 ],
             ])
 
-            assert.equal(searchStub.callCount, 1)
+            assert.strictEqual(searchStub.callCount, 1)
         })
 
         it('should fallback to index-only queries', async () => {
@@ -245,7 +249,7 @@ describe('search providers', () => {
 
             assert.deepEqual(await values, [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]])
 
-            assert.equal(searchStub.callCount, 2)
+            assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -282,7 +286,7 @@ describe('search providers', () => {
                 [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
             ])
 
-            assert.equal(searchStub.callCount, 3)
+            assert.strictEqual(searchStub.callCount, 3)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -321,7 +325,7 @@ describe('search providers', () => {
                 [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
             ])
 
-            assert.equal(searchStub.callCount, 2)
+            assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -365,7 +369,7 @@ describe('search providers', () => {
                 ]
             )
 
-            assert.equal(searchStub.callCount, 2)
+            assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '\\bfoobar\\b',
                 'case:yes',
@@ -406,7 +410,7 @@ describe('search providers', () => {
                 ]
             )
 
-            assert.equal(searchStub.callCount, 2)
+            assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '\\bfoobar\\b',
                 'case:yes',
@@ -452,7 +456,7 @@ describe('search providers', () => {
                 ]
             )
 
-            assert.equal(searchStub.callCount, 4)
+            assert.strictEqual(searchStub.callCount, 4)
             assertQuery(searchStub.getCall(0).args[0], [
                 '\\bfoobar\\b',
                 'case:yes',
@@ -514,7 +518,7 @@ describe('search providers', () => {
                 ]
             )
 
-            assert.equal(searchStub.callCount, 4)
+            assert.strictEqual(searchStub.callCount, 4)
             assertQuery(searchStub.getCall(0).args[0], [
                 '\\bfoobar\\b',
                 'case:yes',
@@ -580,7 +584,7 @@ describe('search providers', () => {
                 },
             ])
 
-            assert.equal(searchStub.callCount, 1)
+            assert.strictEqual(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -589,7 +593,7 @@ describe('search providers', () => {
                 'type:symbol',
             ])
 
-            assert.equal(getFileContentStub.callCount, 2)
+            assert.strictEqual(getFileContentStub.callCount, 2)
             assert.deepEqual(getFileContentStub.secondCall.args, ['repo1', 'rev1', '/b.ts'])
         })
 
@@ -613,7 +617,7 @@ describe('search providers', () => {
                 },
             ])
 
-            assert.equal(searchStub.callCount, 2)
+            assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
                 'case:yes',
@@ -630,7 +634,7 @@ describe('search providers', () => {
                 'index:only',
             ])
 
-            assert.equal(getFileContentStub.callCount, 2)
+            assert.strictEqual(getFileContentStub.callCount, 2)
             assert.deepEqual(getFileContentStub.secondCall.args, ['repo1', 'rev1', '/b.ts'])
         })
     })

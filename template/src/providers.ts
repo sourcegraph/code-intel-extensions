@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
+
 import * as indicators from './indicators'
 import { LanguageSpec, LSIFSupport } from './language-specs/spec'
 import { Logger, NoopLogger } from './logging'
@@ -390,6 +391,7 @@ function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, 
 /**
  * Creates a hover provider.
  *
+ * @param lsifSupport The level of LSIF support of the active language.
  * @param lsifProvider The LSIF-based definition and hover provider.
  * @param searchDefinitionProvider The search-based definition provider.
  * @param searchHoverProvider The search-based hover provider.

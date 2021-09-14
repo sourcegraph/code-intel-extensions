@@ -1,7 +1,10 @@
+import * as path from 'path'
+
 import { copy, emptyDir, ensureDir } from 'fs-extra'
 import * as fs from 'mz/fs'
-import * as path from 'path'
+
 import { LanguageSpec } from '../template/src/language-specs/spec'
+
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {
@@ -46,7 +49,9 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     // Update README.md placeholders with language name
     await fs.writeFile(
         readmeFilename,
-        (await fs.readFile(readmeFilename))
+        (
+            await fs.readFile(readmeFilename)
+        )
             .toString()
             .replace(/LANG\b/g, stylized)
             .replace(/LANGID\b/g, languageID)

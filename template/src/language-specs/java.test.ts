@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+
 import { javaSpec } from './java'
 import { nilFilterContext, nilResult } from './spec.test'
 

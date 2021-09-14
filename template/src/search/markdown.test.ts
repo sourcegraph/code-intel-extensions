@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+
 import { wrapIndentationInCodeBlocks } from './markdown'
 
 describe('wrapping indentation in code blocks', () => {

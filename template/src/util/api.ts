@@ -137,7 +137,7 @@ export class API {
      * input rev is not known to the Sourcegraph instance.
      *
      * @param repoName The repository's name.
-     * @param rev The revision.
+     * @param revision The revision.
      */
     public async resolveRev(repoName: string, revision: string): Promise<string | undefined> {
         const query = gql`
@@ -314,7 +314,7 @@ export class API {
      * not known to the Sourcegraph instance.
      *
      * @param repo The repository in which the file exists.
-     * @param rev The revision in which the target version of the file exists.
+     * @param revision The revision in which the target version of the file exists.
      * @param path The path of the file.
      */
     public async getFileContent(repo: string, revision: string, path: string): Promise<string | undefined> {

@@ -1,7 +1,10 @@
 import * as assert from 'assert'
+
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
 import { QueryGraphQLFn } from '../util/graphql'
+
 import { GenericLSIFResponse } from './api'
 import { ReferencesResponse, MAX_REFERENCE_PAGE_REQUESTS, referencesForPosition } from './references'
 import {
@@ -91,9 +94,9 @@ describe('referencesForPosition', () => {
             [location1, location2, location3],
         ])
 
-        assert.equal(queryGraphQLFn.getCall(0).args[1]?.after, undefined)
-        assert.equal(queryGraphQLFn.getCall(1).args[1]?.after, 'page2')
-        assert.equal(queryGraphQLFn.getCall(2).args[1]?.after, 'page3')
+        assert.strictEqual(queryGraphQLFn.getCall(0).args[1]?.after, undefined)
+        assert.strictEqual(queryGraphQLFn.getCall(1).args[1]?.after, 'page2')
+        assert.strictEqual(queryGraphQLFn.getCall(2).args[1]?.after, 'page3')
     })
 
     it('should not page results indefinitely', async () => {
@@ -117,6 +120,6 @@ describe('referencesForPosition', () => {
 
         assert.deepEqual(await gatherValues(referencesForPosition(document, position, queryGraphQLFn)), values)
 
-        assert.equal(queryGraphQLFn.callCount, MAX_REFERENCE_PAGE_REQUESTS)
+        assert.strictEqual(queryGraphQLFn.callCount, MAX_REFERENCE_PAGE_REQUESTS)
     })
 })

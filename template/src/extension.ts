@@ -1,8 +1,9 @@
-import * as sourcegraph from 'sourcegraph'
-import { languageSpecs } from './language-specs/languages'
-import { languageID } from './language'
 import { from } from 'rxjs'
 import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
+import * as sourcegraph from 'sourcegraph'
+
+import { languageID } from './language'
+import { languageSpecs } from './language-specs/languages'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
 import { createProviders } from './providers'
@@ -10,7 +11,7 @@ import { createProviders } from './providers'
 /**
  * Register providers on the extension host.
  *
- * @param ctx The extension context.
+ * @param context The extension context.
  */
 export const activate = (context: sourcegraph.ExtensionContext): void => {
     for (const spec of languageID === 'all'
@@ -39,7 +40,7 @@ const DUMMY_CTX = {
  * Activate the extension by registering definition, reference, and hover providers
  * with LSIF and search-based providers.
  *
- * @param ctx  The extension context.
+ * @param context  The extension context.
  * @param selector The document selector for which this extension is active.
  * @param languageSpec The language spec used to provide search-based code intelligence.
  * @param logger An optional logger instance.

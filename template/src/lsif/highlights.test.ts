@@ -1,6 +1,7 @@
 import * as assert from 'assert'
-import { range1, range2, range3, range4, document } from './util.test'
+
 import { filterLocationsForDocumentHighlights } from './highlights'
+import { range1, range2, range3, range4, document } from './util.test'
 
 describe('filterLocationsForDocumentHighlights', () => {
     it('should filter out distinct paths', () => {

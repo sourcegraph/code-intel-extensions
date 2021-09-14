@@ -1,9 +1,11 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
-import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { LocationConnectionNode, nodeToLocation } from './locations'
-import { GenericLSIFResponse, queryLSIF } from './api'
+
 import { DefinitionAndHover } from '../providers'
+import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
+
+import { GenericLSIFResponse, queryLSIF } from './api'
+import { LocationConnectionNode, nodeToLocation } from './locations'
 
 export type DefinitionAndHoverResponse = Partial<DefinitionResponse> & HoverResponse
 
@@ -97,7 +99,8 @@ export async function definitionAndHoverForPosition(
  * Convert a GraphQL definition and hover response into an object consisting of a list of Sourcegraph
  * locations and a markdown-formatted hover object.
  *
- * @param lsifObj The resolved LSIF object.
+ * @param textDocument The current document.
+ * @param lsifObject The resolved LSIF object.
  */
 export function definitionAndHoverResponseToLocations(
     textDocument: sourcegraph.TextDocument,

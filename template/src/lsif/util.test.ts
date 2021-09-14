@@ -1,5 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
+
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+
 import { GenericLSIFResponse } from './api'
 
 export const document = createStubTextDocument({
@@ -8,7 +10,11 @@ export const document = createStubTextDocument({
     text: undefined,
 })
 
-export const makeResource = (name: string, oid: string, path: string) => ({
+export const makeResource = (
+    name: string,
+    oid: string,
+    path: string
+): { repository: { name: string }; commit: { oid: string }; path: string } => ({
     repository: { name },
     commit: { oid },
     path,

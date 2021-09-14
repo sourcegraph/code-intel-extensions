@@ -1,4 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
+
 import { SearchBasedCodeIntelligenceSettings } from './settings'
 
 /** Retrieves a config value by key. */
