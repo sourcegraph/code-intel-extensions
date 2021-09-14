@@ -1,16 +1,18 @@
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import * as assert from 'assert'
+
 import { Observable } from 'rxjs'
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
+import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+
 import * as indicators from './indicators'
 import { LSIFSupport } from './language-specs/spec'
 import {
-    createDefinitionProvider,
+    clearReferenceResultCache, createDefinitionProvider,
     createDocumentHighlightProvider,
     createHoverProvider,
-    createReferencesProvider,
-    clearReferenceResultCache,
+    createReferencesProvider
 } from './providers'
 import { API } from './util/api'
 

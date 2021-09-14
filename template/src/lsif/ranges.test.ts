@@ -1,6 +1,11 @@
 import * as assert from 'assert'
+
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
+import { QueryGraphQLFn } from '../util/graphql'
+
+import { GenericLSIFResponse } from './api'
 import {
     calculateRangeWindow,
     rangesInRangeWindow,
@@ -9,8 +14,6 @@ import {
     findOverlappingCodeIntelligenceRange,
 } from './ranges'
 import { range1, makeEnvelope, range2, range3, document, makeResource, position } from './util.test'
-import { QueryGraphQLFn } from '../util/graphql'
-import { GenericLSIFResponse } from './api'
 
 describe('findOverlappingWindows', () => {
     const aggregate1 = { range: range1 }

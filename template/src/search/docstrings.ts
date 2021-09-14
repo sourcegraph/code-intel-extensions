@@ -1,4 +1,5 @@
 import { dropWhile, takeWhile } from 'lodash'
+
 import { BlockCommentStyle, CommentStyle, TextDocumentPlacement } from '../language-specs/spec'
 
 /**

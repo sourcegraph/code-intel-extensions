@@ -1,6 +1,8 @@
 import * as assert from 'assert'
-import * as fs from 'mz/fs'
 import * as path from 'path'
+
+import * as fs from 'mz/fs'
+
 import { languageSpecs } from './languages'
 
 describe('all defined languages', () => {

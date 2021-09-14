@@ -1,5 +1,7 @@
 import * as sourcegraph from 'sourcegraph'
+
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+
 import { GenericLSIFResponse } from './api'
 
 export const document = createStubTextDocument({

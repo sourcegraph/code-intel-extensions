@@ -1,6 +1,8 @@
 import * as assert from 'assert'
+
 import { cStyleComment, javaStyleComment, leadingHashPattern, pythonStyleComment } from '../language-specs/comments'
 import { CommentStyle } from '../language-specs/spec'
+
 import { findDocstring } from './docstrings'
 
 describe('docstrings', () => {

@@ -1,14 +1,18 @@
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import * as assert from 'assert'
+
 import { afterEach, beforeEach } from 'mocha'
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
+import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
+
 import { cStyleComment } from '../language-specs/comments'
 import { LanguageSpec, Result } from '../language-specs/spec'
-import { API, SearchResult } from '../util/api'
-import { createProviders } from './providers'
 import { Providers, SourcegraphProviders } from '../providers'
+import { API, SearchResult } from '../util/api'
 import { observableFromAsyncIterator } from '../util/ix'
+
+import { createProviders } from './providers'
 
 const spec: LanguageSpec = {
     stylized: 'Lang',

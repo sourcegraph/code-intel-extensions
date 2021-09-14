@@ -1,4 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
+
 import { isDefined } from '../util/helpers'
 
 export function filterLocationsForDocumentHighlights(

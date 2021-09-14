@@ -1,4 +1,5 @@
 import * as path from 'path'
+
 import { pythonStyleComment } from './comments'
 import { FilterContext, LanguageSpec, Result } from './spec'
 import { extractFromLines, filterResultsByImports, removeExtension } from './util'

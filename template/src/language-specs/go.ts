@@ -1,4 +1,5 @@
 import * as path from 'path'
+
 import { slashPattern } from './comments'
 import { FilterContext, LanguageSpec, Result, LSIFSupport } from './spec'
 import { extractFromLines, filterResults } from './util'

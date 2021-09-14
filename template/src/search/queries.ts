@@ -1,5 +1,7 @@
 import { extname } from 'path'
+
 import * as sourcegraph from 'sourcegraph'
+
 import { parseGitURI } from '../util/uri'
 
 /**

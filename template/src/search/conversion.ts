@@ -1,4 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
+
 import { LineMatch, SearchResult, SearchSymbol } from '../util/api'
 import { isDefined } from '../util/helpers'
 

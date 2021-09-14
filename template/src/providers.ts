@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
+
 import * as indicators from './indicators'
 import { LanguageSpec, LSIFSupport } from './language-specs/spec'
 import { Logger, NoopLogger } from './logging'

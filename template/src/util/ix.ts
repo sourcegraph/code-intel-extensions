@@ -1,5 +1,5 @@
-import * as sourcegraph from 'sourcegraph'
 import { Observable, Observer } from 'rxjs'
+import * as sourcegraph from 'sourcegraph'
 
 /**
  * An async generator that yields no values.

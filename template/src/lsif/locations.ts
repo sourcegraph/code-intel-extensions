@@ -1,4 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
+
 import { parseGitURI } from '../util/uri'
 
 export interface LocationConnectionNode {

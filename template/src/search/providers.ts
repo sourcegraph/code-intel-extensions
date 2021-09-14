@@ -1,20 +1,22 @@
 import { flatten, sortBy } from 'lodash'
-import { from, Observable, isObservable } from 'rxjs'
+import { from, isObservable, Observable } from 'rxjs'
 import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
+
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
 import { Providers } from '../providers'
 import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
+import { raceWithDelayOffset } from '../util/promise'
 import { parseGitURI } from '../util/uri'
+
+import { getConfig } from './config'
 import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
 import { findSearchToken } from './tokens'
-import { getConfig } from './config'
-import { raceWithDelayOffset } from '../util/promise'
 
 const documentHighlights = (
     textDocument: sourcegraph.TextDocument,

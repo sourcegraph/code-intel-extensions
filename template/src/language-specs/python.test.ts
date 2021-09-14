@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+
 import { pythonSpec, relativeImportPath } from './python'
 import { nilFilterContext, nilResult } from './spec.test'
 

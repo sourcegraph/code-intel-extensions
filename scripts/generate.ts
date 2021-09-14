@@ -1,7 +1,10 @@
+import * as path from 'path'
+
 import { copy, emptyDir, ensureDir } from 'fs-extra'
 import * as fs from 'mz/fs'
-import * as path from 'path'
+
 import { LanguageSpec } from '../template/src/language-specs/spec'
+
 import { findLanguageSpecs } from './args'
 
 async function main(): Promise<void> {

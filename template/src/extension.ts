@@ -1,8 +1,9 @@
-import * as sourcegraph from 'sourcegraph'
-import { languageSpecs } from './language-specs/languages'
-import { languageID } from './language'
 import { from } from 'rxjs'
 import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
+import * as sourcegraph from 'sourcegraph'
+
+import { languageID } from './language'
+import { languageSpecs } from './language-specs/languages'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
 import { createProviders } from './providers'

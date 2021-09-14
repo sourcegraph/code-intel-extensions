@@ -1,9 +1,11 @@
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
+
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { LocationConnectionNode, nodeToLocation } from './locations'
-import { HoverPayload } from './definition-hover'
+
 import { GenericLSIFResponse, queryLSIF } from './api'
+import { HoverPayload } from './definition-hover'
+import { LocationConnectionNode, nodeToLocation } from './locations'
 
 /** The size of the bounds on each ranges request. */
 const RANGE_WINDOW_SIZE = 50

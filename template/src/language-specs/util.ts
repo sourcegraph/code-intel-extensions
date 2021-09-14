@@ -1,4 +1,5 @@
 import { isDefined } from '../util/helpers'
+
 import { Result } from './spec'
 
 /**

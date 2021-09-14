@@ -1,5 +1,7 @@
 import * as assert from 'assert'
+
 import { cStyleBlockComment, slashPattern } from '../language-specs/comments'
+
 import { findSearchToken } from './tokens'
 
 describe('findSearchToken', () => {

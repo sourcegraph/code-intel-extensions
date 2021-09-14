@@ -1,9 +1,13 @@
 import * as assert from 'assert'
+
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
 import { QueryGraphQLFn } from '../util/graphql'
-import { createGraphQLProviders as createProviders } from './providers'
+
 import { GenericLSIFResponse } from './api'
+import { DefinitionResponse, DefinitionAndHoverResponse } from './definition-hover'
+import { createGraphQLProviders as createProviders } from './providers'
 import { ReferencesResponse, MAX_REFERENCE_PAGE_REQUESTS } from './references'
 import {
     gatherValues,
@@ -21,7 +25,6 @@ import {
     document,
     position,
 } from './util.test'
-import { DefinitionResponse, DefinitionAndHoverResponse } from './definition-hover'
 
 describe('graphql providers', () => {
     describe('combined definition and hover provider', () => {

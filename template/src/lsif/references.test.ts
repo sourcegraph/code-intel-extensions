@@ -1,7 +1,10 @@
 import * as assert from 'assert'
+
 import * as sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
+
 import { QueryGraphQLFn } from '../util/graphql'
+
 import { GenericLSIFResponse } from './api'
 import { ReferencesResponse, MAX_REFERENCE_PAGE_REQUESTS, referencesForPosition } from './references'
 import {
