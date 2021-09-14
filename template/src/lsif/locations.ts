@@ -14,7 +14,7 @@ export interface LocationConnectionNode {
 /**
  * Convert a GraphQL location connection node into a Sourcegraph location.
  *
- * @param doc The current document.
+ * @param textDocument The current document.
  * @param node A location connection node.
  */
 export function nodeToLocation(

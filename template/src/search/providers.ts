@@ -73,8 +73,8 @@ export function createProviders(
      * current hover position. Returns undefined if either piece of data could
      * not be determined.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const getContentAndToken = async (
         textDocument: sourcegraph.TextDocument,
@@ -102,8 +102,8 @@ export function createProviders(
     /**
      * Retrieve a definition for the current hover position.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const definition = async (
         textDocument: sourcegraph.TextDocument,
@@ -153,8 +153,8 @@ export function createProviders(
     /**
      * Retrieve references for the current hover position.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const references = async (
         textDocument: sourcegraph.TextDocument,
@@ -199,8 +199,8 @@ export function createProviders(
     /**
      * Retrieve hover text for the current hover position.
      *
-     * @param doc The current text document.
-     * @param pos The current hover position.
+     * @param textDocument The current text document.
+     * @param position The current hover position.
      */
     const hover = async (
         textDocument: sourcegraph.TextDocument,
@@ -481,7 +481,7 @@ async function search(api: API, queryTerms: string[]): Promise<Result[]> {
  * Report whether the given symbol is both private and does not belong to
  * the current text document.
  *
- * @param doc The current text document.
+ * @param textDocument The current text document.
  * @param path The path of the document.
  * @param result The search result.
  */

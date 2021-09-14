@@ -101,7 +101,7 @@ function findDocstringOnDefinitionLine(line: string, { lineRegex, block }: Comme
  * before the definition in reverse order. This ordering will be undone `unmungeLines`.
  *
  * @param lines The lines of the text document.
- * @param docPlacement The placement of a docblock for the current language.
+ * @param textDocumentPlacement The placement of a docblock for the current language.
  * @param definitionLine The line on which the definition occurs.
  */
 function mungeLines(
@@ -118,7 +118,7 @@ function mungeLines(
  * If we reversed the order of the lines in `mungeLines`, undo that here.
  *
  * @param lines The lines of the text document.
- * @param docPlacement The placement of a docblock for the current language.
+ * @param textDocumentPlacement The placement of a docblock for the current language.
  */
 function unmungeLines(lines: string[], textDocumentPlacement: TextDocumentPlacement | undefined): string[] {
     return textDocumentPlacement === 'below the definition' ? lines : lines.reverse()

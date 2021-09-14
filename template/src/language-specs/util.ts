@@ -33,7 +33,7 @@ export function extractFromLines(fileContent: string, ...patterns: RegExp[]): st
  *
  * @param results A list of results to filter.
  * @param importPaths A list of import paths.
- * @param fn The filter function.
+ * @param func The filter function.
  */
 export function filterResultsByImports<T extends Result>(
     results: T[],
@@ -48,7 +48,7 @@ export function filterResultsByImports<T extends Result>(
  * function returns the original input unchanged.
  *
  * @param results A list of results to filter.
- * @param fn The filter function.
+ * @param func The filter function.
  */
 export function filterResults<T extends Result>(results: T[], func: (result: T) => boolean): T[] {
     const filteredResults = results.filter(result => func(result))

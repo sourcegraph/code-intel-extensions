@@ -83,7 +83,7 @@ export async function* concat<T>(source: AsyncIterable<T[] | null>): AsyncIterab
  * Converts a function returning a promise into an async generator yielding the
  * resolved value of that promise.
  *
- * @param fn The promise function.
+ * @param func The promise function.
  */
 export function asyncGeneratorFromPromise<P extends unknown[], R>(
     func: (...args: P) => Promise<R>

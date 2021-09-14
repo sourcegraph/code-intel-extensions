@@ -11,7 +11,7 @@ import { createProviders } from './providers'
 /**
  * Register providers on the extension host.
  *
- * @param ctx The extension context.
+ * @param context The extension context.
  */
 export const activate = (context: sourcegraph.ExtensionContext): void => {
     for (const spec of languageID === 'all'
@@ -40,7 +40,7 @@ const DUMMY_CTX = {
  * Activate the extension by registering definition, reference, and hover providers
  * with LSIF and search-based providers.
  *
- * @param ctx  The extension context.
+ * @param context  The extension context.
  * @param selector The document selector for which this extension is active.
  * @param languageSpec The language spec used to provide search-based code intelligence.
  * @param logger An optional logger instance.

@@ -99,7 +99,8 @@ export async function definitionAndHoverForPosition(
  * Convert a GraphQL definition and hover response into an object consisting of a list of Sourcegraph
  * locations and a markdown-formatted hover object.
  *
- * @param lsifObj The resolved LSIF object.
+ * @param textDocument The current document.
+ * @param lsifObject The resolved LSIF object.
  */
 export function definitionAndHoverResponseToLocations(
     textDocument: sourcegraph.TextDocument,

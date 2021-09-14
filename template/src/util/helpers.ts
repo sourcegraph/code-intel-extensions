@@ -31,7 +31,7 @@ export function asArray<T>(value: T | T[] | null): T[] {
  * modified result in the same shape as the input.
  *
  * @param value The list of values, a single value, or null.
- * @param fn The map function.
+ * @param func The map function.
  */
 export function mapArrayish<T, R>(value: T | T[] | null, func: (value: T) => R): R | R[] | null {
     return Array.isArray(value) ? value.map(func) : value ? func(value) : null
@@ -62,7 +62,7 @@ export function notIn<T>(excludelist: T[]): (value: T) => boolean {
  * Catches any errors that occur during invocation and returns undefined instead of
  * rejecting the promise.
  *
- * @param p The promise.
+ * @param promise The promise.
  */
 export function safePromise<P, R>(promise: (argument: P) => Promise<R>): (argument: P) => Promise<R | undefined> {
     return async (argument: P): Promise<R | undefined> => {
