@@ -18,10 +18,7 @@ import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
 import { findSearchToken } from './tokens'
 
-const documentHighlights = (
-    textDocument: sourcegraph.TextDocument,
-    position: sourcegraph.Position
-): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
+const documentHighlights = (): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
 
 /** The number of files whose content can be cached at once. */
 const FILE_CONTENT_CACHE_CAPACITY = 20

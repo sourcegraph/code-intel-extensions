@@ -49,7 +49,9 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
     // Update README.md placeholders with language name
     await fs.writeFile(
         readmeFilename,
-        (await fs.readFile(readmeFilename))
+        (
+            await fs.readFile(readmeFilename)
+        )
             .toString()
             .replace(/LANG\b/g, stylized)
             .replace(/LANGID\b/g, languageID)

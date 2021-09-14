@@ -11,6 +11,6 @@ module.exports = {
   rules: {
     // [...a] breaks when Array.from(a) works
     // when a is not an array but an iterable
-    "unicorn/prefer-spread": 0
+    'unicorn/prefer-spread': 0,
   },
 }

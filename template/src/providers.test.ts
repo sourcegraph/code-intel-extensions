@@ -9,10 +9,11 @@ import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 import * as indicators from './indicators'
 import { LSIFSupport } from './language-specs/spec'
 import {
-    clearReferenceResultCache, createDefinitionProvider,
+    clearReferenceResultCache,
+    createDefinitionProvider,
     createDocumentHighlightProvider,
     createHoverProvider,
-    createReferencesProvider
+    createReferencesProvider,
 } from './providers'
 import { API } from './util/api'
 
