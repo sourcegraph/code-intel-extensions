@@ -199,7 +199,7 @@ function references(
             results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
 
-        if (localReferences && localReferences.length < 0) {
+        if (localReferences && localReferences.length > 0) {
             // Yield any references we have immediately
             yield localReferences
         }
@@ -254,7 +254,7 @@ function implementations(
             results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
 
-        if (localImplementations && localImplementations.length < 0) {
+        if (localImplementations && localImplementations.length > 0) {
             // Yield any implementations we have immediately
             yield localImplementations
         }
