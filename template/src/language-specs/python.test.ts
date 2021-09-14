@@ -37,10 +37,10 @@ describe('pythonSpec', () => {
 
 describe('relativeImportPath', () => {
     it('converts relative import to path', () => {
-        assert.equal(relativeImportPath('a/b/c.py', 'foo'), undefined)
-        assert.equal(relativeImportPath('a/b/c.py', '.foo'), 'a/b/foo')
-        assert.equal(relativeImportPath('a/b/c.py', '.foo.bar'), 'a/b/foo/bar')
-        assert.equal(relativeImportPath('a/b/c.py', '..foo.bar'), 'a/foo/bar')
-        assert.equal(relativeImportPath('a/b/c.py', '....foo'), '../foo')
+        assert.strictEqual(relativeImportPath('a/b/c.py', 'foo'), undefined)
+        assert.strictEqual(relativeImportPath('a/b/c.py', '.foo'), 'a/b/foo')
+        assert.strictEqual(relativeImportPath('a/b/c.py', '.foo.bar'), 'a/b/foo/bar')
+        assert.strictEqual(relativeImportPath('a/b/c.py', '..foo.bar'), 'a/foo/bar')
+        assert.strictEqual(relativeImportPath('a/b/c.py', '....foo'), '../foo')
     })
 })

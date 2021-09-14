@@ -43,9 +43,9 @@ describe('findOverlappingWindows', () => {
         const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined }]
 
         assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn), expected)
-        assert.equal(windows.length, 3)
-        assert.equal(windows[1].startLine, 4)
-        assert.equal(windows[1].endLine, 6)
+        assert.strictEqual(windows.length, 3)
+        assert.strictEqual(windows[1].startLine, 4)
+        assert.strictEqual(windows[1].endLine, 6)
         assert.deepEqual(await windows[0].ranges, [aggregate1])
         assert.deepEqual(await windows[1].ranges, expected)
         assert.deepEqual(await windows[2].ranges, [aggregate3])
@@ -63,7 +63,7 @@ describe('findOverlappingWindows', () => {
 
         // Rejected promises (once no longer in-flight) do not stay in the cache
         await assert.rejects(findOverlappingWindows(document, position, windows, queryGraphQLFn1), new Error('oops'))
-        assert.equal(windows.length, 2)
+        assert.strictEqual(windows.length, 2)
 
         const queryGraphQLFn2 = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>>>(() =>
             makeEnvelope({ ranges: { nodes: [aggregate2] } })
@@ -72,9 +72,9 @@ describe('findOverlappingWindows', () => {
         const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined }]
 
         assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn2), expected)
-        assert.equal(windows.length, 3)
-        assert.equal(windows[1].startLine, 4)
-        assert.equal(windows[1].endLine, 6)
+        assert.strictEqual(windows.length, 3)
+        assert.strictEqual(windows[1].startLine, 4)
+        assert.strictEqual(windows[1].endLine, 6)
         assert.deepEqual(await windows[0].ranges, [aggregate1])
         assert.deepEqual(await windows[1].ranges, expected)
         assert.deepEqual(await windows[2].ranges, [aggregate3])
@@ -110,7 +110,7 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         const overlappingPositions = [new sourcegraph.Position(10, 5), new sourcegraph.Position(10, 6)]
 
         for (const position of overlappingPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), range)
+            assert.strictEqual(findOverlappingCodeIntelligenceRange(position, [range]), range)
         }
 
         const disjointPositions = [
@@ -122,7 +122,7 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         ]
 
         for (const position of disjointPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), null)
+            assert.strictEqual(findOverlappingCodeIntelligenceRange(position, [range]), null)
         }
     })
 
@@ -138,7 +138,7 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         ]
 
         for (const position of overlappingPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), range)
+            assert.strictEqual(findOverlappingCodeIntelligenceRange(position, [range]), range)
         }
 
         const disjointPositions = [
@@ -149,7 +149,7 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         ]
 
         for (const position of disjointPositions) {
-            assert.equal(findOverlappingCodeIntelligenceRange(position, [range]), null)
+            assert.strictEqual(findOverlappingCodeIntelligenceRange(position, [range]), null)
         }
     })
 
@@ -162,7 +162,7 @@ describe('findOverlappingCodeIntelligenceRange', () => {
         ]
 
         const position = new sourcegraph.Position(3, 5)
-        assert.equal(findOverlappingCodeIntelligenceRange(position, ranges), ranges[3])
+        assert.strictEqual(findOverlappingCodeIntelligenceRange(position, ranges), ranges[3])
     })
 })
 
