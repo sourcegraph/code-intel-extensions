@@ -33,6 +33,7 @@ function candidates(sourcePath: string, importPath: string): string[] {
 
 export const typescriptSpec: LanguageSpec = {
     languageID: 'typescript',
+    additionalLanguages: ['javascript'],
     stylized: 'TypeScript',
     fileExts: ['ts', 'tsx', 'js', 'jsx'],
     commentStyles: [cStyleComment],
