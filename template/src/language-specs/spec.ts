@@ -11,6 +11,14 @@ export interface LanguageSpec {
     languageID: string
 
     /**
+     * Languages that the extension should be activated for in addition to
+     * its main language.
+     *
+     * @example ["javascript"] for the TypeScript extension.
+     */
+    additionalLanguages?: string[]
+
+    /**
      * The name of the generated extension.
      */
     stylized: string

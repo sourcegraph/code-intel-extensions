@@ -12,7 +12,7 @@ async function main(): Promise<void> {
     await Promise.all(specs.map(spec => generate(spec)))
 }
 
-async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
+async function generate({ languageID, stylized, additionalLanguages = [] }: LanguageSpec): Promise<void> {
     console.log(`Generating ${languageID} extension`)
 
     const langDirectory = `generated-${languageID}`
@@ -38,7 +38,10 @@ async function generate({ languageID, stylized }: LanguageSpec): Promise<void> {
                 name: languageID,
                 title: `${stylized} code intelligence`,
                 description: `Provides search-based code intelligence for ${stylized} using the Sourcegraph search API`,
-                activationEvents: [`onLanguage:${languageID}`],
+                activationEvents: [
+                    `onLanguage:${languageID}`,
+                    ...additionalLanguages?.map(language => `onLanguage:${language}`),
+                ],
                 icon: `data:image/png;base64,${(await fs.readFile(iconFilename)).toString('base64')}`,
             },
             null,
