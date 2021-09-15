@@ -73,7 +73,15 @@ const activateCodeIntel = (
         context.subscriptions.add(unsubscribeReferencesProvider)
     }
 
-    context.subscriptions.add(sourcegraph.languages.registerImplementationProvider(selector, providers.implementations))
+    // Implementations: create a panel and register a locations provider.
+    // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
+    const implementationsPanelID = 'implementations'
+    const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+    implementationsPanel.title = 'Implementations'
+    implementationsPanel.component = { locationProvider: implementationsPanelID }
+    implementationsPanel.priority = 160
+    context.subscriptions.add(implementationsPanel)
+    context.subscriptions.add(sourcegraph.languages.registerLocationProvider(implementationsPanelID, selector, providers.implementations))
 
     context.subscriptions.add(
         from(sourcegraph.configuration)

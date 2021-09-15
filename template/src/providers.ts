@@ -15,7 +15,7 @@ import { parseGitURI } from './util/uri'
 export interface Providers {
     definition: DefinitionProvider
     references: ReferencesProvider
-    implementations: ImplementationsProvider
+    implementations: LocationsProvider
     hover: HoverProvider
     documentHighlights: DocumentHighlightProvider
 }
@@ -23,14 +23,14 @@ export interface Providers {
 export interface CombinedProviders {
     definitionAndHover: DefinitionAndHoverProvider
     references: ReferencesProvider
-    implementations: ImplementationsProvider
+    implementations: LocationsProvider
     documentHighlights: DocumentHighlightProvider
 }
 
 export interface SourcegraphProviders {
     definition: sourcegraph.DefinitionProvider
     references: sourcegraph.ReferenceProvider
-    implementations: sourcegraph.ImplementationProvider
+    implementations: sourcegraph.LocationProvider
     hover: sourcegraph.HoverProvider
     documentHighlights: sourcegraph.DocumentHighlightProvider
 }
@@ -56,7 +56,7 @@ export type ReferencesProvider = (
     context: sourcegraph.ReferenceContext
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
 
-export type ImplementationsProvider = (
+export type LocationsProvider = (
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position
 ) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
@@ -347,7 +347,7 @@ export function createReferencesProvider(
 }
 
 /**
- * Creates a implementation provider.
+ * Creates an implementation provider.
  *
  * @param lsifProvider The LSIF-based implementations provider.
  * @param logger The logger instance.
@@ -356,17 +356,16 @@ export function createReferencesProvider(
  * or not search-based results should be displayed when precise results are available.
  */
 export function createImplementationsProvider(
-    lsifProvider: ImplementationsProvider,
+    lsifProvider: LocationsProvider,
     logger?: Logger,
     languageID: string = '',
     api = new API()
-): sourcegraph.ImplementationProvider {
+): sourcegraph.LocationProvider {
     return {
-        provideImplementations: wrapProvider(async function* (
+        provideLocations: wrapProvider(async function* (
             textDocument: sourcegraph.TextDocument,
             position: sourcegraph.Position
         ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-            console.log('providing implementation')
             const { repo } = parseGitURI(new URL(textDocument.uri))
             const repoId = (await api.resolveRepo(repo)).id
             const emitter = new TelemetryEmitter(languageID, repoId)

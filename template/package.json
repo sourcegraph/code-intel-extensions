@@ -49,6 +49,11 @@
           "action": "mixPreciseAndSearchBasedReferences.toggle",
           "when": "panel.activeView.id == 'references'"
         }
+      ],
+      "hover": [
+        {
+          "action": "findImplementations"
+        }
       ]
     },
     "actions": [
@@ -66,6 +71,17 @@
         ],
         "actionItem": {
           "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"Mix precise and search-based results\"}"
+        }
+      },
+      {
+        "id": "findImplementations",
+        "title": "Find implementations",
+        "command": "open",
+        "commandArguments": [
+          "/${resource.repo}@${resource.commit}/-/blob/${resource.path}?L${get(get(hoverPosition, \"position\"), \"line\") + 1}:${get(get(hoverPosition, \"position\"), \"character\") + 1}#tab=implementations"
+        ],
+        "actionItem": {
+          "label": "Find implementations"
         }
       }
     ],
