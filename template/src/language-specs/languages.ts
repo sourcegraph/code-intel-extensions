@@ -20,6 +20,13 @@ import { typescriptSpec } from './typescript'
 
 // Please keep the specs below in lexicographic order.
 
+const apexSpec: LanguageSpec = {
+    languageID: 'apex',
+    stylized: 'Apex',
+    fileExts: ['apex', 'cls', 'trigger'],
+    commentStyles: [javaStyleComment],
+}
+
 const clojureSpec: LanguageSpec = {
     languageID: 'clojure',
     stylized: 'Clojure',
@@ -334,6 +341,7 @@ const vhdlSpec: LanguageSpec = {
  * The language names come from https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers.
  */
 export const languageSpecs: LanguageSpec[] = [
+    apexSpec,
     clojureSpec,
     cobolSpec,
     cppSpec,
