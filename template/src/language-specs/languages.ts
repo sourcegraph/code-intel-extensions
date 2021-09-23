@@ -23,7 +23,7 @@ import { typescriptSpec } from './typescript'
 const apexSpec: LanguageSpec = {
     languageID: 'apex',
     stylized: 'Apex',
-    fileExts: ['apex', 'cls'],
+    fileExts: ['apex', 'cls', 'trigger'],
     commentStyles: [javaStyleComment],
 }
 
