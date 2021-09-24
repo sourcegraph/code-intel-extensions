@@ -1,5 +1,6 @@
 import { extname } from 'path'
 
+import { escapeRegExp } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 
 import { parseGitURI } from '../util/uri'
@@ -22,6 +23,7 @@ export function definitionQuery({
     fileExts: string[]
 }): string[] {
     return [`^${searchToken}$`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
+    // return [`${searchToken}`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
 }
 
 /**
@@ -41,7 +43,15 @@ export function referencesQuery({
     /** File extensions used by the current extension. */
     fileExts: string[]
 }): string[] {
-    return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
+    let pattern = ''
+    if (/^\w/.test(searchToken)) {
+        pattern += '\\b'
+    }
+    pattern += escapeRegExp(searchToken)
+    if (/\w$/.test(searchToken)) {
+        pattern += '\\b'
+    }
+    return [pattern, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
 }
 
 const excludelist = new Set(['thrift', 'proto', 'graphql'])
