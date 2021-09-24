@@ -1,6 +1,6 @@
-import { escapeRegExp } from 'lodash'
 import { extname } from 'path'
 
+import { escapeRegExp } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 
 import { parseGitURI } from '../util/uri'
@@ -23,6 +23,7 @@ export function definitionQuery({
     fileExts: string[]
 }): string[] {
     return [`^${searchToken}$`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
+    // return [`${searchToken}`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
 }
 
 /**
