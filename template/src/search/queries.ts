@@ -1,3 +1,4 @@
+import { escapeRegExp } from 'lodash'
 import { extname } from 'path'
 
 import * as sourcegraph from 'sourcegraph'
@@ -41,7 +42,15 @@ export function referencesQuery({
     /** File extensions used by the current extension. */
     fileExts: string[]
 }): string[] {
-    return [`\\b${searchToken}\\b`, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
+    let pattern = ''
+    if (/^\w/.test(searchToken)) {
+        pattern += '\\b'
+    }
+    pattern += escapeRegExp(searchToken)
+    if (/\w$/.test(searchToken)) {
+        pattern += '\\b'
+    }
+    return [pattern, 'type:file', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
 }
 
 const excludelist = new Set(['thrift', 'proto', 'graphql'])
