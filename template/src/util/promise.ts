@@ -27,7 +27,7 @@ export async function raceWithDelayOffset<T>(
     }
 
     const fallback = makeFallback()
-    const raceResults = await Promise.race([primary, fallback])
+    const raceResults = await Promise.race([primary, fallback.catch(() => primary)])
     if (filter(raceResults)) {
         return raceResults
     }
