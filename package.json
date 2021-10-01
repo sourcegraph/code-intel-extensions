@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@sourcegraph/eslint-config": "^0.25.1",
-    "@sourcegraph/extension-api-stubs": "^1.5.3",
+    "@sourcegraph/extension-api-stubs": "^1.5.4",
     "@sourcegraph/prettierrc": "^3.0.3",
     "@sourcegraph/tsconfig": "^4.0.1",
     "@types/fs-extra": "9.0.13",
