@@ -40,7 +40,7 @@ describe('findOverlappingWindows', () => {
             { startLine: 6, endLine: 9, ranges: Promise.resolve([aggregate3]) },
         ]
 
-        const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined }]
+        const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined, implementations: undefined }]
 
         assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn), expected)
         assert.strictEqual(windows.length, 3)
@@ -69,7 +69,7 @@ describe('findOverlappingWindows', () => {
             makeEnvelope({ ranges: { nodes: [aggregate2] } })
         )
 
-        const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined }]
+        const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined, implementations: undefined }]
 
         assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn2), expected)
         assert.strictEqual(windows.length, 3)

@@ -148,24 +148,20 @@ describe('graphql providers', () => {
                 })
             )
 
-            assert.deepEqual(
-                await gatherValues(
-                    createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).references(
-                        document,
-                        position,
-                        {
-                            includeDeclaration: false,
-                        }
-                    )
-                ),
-                [
-                    [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
-                    ],
-                ]
+            let values = await gatherValues(
+                createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).references(document, position, {
+                    includeDeclaration: false,
+                })
             )
+
+            // assert.deepStrictEqual(values.length, 1);
+            assert.deepEqual(values, [
+                [
+                    new sourcegraph.Location(new URL('git://repo1?deadbeef1#d.ts'), range1),
+                    new sourcegraph.Location(new URL('git://repo2?deadbeef2#e.ts'), range2),
+                    new sourcegraph.Location(new URL('git://repo3?deadbeef3#f.ts'), range3),
+                ],
+            ])
         })
 
         it('should correctly parse result', async () => {

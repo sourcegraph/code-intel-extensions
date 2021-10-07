@@ -407,7 +407,8 @@ export function nodeToCodeIntelligenceRange(
         range,
         definitions: definitions && lazyValue(() => definitions.nodes.map(node => nodeToLocation(textDocument, node))),
         references: references && lazyValue(() => references.nodes.map(node => nodeToLocation(textDocument, node))),
-        implementations: implementations && lazyValue(() => implementations.nodes.map(node => nodeToLocation(textDocument, node))),
+        implementations:
+            implementations && lazyValue(() => implementations.nodes.map(node => nodeToLocation(textDocument, node))),
         hover,
     }
 }
