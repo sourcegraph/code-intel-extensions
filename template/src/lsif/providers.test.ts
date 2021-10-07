@@ -154,12 +154,16 @@ describe('graphql providers', () => {
                 })
             )
 
-            // assert.deepStrictEqual(values.length, 1);
-            assert.deepEqual(values, [
+            assert.deepStrictEqual(values, [
                 [
                     new sourcegraph.Location(new URL('git://repo1?deadbeef1#d.ts'), range1),
                     new sourcegraph.Location(new URL('git://repo2?deadbeef2#e.ts'), range2),
                     new sourcegraph.Location(new URL('git://repo3?deadbeef3#f.ts'), range3),
+                ],
+                [
+                    { ...new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1) },
+                    { ...new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2) },
+                    { ...new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3) },
                 ],
             ])
         })

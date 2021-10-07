@@ -5,7 +5,7 @@ import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { concat } from '../util/ix'
 
 import { queryLSIF, GenericLSIFResponse } from './api'
-import { nodeToLocation, LocationConnectionNode } from './locations'
+import { nodeToLocation, LocationConnectionNode, getQueryPage, LocationCursor } from './locations'
 
 /**
  * The maximum number of chained GraphQL requests to make for a single
@@ -75,27 +75,9 @@ export async function* referencesForPosition(
     position: sourcegraph.Position,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
 ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-    const queryPage = async function* (
-        requestsRemaining: number,
-        after?: string
-    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-        if (requestsRemaining === 0) {
-            return
-        }
-
-        // Make the request for the page starting at the after cursor
-        const { locations, endCursor } = await referencePageForPosition(textDocument, position, after, queryGraphQL)
-
-        // Yield this page's set of results
-        yield locations
-
-        if (endCursor) {
-            // Recursively yield the remaining pages
-            yield* queryPage(requestsRemaining - 1, endCursor)
-        }
-    }
-
-    yield* concat(queryPage(MAX_REFERENCE_PAGE_REQUESTS))
+    yield* concat(
+        getQueryPage(textDocument, position, queryGraphQL, referencePageForPosition)(MAX_REFERENCE_PAGE_REQUESTS)
+    )
 }
 
 /** Retrieve a single page of references for the current hover position. */
@@ -104,7 +86,7 @@ export async function referencePageForPosition(
     position: sourcegraph.Position,
     after: string | undefined,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
-): Promise<{ locations: sourcegraph.Location[] | null; endCursor?: string }> {
+): Promise<LocationCursor> {
     return referenceResponseToLocations(
         textDocument,
         await queryLSIF(

@@ -2,7 +2,7 @@ import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { concat } from '../util/ix'
-import { nodeToLocation, LocationConnectionNode } from './locations'
+import { nodeToLocation, LocationConnectionNode, getQueryPage, LocationCursor } from './locations'
 import { queryLSIF, GenericLSIFResponse } from './api'
 
 /**
@@ -73,27 +73,14 @@ export async function* implementationsForPosition(
     position: sourcegraph.Position,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ImplementationsResponse | null>> = sgQueryGraphQL
 ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-    const queryPage = async function* (
-        requestsRemaining: number,
-        after?: string
-    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-        if (requestsRemaining === 0) {
-            return
-        }
-
-        // Make the request for the page starting at the after cursor
-        const { locations, endCursor } = await implementationPageForPosition(textDocument, position, after, queryGraphQL)
-
-        // Yield this page's set of results
-        yield locations
-
-        if (endCursor) {
-            // Recursively yield the remaining pages
-            yield* queryPage(requestsRemaining - 1, endCursor)
-        }
-    }
-
-    yield* concat(queryPage(MAX_IMPLEMENTATION_PAGE_REQUESTS))
+    yield* concat(
+        getQueryPage(
+            textDocument,
+            position,
+            queryGraphQL,
+            implementationPageForPosition
+        )(MAX_IMPLEMENTATION_PAGE_REQUESTS)
+    )
 }
 
 /** Retrieve a single page of implementations for the current hover position. */
@@ -102,7 +89,7 @@ export async function implementationPageForPosition(
     position: sourcegraph.Position,
     after: string | undefined,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ImplementationsResponse | null>> = sgQueryGraphQL
-): Promise<{ locations: sourcegraph.Location[] | null; endCursor?: string }> {
+): Promise<LocationCursor> {
     return implementationResponseToLocations(
         textDocument,
         await queryLSIF(

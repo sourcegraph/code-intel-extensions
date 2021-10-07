@@ -1,6 +1,9 @@
 import * as sourcegraph from 'sourcegraph'
 
+import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { parseGitURI } from '../util/uri'
+
+import { GenericLSIFResponse } from './api'
 
 export interface LocationConnectionNode {
     resource: {
@@ -27,4 +30,45 @@ export function nodeToLocation(
         uri: new URL(`git://${repository?.name || currentRepo}?${commit?.oid || currentCommit}#${path}`),
         range,
     }
+}
+
+export interface LocationCursor {
+    locations: sourcegraph.Location[] | null
+    endCursor?: string
+}
+
+export type getCursorLocation<T> = (
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position,
+    after: string | undefined,
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<T | null>>
+) => Promise<LocationCursor>
+
+export function getQueryPage<T>(
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position,
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<T | null>> = sgQueryGraphQL,
+    get: getCursorLocation<T>
+) {
+    const queryPage = async function* (
+        requestsRemaining: number,
+        after?: string
+    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if (requestsRemaining === 0) {
+            return
+        }
+
+        // Make the request for the page starting at the after cursor
+        const { locations, endCursor } = await get(textDocument, position, after, queryGraphQL)
+
+        // Yield this page's set of results
+        yield locations
+
+        if (endCursor) {
+            // Recursively yield the remaining pages
+            yield* queryPage(requestsRemaining - 1, endCursor)
+        }
+    }
+
+    return queryPage
 }
