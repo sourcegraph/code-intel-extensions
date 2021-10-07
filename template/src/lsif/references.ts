@@ -108,7 +108,7 @@ export async function referencePageForPosition(
  * @param textDocument The current document.
  * @param lsifObject The resolved LSIF object.
  */
-export function referenceResponseToLocations(
+function referenceResponseToLocations(
     textDocument: sourcegraph.TextDocument,
     lsifObject: ReferencesResponse | null
 ): { locations: sourcegraph.Location[] | null; endCursor?: string } {

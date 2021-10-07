@@ -111,7 +111,7 @@ export async function implementationPageForPosition(
  * @param doc The current document.
  * @param lsifObj The resolved LSIF object.
  */
-export function implementationResponseToLocations(
+function implementationResponseToLocations(
     textDocument: sourcegraph.TextDocument,
     lsifObject: ImplementationsResponse | null
 ): { locations: sourcegraph.Location[] | null; endCursor?: string } {
