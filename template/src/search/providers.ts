@@ -194,10 +194,12 @@ export function createProviders(
         return sortByProximity(mergedReferences, new URL(textDocument.uri))
     }
 
-    // TODO: This is obviously no good.
-    const implementations = async (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position):
-      Promise<sourcegraph.Location[]> => {
-      return [];
+    // It's not possible to find implementations via search.
+    const implementations = async (
+        _textDocument: sourcegraph.TextDocument,
+        _position: sourcegraph.Position
+    ): Promise<sourcegraph.Location[]> => {
+        return []
     }
 
     /**
