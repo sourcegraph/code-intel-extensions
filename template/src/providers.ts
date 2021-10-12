@@ -15,7 +15,6 @@ import { parseGitURI } from './util/uri'
 export interface Providers {
     definition: DefinitionProvider
     references: ReferencesProvider
-    implementations: LocationsProvider
     hover: HoverProvider
     documentHighlights: DocumentHighlightProvider
 }

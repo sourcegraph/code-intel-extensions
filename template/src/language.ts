@@ -1,2 +1,2 @@
 // Set during template generation
-export const languageID = 'go'
+export const languageID = 'all'

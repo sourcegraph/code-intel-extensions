@@ -194,14 +194,6 @@ export function createProviders(
         return sortByProximity(mergedReferences, new URL(textDocument.uri))
     }
 
-    // It's not possible to find implementations via search.
-    const implementations = async (
-        _textDocument: sourcegraph.TextDocument,
-        _position: sourcegraph.Position
-    ): Promise<sourcegraph.Location[]> => {
-        return []
-    }
-
     /**
      * Retrieve hover text for the current hover position.
      *
@@ -278,7 +270,6 @@ export function createProviders(
     return {
         definition: asyncGeneratorFromPromise(cache(definition, { max: 5 })),
         references: asyncGeneratorFromPromise(references),
-        implementations: asyncGeneratorFromPromise(implementations),
         hover: asyncGeneratorFromPromise(hover),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights),
     }
