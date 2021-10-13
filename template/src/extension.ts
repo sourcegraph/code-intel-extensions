@@ -36,6 +36,32 @@ const DUMMY_CTX = {
     },
 }
 
+let implPanelData: {
+    implementationsPanelID: string
+    implementationsPanel: sourcegraph.PanelView
+} | null = null
+
+/**
+ * Create the panel for implementations.
+ *
+ * Makes sure to only create the panel once per session.
+ */
+const createImplementationPanel = (): {
+    implementationsPanelID: string
+    implementationsPanel: sourcegraph.PanelView
+} => {
+    if (implPanelData == null) {
+        const implementationsPanelID = 'implementations'
+        const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+        implementationsPanel.title = 'Implementations'
+        implementationsPanel.component = { locationProvider: implementationsPanelID }
+        implementationsPanel.priority = 160
+        implPanelData = { implementationsPanel, implementationsPanelID }
+    }
+
+    return implPanelData
+}
+
 /**
  * Activate the extension by registering definition, reference, and hover providers
  * with LSIF and search-based providers.
@@ -75,13 +101,11 @@ const activateCodeIntel = (
 
     // Implementations: create a panel and register a locations provider.
     // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
-    const implementationsPanelID = 'implementations'
-    const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
-    implementationsPanel.title = 'Implementations'
-    implementationsPanel.component = { locationProvider: implementationsPanelID }
-    implementationsPanel.priority = 160
+    let { implementationsPanel, implementationsPanelID } = createImplementationPanel()
     context.subscriptions.add(implementationsPanel)
-    context.subscriptions.add(sourcegraph.languages.registerLocationProvider(implementationsPanelID, selector, providers.implementations))
+    context.subscriptions.add(
+        sourcegraph.languages.registerLocationProvider(implementationsPanelID, selector, providers.implementations)
+    )
 
     context.subscriptions.add(
         from(sourcegraph.configuration)
