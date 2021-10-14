@@ -2,11 +2,12 @@ import { from } from 'rxjs'
 import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 
+import { API } from './util/api'
 import { languageID } from './language'
 import { languageSpecs } from './language-specs/languages'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
-import { createProviders } from './providers'
+import { createProviders, SourcegraphProviders } from './providers'
 
 /**
  * Register providers on the extension host.
@@ -36,30 +37,55 @@ const DUMMY_CTX = {
     },
 }
 
-let implPanelData: {
-    implementationsPanelID: string
-    implementationsPanel: sourcegraph.PanelView
-} | null = null
+function once<T>(f: () => T): () => T  {
+  let run = false;
+  let val: T | null = null;
+
+  // @ts-ignore: This is how once works, please typescript.
+  return () => {
+    if (!run) {
+      run = true;
+      val = f();
+    }
+
+    return val
+  }
+}
+
+const createPanel = once(() => {
+  let implementationsPanelID = 'implementations'
+  let implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+
+  implementationsPanel.title = 'Implementations'
+  implementationsPanel.component = { locationProvider: implementationsPanelID }
+  implementationsPanel.priority = 160
+  return { implementationsPanel, implementationsPanelID }
+})
 
 /**
  * Create the panel for implementations.
  *
  * Makes sure to only create the panel once per session.
  */
-const createImplementationPanel = (): {
-    implementationsPanelID: string
-    implementationsPanel: sourcegraph.PanelView
-} => {
-    if (implPanelData == null) {
-        const implementationsPanelID = 'implementations'
-        const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
-        implementationsPanel.title = 'Implementations'
-        implementationsPanel.component = { locationProvider: implementationsPanelID }
-        implementationsPanel.priority = 160
-        implPanelData = { implementationsPanel, implementationsPanelID }
+const createImplementationPanel = async (
+    context: sourcegraph.ExtensionContext = DUMMY_CTX,
+    selector: sourcegraph.DocumentSelector,
+    providers: SourcegraphProviders
+) => {
+    if (!await new API().hasImplementations()) {
+        return
     }
 
-    return implPanelData
+    let { implementationsPanel, implementationsPanelID } = createPanel()
+
+    context.subscriptions.add(implementationsPanel)
+    context.subscriptions.add(
+        sourcegraph.languages.registerLocationProvider(
+            implementationsPanelID,
+            selector,
+            providers.implementations
+        )
+    )
 }
 
 /**
@@ -99,14 +125,6 @@ const activateCodeIntel = (
         context.subscriptions.add(unsubscribeReferencesProvider)
     }
 
-    // Implementations: create a panel and register a locations provider.
-    // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
-    let { implementationsPanel, implementationsPanelID } = createImplementationPanel()
-    context.subscriptions.add(implementationsPanel)
-    context.subscriptions.add(
-        sourcegraph.languages.registerLocationProvider(implementationsPanelID, selector, providers.implementations)
-    )
-
     context.subscriptions.add(
         from(sourcegraph.configuration)
             .pipe(
@@ -117,4 +135,8 @@ const activateCodeIntel = (
             )
             .subscribe()
     )
+
+    // Implementations: create a panel and register a locations provider.
+    // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
+    createImplementationPanel(context, selector, providers)
 }

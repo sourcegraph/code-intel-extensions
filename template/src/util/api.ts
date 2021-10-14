@@ -133,6 +133,31 @@ export class API {
     }
 
     /**
+     * Determines via introspection if the GraphQL API has implementations available
+     *
+     * TODO(tjdevries) - Remove this when we no longer need to support pre-3.XX releases (not yet released)
+     */
+    public async hasImplementations(): Promise<boolean> {
+        const introspectionQuery = gql`
+            query ImplementationsIntrospectionQuery {
+                __type(name: "GitBlobLSIFData") {
+                    fields {
+                        name
+                    }
+                }
+            }
+        `
+
+        interface IntrospectionResponse {
+            __type: { fields: { name: string }[] }
+        }
+
+        return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
+            field => field.name === 'implementations'
+        )
+    }
+
+    /**
      * Retrieves the revhash of an input rev for a repository. Throws an error if the
      * repository is not known to the Sourcegraph instance. Returns undefined if the
      * input rev is not known to the Sourcegraph instance.
