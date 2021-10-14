@@ -41,14 +41,13 @@ function once<T>(f: () => T): () => T  {
   let run = false;
   let val: T | null = null;
 
-  // @ts-ignore: This is how once works, please typescript.
   return () => {
     if (!run) {
       run = true;
       val = f();
     }
 
-    return val
+    return val as T
   }
 }
 
