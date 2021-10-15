@@ -52,7 +52,8 @@
       ],
       "hover": [
         {
-          "action": "findImplementations"
+          "action": "findImplementations",
+          "when": "get(context, \"implementations\")"
         }
       ]
     },

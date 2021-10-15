@@ -37,28 +37,64 @@ const DUMMY_CTX = {
     },
 }
 
-function once<T>(f: () => T): () => T  {
-  let run = false;
-  let val: T | null = null;
+function once<T>(f: () => T): () => T {
+    let run = false
+    let val: T | null = null
 
-  return () => {
-    if (!run) {
-      run = true;
-      val = f();
+    return () => {
+        if (!run) {
+            run = true
+            val = f()
+        }
+
+        return val as T
     }
-
-    return val as T
-  }
 }
 
-const createPanel = once(() => {
-  let implementationsPanelID = 'implementations'
-  let implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+function onceAsync<T>(f: () => Promise<T>): () => Promise<T> {
+    let run = false
+    let val: T | null = null
 
-  implementationsPanel.title = 'Implementations'
-  implementationsPanel.component = { locationProvider: implementationsPanelID }
-  implementationsPanel.priority = 160
-  return { implementationsPanel, implementationsPanelID }
+    return async () => {
+        if (!run) {
+            run = true
+            val = await f()
+        }
+
+        return val as T
+    }
+}
+
+// const createPanel = once(() => {
+//     sourcegraph.internal.updateContext({ implementations: false })
+
+//     sourcegraph.workspace.openedTextDocuments.subscribe(textDocument => {
+//         console.log('openedTextDoc:', textDocument)
+//         if (textDocument.languageId != 'go') {
+//             sourcegraph.internal.updateContext({ implementations: false })
+//             return
+//         }
+
+//         // TODO: check for precise code intel
+
+//         sourcegraph.internal.updateContext({ implementations: true })
+//     })
+
+//     let implementationsPanelID = 'implementations' + "go"
+
+//     let implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+//     implementationsPanel.title = 'Implementations'
+//     implementationsPanel.component = { locationProvider: implementationsPanelID }
+//     implementationsPanel.priority = 160
+
+//     // TODO:
+//     // implementationsPanel.selector = "*.go"
+
+//     return { implementationsPanel, implementationsPanelID }
+// })
+
+const hasImplementations = onceAsync(async () => {
+    return await new API().hasImplementations()
 })
 
 /**
@@ -69,21 +105,27 @@ const createPanel = once(() => {
 const createImplementationPanel = async (
     context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
+    languageSpec: LanguageSpec,
     providers: SourcegraphProviders
 ) => {
-    if (!await new API().hasImplementations()) {
+    if (!(await hasImplementations())) {
         return
     }
 
-    let { implementationsPanel, implementationsPanelID } = createPanel()
+    sourcegraph.internal.updateContext({ implementations: false })
+
+    let implementationsPanelID = 'implementations_' + languageSpec.languageID
+    let implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+    implementationsPanel.title = 'Implementations'
+    implementationsPanel.component = { locationProvider: implementationsPanelID }
+    implementationsPanel.priority = 160
+
+    // @ts-ignore
+    implementationsPanel.selector = ["*.go"]
 
     context.subscriptions.add(implementationsPanel)
     context.subscriptions.add(
-        sourcegraph.languages.registerLocationProvider(
-            implementationsPanelID,
-            selector,
-            providers.implementations
-        )
+        sourcegraph.languages.registerLocationProvider(implementationsPanelID, selector, providers.implementations)
     )
 }
 
@@ -102,6 +144,7 @@ const activateCodeIntel = (
     languageSpec: LanguageSpec,
     logger: Logger = new RedactingLogger(console)
 ): void => {
+    console.log('activatin code intel', languageSpec.languageID)
     const providers = createProviders(languageSpec, logger)
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, providers.definition))
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, providers.hover))
@@ -135,7 +178,9 @@ const activateCodeIntel = (
             .subscribe()
     )
 
-    // Implementations: create a panel and register a locations provider.
-    // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
-    createImplementationPanel(context, selector, providers)
+    if (languageSpec.textDocumentImplemenationSupport) {
+        // Implementations: create a panel and register a locations provider.
+        // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
+        createImplementationPanel(context, selector, languageSpec, providers)
+    }
 }
