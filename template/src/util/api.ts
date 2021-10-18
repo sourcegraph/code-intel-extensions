@@ -54,6 +54,7 @@ export interface RepoMeta {
 export class API {
     /** Small never-evict map from repo names to their meta. */
     private cachedMetas = new Map<string, RepoMeta>()
+
     /**
      * Retrieves the name and fork/archive status of a repository. This method
      * throws an error if the repository is not known to the Sourcegraph instance.

@@ -10,6 +10,7 @@ import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition
 import { filterLocationsForDocumentHighlights } from './highlights'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
+import { stencil } from './stencil'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
@@ -51,6 +52,61 @@ export function createGraphQLProviders(
 /** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
 const RANGE_RESOLUTION_DELAY_MS = 25
 
+const stencilCache: Map<string, Promise<sourcegraph.Range[]>> = new Map()
+
+function stencilCached(textDocument: sourcegraph.TextDocument): Promise<sourcegraph.Range[] | undefined> {
+    let renameme = stencilCache.get(textDocument.uri)
+    if (renameme !== undefined) {
+        return renameme
+    }
+
+    renameme = stencil(textDocument).then(response => response?.stencil || [])
+    stencilCache.set(textDocument.uri, renameme)
+    return renameme
+}
+
+async function searchStencil(
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+): Promise<boolean | undefined> {
+    const stencil = await stencilCached(textDocument)
+    if (stencil === undefined) {
+        return undefined
+    }
+
+    let skip = 1
+    let index = 0
+
+    // Gallop search for the first stencil index that has an end line after the
+    // target position. Since we keep stencil ranges in sorted order, we know
+    // that we can skip anything before this index.
+    while (index < stencil.length && stencil[index].end.line < position.line) {
+        const newIndex = index + skip
+        skip = newIndex < stencil.length && stencil[newIndex].end.line < position.line ? skip : 1
+        index += skip
+        skip *= 2
+    }
+
+    // Linearly search stencil for a range that includes the target position
+    while (index < stencil.length) {
+        const { start, end } = stencil[index]
+        index++
+
+        if (position.line < start.line) {
+            // Since we keep stencil ranges in sorted order, we know that we
+            // can skip the remaining range sin the stencil.
+            break
+        }
+
+        // Do accurate check
+        if (new sourcegraph.Range(start.line, start.character, end.line, end.character).contains(position)) {
+            return true
+        }
+    }
+
+    return false
+}
+
 /** Retrieve definitions and hover text for the current hover position. */
 function definitionAndHover(
     queryGraphQL: QueryGraphQLFn<any>,
@@ -60,6 +116,10 @@ function definitionAndHover(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<DefinitionAndHover | null> => {
+        if ((await searchStencil(textDocument, position)) === false) {
+            return null
+        }
+
         const getDefinitionAndHoverFromRangeRequest = async (): Promise<DefinitionAndHover | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
