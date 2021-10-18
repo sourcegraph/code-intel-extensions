@@ -52,7 +52,11 @@ const createImplementationPanel = (
     languageSpec: LanguageSpec,
     providers: SourcegraphProviders
 ): void => {
-    const implementationsPanelID = 'implementations_' + languageSpec.languageID
+    // - In development, languageID is 'all', so the panel ID will match implementations_LANGID in the
+    //   template manifest.
+    // - After the template is instantiated for Go (for example), languageID is 'go', so the panel ID
+    //   will match implementations_go in the instantiated manifest.
+    const implementationsPanelID = 'implementations_' + (languageID === 'all' ? 'LANGID' : languageSpec.languageID)
     const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
     implementationsPanel.title = 'Implementations'
     implementationsPanel.component = { locationProvider: implementationsPanelID }
