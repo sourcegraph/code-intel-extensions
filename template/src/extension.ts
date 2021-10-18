@@ -1,13 +1,14 @@
+import { once } from 'lodash'
 import { from } from 'rxjs'
 import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 
-import { API } from './util/api'
 import { languageID } from './language'
 import { languageSpecs } from './language-specs/languages'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
 import { createProviders, SourcegraphProviders } from './providers'
+import { API } from './util/api'
 
 /**
  * Register providers on the extension host.
@@ -18,6 +19,7 @@ export const activate = (context: sourcegraph.ExtensionContext): void => {
     for (const spec of languageID === 'all'
         ? languageSpecs
         : languageSpecs.filter(spec => spec.languageID === languageID)) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         activateCodeIntel(
             context,
             spec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }]),
@@ -37,91 +39,25 @@ const DUMMY_CTX = {
     },
 }
 
-function once<T>(f: () => T): () => T {
-    let run = false
-    let val: T | null = null
-
-    return () => {
-        if (!run) {
-            run = true
-            val = f()
-        }
-
-        return val as T
-    }
-}
-
-function onceAsync<T>(f: () => Promise<T>): () => Promise<T> {
-    let run = false
-    let val: T | null = null
-
-    return async () => {
-        if (!run) {
-            run = true
-            val = await f()
-        }
-
-        return val as T
-    }
-}
-
-// const createPanel = once(() => {
-//     sourcegraph.internal.updateContext({ implementations: false })
-
-//     sourcegraph.workspace.openedTextDocuments.subscribe(textDocument => {
-//         console.log('openedTextDoc:', textDocument)
-//         if (textDocument.languageId != 'go') {
-//             sourcegraph.internal.updateContext({ implementations: false })
-//             return
-//         }
-
-//         // TODO: check for precise code intel
-
-//         sourcegraph.internal.updateContext({ implementations: true })
-//     })
-
-//     let implementationsPanelID = 'implementations' + "go"
-
-//     let implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
-//     implementationsPanel.title = 'Implementations'
-//     implementationsPanel.component = { locationProvider: implementationsPanelID }
-//     implementationsPanel.priority = 160
-
-//     // TODO:
-//     // implementationsPanel.selector = "*.go"
-
-//     return { implementationsPanel, implementationsPanelID }
-// })
-
-const hasImplementations = onceAsync(async () => {
-    return await new API().hasImplementations()
-})
+const hasImplementations = once(async () => new API().hasImplementations())
 
 /**
  * Create the panel for implementations.
  *
  * Makes sure to only create the panel once per session.
  */
-const createImplementationPanel = async (
+const createImplementationPanel = (
     context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     providers: SourcegraphProviders
-) => {
-    if (!(await hasImplementations())) {
-        return
-    }
-
-    sourcegraph.internal.updateContext({ implementations: false })
-
-    let implementationsPanelID = 'implementations_' + languageSpec.languageID
-    let implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+): void => {
+    const implementationsPanelID = 'implementations_' + languageSpec.languageID
+    const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
     implementationsPanel.title = 'Implementations'
     implementationsPanel.component = { locationProvider: implementationsPanelID }
     implementationsPanel.priority = 160
-
-    // @ts-ignore
-    implementationsPanel.selector = ["*.go"]
+    implementationsPanel.selector = selector
 
     context.subscriptions.add(implementationsPanel)
     context.subscriptions.add(
@@ -138,13 +74,12 @@ const createImplementationPanel = async (
  * @param languageSpec The language spec used to provide search-based code intelligence.
  * @param logger An optional logger instance.
  */
-const activateCodeIntel = (
+const activateCodeIntel = async (
     context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     logger: Logger = new RedactingLogger(console)
-): void => {
-    console.log('activatin code intel', languageSpec.languageID)
+): Promise<void> => {
     const providers = createProviders(languageSpec, logger)
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, providers.definition))
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, providers.hover))
@@ -178,9 +113,14 @@ const activateCodeIntel = (
             .subscribe()
     )
 
-    if (languageSpec.textDocumentImplemenationSupport) {
-        // Implementations: create a panel and register a locations provider.
-        // The "Find implementations" button in the hover is specified in package.json (look for "findImplementations").
-        createImplementationPanel(context, selector, languageSpec, providers)
+    if (await hasImplementations()) {
+        // Show the "Find implementations" button in the hover, as specified in package.json (look for
+        // "findImplementations").
+        sourcegraph.internal.updateContext({ implementations: true })
+
+        if (languageSpec.textDocumentImplemenationSupport) {
+            // Create an Implementations panel and register a locations provider.
+            createImplementationPanel(context, selector, languageSpec, providers)
+        }
     }
 }
