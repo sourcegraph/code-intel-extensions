@@ -1,3 +1,4 @@
+import LRU from 'lru-cache'
 import * as sourcegraph from 'sourcegraph'
 
 import { Logger } from '../logging'
@@ -52,18 +53,20 @@ export function createGraphQLProviders(
 /** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
 const RANGE_RESOLUTION_DELAY_MS = 25
 
-const stencilCache: Map<string, Promise<sourcegraph.Range[] | undefined>> = new Map()
-
-function stencilCached(textDocument: sourcegraph.TextDocument): Promise<sourcegraph.Range[] | undefined> {
-    let renameme = stencilCache.get(textDocument.uri)
-    if (renameme !== undefined) {
-        return renameme
+const cache = <K, V>(func: (k: K) => V, cacheOptions?: LRU.Options<K, V>): ((k: K) => V) => {
+    const lru = new LRU<K, V>(cacheOptions)
+    return key => {
+        if (lru.has(key)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return lru.get(key)!
+        }
+        const value = func(key)
+        lru.set(key, value)
+        return value
     }
-
-    renameme = stencil(textDocument)
-    stencilCache.set(textDocument.uri, renameme)
-    return renameme
 }
+
+const stencilCached = cache(stencil, { max: 10 })
 
 type StencilResult = 'hit' | 'miss' | 'unknown'
 
