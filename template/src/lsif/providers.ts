@@ -94,7 +94,7 @@ async function searchStencil(
 
         if (position.line < start.line) {
             // Since we keep stencil ranges in sorted order, we know that we
-            // can skip the remaining range sin the stencil.
+            // can skip the remaining ranges in the stencil.
             break
         }
 
