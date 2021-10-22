@@ -60,7 +60,7 @@ function stencilCached(textDocument: sourcegraph.TextDocument): Promise<sourcegr
         return renameme
     }
 
-    renameme = stencil(textDocument).then(response => response?.stencil || [])
+    renameme = stencil(textDocument).then(response => response || [])
     stencilCache.set(textDocument.uri, renameme)
     return renameme
 }
