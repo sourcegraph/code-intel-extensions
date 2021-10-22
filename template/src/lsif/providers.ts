@@ -52,7 +52,7 @@ export function createGraphQLProviders(
 /** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
 const RANGE_RESOLUTION_DELAY_MS = 25
 
-const stencilCache: Map<string, Promise<sourcegraph.Range[]>> = new Map()
+const stencilCache: Map<string, Promise<sourcegraph.Range[] | undefined>> = new Map()
 
 function stencilCached(textDocument: sourcegraph.TextDocument): Promise<sourcegraph.Range[] | undefined> {
     let renameme = stencilCache.get(textDocument.uri)
@@ -60,18 +60,20 @@ function stencilCached(textDocument: sourcegraph.TextDocument): Promise<sourcegr
         return renameme
     }
 
-    renameme = stencil(textDocument).then(response => response || [])
+    renameme = stencil(textDocument)
     stencilCache.set(textDocument.uri, renameme)
     return renameme
 }
 
+type StencilResult = 'hit' | 'miss' | 'unknown'
+
 async function searchStencil(
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position
-): Promise<boolean | undefined> {
+): Promise<StencilResult> {
     const stencil = await stencilCached(textDocument)
     if (stencil === undefined) {
-        return undefined
+        return 'unknown'
     }
 
     let skip = 1
@@ -100,11 +102,11 @@ async function searchStencil(
 
         // Do accurate check
         if (new sourcegraph.Range(start.line, start.character, end.line, end.character).contains(position)) {
-            return true
+            return 'hit'
         }
     }
 
-    return false
+    return 'miss'
 }
 
 /** Retrieve definitions and hover text for the current hover position. */
@@ -116,7 +118,7 @@ function definitionAndHover(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<DefinitionAndHover | null> => {
-        if ((await searchStencil(textDocument, position)) === false) {
+        if ((await searchStencil(textDocument, position)) === 'miss') {
             return null
         }
 
@@ -162,7 +164,7 @@ function references(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-        if ((await searchStencil(textDocument, position)) === false) {
+        if ((await searchStencil(textDocument, position)) === 'miss') {
             return
         }
 
@@ -216,7 +218,7 @@ export function documentHighlights(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
-        if ((await searchStencil(textDocument, position)) === false) {
+        if ((await searchStencil(textDocument, position)) === 'miss') {
             return null
         }
 

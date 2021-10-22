@@ -8,7 +8,7 @@ import { GenericLSIFResponse, queryLSIF } from './api'
 export const stencil = async (
     textDocument: sourcegraph.TextDocument,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<{ stencil: sourcegraph.Range[] }>> = sgQueryGraphQL
-): Promise<sourcegraph.Range[] | null> =>
+): Promise<sourcegraph.Range[] | undefined> =>
     (
         await queryLSIF(
             {
@@ -17,7 +17,7 @@ export const stencil = async (
             },
             queryGraphQL
         )
-    )?.stencil ?? null
+    )?.stencil
 
 const stencilQuery = gql`
     query Stencil($repository: String!, $commit: String!, $path: String!) {
