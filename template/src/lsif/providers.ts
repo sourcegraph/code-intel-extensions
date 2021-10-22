@@ -162,6 +162,10 @@ function references(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if ((await searchStencil(textDocument, position)) === false) {
+            return
+        }
+
         const getReferencesFromRangeRequest = async (): Promise<sourcegraph.Location[] | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
@@ -212,6 +216,10 @@ export function documentHighlights(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
+        if ((await searchStencil(textDocument, position)) === false) {
+            return null
+        }
+
         if (getRangeFromWindow) {
             const range = await (await getRangeFromWindow)(textDocument, position)
             if (range?.references) {
