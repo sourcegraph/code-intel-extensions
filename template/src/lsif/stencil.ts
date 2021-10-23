@@ -1,6 +1,6 @@
+import LRU from 'lru-cache'
 import sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
-import LRU from 'lru-cache'
 
 import { QueryGraphQLFn, queryGraphQL as sgQueryGraphQL } from '../util/graphql'
 
