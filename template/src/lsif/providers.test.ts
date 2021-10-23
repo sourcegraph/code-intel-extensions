@@ -9,6 +9,7 @@ import { GenericLSIFResponse } from './api'
 import { DefinitionResponse, DefinitionAndHoverResponse } from './definition-hover'
 import { createGraphQLProviders as createProviders } from './providers'
 import { ReferencesResponse, MAX_REFERENCE_PAGE_REQUESTS } from './references'
+import { makeStencilFn } from './stencil'
 import {
     gatherValues,
     makeEnvelope,
@@ -24,6 +25,7 @@ import {
     range6,
     document,
     position,
+    stencil1,
 } from './util.test'
 
 describe('graphql providers', () => {
@@ -49,7 +51,10 @@ describe('graphql providers', () => {
             )
 
             assert.deepEqual(
-                await createProviders(queryGraphQLFn, getBulkLocalIntelligence).definitionAndHover(document, position),
+                await createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).definitionAndHover(
+                    document,
+                    position
+                ),
                 {
                     definition: [
                         new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
@@ -85,7 +90,7 @@ describe('graphql providers', () => {
                     })
             )
 
-            assert.deepEqual(await createProviders(queryGraphQLFn).definitionAndHover(document, position), {
+            assert.deepEqual(await createProviders(queryGraphQLFn, makeStencilFn(stencil1)).definitionAndHover(document, position), {
                 definition: [
                     new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
                     new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
@@ -106,7 +111,10 @@ describe('graphql providers', () => {
                 () => makeEnvelope()
             )
 
-            assert.deepEqual(await createProviders(queryGraphQLFn).definitionAndHover(document, position), null)
+            assert.deepEqual(
+                await createProviders(queryGraphQLFn, makeStencilFn(stencil1)).definitionAndHover(document, position),
+                null
+            )
         })
     })
 
@@ -138,7 +146,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).references(document, position, {
+                    createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -168,7 +176,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(document, position, {
+                    createProviders(queryGraphQLFn, makeStencilFn(stencil1)).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -189,7 +197,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(document, position, {
+                    createProviders(queryGraphQLFn, makeStencilFn(stencil1)).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -235,7 +243,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(document, position, {
+                    createProviders(queryGraphQLFn, makeStencilFn(stencil1)).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -268,7 +276,7 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn).references(document, position, {
+                    createProviders(queryGraphQLFn, makeStencilFn(stencil1)).references(document, position, {
                         includeDeclaration: false,
                     })
                 ),
@@ -301,7 +309,10 @@ describe('graphql providers', () => {
 
             assert.deepEqual(
                 await gatherValues(
-                    createProviders(queryGraphQLFn, getBulkLocalIntelligence).documentHighlights(document, position)
+                    createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).documentHighlights(
+                        document,
+                        position
+                    )
                 ),
                 [[{ range: range1 }, { range: range3 }, { range: range5 }]]
             )
@@ -324,7 +335,7 @@ describe('graphql providers', () => {
                 })
             )
             assert.deepEqual(
-                await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)),
+                await gatherValues(createProviders(queryGraphQLFn, makeStencilFn(stencil1)).documentHighlights(document, position)),
                 [[{ range: range1 }, { range: range3 }, { range: range5 }]]
             )
         })
@@ -334,7 +345,7 @@ describe('graphql providers', () => {
                 makeEnvelope()
             )
             assert.deepEqual(
-                await gatherValues(createProviders(queryGraphQLFn).documentHighlights(document, position)),
+                await gatherValues(createProviders(queryGraphQLFn, makeStencilFn(stencil1)).documentHighlights(document, position)),
                 [null]
             )
         })
