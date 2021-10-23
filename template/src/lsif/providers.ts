@@ -59,12 +59,12 @@ const RANGE_RESOLUTION_DELAY_MS = 25
 
 type StencilResult = 'hit' | 'miss' | 'unknown'
 
-async function searchStencil(
-    textDocument: sourcegraph.TextDocument,
+export async function searchStencil(
+    uri: string,
     position: sourcegraph.Position,
     getStencil: StencilFn
 ): Promise<StencilResult> {
-    const stencil = await getStencil(textDocument.uri)
+    const stencil = await getStencil(uri)
     if (stencil === undefined) {
         return 'unknown'
     }
@@ -112,7 +112,7 @@ function definitionAndHover(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<DefinitionAndHover | null> => {
-        if ((await searchStencil(textDocument, position, getStencil)) === 'miss') {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
             return null
         }
 
@@ -159,7 +159,7 @@ function references(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
-        if ((await searchStencil(textDocument, position, getStencil)) === 'miss') {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
             return
         }
 
@@ -214,7 +214,7 @@ export function documentHighlights(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
-        if ((await searchStencil(textDocument, position, getStencil)) === 'miss') {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
             return null
         }
 
