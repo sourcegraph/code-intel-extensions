@@ -369,6 +369,32 @@ export class API {
         })
         return data.search.results.results.filter(isDefined)
     }
+
+    /**
+     * Determines via introspection if the GraphQL API supports stencils
+     *
+     * TODO(chrismwendt) - Remove this when we no longer need to support Sourcegraph versions that don't
+     * have stencil support
+     */
+    public async hasStencils(): Promise<boolean> {
+        const introspectionQuery = gql`
+            query StencilIntrospectionQuery {
+                __type(name: "GitBlobLSIFData") {
+                    fields {
+                        name
+                    }
+                }
+            }
+        `
+
+        interface IntrospectionResponse {
+            __type: { fields: { name: string }[] }
+        }
+
+        return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
+            field => field.name === 'stencil'
+        )
+    }
 }
 
 function buildSearchQuery(context: boolean, fileLocal: boolean): string {
