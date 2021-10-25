@@ -1,7 +1,9 @@
+import { once } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 
 import { Logger } from '../logging'
 import { noopProviders, CombinedProviders, DefinitionAndHover } from '../providers'
+import { API } from '../util/api'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
 import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
 import { raceWithDelayOffset } from '../util/promise'
@@ -10,6 +12,7 @@ import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition
 import { filterLocationsForDocumentHighlights } from './highlights'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
+import { makeStencilFn, StencilFn } from './stencil'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
@@ -24,7 +27,14 @@ export function createProviders(logger: Logger): CombinedProviders {
         return noopProviders
     }
 
-    const providers = createGraphQLProviders(sgQueryGraphQL, makeRangeWindowFactory(sgQueryGraphQL))
+    const providers = createGraphQLProviders(
+        sgQueryGraphQL,
+        makeStencilFn(
+            sgQueryGraphQL,
+            once(() => new API().hasStencils())
+        ),
+        makeRangeWindowFactory(sgQueryGraphQL)
+    )
 
     logger.log('LSIF providers are active')
     return providers
@@ -39,27 +49,78 @@ export function createProviders(logger: Logger): CombinedProviders {
  */
 export function createGraphQLProviders(
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL,
+    getStencil: StencilFn,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): CombinedProviders {
     return {
-        definitionAndHover: cachePromiseProvider(definitionAndHover(queryGraphQL, getRangeFromWindow)),
-        references: references(queryGraphQL, getRangeFromWindow),
-        documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getRangeFromWindow)),
+        definitionAndHover: cachePromiseProvider(definitionAndHover(queryGraphQL, getStencil, getRangeFromWindow)),
+        references: references(queryGraphQL, getStencil, getRangeFromWindow),
+        documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getStencil, getRangeFromWindow)),
     }
 }
 
 /** The time in ms to delay between range queries and an explicit definition/reference/hover request. */
 const RANGE_RESOLUTION_DELAY_MS = 25
 
+type StencilResult = 'hit' | 'miss' | 'unknown'
+
+export async function searchStencil(
+    uri: string,
+    position: sourcegraph.Position,
+    getStencil: StencilFn
+): Promise<StencilResult> {
+    const stencil = await getStencil(uri)
+    if (stencil === undefined) {
+        return 'unknown'
+    }
+
+    let skip = 1
+    let index = 0
+
+    // Gallop search for the first stencil index that has an end line after the
+    // target position. Since we keep stencil ranges in sorted order, we know
+    // that we can skip anything before this index.
+    while (index < stencil.length && stencil[index].end.line < position.line) {
+        const newIndex = index + skip
+        skip = newIndex < stencil.length && stencil[newIndex].end.line < position.line ? skip : 1
+        index += skip
+        skip *= 2
+    }
+
+    // Linearly search stencil for a range that includes the target position
+    while (index < stencil.length) {
+        const { start, end } = stencil[index]
+        index++
+
+        if (position.line < start.line) {
+            // Since we keep stencil ranges in sorted order, we know that we
+            // can skip the remaining ranges in the stencil.
+            break
+        }
+
+        // Do accurate check
+        if (new sourcegraph.Range(start.line, start.character, end.line, end.character).contains(position)) {
+            return 'hit'
+        }
+    }
+
+    return 'miss'
+}
+
 /** Retrieve definitions and hover text for the current hover position. */
 function definitionAndHover(
     queryGraphQL: QueryGraphQLFn<any>,
+    getStencil: StencilFn,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<DefinitionAndHover | null> {
     return async (
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<DefinitionAndHover | null> => {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
+            return null
+        }
+
         const getDefinitionAndHoverFromRangeRequest = async (): Promise<DefinitionAndHover | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
@@ -93,6 +154,7 @@ function definitionAndHover(
 /** Retrieve references for the current hover position. */
 function references(
     queryGraphQL: QueryGraphQLFn<any>,
+    getStencil: StencilFn,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (
     textDocument: sourcegraph.TextDocument,
@@ -102,6 +164,10 @@ function references(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
+            return
+        }
+
         const getReferencesFromRangeRequest = async (): Promise<sourcegraph.Location[] | null> => {
             if (getRangeFromWindow) {
                 const range = await (await getRangeFromWindow)(textDocument, position)
@@ -143,6 +209,7 @@ function references(
 /** Retrieve references ranges of the current hover position to highlight. */
 export function documentHighlights(
     queryGraphQL: QueryGraphQLFn<any>,
+    getStencil: StencilFn,
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): (
     textDocument: sourcegraph.TextDocument,
@@ -152,6 +219,10 @@ export function documentHighlights(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.DocumentHighlight[] | null> => {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
+            return null
+        }
+
         if (getRangeFromWindow) {
             const range = await (await getRangeFromWindow)(textDocument, position)
             if (range?.references) {

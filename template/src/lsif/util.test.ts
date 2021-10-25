@@ -1,3 +1,4 @@
+import sinon from 'sinon'
 import * as sourcegraph from 'sourcegraph'
 
 import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
@@ -27,6 +28,12 @@ export const range3 = new sourcegraph.Range(3, 4, 5, 6)
 export const range4 = new sourcegraph.Range(4, 5, 6, 7)
 export const range5 = new sourcegraph.Range(5, 6, 7, 8)
 export const range6 = new sourcegraph.Range(6, 7, 8, 9)
+
+export const stencil1 = sinon.stub().callsFake(() =>
+    makeEnvelope({
+        stencil: [new sourcegraph.Range(position, new sourcegraph.Position(position.line, position.character + 1))],
+    })
+)
 
 export const resource0 = makeResource('repo', 'rev', 'foo.ts')
 export const resource1 = makeResource('repo1', 'deadbeef1', 'a.ts')
