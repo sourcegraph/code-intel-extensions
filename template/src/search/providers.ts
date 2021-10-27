@@ -4,10 +4,11 @@ import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
+import { cache } from '../lsif/util'
 import { Providers } from '../providers'
 import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
-import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
+import { asyncGeneratorFromPromise } from '../util/ix'
 import { raceWithDelayOffset } from '../util/promise'
 import { parseGitURI } from '../util/uri'
 
@@ -267,7 +268,7 @@ export function createProviders(
     }
 
     return {
-        definition: asyncGeneratorFromPromise(cachePromiseProvider(definition)),
+        definition: asyncGeneratorFromPromise(cache(definition, { max: 5 })),
         references: asyncGeneratorFromPromise(references),
         hover: asyncGeneratorFromPromise(hover),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights),

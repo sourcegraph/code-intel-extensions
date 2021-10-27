@@ -1,10 +1,10 @@
-import LRU from 'lru-cache'
 import sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 
 import { QueryGraphQLFn, queryGraphQL as sgQueryGraphQL } from '../util/graphql'
 
 import { GenericLSIFResponse, queryLSIF } from './api'
+import { cache } from './util'
 
 export const stencil = async (
     uri: string,
@@ -41,19 +41,6 @@ const stencilQuery = gql`
         }
     }
 `
-
-const cache = <K, V>(func: (k: K) => V, cacheOptions?: LRU.Options<K, V>): ((k: K) => V) => {
-    const lru = new LRU<K, V>(cacheOptions)
-    return key => {
-        if (lru.has(key)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return lru.get(key)!
-        }
-        const value = func(key)
-        lru.set(key, value)
-        return value
-    }
-}
 
 export type StencilFn = (uri: string) => Promise<sourcegraph.Range[] | undefined>
 
