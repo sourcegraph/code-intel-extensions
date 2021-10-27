@@ -5,7 +5,7 @@ import { Logger } from '../logging'
 import { noopProviders, CombinedProviders, DefinitionAndHover } from '../providers'
 import { API } from '../util/api'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
-import { asyncGeneratorFromPromise, cachePromiseProvider } from '../util/ix'
+import { asyncGeneratorFromPromise } from '../util/ix'
 import { raceWithDelayOffset } from '../util/promise'
 
 import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition-hover'
@@ -13,6 +13,7 @@ import { filterLocationsForDocumentHighlights } from './highlights'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
 import { makeStencilFn, StencilFn } from './stencil'
+import { cache } from './util'
 
 /**
  * Creates providers powered by LSIF-based code intelligence. This particular
@@ -53,7 +54,7 @@ export function createGraphQLProviders(
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): CombinedProviders {
     return {
-        definitionAndHover: cachePromiseProvider(definitionAndHover(queryGraphQL, getStencil, getRangeFromWindow)),
+        definitionAndHover: cache(definitionAndHover(queryGraphQL, getStencil, getRangeFromWindow)),
         references: references(queryGraphQL, getStencil, getRangeFromWindow),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getStencil, getRangeFromWindow)),
     }
