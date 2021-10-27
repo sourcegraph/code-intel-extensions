@@ -1,9 +1,5 @@
 import * as assert from 'assert'
 
-import * as sourcegraph from 'sourcegraph'
-
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
-
 import {
     asyncGeneratorFromPromise,
     concat,
