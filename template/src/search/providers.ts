@@ -268,7 +268,7 @@ export function createProviders(
     }
 
     return {
-        definition: asyncGeneratorFromPromise(cache(definition)),
+        definition: asyncGeneratorFromPromise(cache(definition, { max: 5 })),
         references: asyncGeneratorFromPromise(references),
         hover: asyncGeneratorFromPromise(hover),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights),

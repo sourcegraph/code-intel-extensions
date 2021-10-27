@@ -54,7 +54,7 @@ export function createGraphQLProviders(
     getRangeFromWindow?: Promise<RangeWindowFactoryFn>
 ): CombinedProviders {
     return {
-        definitionAndHover: cache(definitionAndHover(queryGraphQL, getStencil, getRangeFromWindow)),
+        definitionAndHover: cache(definitionAndHover(queryGraphQL, getStencil, getRangeFromWindow), { max: 5 }),
         references: references(queryGraphQL, getStencil, getRangeFromWindow),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getStencil, getRangeFromWindow)),
     }
