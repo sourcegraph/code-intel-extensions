@@ -6032,6 +6032,11 @@ type CodeIntelligenceRange {
     references: LocationConnection!
 
     """
+    A list of implementations of the symbol occurring within the range.
+    """
+    implementations: LocationConnection!
+
+    """
     The hover result of the symbol occurring within the range.
     """
     hover: Hover
@@ -6899,6 +6904,36 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
     A list of references of the symbol under the given document position.
     """
     references(
+        """
+        The line on which the symbol occurs (zero-based, inclusive).
+        """
+        line: Int!
+
+        """
+        The character (not byte) of the start line on which the symbol occurs (zero-based, inclusive).
+        """
+        character: Int!
+
+        """
+        When specified, indicates that this request should be paginated and
+        to fetch results starting at this cursor.
+        A future request can be made for more results by passing in the
+        'LocationConnection.pageInfo.endCursor' that is returned.
+        """
+        after: String
+
+        """
+        When specified, indicates that this request should be paginated and
+        the first N results (relative to the cursor) should be returned. i.e.
+        how many results to return per page.
+        """
+        first: Int
+    ): LocationConnection!
+
+    """
+    A list of implementations of the symbol under the given document position.
+    """
+    implementations(
         """
         The line on which the symbol occurs (zero-based, inclusive).
         """

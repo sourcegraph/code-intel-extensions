@@ -22,7 +22,7 @@
     "generate": "yarn -s && yarn run ts-node -P tsconfig.json ./scripts/generate.ts",
     "publish": "yarn run ts-node -P tsconfig.json ./scripts/publish.ts",
     "config-types": "./node_modules/.bin/dot-json template/package.json contributes.configuration | ./node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o ./template/src/search/settings.ts && yarn prettier",
-    "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/2fd95a0dbda697c544a9b9e369d56b0bd3067025/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql && curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/2fd95a0dbda697c544a9b9e369d56b0bd3067025/cmd/frontend/graphqlbackend/codeintel.graphql >> ./schema/schema.graphql",
+    "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/3d47a07d67357b423a82c3376aafbc54def4e10b/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql && curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/3d47a07d67357b423a82c3376aafbc54def4e10b/cmd/frontend/graphqlbackend/codeintel.graphql >> ./schema/schema.graphql",
     "validate-graphql": "yarn run tsgql validate -p ./template/tsconfig.json"
   },
   "dependencies": {
