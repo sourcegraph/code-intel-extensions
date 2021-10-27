@@ -8,4 +8,6 @@ steps:
     label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
     label: ':jest: :codecov:'
+  - command: '! grep -r "Fix before merging" template && echo remove this command && false'
+    label: 'fixme'
   - wait
