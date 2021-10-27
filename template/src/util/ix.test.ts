@@ -1,10 +1,6 @@
 import * as assert from 'assert'
 
-import {
-    asyncGeneratorFromPromise,
-    concat,
-    observableFromAsyncIterator,
-} from './ix'
+import { asyncGeneratorFromPromise, concat, observableFromAsyncIterator } from './ix'
 
 describe('observableFromAsyncIterator', () => {
     it('converts iterator into an observable', async () => {
