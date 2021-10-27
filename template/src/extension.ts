@@ -19,12 +19,11 @@ export const activate = (context: sourcegraph.ExtensionContext): void => {
     for (const spec of languageID === 'all'
         ? languageSpecs
         : languageSpecs.filter(spec => spec.languageID === languageID)) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         activateCodeIntel(
             context,
             spec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }]),
             spec
-        )
+        ).catch(error => console.log(error))
     }
 }
 
