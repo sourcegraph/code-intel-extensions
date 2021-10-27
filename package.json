@@ -28,7 +28,7 @@
   "dependencies": {
     "dot-json": "^1.2.2",
     "fast-json-stable-stringify": "^2.1.0",
-    "js-base64": "^3.7.1",
+    "js-base64": "^3.7.2",
     "json2ts": "^0.0.7",
     "lodash": "^4.17.21",
     "lru-cache": "^6.0.0",
