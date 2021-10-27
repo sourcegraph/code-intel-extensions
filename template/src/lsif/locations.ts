@@ -44,16 +44,18 @@ export type getCursorLocation<T> = (
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<T | null>>
 ) => Promise<LocationCursor>
 
+type QueryPageFn = (
+    requestsRemaining: number,
+    after?: string | undefined
+) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined>
+
 export function getQueryPage<T>(
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<T | null>> = sgQueryGraphQL,
     get: getCursorLocation<T>
-) {
-    const queryPage = async function* (
-        requestsRemaining: number,
-        after?: string
-    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+): QueryPageFn {
+    const queryPage: QueryPageFn = async function* (requestsRemaining, after) {
         if (requestsRemaining === 0) {
             return
         }

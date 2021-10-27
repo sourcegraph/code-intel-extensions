@@ -148,10 +148,14 @@ describe('graphql providers', () => {
                 })
             )
 
-            let values = await gatherValues(
-                createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).references(document, position, {
-                    includeDeclaration: false,
-                })
+            const values = await gatherValues(
+                createProviders(queryGraphQLFn, makeStencilFn(stencil1), getBulkLocalIntelligence).references(
+                    document,
+                    position,
+                    {
+                        includeDeclaration: false,
+                    }
+                )
             )
 
             assert.deepStrictEqual(values, [
