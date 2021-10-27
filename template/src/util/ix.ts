@@ -113,7 +113,7 @@ export function cachePromiseProvider<P extends unknown[], R>(
     const cache: CacheEntry[] = []
 
     return (...args) => {
-        for (const [index, entry] of cache.entries()) {
+        for (const [index, entry] of Array.from(cache.entries())) {
             if (compareProviderArguments(entry.args, args)) {
                 if (index !== 0) {
                     cache.splice(index, 1)
