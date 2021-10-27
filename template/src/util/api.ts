@@ -350,7 +350,6 @@ export class API {
      * @param fileLocal Set to false to not request this field, which is absent in older versions of Sourcegraph.
      */
     public async search(searchQuery: string, fileLocal = true): Promise<SearchResult[]> {
-        const versionContext = sourcegraph.workspace.versionContext
         const searchContext = sourcegraph.workspace.searchContext
         const query = searchContext ? `context:${searchContext} ${searchQuery}` : searchQuery
 
@@ -363,9 +362,8 @@ export class API {
             }
         }
 
-        const data = await queryGraphQL<Response>(buildSearchQuery(!!versionContext, fileLocal), {
+        const data = await queryGraphQL<Response>(buildSearchQuery(fileLocal), {
             query,
-            versionContext,
         })
         return data.search.results.results.filter(isDefined)
     }
@@ -397,7 +395,7 @@ export class API {
     }
 }
 
-function buildSearchQuery(context: boolean, fileLocal: boolean): string {
+function buildSearchQuery(fileLocal: boolean): string {
     const searchResultsFragment = gql`
         fragment SearchResults on Search {
             results {
@@ -459,19 +457,6 @@ function buildSearchQuery(context: boolean, fileLocal: boolean): string {
     `
 
     if (fileLocal) {
-        if (context) {
-            return gql`
-                query CodeIntelSearch($query: String!, $versionContext: String) {
-                    search(query: $query, versionContext: $versionContext) {
-                        ...SearchResults
-                        ...FileLocal
-                    }
-                }
-                ${searchResultsFragment}
-                ${fileLocalFragment}
-            `
-        }
-
         return gql`
             query CodeIntelSearch($query: String!) {
                 search(query: $query) {
@@ -481,17 +466,6 @@ function buildSearchQuery(context: boolean, fileLocal: boolean): string {
             }
             ${searchResultsFragment}
             ${fileLocalFragment}
-        `
-    }
-
-    if (context) {
-        return gql`
-            query CodeIntelSearch($query: String!, $versionContext: String) {
-                search(query: $query, versionContext: $versionContext) {
-                    ...SearchResults
-                }
-            }
-            ${searchResultsFragment}
         `
     }
 
