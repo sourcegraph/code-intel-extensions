@@ -22,7 +22,7 @@ import { cache } from './util'
  *
  * @param logger The logger instance.
  */
-export function createProviders(logger: Logger): CombinedProviders {
+export function createProviders(hasImplementationsField: boolean, logger: Logger): CombinedProviders {
     const enabled = sourcegraph.configuration.get().get('codeIntel.lsif') ?? true
     if (!enabled) {
         logger.log('LSIF is not enabled in global settings')
@@ -35,7 +35,7 @@ export function createProviders(logger: Logger): CombinedProviders {
             sgQueryGraphQL,
             once(() => new API().hasStencils())
         ),
-        makeRangeWindowFactory(sgQueryGraphQL)
+        makeRangeWindowFactory(hasImplementationsField, sgQueryGraphQL)
     )
 
     logger.log('LSIF providers are active')

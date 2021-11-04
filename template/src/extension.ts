@@ -38,7 +38,7 @@ const DUMMY_CTX = {
     },
 }
 
-const hasImplementations = once(async () => new API().hasImplementations())
+const hasImplementationsField = once(() => new API().hasImplementationsField())
 
 /**
  * Create the panel for implementations.
@@ -85,7 +85,9 @@ const activateCodeIntel = async (
     languageSpec: LanguageSpec,
     logger: Logger = new RedactingLogger(console)
 ): Promise<void> => {
-    const providers = createProviders(languageSpec, logger)
+    const hasImplementationsFieldConst = await hasImplementationsField()
+
+    const providers = createProviders(languageSpec, hasImplementationsFieldConst, logger)
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, providers.definition))
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, providers.hover))
 
@@ -118,7 +120,7 @@ const activateCodeIntel = async (
             .subscribe()
     )
 
-    if (await hasImplementations()) {
+    if (hasImplementationsFieldConst) {
         // Show the "Find implementations" button in the hover, as specified in package.json (look for
         // "findImplementations").
         sourcegraph.internal.updateContext({ implementations: true })

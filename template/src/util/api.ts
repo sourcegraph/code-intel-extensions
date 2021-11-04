@@ -137,7 +137,7 @@ export class API {
      *
      * TODO(tjdevries) - Remove this when we no longer need to support pre-3.XX releases (not yet released)
      */
-    public async hasImplementations(): Promise<boolean> {
+    public async hasImplementationsField(): Promise<boolean> {
         const introspectionQuery = gql`
             query ImplementationsIntrospectionQuery {
                 __type(name: "GitBlobLSIFData") {

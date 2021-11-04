@@ -60,6 +60,7 @@ interface RangeWindow {
  * @param queryGraphQL The function used to query the GraphQL API.
  */
 export async function makeRangeWindowFactory(
+    hasImplementationsField: boolean,
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL
 ): Promise<RangeWindowFactoryFn> {
     const disabled = !!sourcegraph.configuration.get().get('codeIntel.disableRangeQueries')
@@ -104,7 +105,7 @@ export async function makeRangeWindowFactory(
             cacheEntry.lasthit = new Date()
         }
 
-        return findOverlappingWindows(textDocument, position, cacheEntry?.windows || [], queryGraphQL)
+        return findOverlappingWindows(textDocument, position, cacheEntry?.windows || [], hasImplementationsField, queryGraphQL)
     }
 
     return async (textDocument, position) =>
@@ -129,6 +130,7 @@ export async function findOverlappingWindows(
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     rangeWindows: RangeWindow[],
+    hasImplementationsField: boolean,
     queryGraphQL: QueryGraphQLFn<any> = sgQueryGraphQL
 ): Promise<CodeIntelligenceRange[] | null> {
     let index = -1
@@ -160,7 +162,7 @@ export async function findOverlappingWindows(
     // requests while the user hovers over another token while the original range
     // request is still in-flight.
 
-    const ranges = rangesInRangeWindow(textDocument, startLine, endLine, queryGraphQL)
+    const ranges = rangesInRangeWindow(textDocument, startLine, endLine, hasImplementationsField, queryGraphQL)
     rangeWindows.splice(index + 1, 0, { startLine, endLine, ranges })
 
     // Caching a promise is tricky when the promise may not resolve successfully. In
@@ -262,7 +264,15 @@ async function hasRangesQuery(queryGraphQL: QueryGraphQLFn<IntrospectionResponse
     return (await queryGraphQL(introspectionQuery)).__type?.fields.some(field => field.name === 'ranges') || false
 }
 
-const rangesQuery = gql`
+const rangesQuery = (hasImplementationsField: boolean): string => {
+    // This must be written as `let ... if` so that ts-graphql-plugin can validate it. ts-graphql-plugin
+    // can't analyze ternaries or subsequent assignments to the variable.
+    let implementationsFragment = 'implementations { nodes { resource { path } range { start { line character } end { line character } } } }'
+    if (!hasImplementationsField) {
+        implementationsFragment = ''
+    }
+
+    return gql`
     query Ranges($repository: String!, $commit: String!, $path: String!, $startLine: Int!, $endLine: Int!) {
         repository(name: $repository) {
             commit(rev: $commit) {
@@ -314,23 +324,7 @@ const rangesQuery = gql`
                                         }
                                     }
                                 }
-                                implementations {
-                                    nodes {
-                                        resource {
-                                            path
-                                        }
-                                        range {
-                                            start {
-                                                line
-                                                character
-                                            }
-                                            end {
-                                                line
-                                                character
-                                            }
-                                        }
-                                    }
-                                }
+                                ${implementationsFragment}
                                 hover {
                                     markdown {
                                         text
@@ -354,17 +348,19 @@ const rangesQuery = gql`
         }
     }
 `
+}
 
 /** Retrieve local (same-bundle) code intelligence for symbols between the given lines. */
 export async function rangesInRangeWindow(
     textDocument: sourcegraph.TextDocument,
     startLine: number,
     endLine: number,
+    hasImplementationsField: boolean,
     queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>> = sgQueryGraphQL
 ): Promise<CodeIntelligenceRange[] | null> {
     return rangesResponseToCodeIntelligenceRangeNodes(
         textDocument,
-        await queryLSIF({ query: rangesQuery, uri: textDocument.uri, startLine, endLine }, queryGraphQL)
+        await queryLSIF({ query: rangesQuery(hasImplementationsField), uri: textDocument.uri, startLine, endLine }, queryGraphQL)
     )
 }
 
