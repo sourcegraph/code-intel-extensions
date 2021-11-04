@@ -8,6 +8,4 @@ steps:
     label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
     label: ':jest: :codecov:'
-  - command: '! grep -r "update-graphql-schema.*3d47a07d67357b423a82c3376aafbc54def4e10b" package.json && echo "make sure the codeintel GraphQL schema is from master, and remove this check before merging" && false'
-    label: 'fixme'
   - wait
