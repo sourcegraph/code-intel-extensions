@@ -53,7 +53,7 @@
       "hover": [
         {
           "action": "findImplementations",
-          "when": "get(context, \"implementations\")"
+          "when": "get(context, \"implementations\") && !get(context, \"goToDefinition.notFound\")"
         }
       ]
     },
