@@ -60,9 +60,7 @@ const createImplementationPanel = (
     implementationsPanel.title = 'Implementations'
     implementationsPanel.component = { locationProvider: implementationsPanelID }
     implementationsPanel.priority = 160
-    // Fix before merging
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-explicit-any
-    ;(implementationsPanel as any).selector = selector
+    implementationsPanel.selector = selector
 
     context.subscriptions.add(implementationsPanel)
     context.subscriptions.add(
