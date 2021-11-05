@@ -995,16 +995,17 @@
   dependencies:
     "@sourcegraph/extension-api-types" "^2.1.0"
 
-"@sourcegraph/extension-api-stubs@^1.5.4":
-  version "1.5.4"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-stubs/-/extension-api-stubs-1.5.4.tgz#4eeb2744e90c04c4cdc108173b92e86b4b47dc6d"
-  integrity sha512-F6GktP5Ov3tKVhdfmG2tUFnPqXitwSuh48F/2rDev0heBIE2OzeiaWaZqJL/5V4YH4y4HeTbhUT4lPUBOWlKcw==
+"@sourcegraph/extension-api-stubs@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-stubs/-/extension-api-stubs-1.6.0.tgz#e50c4a730c01d34770893dc8a959dedd3c75680c"
+  integrity sha512-0AtH0AUVRo3+1ob1xvaVtwMQ1MYbzYuEbOFb6lVpqsyHt+C66fnpXeZaf+p1PFc1d86YDO4JQIt84yFunpumwg==
   dependencies:
     "@sourcegraph/extension-api-classes" "^1.1.0"
     "@types/sinon" "10.0.4"
+    graphql "^15.4.0"
     rxjs "^6.5.1"
     sinon "^10.0.0"
-    sourcegraph "^25.3.0"
+    sourcegraph "^25.4.0"
 
 "@sourcegraph/extension-api-types@^2.1.0":
   version "2.1.0"
@@ -3970,6 +3971,11 @@ graphql-language-service-utils@^2.4.1:
   integrity sha512-fqYSrjJ3YXHwY9eYUz5nesLwLfo8csbR/hS4Xz8wDZCeqkD20UzjVfnbF1Q0SjtKFlDtEfnG9hJvHZEJXZCF3A==
   dependencies:
     graphql-language-service-types "^1.6.1"
+
+graphql@^15.4.0:
+  version "15.7.2"
+  resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.7.2.tgz#85ab0eeb83722977151b3feb4d631b5f2ab287ef"
+  integrity sha512-AnnKk7hFQFmU/2I9YSQf3xw44ctnSFCfp3zE0N6W174gqe9fWG/2rKaKxROK7CcI3XtERpjEKFqts8o319Kf7A==
 
 graphql@^15.5.3:
   version "15.5.3"
@@ -7447,7 +7453,7 @@ source-map@^0.5.0, source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-sourcegraph@25.4.0, sourcegraph@^25.3.0:
+sourcegraph@25.4.0, sourcegraph@^25.4.0:
   version "25.4.0"
   resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-25.4.0.tgz#182cedc8c5090428d8456ee60d39c4ed0fdae849"
   integrity sha512-c+sDrBAQxd3T7hEAGvLFbkHEBh9NXTppCzpA0FhULV3Y/ONqLBOO+UEhPq3iWihgHmyF18r1+lciW545h0vmZQ==
