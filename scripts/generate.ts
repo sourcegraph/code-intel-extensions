@@ -46,7 +46,7 @@ async function generate({ languageID, stylized, additionalLanguages = [] }: Lang
             },
             null,
             2
-        )
+        ).replace(/LANGID\b/g, languageID)
     )
 
     // Update README.md placeholders with language name
