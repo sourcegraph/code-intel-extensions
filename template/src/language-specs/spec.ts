@@ -51,6 +51,11 @@ export interface LanguageSpec {
      * from this language.
      */
     lsifSupport?: LSIFSupport
+
+    /**
+     * Supports textDocument/implementation Requests
+     */
+    textDocumentImplemenationSupport?: boolean
 }
 
 export enum LSIFSupport {

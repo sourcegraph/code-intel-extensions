@@ -45,4 +45,5 @@ export const goSpec: LanguageSpec = {
     commentStyles: [{ lineRegex: slashPattern }],
     filterDefinitions,
     lsifSupport: LSIFSupport.Robust,
+    textDocumentImplemenationSupport: true,
 }

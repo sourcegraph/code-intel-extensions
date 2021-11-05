@@ -13,17 +13,17 @@ import { nodeToLocation, LocationConnectionNode, getQueryPage, LocationCursor } 
  * relatively low unless it's a VERY popular library and LSIF data is
  * ubiquitous (which is our goal).
  */
-export const MAX_REFERENCE_PAGE_REQUESTS = 10
+export const MAX_IMPLEMENTATION_PAGE_REQUESTS = 10
 
-export interface ReferencesResponse {
-    references: {
+export interface ImplementationsResponse {
+    implementations: {
         nodes: LocationConnectionNode[]
         pageInfo: { endCursor?: string }
     }
 }
 
-const referencesQuery = gql`
-    query References(
+const implementationsQuery = gql`
+    query Implementations(
         $repository: String!
         $commit: String!
         $path: String!
@@ -35,7 +35,7 @@ const referencesQuery = gql`
             commit(rev: $commit) {
                 blob(path: $path) {
                     lsif {
-                        references(line: $line, character: $character, after: $after) {
+                        implementations(line: $line, character: $character, after: $after) {
                             nodes {
                                 resource {
                                     path
@@ -68,30 +68,35 @@ const referencesQuery = gql`
     }
 `
 
-/** Retrieve references for the current hover position. */
+/** Retrieve implementations for the current hover position. */
 // eslint-disable-next-line @typescript-eslint/require-await
-export async function* referencesForPosition(
+export async function* implementationsForPosition(
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
-    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ImplementationsResponse | null>> = sgQueryGraphQL
 ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
     yield* concat(
-        getQueryPage(textDocument, position, queryGraphQL, referencePageForPosition)(MAX_REFERENCE_PAGE_REQUESTS)
+        getQueryPage(
+            textDocument,
+            position,
+            queryGraphQL,
+            implementationPageForPosition
+        )(MAX_IMPLEMENTATION_PAGE_REQUESTS)
     )
 }
 
-/** Retrieve a single page of references for the current hover position. */
-export async function referencePageForPosition(
+/** Retrieve a single page of implementations for the current hover position. */
+export async function implementationPageForPosition(
     textDocument: sourcegraph.TextDocument,
     position: sourcegraph.Position,
     after: string | undefined,
-    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ReferencesResponse | null>> = sgQueryGraphQL
+    queryGraphQL: QueryGraphQLFn<GenericLSIFResponse<ImplementationsResponse | null>> = sgQueryGraphQL
 ): Promise<LocationCursor> {
-    return referenceResponseToLocations(
+    return implementationResponseToLocations(
         textDocument,
         await queryLSIF(
             {
-                query: referencesQuery,
+                query: implementationsQuery,
                 uri: textDocument.uri,
                 after,
                 line: position.line,
@@ -103,21 +108,21 @@ export async function referencePageForPosition(
 }
 
 /**
- * Convert a GraphQL reference response into a set of Sourcegraph locations and end cursor.
+ * Convert a GraphQL implementation response into a set of Sourcegraph locations and end cursor.
  *
- * @param textDocument The current document.
- * @param lsifObject The resolved LSIF object.
+ * @param doc The current document.
+ * @param lsifObj The resolved LSIF object.
  */
-function referenceResponseToLocations(
+function implementationResponseToLocations(
     textDocument: sourcegraph.TextDocument,
-    lsifObject: ReferencesResponse | null
+    lsifObject: ImplementationsResponse | null
 ): { locations: sourcegraph.Location[] | null; endCursor?: string } {
     if (!lsifObject) {
         return { locations: null }
     }
 
     return {
-        locations: lsifObject.references.nodes.map(node => nodeToLocation(textDocument, node)),
-        endCursor: lsifObject.references.pageInfo.endCursor,
+        locations: lsifObject.implementations.nodes.map(node => nodeToLocation(textDocument, node)),
+        endCursor: lsifObject.implementations.pageInfo.endCursor,
     }
 }

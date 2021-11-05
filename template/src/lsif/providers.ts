@@ -10,6 +10,7 @@ import { raceWithDelayOffset } from '../util/promise'
 
 import { definitionAndHoverForPosition, hoverPayloadToHover } from './definition-hover'
 import { filterLocationsForDocumentHighlights } from './highlights'
+import { implementationsForPosition } from './implementations'
 import { RangeWindowFactoryFn, makeRangeWindowFactory } from './ranges'
 import { referencesForPosition, referencePageForPosition } from './references'
 import { makeStencilFn, StencilFn } from './stencil'
@@ -21,7 +22,7 @@ import { cache } from './util'
  *
  * @param logger The logger instance.
  */
-export function createProviders(logger: Logger): CombinedProviders {
+export function createProviders(hasImplementationsField: boolean, logger: Logger): CombinedProviders {
     const enabled = sourcegraph.configuration.get().get('codeIntel.lsif') ?? true
     if (!enabled) {
         logger.log('LSIF is not enabled in global settings')
@@ -34,7 +35,7 @@ export function createProviders(logger: Logger): CombinedProviders {
             sgQueryGraphQL,
             once(() => new API().hasStencils())
         ),
-        makeRangeWindowFactory(sgQueryGraphQL)
+        makeRangeWindowFactory(hasImplementationsField, sgQueryGraphQL)
     )
 
     logger.log('LSIF providers are active')
@@ -56,6 +57,7 @@ export function createGraphQLProviders(
     return {
         definitionAndHover: cache(definitionAndHover(queryGraphQL, getStencil, getRangeFromWindow), { max: 5 }),
         references: references(queryGraphQL, getStencil, getRangeFromWindow),
+        implementations: implementations(queryGraphQL, getStencil, getRangeFromWindow),
         documentHighlights: asyncGeneratorFromPromise(documentHighlights(queryGraphQL, getStencil, getRangeFromWindow)),
     }
 }
@@ -197,13 +199,68 @@ function references(
             results => results !== null && !(Array.isArray(results) && results.length === 0)
         )
 
-        if (localReferences && localReferences.length < 0) {
+        if (localReferences && localReferences.length > 0) {
             // Yield any references we have immediately
             yield localReferences
         }
 
         // Replace local references with actual results
         yield* referencesForPosition(textDocument, position, queryGraphQL)
+    }
+}
+
+/** Retrieve implementations for the current hover position. */
+function implementations(
+    queryGraphQL: QueryGraphQLFn<any>,
+    getStencil: StencilFn,
+    getRangeFromWindow?: Promise<RangeWindowFactoryFn>
+): (
+    textDocument: sourcegraph.TextDocument,
+    position: sourcegraph.Position
+) => AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+    return async function* (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): AsyncGenerator<sourcegraph.Location[] | null, void, undefined> {
+        if ((await searchStencil(textDocument.uri, position, getStencil)) === 'miss') {
+            return
+        }
+
+        const getImplementationsFromRangeRequest = async (): Promise<sourcegraph.Location[] | null> => {
+            if (getRangeFromWindow) {
+                const range = await (await getRangeFromWindow)(textDocument, position)
+                if (range?.implementations) {
+                    const implementations = range.implementations()
+                    if (implementations.length > 0) {
+                        return range.implementations()
+                    }
+                }
+            }
+
+            return null
+        }
+
+        // First see if we can query or resolve a window containing this
+        // target position. If we've already requested this range, it should
+        // be a synchronous return that won't trigger the fallback request.
+        // If we don't have the window in memory, wait a very small time for
+        // the window to resolve, then fall back to requesting the hover text
+        // for this position explicitly. This fallback will also happen if we
+        // have a null hover text for this position.
+        const localImplementations = await raceWithDelayOffset(
+            getImplementationsFromRangeRequest(),
+            () => Promise.resolve(null),
+            RANGE_RESOLUTION_DELAY_MS,
+            results => results !== null && !(Array.isArray(results) && results.length === 0)
+        )
+
+        if (localImplementations && localImplementations.length > 0) {
+            // Yield any implementations we have immediately
+            yield localImplementations
+        }
+
+        // Replace local implementations with actual results
+        yield* implementationsForPosition(textDocument, position, queryGraphQL)
     }
 }
 

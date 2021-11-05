@@ -1,3 +1,4 @@
+import { once } from 'lodash'
 import { from } from 'rxjs'
 import { distinctUntilChanged, map, startWith } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
@@ -6,7 +7,8 @@ import { languageID } from './language'
 import { languageSpecs } from './language-specs/languages'
 import { LanguageSpec } from './language-specs/spec'
 import { Logger, RedactingLogger } from './logging'
-import { createProviders } from './providers'
+import { createProviders, SourcegraphProviders } from './providers'
+import { API } from './util/api'
 
 /**
  * Register providers on the extension host.
@@ -21,7 +23,7 @@ export const activate = (context: sourcegraph.ExtensionContext): void => {
             context,
             spec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }]),
             spec
-        )
+        ).catch(error => console.log(error))
     }
 }
 
@@ -36,6 +38,36 @@ const DUMMY_CTX = {
     },
 }
 
+const hasImplementationsField = once(() => new API().hasImplementationsField())
+
+/**
+ * Create the panel for implementations.
+ *
+ * Makes sure to only create the panel once per session.
+ */
+const createImplementationPanel = (
+    context: sourcegraph.ExtensionContext = DUMMY_CTX,
+    selector: sourcegraph.DocumentSelector,
+    languageSpec: LanguageSpec,
+    providers: SourcegraphProviders
+): void => {
+    // - In development, languageID is 'all', so the panel ID will match implementations_LANGID in the
+    //   template manifest.
+    // - After the template is instantiated for Go (for example), languageID is 'go', so the panel ID
+    //   will match implementations_go in the instantiated manifest.
+    const implementationsPanelID = 'implementations_' + (languageID === 'all' ? 'LANGID' : languageSpec.languageID)
+    const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+    implementationsPanel.title = 'Implementations'
+    implementationsPanel.component = { locationProvider: implementationsPanelID }
+    implementationsPanel.priority = 160
+    implementationsPanel.selector = selector
+
+    context.subscriptions.add(implementationsPanel)
+    context.subscriptions.add(
+        sourcegraph.languages.registerLocationProvider(implementationsPanelID, selector, providers.implementations)
+    )
+}
+
 /**
  * Activate the extension by registering definition, reference, and hover providers
  * with LSIF and search-based providers.
@@ -45,13 +77,15 @@ const DUMMY_CTX = {
  * @param languageSpec The language spec used to provide search-based code intelligence.
  * @param logger An optional logger instance.
  */
-const activateCodeIntel = (
+const activateCodeIntel = async (
     context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
     languageSpec: LanguageSpec,
     logger: Logger = new RedactingLogger(console)
-): void => {
-    const providers = createProviders(languageSpec, logger)
+): Promise<void> => {
+    const hasImplementationsFieldConst = await hasImplementationsField()
+
+    const providers = createProviders(languageSpec, hasImplementationsFieldConst, logger)
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, providers.definition))
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, providers.hover))
 
@@ -83,4 +117,15 @@ const activateCodeIntel = (
             )
             .subscribe()
     )
+
+    if (hasImplementationsFieldConst) {
+        // Show the "Find implementations" button in the hover, as specified in package.json (look for
+        // "findImplementations").
+        sourcegraph.internal.updateContext({ implementations: true })
+
+        if (languageSpec.textDocumentImplemenationSupport) {
+            // Create an Implementations panel and register a locations provider.
+            createImplementationPanel(context, selector, languageSpec, providers)
+        }
+    }
 }

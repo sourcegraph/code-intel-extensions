@@ -27,7 +27,7 @@ describe('findOverlappingWindows', () => {
             { startLine: 6, endLine: 9, ranges: Promise.resolve([aggregate3]) },
         ]
 
-        assert.deepEqual(await findOverlappingWindows(document, position, windows), [aggregate2])
+        assert.deepEqual(await findOverlappingWindows(document, position, windows, true), [aggregate2])
     })
 
     it('creates new window and inserts it correctly', async () => {
@@ -40,9 +40,17 @@ describe('findOverlappingWindows', () => {
             { startLine: 6, endLine: 9, ranges: Promise.resolve([aggregate3]) },
         ]
 
-        const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined }]
+        const expected = [
+            {
+                ...aggregate2,
+                definitions: undefined,
+                hover: undefined,
+                references: undefined,
+                implementations: undefined,
+            },
+        ]
 
-        assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn), expected)
+        assert.deepEqual(await findOverlappingWindows(document, position, windows, true, queryGraphQLFn), expected)
         assert.strictEqual(windows.length, 3)
         assert.strictEqual(windows[1].startLine, 4)
         assert.strictEqual(windows[1].endLine, 6)
@@ -62,16 +70,27 @@ describe('findOverlappingWindows', () => {
         )
 
         // Rejected promises (once no longer in-flight) do not stay in the cache
-        await assert.rejects(findOverlappingWindows(document, position, windows, queryGraphQLFn1), new Error('oops'))
+        await assert.rejects(
+            findOverlappingWindows(document, position, windows, true, queryGraphQLFn1),
+            new Error('oops')
+        )
         assert.strictEqual(windows.length, 2)
 
         const queryGraphQLFn2 = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>>>(() =>
             makeEnvelope({ ranges: { nodes: [aggregate2] } })
         )
 
-        const expected = [{ ...aggregate2, definitions: undefined, hover: undefined, references: undefined }]
+        const expected = [
+            {
+                ...aggregate2,
+                definitions: undefined,
+                hover: undefined,
+                references: undefined,
+                implementations: undefined,
+            },
+        ]
 
-        assert.deepEqual(await findOverlappingWindows(document, position, windows, queryGraphQLFn2), expected)
+        assert.deepEqual(await findOverlappingWindows(document, position, windows, true, queryGraphQLFn2), expected)
         assert.strictEqual(windows.length, 3)
         assert.strictEqual(windows[1].startLine, 4)
         assert.strictEqual(windows[1].endLine, 6)
@@ -202,7 +221,7 @@ describe('rangesInRangeWindow', () => {
             })
         )
 
-        const results = await rangesInRangeWindow(document, 10, 20, queryGraphQLFn)
+        const results = await rangesInRangeWindow(document, 10, 20, true, queryGraphQLFn)
 
         assert.deepEqual(
             (results || []).map(result => ({
@@ -232,6 +251,6 @@ describe('rangesInRangeWindow', () => {
             makeEnvelope()
         )
 
-        assert.deepStrictEqual(await rangesInRangeWindow(document, 10, 20, queryGraphQLFn), null)
+        assert.deepStrictEqual(await rangesInRangeWindow(document, 10, 20, true, queryGraphQLFn), null)
     })
 })
