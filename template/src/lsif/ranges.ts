@@ -105,7 +105,13 @@ export async function makeRangeWindowFactory(
             cacheEntry.lasthit = new Date()
         }
 
-        return findOverlappingWindows(textDocument, position, cacheEntry?.windows || [], hasImplementationsField, queryGraphQL)
+        return findOverlappingWindows(
+            textDocument,
+            position,
+            cacheEntry?.windows || [],
+            hasImplementationsField,
+            queryGraphQL
+        )
     }
 
     return async (textDocument, position) =>
@@ -267,7 +273,8 @@ async function hasRangesQuery(queryGraphQL: QueryGraphQLFn<IntrospectionResponse
 const rangesQuery = (hasImplementationsField: boolean): string => {
     // This must be written as `let ... if` so that ts-graphql-plugin can validate it. ts-graphql-plugin
     // can't analyze ternaries or subsequent assignments to the variable.
-    let implementationsFragment = 'implementations { nodes { resource { path } range { start { line character } end { line character } } } }'
+    let implementationsFragment =
+        'implementations { nodes { resource { path } range { start { line character } end { line character } } } }'
     if (!hasImplementationsField) {
         implementationsFragment = ''
     }
@@ -360,7 +367,10 @@ export async function rangesInRangeWindow(
 ): Promise<CodeIntelligenceRange[] | null> {
     return rangesResponseToCodeIntelligenceRangeNodes(
         textDocument,
-        await queryLSIF({ query: rangesQuery(hasImplementationsField), uri: textDocument.uri, startLine, endLine }, queryGraphQL)
+        await queryLSIF(
+            { query: rangesQuery(hasImplementationsField), uri: textDocument.uri, startLine, endLine },
+            queryGraphQL
+        )
     )
 }
 

@@ -70,7 +70,10 @@ describe('findOverlappingWindows', () => {
         )
 
         // Rejected promises (once no longer in-flight) do not stay in the cache
-        await assert.rejects(findOverlappingWindows(document, position, windows, true, queryGraphQLFn1), new Error('oops'))
+        await assert.rejects(
+            findOverlappingWindows(document, position, windows, true, queryGraphQLFn1),
+            new Error('oops')
+        )
         assert.strictEqual(windows.length, 2)
 
         const queryGraphQLFn2 = sinon.spy<QueryGraphQLFn<GenericLSIFResponse<RangesResponse | null>>>(() =>

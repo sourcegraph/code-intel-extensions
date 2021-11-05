@@ -84,7 +84,11 @@ export const noopProviders = {
  *
  * @param languageSpec The language spec used to provide search-based code intelligence.
  */
-export function createProviders(languageSpec: LanguageSpec, hasImplementationsField: boolean, logger: Logger): SourcegraphProviders {
+export function createProviders(
+    languageSpec: LanguageSpec,
+    hasImplementationsField: boolean,
+    logger: Logger
+): SourcegraphProviders {
     const wrapped: { definition?: sourcegraph.DefinitionProvider } = {}
     const api = new API()
     const lsifProviders = createLSIFProviders(hasImplementationsField, logger)
