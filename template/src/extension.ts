@@ -120,8 +120,9 @@ const activateCodeIntel = async (
 
     if (hasImplementationsFieldConst) {
         // Show the "Find implementations" button in the hover, as specified in package.json (look for
-        // "findImplementations").
-        sourcegraph.internal.updateContext({ implementations: true })
+        // "findImplementations"). TODO reenable this once the browser extension works again.
+        // See https://github.com/sourcegraph/sourcegraph/issues/27239
+        // sourcegraph.internal.updateContext({implementations: true })
 
         if (languageSpec.textDocumentImplemenationSupport) {
             // Create an Implementations panel and register a locations provider.
