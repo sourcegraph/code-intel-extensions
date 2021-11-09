@@ -79,7 +79,7 @@
         "title": "Find implementations",
         "command": "open",
         "commandArguments": [
-          "/${resource.repo}@${resource.commit}/-/blob/${resource.path}?L${get(get(hoverPosition, \"position\"), \"line\") + 1}:${get(get(hoverPosition, \"position\"), \"character\") + 1}#tab=implementations_LANGID"
+          "${sub(get(context, 'panel.url'), 'panelID', 'implementations_LANGID')}"
         ],
         "actionItem": {
           "label": "Find implementations"
