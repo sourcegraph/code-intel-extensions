@@ -79,7 +79,7 @@
         "title": "Find implementations",
         "command": "open",
         "commandArguments": [
-          "${sub(get(context, 'panel.url'), 'panelID', 'implementations_LANGID')}"
+          "${get(context, 'implementations') && get(context, 'panel.url') && sub(get(context, 'panel.url'), 'panelID', 'implementations_LANGID') || 'noop'}"
         ],
         "actionItem": {
           "label": "Find implementations"
