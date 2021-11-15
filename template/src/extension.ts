@@ -121,11 +121,16 @@ const activateCodeIntel = async (
     // TODO reenable the browser extension upon next release (Nov 22).
     // See https://github.com/sourcegraph/sourcegraph/issues/27239
     if (hasImplementationsFieldConst && sourcegraph.internal.clientApplication === 'sourcegraph') {
-        // Show the "Find implementations" button in the hover, as specified in package.json (look for
-        // "findImplementations").
-        sourcegraph.internal.updateContext({ implementations: true })
-
         if (languageSpec.textDocumentImplemenationSupport) {
+            // Show the "Find implementations" button in the hover, as specified in package.json (look for
+            // "findImplementations").
+            sourcegraph.internal.updateContext({
+                // For the hover
+                [`implementations_${languageSpec.languageID}`]: true,
+                // For the action that opens the panel
+                [`implementations_${languageID === 'all' ? 'LANGID' : languageSpec.languageID}`]: true,
+            })
+
             // Create an Implementations panel and register a locations provider.
             createImplementationPanel(context, selector, languageSpec, providers)
         }
