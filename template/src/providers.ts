@@ -181,20 +181,25 @@ export function createDefinitionProvider(
             const repoId = (await api.resolveRepo(repo)).id
             const emitter = new TelemetryEmitter(languageID, repoId, !quiet)
             const commonFields = { provider: 'definition', repo, textDocument, position, emitter, logger }
-            const lsifWrapper = await lsifProvider(textDocument, position)
-            let hasPreciseResult = false
 
-            for await (const rawResults of asArray(lsifWrapper?.definition || [])) {
-                // Mark new results as precise
-                const aggregableBadges = [indicators.preciseBadge]
-                const results = { ...rawResults, aggregableBadges }
-                logLocationResults({ ...commonFields, action: 'lsifDefinitions', results })
-                yield results
-                hasPreciseResult = true
-            }
-            if (hasPreciseResult) {
-                // Found the best precise definition we'll get. Stop.
-                return
+            try {
+                const lsifWrapper = await lsifProvider(textDocument, position)
+                let hasPreciseResult = false
+
+                for await (const rawResults of asArray(lsifWrapper?.definition || [])) {
+                    // Mark new results as precise
+                    const aggregableBadges = [indicators.preciseBadge]
+                    const results = { ...rawResults, aggregableBadges }
+                    logLocationResults({ ...commonFields, action: 'lsifDefinitions', results })
+                    yield results
+                    hasPreciseResult = true
+                }
+                if (hasPreciseResult) {
+                    // Found the best precise definition we'll get. Stop.
+                    return
+                }
+            } catch (error) {
+                console.error('resolving lsif definition', { error })
             }
 
             // No results so far, fall back to search
@@ -287,20 +292,24 @@ export function createReferencesProvider(
                 cached = true
                 lsifResults = lsifReferenceResultCache.lsifResults
             } else {
-                for await (const rawResult of lsifProvider(textDocument, position, context)) {
-                    if (!nonEmpty(rawResult)) {
-                        continue
+                try {
+                    for await (const rawResult of lsifProvider(textDocument, position, context)) {
+                        if (!nonEmpty(rawResult)) {
+                            continue
+                        }
+
+                        // Mark results as precise
+                        const aggregableBadges = [indicators.preciseBadge]
+                        lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
+                        logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
+                        yield lsifResults
                     }
 
-                    // Mark results as precise
-                    const aggregableBadges = [indicators.preciseBadge]
-                    lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
-                    logLocationResults({ ...commonFields, action: 'lsifReferences', results: lsifResults })
-                    yield lsifResults
+                    // Cache new precise results
+                    lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
+                } catch (error) {
+                    console.error('resolving lsif references', { error })
                 }
-
-                // Cache new precise results
-                lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
             }
 
             // If we have precise results and mixPreciseAndSearchBasedReferences is disabled, do not fall
@@ -374,17 +383,21 @@ export function createImplementationsProvider(
             const emitter = new TelemetryEmitter(languageID, repoId)
             const commonFields = { repo, textDocument, position, emitter, logger, provider: 'implementations' }
 
-            let lsifResults: sourcegraph.Location[] = []
-            for await (const rawResult of lsifProvider(textDocument, position)) {
-                if (!nonEmpty(rawResult)) {
-                    continue
-                }
+            try {
+                let lsifResults: sourcegraph.Location[] = []
+                for await (const rawResult of lsifProvider(textDocument, position)) {
+                    if (!nonEmpty(rawResult)) {
+                        continue
+                    }
 
-                // Mark results as precise
-                const aggregableBadges = [indicators.preciseBadge]
-                lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
-                logLocationResults({ ...commonFields, action: 'lsifImplementations', results: lsifResults })
-                yield lsifResults
+                    // Mark results as precise
+                    const aggregableBadges = [indicators.preciseBadge]
+                    lsifResults = asArray(rawResult).map(location => ({ ...location, aggregableBadges }))
+                    logLocationResults({ ...commonFields, action: 'lsifImplementations', results: lsifResults })
+                    yield lsifResults
+                }
+            } catch (error) {
+                console.error('resolving lsif implementations', { error })
             }
         }),
     }
@@ -485,41 +498,47 @@ export function createHoverProvider(
             const repoId = (await api.resolveRepo(repo)).id
             const emitter = new TelemetryEmitter(languageID, repoId)
             const commonLogFields = { path, line: position.line, character: position.character }
-            const lsifWrapper = await lsifProvider(textDocument, position)
 
-            if (lsifWrapper?.hover) {
-                // We have a precise hover, but we might not have a precise definition.
-                // We want to tell the difference here, otherwise the definition may take
-                // the user to an unrelated location without making it obvious that it's
-                // not a precise result.
+            let hasPreciseDefinition = false
+            try {
+                const lsifWrapper = await lsifProvider(textDocument, position)
 
-                let hasSearchBasedDefinition = false
-                if (!nonEmpty(lsifWrapper.definition)) {
-                    for await (const searchResult of searchDefinitionProvider(textDocument, position)) {
-                        if (nonEmpty(searchResult)) {
-                            hasSearchBasedDefinition = true
-                            break
+                if (lsifWrapper?.hover) {
+                    // We have a precise hover, but we might not have a precise definition.
+                    // We want to tell the difference here, otherwise the definition may take
+                    // the user to an unrelated location without making it obvious that it's
+                    // not a precise result.
+
+                    let hasSearchBasedDefinition = false
+                    if (!nonEmpty(lsifWrapper.definition)) {
+                        for await (const searchResult of searchDefinitionProvider(textDocument, position)) {
+                            if (nonEmpty(searchResult)) {
+                                hasSearchBasedDefinition = true
+                                break
+                            }
                         }
                     }
+
+                    emitter.emitOnce('lsifHover')
+                    logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
+                    yield badgeHoverResult(
+                        lsifWrapper.hover,
+                        // Display a partial data tooltip when there is a precise hover text but a
+                        // search definition. This can happen if we haven't indexed the target
+                        // repository, but the dependent repository still has hover information for
+                        // externally defined symbols.
+                        [!hasSearchBasedDefinition ? indicators.lsif : indicators.lsifPartialHoverOnly],
+                        [!hasSearchBasedDefinition ? indicators.preciseBadge : indicators.partialHoverNoDefinitionBadge]
+                    )
+
+                    // Found the best precise hover text we'll get. Stop.
+                    return
                 }
 
-                emitter.emitOnce('lsifHover')
-                logger?.log({ provider: 'hover', precise: true, ...commonLogFields })
-                yield badgeHoverResult(
-                    lsifWrapper.hover,
-                    // Display a partial data tooltip when there is a precise hover text but a
-                    // search definition. This can happen if we haven't indexed the target
-                    // repository, but the dependent repository still has hover information for
-                    // externally defined symbols.
-                    [!hasSearchBasedDefinition ? indicators.lsif : indicators.lsifPartialHoverOnly],
-                    [!hasSearchBasedDefinition ? indicators.preciseBadge : indicators.partialHoverNoDefinitionBadge]
-                )
-
-                // Found the best precise hover text we'll get. Stop.
-                return
+                hasPreciseDefinition = nonEmpty(lsifWrapper?.definition)
+            } catch (error) {
+                console.error('resolving lsif hover', { error })
             }
-
-            const hasPreciseDefinition = nonEmpty(lsifWrapper?.definition)
 
             // No results so far, fall back to search.
             for await (const searchResult of searchHoverProvider(textDocument, position)) {
@@ -577,11 +596,15 @@ export function createDocumentHighlightProvider(
             const repoId = (await api.resolveRepo(repo)).id
             const emitter = new TelemetryEmitter(languageID, repoId)
 
-            for await (const lsifResult of lsifProvider(textDocument, position)) {
-                if (lsifResult) {
-                    emitter.emitOnce('lsifDocumentHighlight')
-                    yield lsifResult
+            try {
+                for await (const lsifResult of lsifProvider(textDocument, position)) {
+                    if (lsifResult) {
+                        emitter.emitOnce('lsifDocumentHighlight')
+                        yield lsifResult
+                    }
                 }
+            } catch (error) {
+                console.error('resolving lsif document highlights', { error })
             }
         }),
     }
