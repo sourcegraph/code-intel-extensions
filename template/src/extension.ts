@@ -118,9 +118,7 @@ const activateCodeIntel = async (
             .subscribe()
     )
 
-    // TODO reenable the browser extension upon next release (Nov 22).
-    // See https://github.com/sourcegraph/sourcegraph/issues/27239
-    if (hasImplementationsFieldConst && sourcegraph.internal.clientApplication === 'sourcegraph') {
+    if (hasImplementationsFieldConst) {
         if (languageSpec.textDocumentImplemenationSupport) {
             // Show the "Find implementations" button in the hover, as specified in package.json (look for
             // "findImplementations").
