@@ -67,7 +67,7 @@
     "nyc": "^15.1.0",
     "parcel": "1.x",
     "parcel-bundler": "^1.12.5",
-    "prettier": "^2.5.0",
+    "prettier": "^2.5.1",
     "ts-graphql-plugin": "^2.1.4",
     "ts-node": "^10.2.1",
     "tslint": "^6.1.3",
