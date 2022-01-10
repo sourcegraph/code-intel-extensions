@@ -22,8 +22,14 @@ export function definitionQuery({
     /** File extensions used by the current extension. */
     fileExts: string[]
 }): string[] {
-    return [`^${searchToken}$`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
-    // return [`${searchToken}`, 'type:symbol', 'patternType:regexp', 'case:yes', fileExtensionTerm(doc, fileExts)]
+    return [
+        `^${searchToken}$`,
+        'type:symbol',
+        'patternType:regexp',
+        'count:500',
+        'case:yes',
+        fileExtensionTerm(doc, fileExts),
+    ]
 }
 
 /**
