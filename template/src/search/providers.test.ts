@@ -155,6 +155,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -178,6 +179,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo\\ with\\ spaces$@rev',
@@ -202,6 +204,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -209,6 +212,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -252,6 +256,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -259,6 +264,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$',
@@ -289,6 +295,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 3)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -296,6 +303,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -303,6 +311,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.thirdCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -328,6 +337,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'fork:yes',
                 'patternType:regexp',
@@ -336,6 +346,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -372,6 +383,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -379,6 +391,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -413,6 +426,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo\\ with\\ spaces$@rev',
@@ -420,6 +434,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo\\ with\\ spaces$',
@@ -459,6 +474,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 4)
             assertQuery(searchStub.getCall(0).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -466,6 +482,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.getCall(1).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -473,6 +490,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.getCall(2).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$',
@@ -481,6 +499,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.getCall(3).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -521,6 +540,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 4)
             assertQuery(searchStub.getCall(0).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'fork:yes',
                 'patternType:regexp',
@@ -529,6 +549,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.getCall(1).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -536,6 +557,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.getCall(2).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'fork:yes',
                 'index:only',
@@ -545,6 +567,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.getCall(3).args[0], [
                 '\\bfoobar\\b',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 '-repo:^sourcegraph.test/repo$',
@@ -587,6 +610,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 1)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -620,6 +644,7 @@ describe('search providers', () => {
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$@rev',
@@ -627,6 +652,7 @@ describe('search providers', () => {
             ])
             assertQuery(searchStub.secondCall.args[0], [
                 '^foobar$',
+                'count:500',
                 'case:yes',
                 'patternType:regexp',
                 'repo:^sourcegraph.test/repo$',
