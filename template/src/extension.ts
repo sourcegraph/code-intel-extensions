@@ -63,9 +63,11 @@ const createImplementationPanel = (
     implementationsPanel.priority = 160
     implementationsPanel.selector = selector
 
-    const maxPanelResults = sourcegraph.configuration.get().get('codeIntelligence.maxPanelResults')
+    const maxPanelResults = sourcegraph.configuration
+        .get<{ 'codeIntelligence.maxPanelResults'?: number }>()
+        .get('codeIntelligence.maxPanelResults')
     if (maxPanelResults) {
-        implementationsPanel.component.maxLocationResults = maxPanelResults as unknown as number
+        implementationsPanel.component.maxLocationResults = maxPanelResults
     }
 
     context.subscriptions.add(implementationsPanel)
