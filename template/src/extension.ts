@@ -57,10 +57,18 @@ const createImplementationPanel = (
     //   will match implementations_go in the instantiated manifest.
     const implementationsPanelID = 'implementations_' + (languageID === 'all' ? 'LANGID' : languageSpec.languageID)
     const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
+
     implementationsPanel.title = 'Implementations'
     implementationsPanel.component = { locationProvider: implementationsPanelID }
     implementationsPanel.priority = 160
     implementationsPanel.selector = selector
+
+    const maxPanelResults = sourcegraph.configuration
+        .get<{ 'codeIntelligence.maxPanelResults'?: number }>()
+        .get('codeIntelligence.maxPanelResults')
+    if (maxPanelResults) {
+        implementationsPanel.component.maxLocationResults = maxPanelResults
+    }
 
     context.subscriptions.add(implementationsPanel)
     context.subscriptions.add(
