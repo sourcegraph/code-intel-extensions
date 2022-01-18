@@ -7461,10 +7461,10 @@ source-map@^0.5.0, source-map@^0.5.6:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
 
-sourcegraph@25.4.0, sourcegraph@^25.4.0:
-  version "25.4.0"
-  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-25.4.0.tgz#182cedc8c5090428d8456ee60d39c4ed0fdae849"
-  integrity sha512-c+sDrBAQxd3T7hEAGvLFbkHEBh9NXTppCzpA0FhULV3Y/ONqLBOO+UEhPq3iWihgHmyF18r1+lciW545h0vmZQ==
+sourcegraph@25.5.0, sourcegraph@^25.4.0:
+  version "25.5.0"
+  resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-25.5.0.tgz#55ba5f8bf47e24d2183444cab7c97aa77a31672d"
+  integrity sha512-zUPRcqY3yEuhB/JlVvd5xWAxE9myBuqPU7ZIVRDFs0st5MBqdDfb4bxOhJGkIarV4V/V1iL/5lhD+yquXeFaEg==
 
 spawn-wrap@^2.0.0:
   version "2.0.0"
