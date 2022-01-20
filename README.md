@@ -13,7 +13,7 @@ This repository contains the code for the [Sourcegraph extensions that provide c
 ## Development
 
 1. Run `yarn`
-2. Run `yarn --cwd template run serve`
+2. Run `yarn run generate --languages=cpp && yarn --cwd generated-cpp run serve` (replace `cpp` with your language)
 3. Open up your Sourcegraph settings https://sourcegraph.com/users/you/settings and disable the language extensions you're developing:
 
    ```json
