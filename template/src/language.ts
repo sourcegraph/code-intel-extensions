@@ -1,2 +1,2 @@
 // Set during template generation
-export const languageID = 'all'
+export const languageID = 'LANGID'

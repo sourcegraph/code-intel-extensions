@@ -5,27 +5,9 @@ import * as sourcegraph from 'sourcegraph'
 
 import { languageID } from './language'
 import { languageSpecs } from './language-specs/languages'
-import { LanguageSpec } from './language-specs/spec'
-import { Logger, RedactingLogger } from './logging'
+import { RedactingLogger } from './logging'
 import { createProviders, SourcegraphProviders } from './providers'
 import { API } from './util/api'
-
-/**
- * Register providers on the extension host.
- *
- * @param context The extension context.
- */
-export const activate = (context: sourcegraph.ExtensionContext): void => {
-    for (const spec of languageID === 'all'
-        ? languageSpecs
-        : languageSpecs.filter(spec => spec.languageID === languageID)) {
-        activateCodeIntel(
-            context,
-            spec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }]),
-            spec
-        ).catch(error => console.log(error))
-    }
-}
 
 /**
  * A dummy context that is used for versions of Sourcegraph to 3.0.
@@ -48,14 +30,9 @@ const hasImplementationsField = once(() => new API().hasImplementationsField())
 const createImplementationPanel = (
     context: sourcegraph.ExtensionContext = DUMMY_CTX,
     selector: sourcegraph.DocumentSelector,
-    languageSpec: LanguageSpec,
     providers: SourcegraphProviders
 ): void => {
-    // - In development, languageID is 'all', so the panel ID will match implementations_LANGID in the
-    //   template manifest.
-    // - After the template is instantiated for Go (for example), languageID is 'go', so the panel ID
-    //   will match implementations_go in the instantiated manifest.
-    const implementationsPanelID = 'implementations_' + (languageID === 'all' ? 'LANGID' : languageSpec.languageID)
+    const implementationsPanelID = 'implementations_LANGID'
     const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
 
     implementationsPanel.title = 'Implementations'
@@ -81,19 +58,18 @@ const createImplementationPanel = (
  * with LSIF and search-based providers.
  *
  * @param context  The extension context.
- * @param selector The document selector for which this extension is active.
- * @param languageSpec The language spec used to provide search-based code intelligence.
- * @param logger An optional logger instance.
  */
-const activateCodeIntel = async (
-    context: sourcegraph.ExtensionContext = DUMMY_CTX,
-    selector: sourcegraph.DocumentSelector,
-    languageSpec: LanguageSpec,
-    logger: Logger = new RedactingLogger(console)
-): Promise<void> => {
+export const activate = async (context: sourcegraph.ExtensionContext = DUMMY_CTX): Promise<void> => {
+    const languageSpec = languageSpecs.find(spec => spec.languageID === languageID)
+    if (languageSpec === undefined) {
+        throw new Error(`Unknown language ${languageID}`)
+    }
+
+    const selector = languageSpec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }])
+
     const hasImplementationsFieldConst = await hasImplementationsField()
 
-    const providers = createProviders(languageSpec, hasImplementationsFieldConst, logger)
+    const providers = createProviders(languageSpec, hasImplementationsFieldConst, new RedactingLogger(console))
     context.subscriptions.add(sourcegraph.languages.registerDefinitionProvider(selector, providers.definition))
     context.subscriptions.add(sourcegraph.languages.registerHoverProvider(selector, providers.hover))
 
@@ -128,17 +104,14 @@ const activateCodeIntel = async (
 
     if (hasImplementationsFieldConst) {
         if (languageSpec.textDocumentImplemenationSupport) {
-            // Show the "Find implementations" button in the hover, as specified in package.json (look for
+            // Show the "Find implementations" button in the hover as specified in package.json (look for
             // "findImplementations").
             sourcegraph.internal.updateContext({
-                // For the hover
-                [`implementations_${languageSpec.languageID}`]: true,
-                // For the action that opens the panel
-                [`implementations_${languageID === 'all' ? 'LANGID' : languageSpec.languageID}`]: true,
+                ['implementations_LANGID']: true,
             })
 
             // Create an Implementations panel and register a locations provider.
-            createImplementationPanel(context, selector, languageSpec, providers)
+            createImplementationPanel(context, selector, providers)
         }
     }
 }

@@ -2,6 +2,7 @@ import * as path from 'path'
 
 import { copy, emptyDir, ensureDir } from 'fs-extra'
 import * as fs from 'mz/fs'
+import readdir from 'recursive-readdir'
 
 import { LanguageSpec } from '../template/src/language-specs/spec'
 
@@ -19,7 +20,7 @@ async function generate({ languageID, stylized, additionalLanguages = [] }: Lang
     const iconFilename = path.join('icons', `${languageID}.png`)
     const packageFilename = path.join(langDirectory, 'package.json')
     const readmeFilename = path.join(langDirectory, 'README.md')
-    const languageFilename = path.join(langDirectory, 'src', 'language.ts')
+    const sourceFiles = await readdir(path.join(langDirectory, 'src'))
 
     await ensureDir(langDirectory)
     await emptyDir(langDirectory)
@@ -46,25 +47,15 @@ async function generate({ languageID, stylized, additionalLanguages = [] }: Lang
             },
             null,
             2
-        ).replace(/LANGID\b/g, languageID)
-    )
-
-    // Update README.md placeholders with language name
-    await fs.writeFile(
-        readmeFilename,
-        (
-            await fs.readFile(readmeFilename)
         )
-            .toString()
-            .replace(/LANG\b/g, stylized)
-            .replace(/LANGID\b/g, languageID)
     )
 
-    await fs.writeFile(
-        languageFilename,
-        // Update code to only provide intel for one language
-        `export const languageID: string | undefined = '${languageID}'\n`
-    )
+    // Update LANG/LANGID placeholders with language name
+    for (const filename of [packageFilename, readmeFilename, ...sourceFiles]) {
+        const old = await fs.readFile(filename, 'utf8')
+        const new_ = old.replace(/LANG\b/g, stylized).replace(/LANGID\b/g, languageID)
+        await fs.writeFile(filename, new_)
+    }
 }
 
 main().catch(error => {
