@@ -1,13 +1,16 @@
 env:
-  FORCE_COLOR: "1"
+  FORCE_COLOR: '1'
 
 steps:
   - command: ./.buildkite/check-all.sh
-    label: ":white_check_mark:"
+    label: ':white_check_mark:'
   - command: ./.buildkite/lint.sh
-    label: ":lipstick: :eslint:"
+    label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
-    label: ":jest: :codecov:"
+    label: ':jest: :codecov:'
+
+  # This runs the Checkov Terraform Code scanner
+  # https://www.checkov.io/
   - command: .buildkite/ci-checkov.sh
-    label: ":lock: security - checkov"
+    label: ':lock: security - checkov'
   - wait
