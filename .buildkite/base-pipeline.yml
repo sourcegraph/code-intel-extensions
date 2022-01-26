@@ -4,13 +4,10 @@ env:
 steps:
   - command: ./.buildkite/check-all.sh
     label: ':white_check_mark:'
-    agents: { queue: standard }    
   - command: ./.buildkite/lint.sh
     label: ':lipstick: :eslint:'
-    agents: { queue: standard }    
   - command: ./.buildkite/test.sh
     label: ':jest: :codecov:'
-    agents: { queue: standard }    
 
   # This runs the Checkov Terraform Code scanner
   # https://www.checkov.io/
