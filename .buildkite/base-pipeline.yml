@@ -10,5 +10,5 @@ steps:
     label: ":jest: :codecov:"
   - command: .buildkite/ci-checkov.sh
     label: ":lock: security - checkov"
-    agents: { queue: standard }
+
   - wait
