@@ -20,7 +20,6 @@ async function generate({ languageID, stylized, additionalLanguages = [] }: Lang
     const iconFilename = path.join('icons', `${languageID}.png`)
     const packageFilename = path.join(langDirectory, 'package.json')
     const readmeFilename = path.join(langDirectory, 'README.md')
-    const sourceFiles = await readdir(path.join(langDirectory, 'src'))
 
     await ensureDir(langDirectory)
     await emptyDir(langDirectory)
@@ -51,7 +50,8 @@ async function generate({ languageID, stylized, additionalLanguages = [] }: Lang
     )
 
     // Update LANG/LANGID placeholders with language name
-    for (const filename of [packageFilename, readmeFilename, ...sourceFiles]) {
+    const templateFiles = [packageFilename, readmeFilename, ...(await readdir(path.join(langDirectory, 'src')))]
+    for (const filename of templateFiles) {
         const old = await fs.readFile(filename, 'utf8')
         const new_ = old.replace(/LANG\b/g, stylized).replace(/LANGID\b/g, languageID)
         await fs.writeFile(filename, new_)
