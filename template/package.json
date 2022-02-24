@@ -93,6 +93,10 @@
           "description": "Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence.",
           "type": "boolean"
         },
+        "codeIntel.disableSearchBased": {
+          "description": "Never fall back to search-based code intelligence.",
+          "type": "boolean"
+        },
         "codeIntel.traceExtension": {
           "description": "Whether to enable trace logging on the extension.",
           "type": "boolean"
