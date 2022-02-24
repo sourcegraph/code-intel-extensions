@@ -47,7 +47,7 @@
       "panel/toolbar": [
         {
           "action": "mixPreciseAndSearchBasedReferences.toggle",
-          "when": "panel.activeView.id == 'references'"
+          "when": "panel.activeView.id == 'references' && !config.codeIntel.disableSearchBased"
         }
       ],
       "hover": [

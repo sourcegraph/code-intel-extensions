@@ -197,7 +197,11 @@ export function createDefinitionProvider(
                 return
             }
 
-            // No results so far, fall back to search
+            // No results so far, fall back to search if not disabled.
+            if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
+                return
+            }
+
             for await (const rawResult of searchProvider(textDocument, position)) {
                 if (!nonEmpty(rawResult)) {
                     continue
@@ -301,6 +305,16 @@ export function createReferencesProvider(
 
                 // Cache new precise results
                 lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
+            }
+
+            // Return early if search=based is disabled.
+            if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
+                if (cached) {
+                    // If we haven't emitted lsif results yet, do so now
+                    yield lsifResults
+                }
+
+                return
             }
 
             // If we have precise results and mixPreciseAndSearchBasedReferences is disabled, do not fall
@@ -521,7 +535,11 @@ export function createHoverProvider(
 
             const hasPreciseDefinition = nonEmpty(lsifWrapper?.definition)
 
-            // No results so far, fall back to search.
+            // No results so far, fall back to search if not disabled.
+            if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
+                return
+            }
+
             for await (const searchResult of searchHoverProvider(textDocument, position)) {
                 if (!searchResult) {
                     continue
