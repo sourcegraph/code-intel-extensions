@@ -197,7 +197,11 @@ export function createDefinitionProvider(
                 return
             }
 
-            // No results so far, fall back to search
+            // No results so far, fall back to search if not disabled.
+            if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
+                return
+            }
+
             for await (const rawResult of searchProvider(textDocument, position)) {
                 if (!nonEmpty(rawResult)) {
                     continue
@@ -303,10 +307,13 @@ export function createReferencesProvider(
                 lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
             }
 
-            // If we have precise results and mixPreciseAndSearchBasedReferences is disabled, do not fall
-            // back to display any additional search-based results, regardless if it's from a file with
-            // no precise results.
-            if (lsifResults.length > 0 && !shouldMixPreciseAndSearchBasedReferences()) {
+            // If search-based is disabled or we have precise results and
+            // mixPreciseAndSearchBasedReferences is disabled, do not fall back to display any additional
+            // search-based results, regardless if it's from a file with no precise results.
+            if (
+                (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) ||
+                (lsifResults.length > 0 && !shouldMixPreciseAndSearchBasedReferences())
+            ) {
                 if (cached) {
                     // If we haven't emitted lsif results yet, do so now
                     yield lsifResults
@@ -521,7 +528,11 @@ export function createHoverProvider(
 
             const hasPreciseDefinition = nonEmpty(lsifWrapper?.definition)
 
-            // No results so far, fall back to search.
+            // No results so far, fall back to search if not disabled.
+            if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
+                return
+            }
+
             for await (const searchResult of searchHoverProvider(textDocument, position)) {
                 if (!searchResult) {
                     continue
