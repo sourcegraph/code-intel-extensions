@@ -307,20 +307,13 @@ export function createReferencesProvider(
                 lsifReferenceResultCache = { textDocumentUri: textDocument.uri, position, lsifResults }
             }
 
-            // Return early if search=based is disabled.
-            if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
-                if (cached) {
-                    // If we haven't emitted lsif results yet, do so now
-                    yield lsifResults
-                }
-
-                return
-            }
-
-            // If we have precise results and mixPreciseAndSearchBasedReferences is disabled, do not fall
-            // back to display any additional search-based results, regardless if it's from a file with
-            // no precise results.
-            if (lsifResults.length > 0 && !shouldMixPreciseAndSearchBasedReferences()) {
+            // If search-based is disabled or we have precise results and
+            // mixPreciseAndSearchBasedReferences is disabled, do not fall back to display any additional
+            // search-based results, regardless if it's from a file with no precise results.
+            if (
+                (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) ||
+                (lsifResults.length > 0 && !shouldMixPreciseAndSearchBasedReferences())
+            ) {
                 if (cached) {
                     // If we haven't emitted lsif results yet, do so now
                     yield lsifResults
