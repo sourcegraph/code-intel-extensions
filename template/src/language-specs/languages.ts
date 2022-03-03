@@ -333,6 +333,13 @@ const vhdlSpec: LanguageSpec = {
     commentStyles: [{ lineRegex: dashPattern }],
 }
 
+const stratoSpec: LanguageSpec = {
+    languageID: 'strato',
+    stylized: 'Strato',
+    fileExts: ['strato'],
+    commentStyles: [cStyleComment],
+}
+
 /**
  * The specification of languages for which search-based code intelligence
  * is supported.
@@ -371,6 +378,7 @@ export const languageSpecs: LanguageSpec[] = [
     rubySpec,
     rustSpec,
     scalaSpec,
+    stratoSpec,
     shellSpec,
     swiftSpec,
     thriftSpec,
