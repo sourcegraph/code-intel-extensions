@@ -6,6 +6,7 @@ import { LanguageSpec, LSIFSupport } from './language-specs/spec'
 import { Logger, NoopLogger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
+import { createProviders as createSquirrelProviders } from './squirrel/providers'
 import { TelemetryEmitter } from './telemetry'
 import { API } from './util/api'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
@@ -92,6 +93,7 @@ export function createProviders(
     const wrapped: { definition?: sourcegraph.DefinitionProvider } = {}
     const api = new API()
     const lsifProviders = createLSIFProviders(hasImplementationsField, logger)
+    const squirrelProviders = createSquirrelProviders()
     const searchProviders = createSearchProviders(languageSpec, wrapped, api)
 
     const providerLogger =
@@ -103,6 +105,7 @@ export function createProviders(
     // hover text.
     wrapped.definition = createDefinitionProvider(
         lsifProviders.definitionAndHover,
+        squirrelProviders.definition,
         searchProviders.definition,
         providerLogger,
         languageSpec.languageID,
@@ -114,6 +117,7 @@ export function createProviders(
         // Return the provider with telemetry to use from the root
         definition: createDefinitionProvider(
             lsifProviders.definitionAndHover,
+            squirrelProviders.definition,
             searchProviders.definition,
             providerLogger,
             languageSpec.languageID,
@@ -123,6 +127,7 @@ export function createProviders(
 
         references: createReferencesProvider(
             lsifProviders.references,
+            squirrelProviders.references,
             searchProviders.references,
             providerLogger,
             languageSpec.languageID,
@@ -139,6 +144,8 @@ export function createProviders(
         hover: createHoverProvider(
             languageSpec.lsifSupport || LSIFSupport.None,
             lsifProviders.definitionAndHover,
+            squirrelProviders.definition,
+            squirrelProviders.hover,
             searchProviders.definition,
             searchProviders.hover,
             providerLogger,
@@ -166,6 +173,7 @@ export function createProviders(
  */
 export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
+    squirrelProvider: DefinitionProvider,
     searchProvider: DefinitionProvider,
     logger?: Logger,
     languageID: string = '',
@@ -200,6 +208,15 @@ export function createDefinitionProvider(
             // No results so far, fall back to search if not disabled.
             if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
                 return
+            }
+
+            for await (const definition of squirrelProvider(textDocument, position)) {
+                // Mark new results as syntactic
+                const aggregableBadges = [indicators.syntacticBadge]
+                const results = mapArrayish(definition, location => ({ ...location, aggregableBadges }))
+                logLocationResults({ ...commonFields, action: 'squirrelDefinitions', results })
+                yield results
+                return // There will only be 1 definition.
             }
 
             for await (const rawResult of searchProvider(textDocument, position)) {
@@ -255,6 +272,7 @@ export function clearReferenceResultCache(): void {
  */
 export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
+    squirrelProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
     logger?: Logger,
     languageID: string = '',
@@ -468,6 +486,8 @@ function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, 
 export function createHoverProvider(
     lsifSupport: LSIFSupport,
     lsifProvider: DefinitionAndHoverProvider,
+    squirrelDefinitionProvider: DefinitionProvider,
+    squirrelHoverProvider: HoverProvider,
     searchDefinitionProvider: DefinitionProvider,
     searchHoverProvider: HoverProvider,
     logger?: Logger,

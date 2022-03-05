@@ -6478,6 +6478,20 @@ extend type Query {
         """
         repos: [String!]
     ): DocumentationSearchResults!
+
+    squirrel: Squirrel!
+}
+
+type Squirrel {
+    definition(args: SquirrelLocation!): SquirrelLocation
+}
+
+type SquirrelLocation {
+    repo: String!
+    commit: String!
+    path: String!
+    row: Int!
+    column: Int!
 }
 
 """
