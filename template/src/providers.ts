@@ -340,32 +340,54 @@ export function createReferencesProvider(
                 return
             }
 
-            const lsifFiles = new Set(lsifResults.map(file))
-            let hasSearchResults = false
+            const seenFiles = new Set(lsifResults.map(file))
+            let hasSearchOrSyntacticResults = false
+
+            let squirrelResults: sourcegraph.Location[] = []
+            for await (const rawResults of squirrelProvider(textDocument, position, context)) {
+                // Skip files for which references have already been yielded.
+                squirrelResults = asArray(rawResults).filter(location => !seenFiles.has(file(location)))
+                if (squirrelResults.length === 0) {
+                    continue
+                }
+
+                hasSearchOrSyntacticResults = true
+
+                // Mark new results as syntactic.
+                const badge = indicators.syntacticBadge
+                const aggregableBadges = [indicators.syntacticBadge]
+                squirrelResults = squirrelResults.map(location => ({ ...location, badge, aggregableBadges }))
+                logLocationResults({ ...commonFields, action: 'squirrelReferences', results: squirrelResults })
+
+                for (const result of squirrelResults) {
+                    seenFiles.add(file(result))
+                }
+            }
 
             for await (const rawResults of searchProvider(textDocument, position, context)) {
                 // Filter out any search results that occur in the same file as LSIF results. These
                 // results are definitely incorrect and will pollute the ordering of precise and fuzzy
                 // results in the references pane.
-                const searchResults = asArray(rawResults).filter(location => !lsifFiles.has(file(location)))
+                const searchResults = asArray(rawResults).filter(location => !seenFiles.has(file(location)))
                 if (searchResults.length === 0) {
                     continue
                 }
 
-                hasSearchResults = true
+                hasSearchOrSyntacticResults = true
 
                 // Mark new results as imprecise, then append them to the previous result set. We need
                 // to append here so that we do not overwrite what was emitted previously.
                 const badge = indicators.impreciseBadge
                 const aggregableBadges = [indicators.searchBasedBadge]
                 const results = lsifResults.concat(
+                    squirrelResults,
                     searchResults.map(location => ({ ...location, badge, aggregableBadges }))
                 )
                 logLocationResults({ ...commonFields, action: 'searchReferences', results })
                 yield results
             }
 
-            if (cached && !hasSearchResults) {
+            if (cached && !hasSearchOrSyntacticResults) {
                 // if lsifResults came from the cache and we never had any results come from
                 // the search provider above, then we need to emit our cached precise results.
                 yield lsifResults

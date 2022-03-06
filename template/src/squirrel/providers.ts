@@ -23,8 +23,7 @@ export function createProviders(): Providers {
                     repo,
                     commit,
                     path,
-                    row: symbol.def.row,
-                    column: symbol.def.row,
+                    ...symbol.def,
                 })
 
                 if (isInRange(position, symbol.def)) {
@@ -40,8 +39,36 @@ export function createProviders(): Providers {
                 }
             }
         },
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        async *references() {},
+        async *references(document, position) {
+            const { repo, commit, path } = parseGitURI(new URL(document.uri))
+
+            const payload = await fetchPayloadCached({ repo, commit, path })
+            if (!payload) {
+                return
+            }
+
+            for (const symbol of payload.symbols) {
+                const referenceLocations = symbol.refs.map(reference =>
+                    mkSourcegraphLocation({
+                        repo,
+                        commit,
+                        path,
+                        ...reference,
+                    })
+                )
+
+                if (isInRange(position, symbol.def)) {
+                    yield referenceLocations
+                    return
+                }
+
+                for (const reference of symbol.refs) {
+                    if (isInRange(position, reference)) {
+                        yield referenceLocations
+                    }
+                }
+            }
+        },
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         async *hover() {},
         // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -49,7 +76,7 @@ export function createProviders(): Providers {
     }
 }
 
-const fetchPayload = async ({repo,commit,path}: RepoCommitPath): Promise<LocalCodeIntelPayload | undefined> => {
+const fetchPayload = async ({ repo, commit, path }: RepoCommitPath): Promise<LocalCodeIntelPayload | undefined> => {
     const vars = { repository: repo, commit, path }
     const response = await queryGraphQL<LocalCodeIntelResponse>(localCodeIntelQuery, vars)
 
@@ -96,15 +123,18 @@ interface Range {
     length: number
 }
 
-const mkSourcegraphLocation = (args: {
-    repo: string
-    commit: string
-    path: string
-    row: number
-    column: number
-}): sourcegraph.Location => ({
-    uri: new URL(`git://${args.repo}?${args.commit}#${args.path}`),
-    range: new sourcegraph.Range(args.row, args.column, args.row, args.column),
+type RepoCommitPathRange = RepoCommitPath & Range
+
+const mkSourcegraphLocation = ({
+    repo,
+    commit,
+    path,
+    row,
+    column,
+    length,
+}: RepoCommitPathRange): sourcegraph.Location => ({
+    uri: new URL(`git://${repo}?${commit}#${path}`),
+    range: new sourcegraph.Range(row, column, row, column + length),
 })
 
 /** The response envelope for all blob queries. */
