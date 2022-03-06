@@ -80,8 +80,35 @@ export function createProviders(): Providers {
                 }
             }
         },
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        async *hover() {},
+        async *hover(document, position) {
+            if (!(await hasLocalCodeIntelField())) {
+                return
+            }
+
+            const { repo, commit, path } = parseGitURI(new URL(document.uri))
+
+            const payload = await fetchPayloadCached({ repo, commit, path })
+            if (!payload) {
+                return
+            }
+
+            for (const symbol of payload.symbols) {
+                if (isInRange(position, symbol.def)) {
+                    if (symbol.hover) {
+                        yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.PlainText } }
+                    }
+                    return
+                }
+
+                for (const reference of symbol.refs) {
+                    if (isInRange(position, reference)) {
+                        if (symbol.hover) {
+                            yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.PlainText } }
+                        }
+                    }
+                }
+            }
+        },
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         async *documentHighlights() {},
     }
