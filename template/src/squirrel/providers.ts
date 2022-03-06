@@ -1,16 +1,23 @@
+import { once } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 
 import { Providers } from '../providers'
 import { cache } from '../util'
+import { API } from '../util/api'
 import { queryGraphQL } from '../util/graphql'
 import { parseGitURI } from '../util/uri'
 
 export function createProviders(): Providers {
     const fetchPayloadCached = cache(fetchPayload, { max: 10 })
+    const hasLocalCodeIntelField = once(() => new API().hasLocalCodeIntelField())
 
     return {
         async *definition(document, position) {
+            if (!(await hasLocalCodeIntelField())) {
+                return
+            }
+
             const { repo, commit, path } = parseGitURI(new URL(document.uri))
 
             const payload = await fetchPayloadCached({ repo, commit, path })
@@ -40,6 +47,10 @@ export function createProviders(): Providers {
             }
         },
         async *references(document, position) {
+            if (!(await hasLocalCodeIntelField())) {
+                return
+            }
+
             const { repo, commit, path } = parseGitURI(new URL(document.uri))
 
             const payload = await fetchPayloadCached({ repo, commit, path })
