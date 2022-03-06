@@ -12,102 +12,60 @@ export function createProviders(): Providers {
     const fetchPayloadCached = cache(fetchPayload, { max: 10 })
     const hasLocalCodeIntelField = once(() => new API().hasLocalCodeIntelField())
 
+    const findSymbol = async (
+        document: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<LocalSymbol | undefined> => {
+        if (!(await hasLocalCodeIntelField())) {
+            return
+        }
+
+        const { repo, commit, path } = parseGitURI(new URL(document.uri))
+
+        const payload = await fetchPayloadCached({ repo, commit, path })
+        if (!payload) {
+            return
+        }
+
+        for (const symbol of payload.symbols) {
+            if (isInRange(position, symbol.def)) {
+                return symbol
+            }
+
+            for (const reference of symbol.refs) {
+                if (isInRange(position, reference)) {
+                    return symbol
+                }
+            }
+        }
+
+        return undefined
+    }
+
     return {
         async *definition(document, position) {
-            if (!(await hasLocalCodeIntelField())) {
+            const symbol = await findSymbol(document, position)
+            if (!symbol) {
                 return
             }
 
-            const { repo, commit, path } = parseGitURI(new URL(document.uri))
-
-            const payload = await fetchPayloadCached({ repo, commit, path })
-            if (!payload) {
-                return
-            }
-
-            for (const symbol of payload.symbols) {
-                const defLocation = mkSourcegraphLocation({
-                    repo,
-                    commit,
-                    path,
-                    ...symbol.def,
-                })
-
-                if (isInRange(position, symbol.def)) {
-                    yield defLocation
-                    return
-                }
-
-                for (const reference of symbol.refs) {
-                    if (isInRange(position, reference)) {
-                        yield defLocation
-                        return
-                    }
-                }
-            }
+            yield mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...symbol.def })
         },
         async *references(document, position) {
-            if (!(await hasLocalCodeIntelField())) {
+            const symbol = await findSymbol(document, position)
+            if (!symbol) {
                 return
             }
 
-            const { repo, commit, path } = parseGitURI(new URL(document.uri))
-
-            const payload = await fetchPayloadCached({ repo, commit, path })
-            if (!payload) {
-                return
-            }
-
-            for (const symbol of payload.symbols) {
-                const referenceLocations = symbol.refs.map(reference =>
-                    mkSourcegraphLocation({
-                        repo,
-                        commit,
-                        path,
-                        ...reference,
-                    })
-                )
-
-                if (isInRange(position, symbol.def)) {
-                    yield referenceLocations
-                    return
-                }
-
-                for (const reference of symbol.refs) {
-                    if (isInRange(position, reference)) {
-                        yield referenceLocations
-                    }
-                }
-            }
+            yield symbol.refs.map(reference => mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...reference }))
         },
         async *hover(document, position) {
-            if (!(await hasLocalCodeIntelField())) {
+            const symbol = await findSymbol(document, position)
+            if (!symbol?.hover) {
                 return
             }
 
-            const { repo, commit, path } = parseGitURI(new URL(document.uri))
-
-            const payload = await fetchPayloadCached({ repo, commit, path })
-            if (!payload) {
-                return
-            }
-
-            for (const symbol of payload.symbols) {
-                if (isInRange(position, symbol.def)) {
-                    if (symbol.hover) {
-                        yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.PlainText } }
-                    }
-                    return
-                }
-
-                for (const reference of symbol.refs) {
-                    if (isInRange(position, reference)) {
-                        if (symbol.hover) {
-                            yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.PlainText } }
-                        }
-                    }
-                }
-            }
+            yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.PlainText } }
         },
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         async *documentHighlights() {},
