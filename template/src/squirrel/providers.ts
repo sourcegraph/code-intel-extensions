@@ -57,7 +57,9 @@ export function createProviders(): Providers {
                 return
             }
 
-            yield symbol.refs.map(reference => mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...reference }))
+            yield symbol.refs.map(reference =>
+                mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...reference })
+            )
         },
         async *hover(document, position) {
             const symbol = await findSymbol(document, position)
@@ -65,7 +67,7 @@ export function createProviders(): Providers {
                 return
             }
 
-            yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.PlainText } }
+            yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.Markdown } }
         },
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         async *documentHighlights() {},

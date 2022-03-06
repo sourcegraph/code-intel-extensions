@@ -575,6 +575,29 @@ export function createHoverProvider(
                 return
             }
 
+            for await (const squirrelResult of squirrelHoverProvider(textDocument, position)) {
+                if (!squirrelResult) {
+                    break
+                }
+
+                const first = emitter.emitOnce('squirrelHover')
+                logger?.log({ provider: 'hover', precise: false, syntactic: true, ...commonLogFields })
+
+                if (hasPreciseDefinition) {
+                    // We have a precise definition but syntactic hover text
+                    const alerts = first ? [indicators.lsifPartialDefinitionOnly] : undefined
+                    const aggregableBadges = [indicators.partialDefinitionNoHoverBadge]
+                    yield badgeHoverResult(squirrelResult, alerts, aggregableBadges)
+                    continue
+                }
+
+                // Only Squirrel results for this token
+                const aggregableBadges = [indicators.syntacticBadge]
+                yield badgeHoverResult(squirrelResult, [], aggregableBadges)
+
+                return // Squirrel only returns one result
+            }
+
             for await (const searchResult of searchHoverProvider(textDocument, position)) {
                 if (!searchResult) {
                     continue
