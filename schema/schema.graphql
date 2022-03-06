@@ -6478,20 +6478,6 @@ extend type Query {
         """
         repos: [String!]
     ): DocumentationSearchResults!
-
-    squirrel: Squirrel!
-}
-
-type Squirrel {
-    definition(args: SquirrelLocation!): SquirrelLocation
-}
-
-type SquirrelLocation {
-    repo: String!
-    commit: String!
-    path: String!
-    row: Int!
-    column: Int!
 }
 
 """
@@ -6706,6 +6692,11 @@ extend type GitBlob {
         """
         toolName: String
     ): GitBlobLSIFData
+
+    """
+    Provides code intelligence within the file.
+    """
+    localCodeIntel: JSONValue
 }
 
 """
