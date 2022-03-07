@@ -6478,6 +6478,22 @@ extend type Query {
         """
         repos: [String!]
     ): DocumentationSearchResults!
+
+    symbolInfo(line: Int!, character: Int!): SymbolInfo
+}
+
+type SymbolInfo {
+    definition: SymbolLocation
+    hover: String
+}
+
+type SymbolLocation {
+    repo: String!
+    commit: String!
+    path: String!
+    line: Int!
+    character: Int!
+    length: Int!
 }
 
 """

@@ -28,7 +28,7 @@ export function createProviders(): Providers {
         }
 
         for (const symbol of payload.symbols) {
-            if (isInRange(position, symbol.def)) {
+            if (symbol.def && isInRange(position, symbol.def)) {
                 return symbol
             }
 
@@ -42,10 +42,44 @@ export function createProviders(): Providers {
         return undefined
     }
 
+    const fetchSymbolInfo = async (
+        document: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<SymbolInfo | undefined> => {
+        if (!(await hasLocalCodeIntelField())) {
+            return
+        }
+
+        const { repo, commit, path } = parseGitURI(new URL(document.uri))
+
+        const vars = { repository: repo, commit, path, line: position.line, character: position.character }
+        const response = await queryGraphQL<SymbolInfoResponse>(symbolInfoDefinitionQuery, vars)
+
+        return response?.repository?.commit?.blob?.symbolInfo ?? undefined
+    }
+
     return {
         async *definition(document, position) {
             const symbol = await findSymbol(document, position)
             if (!symbol) {
+                return
+            }
+
+            if (!symbol.def) {
+                const symbolInfo = await fetchSymbolInfo(document, position)
+                if (!symbolInfo) {
+                    return
+                }
+
+                const location = {
+                    repo: symbolInfo.definition.repo,
+                    commit: symbolInfo.definition.commit,
+                    path: symbolInfo.definition.path,
+                    row: symbolInfo.definition.line,
+                    column: symbolInfo.definition.character,
+                    length: symbolInfo.definition.length,
+                }
+                yield mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...location })
                 return
             }
 
@@ -63,6 +97,24 @@ export function createProviders(): Providers {
         },
         async *hover(document, position) {
             const symbol = await findSymbol(document, position)
+            if (!symbol) {
+                return
+            }
+
+            if (!symbol.def) {
+                const symbolInfo = await fetchSymbolInfo(document, position)
+                if (!symbolInfo) {
+                    return
+                }
+
+                if (!symbolInfo.hover) {
+                    return
+                }
+
+                yield { contents: { value: symbolInfo.hover ?? undefined, kind: sourcegraph.MarkupKind.Markdown } }
+                return
+            }
+
             if (!symbol?.hover) {
                 return
             }
@@ -111,7 +163,7 @@ interface LocalCodeIntelPayload {
 
 interface LocalSymbol {
     hover?: string
-    def: Range
+    def?: Range
     refs: Range[]
 }
 
@@ -148,6 +200,37 @@ const localCodeIntelQuery = gql`
             commit(rev: $commit) {
                 blob(path: $path) {
                     localCodeIntel
+                }
+            }
+        }
+    }
+`
+
+type SymbolInfoResponse = GenericBlobResponse<{
+    symbolInfo: SymbolInfo | null
+}>
+
+interface SymbolInfo {
+    definition: RepoCommitPath & { line: number; character: number; length: number }
+    hover: string | null
+}
+
+const symbolInfoDefinitionQuery = gql`
+    query SymbolInfo($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    symbolInfo(line: $line, character: $character) {
+                        definition {
+                            repo
+                            commit
+                            path
+                            line
+                            character
+                            length
+                        }
+                        hover
+                    }
                 }
             }
         }
