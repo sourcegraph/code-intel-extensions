@@ -32,7 +32,7 @@ export function createProviders(): Providers {
                 return symbol
             }
 
-            for (const reference of symbol.refs) {
+            for (const reference of (symbol.refs ?? [])) {
                 if (isInRange(position, reference)) {
                     return symbol
                 }
@@ -87,7 +87,7 @@ export function createProviders(): Providers {
         },
         async *references(document, position) {
             const symbol = await findSymbol(document, position)
-            if (!symbol) {
+            if (!symbol?.refs) {
                 return
             }
 
@@ -164,7 +164,7 @@ interface LocalCodeIntelPayload {
 interface LocalSymbol {
     hover?: string
     def?: Range
-    refs: Range[]
+    refs?: Range[]
 }
 
 interface Range {
