@@ -6,7 +6,6 @@ import { LanguageSpec, LSIFSupport } from './language-specs/spec'
 import { Logger, NoopLogger } from './logging'
 import { createProviders as createLSIFProviders } from './lsif/providers'
 import { createProviders as createSearchProviders } from './search/providers'
-import { createProviders as createSquirrelProviders } from './squirrel/providers'
 import { TelemetryEmitter } from './telemetry'
 import { API } from './util/api'
 import { asArray, mapArrayish, nonEmpty } from './util/helpers'
@@ -33,6 +32,26 @@ export interface SourcegraphProviders {
     implementations: sourcegraph.LocationProvider
     hover: sourcegraph.HoverProvider
     documentHighlights: sourcegraph.DocumentHighlightProvider
+}
+
+export interface PromiseProviders {
+    definition: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.Definition>
+    references: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.Location[] | null>
+    implementations: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.Location[] | null>
+    hover: (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Hover | null>
+    documentHighlights: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.DocumentHighlight[] | null>
 }
 
 export interface DefinitionAndHover {
@@ -93,7 +112,6 @@ export function createProviders(
     const wrapped: { definition?: sourcegraph.DefinitionProvider } = {}
     const api = new API()
     const lsifProviders = createLSIFProviders(hasImplementationsField, logger)
-    const squirrelProviders = createSquirrelProviders()
     const searchProviders = createSearchProviders(languageSpec, wrapped, api)
 
     const providerLogger =
@@ -105,7 +123,6 @@ export function createProviders(
     // hover text.
     wrapped.definition = createDefinitionProvider(
         lsifProviders.definitionAndHover,
-        squirrelProviders.definition,
         searchProviders.definition,
         providerLogger,
         languageSpec.languageID,
@@ -117,7 +134,6 @@ export function createProviders(
         // Return the provider with telemetry to use from the root
         definition: createDefinitionProvider(
             lsifProviders.definitionAndHover,
-            squirrelProviders.definition,
             searchProviders.definition,
             providerLogger,
             languageSpec.languageID,
@@ -127,7 +143,6 @@ export function createProviders(
 
         references: createReferencesProvider(
             lsifProviders.references,
-            squirrelProviders.references,
             searchProviders.references,
             providerLogger,
             languageSpec.languageID,
@@ -144,8 +159,6 @@ export function createProviders(
         hover: createHoverProvider(
             languageSpec.lsifSupport || LSIFSupport.None,
             lsifProviders.definitionAndHover,
-            squirrelProviders.definition,
-            squirrelProviders.hover,
             searchProviders.definition,
             searchProviders.hover,
             providerLogger,
@@ -173,7 +186,6 @@ export function createProviders(
  */
 export function createDefinitionProvider(
     lsifProvider: DefinitionAndHoverProvider,
-    squirrelProvider: DefinitionProvider,
     searchProvider: DefinitionProvider,
     logger?: Logger,
     languageID: string = '',
@@ -208,15 +220,6 @@ export function createDefinitionProvider(
             // No results so far, fall back to search if not disabled.
             if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
                 return
-            }
-
-            for await (const definition of squirrelProvider(textDocument, position)) {
-                // Mark new results as syntactic
-                const aggregableBadges = [indicators.syntacticBadge]
-                const results = mapArrayish(definition, location => ({ ...location, aggregableBadges }))
-                logLocationResults({ ...commonFields, action: 'squirrelDefinitions', results })
-                yield results
-                return // There will only be 1 definition.
             }
 
             for await (const rawResult of searchProvider(textDocument, position)) {
@@ -272,7 +275,6 @@ export function clearReferenceResultCache(): void {
  */
 export function createReferencesProvider(
     lsifProvider: ReferencesProvider,
-    squirrelProvider: ReferencesProvider,
     searchProvider: ReferencesProvider,
     logger?: Logger,
     languageID: string = '',
@@ -340,54 +342,32 @@ export function createReferencesProvider(
                 return
             }
 
-            const seenFiles = new Set(lsifResults.map(file))
-            let hasSearchOrSyntacticResults = false
-
-            let squirrelResults: sourcegraph.Location[] = []
-            for await (const rawResults of squirrelProvider(textDocument, position, context)) {
-                // Skip files for which references have already been yielded.
-                squirrelResults = asArray(rawResults).filter(location => !seenFiles.has(file(location)))
-                if (squirrelResults.length === 0) {
-                    continue
-                }
-
-                hasSearchOrSyntacticResults = true
-
-                // Mark new results as syntactic.
-                const badge = indicators.syntacticBadge
-                const aggregableBadges = [indicators.syntacticBadge]
-                squirrelResults = squirrelResults.map(location => ({ ...location, badge, aggregableBadges }))
-                logLocationResults({ ...commonFields, action: 'squirrelReferences', results: squirrelResults })
-
-                for (const result of squirrelResults) {
-                    seenFiles.add(file(result))
-                }
-            }
+            const lsifFiles = new Set(lsifResults.map(file))
+            let hasSearchResults = false
 
             for await (const rawResults of searchProvider(textDocument, position, context)) {
                 // Filter out any search results that occur in the same file as LSIF results. These
                 // results are definitely incorrect and will pollute the ordering of precise and fuzzy
                 // results in the references pane.
-                const searchResults = asArray(rawResults).filter(location => !seenFiles.has(file(location)))
+                const searchResults = asArray(rawResults).filter(location => !lsifFiles.has(file(location)))
                 if (searchResults.length === 0) {
                     continue
                 }
 
-                hasSearchOrSyntacticResults = true
+                hasSearchResults = true
 
                 // Mark new results as imprecise, then append them to the previous result set. We need
                 // to append here so that we do not overwrite what was emitted previously.
                 const badge = indicators.impreciseBadge
                 const aggregableBadges = [indicators.searchBasedBadge]
                 const results = lsifResults.concat(
-                    squirrelResults,
                     searchResults.map(location => ({ ...location, badge, aggregableBadges }))
                 )
                 logLocationResults({ ...commonFields, action: 'searchReferences', results })
                 yield results
             }
 
-            if (cached && !hasSearchOrSyntacticResults) {
+            if (cached && !hasSearchResults) {
                 // if lsifResults came from the cache and we never had any results come from
                 // the search provider above, then we need to emit our cached precise results.
                 yield lsifResults
@@ -508,8 +488,6 @@ function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, 
 export function createHoverProvider(
     lsifSupport: LSIFSupport,
     lsifProvider: DefinitionAndHoverProvider,
-    squirrelDefinitionProvider: DefinitionProvider,
-    squirrelHoverProvider: HoverProvider,
     searchDefinitionProvider: DefinitionProvider,
     searchHoverProvider: HoverProvider,
     logger?: Logger,
@@ -573,29 +551,6 @@ export function createHoverProvider(
             // No results so far, fall back to search if not disabled.
             if (sourcegraph.configuration.get().get('codeIntel.disableSearchBased') ?? false) {
                 return
-            }
-
-            for await (const squirrelResult of squirrelHoverProvider(textDocument, position)) {
-                if (!squirrelResult) {
-                    break
-                }
-
-                const first = emitter.emitOnce('squirrelHover')
-                logger?.log({ provider: 'hover', precise: false, syntactic: true, ...commonLogFields })
-
-                if (hasPreciseDefinition) {
-                    // We have a precise definition but syntactic hover text
-                    const alerts = first ? [indicators.lsifPartialDefinitionOnly] : undefined
-                    const aggregableBadges = [indicators.partialDefinitionNoHoverBadge]
-                    yield badgeHoverResult(squirrelResult, alerts, aggregableBadges)
-                    continue
-                }
-
-                // Only Squirrel results for this token
-                const aggregableBadges = [indicators.syntacticBadge]
-                yield badgeHoverResult(squirrelResult, [], aggregableBadges)
-
-                return // Squirrel only returns one result
             }
 
             for await (const searchResult of searchHoverProvider(textDocument, position)) {

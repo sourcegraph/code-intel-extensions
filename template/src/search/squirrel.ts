@@ -2,13 +2,13 @@ import { once } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 
-import { Providers } from '../providers'
+import { PromiseProviders } from '../providers'
 import { cache } from '../util'
 import { API } from '../util/api'
 import { queryGraphQL } from '../util/graphql'
 import { parseGitURI } from '../util/uri'
 
-export function createProviders(): Providers {
+export const mkSquirrel = (): PromiseProviders => {
     const fetchPayloadCached = cache(fetchPayload, { max: 10 })
     const hasLocalCodeIntelField = once(() => new API().hasLocalCodeIntelField())
 
@@ -32,7 +32,7 @@ export function createProviders(): Providers {
                 return symbol
             }
 
-            for (const reference of (symbol.refs ?? [])) {
+            for (const reference of symbol.refs ?? []) {
                 if (isInRange(position, reference)) {
                     return symbol
                 }
@@ -59,16 +59,16 @@ export function createProviders(): Providers {
     }
 
     return {
-        async *definition(document, position) {
+        async definition(document, position) {
             const symbol = await findSymbol(document, position)
             if (!symbol) {
-                return
+                return null
             }
 
             if (!symbol.def) {
                 const symbolInfo = await fetchSymbolInfo(document, position)
                 if (!symbolInfo) {
-                    return
+                    return null
                 }
 
                 const location = {
@@ -79,50 +79,61 @@ export function createProviders(): Providers {
                     column: symbolInfo.definition.character,
                     length: symbolInfo.definition.length,
                 }
-                yield mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...location })
-                return
+                return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...location })
             }
 
-            yield mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...symbol.def })
+            return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...symbol.def })
         },
-        async *references(document, position) {
+        async references(document, position) {
             const symbol = await findSymbol(document, position)
             if (!symbol?.refs) {
-                return
+                return null
             }
 
-            yield symbol.refs.map(reference =>
+            return symbol.refs.map(reference =>
                 mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...reference })
             )
         },
-        async *hover(document, position) {
+        async hover(document, position) {
             const symbol = await findSymbol(document, position)
             if (!symbol) {
-                return
+                return null
             }
 
             if (!symbol.def) {
                 const symbolInfo = await fetchSymbolInfo(document, position)
                 if (!symbolInfo) {
-                    return
+                    return null
                 }
 
                 if (!symbolInfo.hover) {
-                    return
+                    return null
                 }
 
-                yield { contents: { value: symbolInfo.hover ?? undefined, kind: sourcegraph.MarkupKind.Markdown } }
-                return
+                return { contents: { value: symbolInfo.hover ?? undefined, kind: sourcegraph.MarkupKind.Markdown } }
             }
 
             if (!symbol?.hover) {
-                return
+                return null
             }
 
-            yield { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.Markdown } }
+            return { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.Markdown } }
         },
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        async *documentHighlights() {},
+        async documentHighlights(document, position) {
+            const symbol = await findSymbol(document, position)
+            if (!symbol?.refs) {
+                return null
+            }
+
+            return symbol.refs.map(reference => ({
+                range: rangeToSourcegraphRange(reference),
+                kind: sourcegraph.DocumentHighlightKind.Text,
+            }))
+        },
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async implementations() {
+            return null
+        },
     }
 }
 
@@ -184,8 +195,11 @@ const mkSourcegraphLocation = ({
     length,
 }: RepoCommitPathRange): sourcegraph.Location => ({
     uri: new URL(`git://${repo}?${commit}#${path}`),
-    range: new sourcegraph.Range(row, column, row, column + length),
+    range: rangeToSourcegraphRange({ row, column, length }),
 })
+
+const rangeToSourcegraphRange = ({ row, column, length }: Range): sourcegraph.Range =>
+    new sourcegraph.Range(row, column, row, column + length)
 
 /** The response envelope for all blob queries. */
 export interface GenericBlobResponse<R> {

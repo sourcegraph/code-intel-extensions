@@ -17,9 +17,8 @@ import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
+import { mkSquirrel } from './squirrel'
 import { findSearchToken } from './tokens'
-
-const documentHighlights = (): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
 
 /** The number of files whose content can be cached at once. */
 const FILE_CONTENT_CACHE_CAPACITY = 20
@@ -97,6 +96,8 @@ export function createProviders(
         return { text, searchToken: tokenResult.searchToken }
     }
 
+    const squirrel = mkSquirrel()
+
     /**
      * Retrieve a definition for the current hover position.
      *
@@ -107,6 +108,11 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
+        const squirrelDefinition = await squirrel.definition(textDocument, position)
+        if (squirrelDefinition) {
+            return squirrelDefinition
+        }
+
         const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
             return null
@@ -158,6 +164,11 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Location[]> => {
+        const squirrelReferences = await squirrel.references(textDocument, position)
+        if (squirrelReferences) {
+            return squirrelReferences
+        }
+
         const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
             return []
@@ -204,6 +215,11 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
+        const squirrelHover = await squirrel.hover(textDocument, position)
+        if (squirrelHover) {
+            return squirrelHover
+        }
+
         if (!wrappedProviders.definition) {
             return null
         }
@@ -265,6 +281,17 @@ export function createProviders(
                 value: [codeLineMarkdown, docstringMarkdown].filter(isDefined).join('\n\n---\n\n'),
             },
         }
+    }
+
+    const documentHighlights = async (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.DocumentHighlight[] | null> => {
+        const squirrelDocumentHighlights = await squirrel.documentHighlights(textDocument, position)
+        if (squirrelDocumentHighlights) {
+            return squirrelDocumentHighlights
+        }
+        return null
     }
 
     return {
