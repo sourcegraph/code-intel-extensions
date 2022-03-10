@@ -624,7 +624,6 @@ export function createDocumentHighlightProvider(
                 emitter.emitOnce('searchDocumentHighlight')
                 for await (const searchResult of searchProvider(textDocument, position)) {
                     if (searchResult) {
-                        console.log('yielding', searchResult)
                         yield searchResult
                     }
                 }
