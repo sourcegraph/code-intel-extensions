@@ -196,7 +196,7 @@ export function createProviders(
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
-        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
+        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve<sourcegraph.Location[]>([]) : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
