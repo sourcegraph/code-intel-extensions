@@ -134,8 +134,19 @@ describe('search providers', () => {
         id?: number
     } = {}): API => {
         const api = new API()
-        const stub = sinon.stub(api, 'resolveRepo')
-        stub.callsFake(repo => Promise.resolve({ name: repo, isFork, isArchived, id }))
+
+        const stubResolveRepo = sinon.stub(api, 'resolveRepo')
+        stubResolveRepo.callsFake(repo => Promise.resolve({ name: repo, isFork, isArchived, id }))
+
+        const stubHasLocalCodeIntelField = sinon.stub(api, 'hasLocalCodeIntelField')
+        stubHasLocalCodeIntelField.callsFake(() => Promise.resolve(true))
+
+        const stubFindSymbol = sinon.stub(api, 'findSymbol')
+        stubFindSymbol.callsFake(() => Promise.resolve(undefined))
+
+        const stubFetchSymbolInfo = sinon.stub(api, 'fetchSymbolInfo')
+        stubFetchSymbolInfo.callsFake(() => Promise.resolve(undefined))
+
         return api
     }
 

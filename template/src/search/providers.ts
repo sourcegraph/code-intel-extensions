@@ -96,7 +96,7 @@ export function createProviders(
         return { text, searchToken: tokenResult.searchToken }
     }
 
-    const squirrel = mkSquirrel()
+    const squirrel = mkSquirrel(api)
 
     /**
      * Retrieve a definition for the current hover position.
