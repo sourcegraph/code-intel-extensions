@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+
 import * as sourcegraph from 'sourcegraph'
 
 import { PromiseProviders } from '../providers'
@@ -96,5 +98,11 @@ const mkSourcegraphLocation = ({
     range: rangeToSourcegraphRange({ row, column, length }),
 })
 
+// We can't use `new sourcegraph.Range()` directly because it only sets internal fields like `_start` and
+// `_end` and in the extension host the type checker believes the properties `start` and `end` exist, but
+// they don't.
 const rangeToSourcegraphRange = ({ row, column, length }: Range): sourcegraph.Range =>
-    new sourcegraph.Range(row, column, row, column + length)
+    ({
+        start: { line: row, character: column } as sourcegraph.Position,
+        end: { line: row, character: column + length } as sourcegraph.Position,
+    } as sourcegraph.Range)
