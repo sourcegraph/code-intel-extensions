@@ -232,22 +232,6 @@ export class API {
         return undefined
     }
 
-    public fetchSymbolInfo = async (
-        document: sourcegraph.TextDocument,
-        position: sourcegraph.Position
-    ): Promise<SymbolInfo | undefined> => {
-        if (!(await this.hasLocalCodeIntelField())) {
-            return
-        }
-
-        const { repo, commit, path } = parseGitURI(new URL(document.uri))
-
-        const vars = { repository: repo, commit, path, line: position.line, character: position.character }
-        const response = await queryGraphQL<SymbolInfoResponse>(symbolInfoDefinitionQuery, vars)
-
-        return response?.repository?.commit?.blob?.symbolInfo ?? undefined
-    }
-
     /**
      * Retrieves the revhash of an input rev for a repository. Throws an error if the
      * repository is not known to the Sourcegraph instance. Returns undefined if the
@@ -643,37 +627,6 @@ const localCodeIntelQuery = gql`
             commit(rev: $commit) {
                 blob(path: $path) {
                     localCodeIntel
-                }
-            }
-        }
-    }
-`
-
-type SymbolInfoResponse = GenericBlobResponse<{
-    symbolInfo: SymbolInfo | null
-}>
-
-interface SymbolInfo {
-    definition: RepoCommitPath & { line: number; character: number; length: number }
-    hover: string | null
-}
-
-const symbolInfoDefinitionQuery = gql`
-    query SymbolInfo($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
-        repository(name: $repository) {
-            commit(rev: $commit) {
-                blob(path: $path) {
-                    symbolInfo(line: $line, character: $character) {
-                        definition {
-                            repo
-                            commit
-                            path
-                            line
-                            character
-                            length
-                        }
-                        hover
-                    }
                 }
             }
         }

@@ -14,20 +14,7 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
         }
 
         if (!symbol.def) {
-            const symbolInfo = await api.fetchSymbolInfo(document, position)
-            if (!symbolInfo) {
-                return null
-            }
-
-            const location = {
-                repo: symbolInfo.definition.repo,
-                commit: symbolInfo.definition.commit,
-                path: symbolInfo.definition.path,
-                row: symbolInfo.definition.line,
-                column: symbolInfo.definition.character,
-                length: symbolInfo.definition.length,
-            }
-            return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...location })
+            return null
         }
 
         return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...symbol.def })
@@ -49,16 +36,7 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
         }
 
         if (!symbol.def) {
-            const symbolInfo = await api.fetchSymbolInfo(document, position)
-            if (!symbolInfo) {
-                return null
-            }
-
-            if (!symbolInfo.hover) {
-                return null
-            }
-
-            return { contents: { value: symbolInfo.hover ?? undefined, kind: sourcegraph.MarkupKind.Markdown } }
+            return null
         }
 
         if (!symbol?.hover) {

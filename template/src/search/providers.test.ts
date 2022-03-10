@@ -144,9 +144,6 @@ describe('search providers', () => {
         const stubFindSymbol = sinon.stub(api, 'findSymbol')
         stubFindSymbol.callsFake(() => Promise.resolve(undefined))
 
-        const stubFetchSymbolInfo = sinon.stub(api, 'fetchSymbolInfo')
-        stubFetchSymbolInfo.callsFake(() => Promise.resolve(undefined))
-
         return api
     }
 
