@@ -218,7 +218,7 @@ export class API {
         }
 
         for (const symbol of payload.symbols) {
-            if (symbol.def && isInRange(position, symbol.def)) {
+            if (isInRange(position, symbol.def)) {
                 return symbol
             }
 
@@ -591,7 +591,7 @@ export interface LocalCodeIntelPayload {
 
 export interface LocalSymbol {
     hover?: string
-    def?: Range
+    def: Range
     refs?: Range[]
 }
 

@@ -35,10 +35,6 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
             return null
         }
 
-        if (!symbol.def) {
-            return null
-        }
-
         if (!symbol?.hover) {
             return null
         }
