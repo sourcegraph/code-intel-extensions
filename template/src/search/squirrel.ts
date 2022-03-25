@@ -9,11 +9,7 @@ import { parseGitURI } from '../util/uri'
 export const mkSquirrel = (api: API): PromiseProviders => ({
     async definition(document, position) {
         const symbol = await api.findSymbol(document, position)
-        if (!symbol) {
-            return null
-        }
-
-        if (!symbol.def) {
+        if (!symbol?.def) {
             return null
         }
 
@@ -31,10 +27,6 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
     },
     async hover(document, position) {
         const symbol = await api.findSymbol(document, position)
-        if (!symbol) {
-            return null
-        }
-
         if (!symbol?.hover) {
             return null
         }
