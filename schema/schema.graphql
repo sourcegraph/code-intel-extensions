@@ -87,7 +87,7 @@ type Mutation {
 
     Only authenticated users may perform this mutation.
     """
-    createOrganization(name: String!, displayName: String): Org!
+    createOrganization(name: String!, displayName: String, statsID: ID): Org!
     """
     Updates an organization.
 
@@ -95,9 +95,14 @@ type Mutation {
     """
     updateOrganization(id: ID!, displayName: String): Org!
     """
-    Deletes an organization. Only site admins may perform this mutation.
+    Soft or hard deletes an organization.
+    - When the second argument is not provided, it soft deletes an organization, marking it as deleted.
+    Only site admins may perform this mutation.
+    - When the second argument is true, it hard deletes an organization and its associated resources.
+    Hard deletion is currently only supported on cloud. Only org members may perform this mutation
     """
-    deleteOrganization(organization: ID!): EmptyResponse
+    deleteOrganization(organization: ID!, hard: Boolean): EmptyResponse
+
     """
     Adds a external service. Only site admins may perform this mutation.
     """
@@ -218,6 +223,17 @@ type Mutation {
     """
     createPassword(newPassword: String!): EmptyResponse
     """
+    Sets the user to accept the site's Terms of Service and Privacy Policy.
+    If the ID is ommitted, the current user is assumed.
+
+    Only the user or site admins may perform this mutation.
+    """
+    setTosAccepted(userID: ID): EmptyResponse!
+    """
+    Current user opt in/out from being searchable in the users picker.
+    """
+    setSearchable(searchable: Boolean!): EmptyResponse!
+    """
     Creates an access token that grants the privileges of the specified user (referred to as the access token's
     "subject" user after token creation). The result is the access token value, which the caller is responsible
     for storing (it is not accessible by Sourcegraph after creation).
@@ -246,12 +262,20 @@ type Mutation {
     """
     deleteExternalAccount(externalAccount: ID!): EmptyResponse!
     """
+    Sends an invitation to join Sourcegraph to the given email address.
+
+    Returns instantly regardless of whether or not an invitation email was actually sent. For example, the email
+    may fail to send if there is a typo or it is invalid, or Sourcegraph may refuse to send it due to spam concerns
+    or if the user has been invited too recently.
+    """
+    inviteEmailToSourcegraph(email: String!): EmptyResponse!
+    """
     Invite the user with the given username to join the organization. The invited user account must already
     exist.
 
     Only site admins and any organization member may perform this mutation.
     """
-    inviteUserToOrganization(organization: ID!, username: String!): InviteUserToOrganizationResult!
+    inviteUserToOrganization(organization: ID!, username: String, email: String): InviteUserToOrganizationResult!
     """
     Accept or reject an existing organization invitation.
 
@@ -410,6 +434,10 @@ type Mutation {
         """
         firstSourceURL: String
         """
+        The last sourcegraph URL visited by the user, stored in a browser cookie.
+        """
+        lastSourceURL: String
+        """
         The URL when the event was logged.
         """
         url: String!
@@ -457,18 +485,6 @@ type Mutation {
     Logs a batch of events.
     """
     logEvents(events: [Event!]): EmptyResponse
-    """
-    Sends a test notification for the saved search. Be careful: this will send a notifcation (email and other
-    types of notifications, if configured) to all subscribers of the saved search, which could be bothersome.
-
-    Only subscribers to this saved search may perform this action.
-    """
-    sendSavedSearchTestNotification(
-        """
-        ID of the saved search.
-        """
-        id: ID!
-    ): EmptyResponse
     """
     All mutations that update settings (global, organization, and user settings) are under this field.
 
@@ -730,6 +746,13 @@ type Mutation {
         """
         settingsToEdit: String!
     ): EmptyResponse!
+
+    """
+    Sends an email for testing Sourcegraph's email configuration.
+
+    Only administrators can use this API.
+    """
+    sendTestEmail(to: String!): String!
 }
 
 """
@@ -748,6 +771,10 @@ input Event {
     The first sourcegraph URL visited by the user, stored in a browser cookie.
     """
     firstSourceURL: String
+    """
+    The last sourcegraph URL visited by the user, stored in a browser cookie.
+    """
+    lastSourceURL: String
     """
     The URL when the event was logged.
     """
@@ -811,7 +838,7 @@ input AddExternalServiceInput {
     config: String!
     """
     The namespace this external service belongs to.
-    Currently, this can only be used for a user.
+    This can be used both for a user and an organization.
     """
     namespace: ID
 }
@@ -851,6 +878,8 @@ enum EventSource {
     WEB
     CODEHOSTINTEGRATION
     BACKEND
+    STATICWEB
+    IDEEXTENSION
 }
 
 """
@@ -1102,7 +1131,7 @@ type Query {
         uri: String
     ): Repository
     """
-    Looks up a repository by either name or cloneURL. When the repository does not exist on the server
+    Looks up a repository by either name or cloneURL or hashedName. When the repository does not exist on the server
     and "disablePublicRepoRedirects" is "false" in the site configuration, it returns a Redirect to
     an external Sourcegraph URL that may have this repository instead. Otherwise, this query returns
     null.
@@ -1118,6 +1147,12 @@ type Query {
         Will not actually check the code host to see if the repository actually exists.
         """
         cloneURL: String
+        """
+        Query the repository by hashed name.
+        Hashed name is a SHA256 checksum of the absolute repo name in lower case,
+        for example "github.com/sourcegraph/sourcegraph" -> "a6c905ceb7dec9a565945ceded8c7fa4154250df8b928fb40673b535d9a24c2f"
+        """
+        hashedName: String
     ): RepositoryRedirect
     """
     Lists external services under given namespace.
@@ -1289,10 +1324,6 @@ type Query {
     """
     clientConfiguration: ClientConfigurationDetails!
     """
-    Fetch search filter suggestions for autocompletion.
-    """
-    searchFilterSuggestions: SearchFilterSuggestions!
-    """
     Runs a search.
     """
     search(
@@ -1401,9 +1432,214 @@ type Query {
     organizationFeatureFlagValue(orgID: ID!, flagName: String!): Boolean!
 
     """
+    Retrieve all organization feature flag overrides for the current user
+    """
+    organizationFeatureFlagOverrides: [FeatureFlagOverride!]!
+
+    """
     Retrieves the temporary settings for the current user.
     """
     temporarySettings: TemporarySettings!
+
+    """
+    Returns recently received webhooks across all external services, optionally
+    limiting the returned values to only those that didn't match any external
+    service.
+
+    Only site admins can access this field.
+    """
+    webhookLogs(
+        """
+        Returns the first n webhook logs.
+        """
+        first: Int
+
+        """
+        Opaque pagination cursor.
+        """
+        after: String
+
+        """
+        Only include webhook logs that resulted in errors.
+        """
+        onlyErrors: Boolean
+
+        """
+        Only include webhook logs that were not matched to an external service.
+        """
+        onlyUnmatched: Boolean
+
+        """
+        Only include webhook logs on or after this time.
+        """
+        since: DateTime
+
+        """
+        Only include webhook logs on or before this time.
+        """
+        until: DateTime
+    ): WebhookLogConnection!
+
+    """
+    Retrieve active executor compute instances.
+    """
+    executors(
+        """
+        An (optional) search query that searches over the hostname, queue name, os, architecture, and
+        version properties.
+        """
+        query: String
+
+        """
+        Whether to show only executors that have sent a heartbeat in the last fifteen minutes.
+        """
+        active: Boolean
+
+        """
+        Returns the first n executors.
+        """
+        first: Int
+
+        """
+        Opaque pagination cursor.
+        """
+        after: String
+    ): ExecutorConnection!
+
+    """
+    (experimental)
+    Get invitation based on the JWT in the invitation URL
+    """
+    invitationByToken(
+        """
+        The token that uniquely identifies the invitation
+        """
+        token: String!
+    ): OrganizationInvitation!
+
+    """
+    Get pending invitations for the specific organization
+    """
+    pendingInvitations(
+        """
+        The organization ID
+        """
+        organization: ID!
+    ): [OrganizationInvitation!]!
+
+    """
+    Search for users that opt-in to search autocomplete.
+    """
+    autocompleteMembersSearch(
+        """
+        The organization ID
+        """
+        organization: ID!
+        """
+        Return users whose usernames or display names match the query.
+        """
+        query: String!
+    ): [AutocompleteMemberSearchItem!]!
+
+    """
+    Get started organization summary
+    """
+    orgMembersSummary(
+        """
+        The organization ID
+        """
+        organization: ID!
+    ): OrgMembersSummary!
+}
+
+"""
+A list of active executors compute instances.
+"""
+type ExecutorConnection {
+    """
+    A list of executors.
+    """
+    nodes: [Executor!]!
+
+    """
+    The total number of executors in this result set.
+    """
+    totalCount: Int!
+
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
+}
+
+"""
+An active executor compute instance.
+"""
+type Executor implements Node {
+    """
+    The unique identifier of this executor.
+    """
+    id: ID!
+
+    """
+    The hostname of the executor instance.
+    """
+    hostname: String!
+
+    """
+    The queue name that the executor polls for work.
+    """
+    queueName: String!
+
+    """
+    Active is true, if a heartbeat from the executor has been received at most three heartbeat intervals ago.
+    """
+    active: Boolean!
+
+    """
+    The operating system running the executor.
+    """
+    os: String!
+
+    """
+    The machine architure running the executor.
+    """
+    architecture: String!
+
+    """
+    The version of Git used by the executor.
+    """
+    dockerVersion: String!
+
+    """
+    The version of the executor.
+    """
+    executorVersion: String!
+
+    """
+    The version of Docker used by the executor.
+    """
+    gitVersion: String!
+
+    """
+    The version of Ignite used by the executor.
+    """
+    igniteVersion: String!
+
+    """
+    The version of src-cli used by the executor.
+    """
+    srcCliVersion: String!
+
+    """
+    The first time the executor sent a heartbeat to the Sourcegraph instance.
+    """
+    firstSeenAt: DateTime!
+
+    """
+    The last time the executor sent a heartbeat to the Sourcegraph instance.
+    """
+    lastSeenAt: DateTime!
 }
 
 """
@@ -1644,29 +1880,11 @@ type Search {
     """
     results: SearchResults!
     """
-    The suggestions.
-    """
-    suggestions(first: Int): [SearchSuggestion!]!
-        @deprecated(
-            reason: "Suggestions now done with streaming search. This field is deprecated and will be removed in a future release."
-        )
-
-    """
     A subset of results (excluding actual search results) which are heavily
     cached and thus quicker to query. Useful for e.g. querying sparkline
     data.
     """
     stats: SearchResultsStats!
-}
-
-"""
-Predefined suggestions for search filters when backfill.
-"""
-type SearchFilterSuggestions {
-    """
-    The suggestions for search filter "repo:".
-    """
-    repo: [String!]!
 }
 
 """
@@ -1773,11 +1991,11 @@ type SearchResults {
     """
     sparkline: [Int!]!
     """
-    Repositories that were eligible to be searched.
+    Repositories from results.
     """
     repositories: [Repository!]!
     """
-    The number of repositories that were eligible to be searched (for clients
+    The number of repositories that had results (for clients
     that just wish to know how many without querying the, sometimes extremely
     large, list).
     """
@@ -1806,6 +2024,7 @@ type SearchResults {
     """
     timedout: [Repository!]!
     """
+    DEPRECATED: This field is not used in known clients, and will always return `false`.
     True if indexed search is enabled but was not available during this search.
     """
     indexUnavailable: Boolean!
@@ -1878,11 +2097,6 @@ type Language {
     """
     name: String!
 }
-
-"""
-A search suggestion.
-"""
-union SearchSuggestion = Repository | File | Symbol | Language
 
 """
 A search-related alert message.
@@ -2069,10 +2283,13 @@ enum ExternalServiceKind {
     GITHUB
     GITLAB
     GITOLITE
+    GOMODULES
     JVMPACKAGES
+    NPMPACKAGES
+    OTHER
+    PAGURE
     PERFORCE
     PHABRICATOR
-    OTHER
 }
 
 """
@@ -2145,6 +2362,52 @@ type ExternalService implements Node {
     so it should be used sparingly.
     """
     grantedScopes: [String!]
+
+    """
+    Returns recently received webhooks on this external service.
+
+    Only site admins may access this field.
+    """
+    webhookLogs(
+        """
+        Returns the first n webhook logs.
+        """
+        first: Int
+
+        """
+        Opaque pagination cursor.
+        """
+        after: String
+
+        """
+        Only include webhook logs that resulted in errors.
+        """
+        onlyErrors: Boolean
+
+        """
+        Only include webhook logs on or after this time.
+        """
+        since: DateTime
+
+        """
+        Only include webhook logs on or before this time.
+        """
+        until: DateTime
+    ): WebhookLogConnection!
+
+    """
+    EXPERIMENTAL: Collaborators who can be invited to Sourcegraph. This typically comes from a few
+    repositories included by this external service, and is derived from commit history (because that
+    for example gives more accurate collaborator work email addresses than the contributors API which
+    often returns personal emails.
+
+    Importantly, this API works when repositories are not cloned on Sourcegraph yet so as to allow
+    inviting collaborators while repositories are cloning.
+
+    In general, this API should NOT be used once repositories are cloned on to Sourcegraph as it
+    reaches out to the code host directly which is wasteful if repositories are already cloned.
+    """
+    invitableCollaborators: [Person!]!
 }
 
 """
@@ -2595,7 +2858,7 @@ type RepositoryTextSearchIndexStatus {
     """
     The byte size of the original content.
     """
-    contentByteSize: Int!
+    contentByteSize: BigInt!
     """
     The number of files in the original content.
     """
@@ -4140,6 +4403,10 @@ type HighlightedFile {
     """
     html: String!
     """
+    Base64 encoded JSON payload of LSIF Typed with syntax highlighting data.
+    """
+    lsif: String!
+    """
     A list of the desired line ranges. Each list is a list of lines, where each element is an HTML
     table row '<tr>...</tr>' string. This is useful if you only need to display specific subsets of
     the file.
@@ -4370,6 +4637,14 @@ type User implements Node & SettingsSubject & Namespace {
     """
     tags: [String!]!
     """
+    Whether the user has already accepted the terms of service or not.
+    """
+    tosAccepted: Boolean!
+    """
+    Whether the user accepted to be searched in the users picker or not.
+    """
+    searchable: Boolean!
+    """
     The user's usage statistics on Sourcegraph.
     """
     usageStatistics: UserUsageStatistics!
@@ -4443,7 +4718,6 @@ type User implements Node & SettingsSubject & Namespace {
     The name of this user namespace's component. For users, this is the username.
     """
     namespaceName: String!
-
     """
     Repositories from external services owned by this user.
     """
@@ -4486,6 +4760,12 @@ type User implements Node & SettingsSubject & Namespace {
     publicRepositories returns the repos listed in user_public_repos for this user
     """
     publicRepositories: [Repository!]!
+
+    """
+    EXPERIMENTAL: Collaborators who can be invited to Sourcegraph. This typically comes from a few
+    repositories this user has access to, and is derived from recent commit history of those.
+    """
+    invitableCollaborators: [Person!]!
 }
 
 """
@@ -4796,9 +5076,13 @@ type Org implements Node & SettingsSubject & Namespace {
             reason: "Use settingsCascade instead. This field is a deprecated alias for it and will be removed in a future release."
         )
     """
+    DEPRECATED
     A pending invitation for the viewer to join this organization, if any.
     """
     viewerPendingInvitation: OrganizationInvitation
+        @deprecated(
+            reason: "Use invitationByToken operation instead. This field is deprecated and will be removed in a future release."
+        )
     """
     Whether the viewer has admin privileges on this organization. Currently, all of an organization's members
     have admin privileges on the organization.
@@ -4808,6 +5092,10 @@ type Org implements Node & SettingsSubject & Namespace {
     Whether the viewer is a member of this organization.
     """
     viewerIsMember: Boolean!
+    """
+    Whether the viewer needs to update their code host connection.
+    """
+    viewerNeedsCodeHostUpdate: Boolean!
     """
     The URL to the organization.
     """
@@ -4821,44 +5109,6 @@ type Org implements Node & SettingsSubject & Namespace {
     The name of this user namespace's component. For organizations, this is the organization's name.
     """
     namespaceName: String!
-
-    """
-    Repositories from external services owned by this organization.
-    """
-    repositories(
-        """
-        Returns the first n repositories from the list.
-        """
-        first: Int
-        """
-        Return repositories whose names match the query.
-        """
-        query: String
-        """
-        An opaque cursor that is used for pagination.
-        """
-        after: String
-        """
-        Include cloned repositories.
-        """
-        cloned: Boolean = true
-        """
-        Include repositories that are not yet cloned and for which cloning is not in progress.
-        """
-        notCloned: Boolean = true
-        """
-        Include repositories that have a text search index.
-        """
-        indexed: Boolean = true
-        """
-        Include repositories that do not have a text search index.
-        """
-        notIndexed: Boolean = true
-        """
-        Only include repositories from these external services.
-        """
-        externalServiceIDs: [ID]
-    ): RepositoryConnection!
 }
 
 """
@@ -4895,7 +5145,11 @@ type OrganizationInvitation implements Node {
     """
     The user who received the invitation.
     """
-    recipient: User!
+    recipient: User
+    """
+    The email address that the invitation was sent to.
+    """
+    recipientEmail: String
     """
     The date when this invitation was created.
     """
@@ -4920,6 +5174,57 @@ type OrganizationInvitation implements Node {
     The date when this invitation was revoked.
     """
     revokedAt: DateTime
+    """
+    The date when this invitation is going to expire.
+    """
+    expiresAt: DateTime
+    """
+    Boolean flag which returns true if the email on the invite matches a verified email of the user
+    """
+    isVerifiedEmail: Boolean
+}
+"""
+Result user returned by invite members autocomplete search.
+"""
+type AutocompleteMemberSearchItem {
+    """
+    The unique ID for the user.
+    """
+    id: ID!
+    """
+    The user's username.
+    """
+    username: String!
+    """
+    The display name chosen by the user.
+    """
+    displayName: String
+    """
+    The URL of the user's avatar image.
+    """
+    avatarURL: String
+    """
+    If the user belongs to current Organization.
+    """
+    inOrg: Boolean
+}
+
+"""
+Result organization members count and pending invitations count.
+"""
+type OrgMembersSummary {
+    """
+    The unique ID for the Org.
+    """
+    id: ID!
+    """
+    Total number of members for the org.
+    """
+    membersCount: Int!
+    """
+    Total number of pending invites for the org.
+    """
+    invitesCount: Int!
 }
 
 """
@@ -6221,6 +6526,11 @@ A list of code host repositories
 """
 type CodeHostRepositoryConnection {
     """
+    Errors returned from the code host.
+    """
+    codeHostErrors: [String!]!
+
+    """
     A list of repositories affiliated with a code host.
     """
     nodes: [CodeHostRepository!]!
@@ -6288,6 +6598,136 @@ type TemporarySettings {
     """
     contents: String!
 }
+
+"""
+A list of logged webhook deliveries.
+"""
+type WebhookLogConnection {
+    """
+    A list of webhook logs.
+    """
+    nodes: [WebhookLog!]!
+
+    """
+    The total number of webhook logs in the connection.
+    """
+    totalCount: Int!
+
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
+}
+
+"""
+A single logged webhook delivery.
+"""
+type WebhookLog implements Node {
+    """
+    The webhook log ID.
+    """
+    id: ID!
+
+    """
+    The time the webhook was received at.
+    """
+    receivedAt: DateTime!
+
+    """
+    The external service the webhook was matched to, if any.
+    """
+    externalService: ExternalService
+
+    """
+    The HTTP status code returned from the webhook handler.
+    """
+    statusCode: Int!
+
+    """
+    The received webhook request.
+    """
+    request: WebhookLogRequest!
+
+    """
+    The response sent by the webhook handler.
+    """
+    response: WebhookLogResponse!
+}
+
+"""
+A HTTP message (request or response) within a webhook log.
+"""
+interface WebhookLogMessage {
+    """
+    The headers in the HTTP message.
+    """
+    headers: [WebhookLogHeader!]!
+
+    """
+    The body content of the HTTP message.
+    """
+    body: String!
+}
+
+"""
+A HTTP request within a webhook log.
+"""
+type WebhookLogRequest implements WebhookLogMessage {
+    """
+    The headers in the HTTP message.
+    """
+    headers: [WebhookLogHeader!]!
+
+    """
+    The body content of the HTTP message.
+    """
+    body: String!
+
+    """
+    The method used in the HTTP request.
+    """
+    method: String!
+
+    """
+    The requested URL.
+    """
+    url: String!
+
+    """
+    The HTTP version in use.
+    """
+    version: String!
+}
+
+"""
+A HTTP response within a webhook log.
+"""
+type WebhookLogResponse implements WebhookLogMessage {
+    """
+    The headers in the HTTP message.
+    """
+    headers: [WebhookLogHeader!]!
+
+    """
+    The body content of the HTTP message.
+    """
+    body: String!
+}
+
+"""
+A single HTTP header within a webhook log.
+"""
+type WebhookLogHeader {
+    """
+    The header name.
+    """
+    name: String!
+
+    """
+    The header values.
+    """
+    values: [String!]!
+}
 extend type Mutation {
     """
     Creates a new configuration policy with the given attributes.
@@ -6351,7 +6791,7 @@ extend type Mutation {
     If a configuration is supplied, that configuration is used to determine what jobs to
     schedule. If no configuration is supplied, it will go through the regular index scheduling
     rules: first read any in-repo configuration (e.g., sourcegraph.yaml), then look for any
-    existing in-database configuration, finally falling back to the automatically inferred
+    existing in-database configuration, finally falling back to the automatically infered
     connfiguration based on the repo contents at the target commit.
     """
     queueAutoIndexJobsForRepo(repository: ID!, rev: String, configuration: String): [LSIFIndex!]!
@@ -6369,11 +6809,49 @@ extend type Mutation {
 
 extend type Query {
     """
-    Get the complete list of configuration policies. If repository is supplied, then the
-    configuration policies attached to that repository are returned. If repository is not
-    supplied, then all global configuration policies are returned.
+    Returns precise code intelligence configuration policies that control data retention
+    and (if enabled) auto-indexing behavior.
     """
-    codeIntelligenceConfigurationPolicies(repository: ID): [CodeIntelligenceConfigurationPolicy!]!
+    codeIntelligenceConfigurationPolicies(
+        """
+        If repository is supplied, then only the configuration policies that apply to
+        repository are returned. If repository is not supplied, then all policies are
+        returned.
+        """
+        repository: ID
+
+        """
+        An (optional) search query that searches over the name property.
+        """
+        query: String
+
+        """
+        If set to true, then only configuration policies with data retention enabled are returned.
+        """
+        forDataRetention: Boolean
+
+        """
+        If set to true, then only configuration policies with indexing enabled are returned.
+        """
+        forIndexing: Boolean
+
+        """
+        When specified, indicates that this request should be paginated and
+        the first N results (relative to the cursor) should be returned. i.e.
+        how many results to return per page.
+        """
+        first: Int
+
+        """
+        When specified, indicates that this request should be paginated and
+        to fetch results starting at this cursor.
+
+        A future request can be made for more results by passing in the
+        'CodeIntelligenceConfigurationPolicyConnection.pageInfo.endCursor'
+        that is returned.
+        """
+        after: String
+    ): CodeIntelligenceConfigurationPolicyConnection!
 
     """
     The repository's LSIF uploads.
@@ -6408,7 +6886,7 @@ extend type Query {
         """
         When specified, indicates that this request should be paginated and
         the first N results (relative to the cursor) should be returned. i.e.
-        how many results to return per page. It must be in the range of 0-5000.
+        how many results to return per page.
         """
         first: Int
 
@@ -6440,7 +6918,7 @@ extend type Query {
         """
         When specified, indicates that this request should be paginated and
         the first N results (relative to the cursor) should be returned. i.e.
-        how many results to return per page. It must be in the range of 0-5000.
+        how many results to return per page.
         """
         first: Int
 
@@ -6459,10 +6937,25 @@ extend type Query {
     """
     previewRepositoryFilter(
         """
-        A pattern matching the name of the matching repository.
+        A set of patterns matching the name of the matching repository.
         """
-        pattern: String!
-    ): [Repository!]!
+        patterns: [String!]!
+
+        """
+        When specified, indicates that this request should be paginated and
+        the first N results (relative to the cursor) should be returned. i.e.
+        how many results to return per page.
+        """
+        first: Int
+
+        """
+        When specified, indicates that this request should be paginated and
+        to fetch results starting at this cursor.
+        A future request can be made for more results by passing in the
+        'RepositoryFilterPreview.pageInfo.endCursor' that is returned.
+        """
+        after: String
+    ): RepositoryFilterPreview!
 
     """
     Search over documentation
@@ -6478,22 +6971,57 @@ extend type Query {
         """
         repos: [String!]
     ): DocumentationSearchResults!
-
-    symbolInfo(line: Int!, character: Int!): SymbolInfo
 }
 
-type SymbolInfo {
-    definition: SymbolLocation
-    hover: String
+"""
+A decorated connection of repositories resulting from 'previewRepositoryFilter'.
+"""
+type RepositoryFilterPreview {
+    """
+    A list of repositories composing the current page.
+    """
+    nodes: [Repository!]!
+
+    """
+    The total number of repositories in this result set.
+    """
+    totalCount: Int!
+
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
+
+    """
+    The maximum number of repository matches a single policy can make.
+    """
+    limit: Int
+
+    """
+    The number of repositories matching the given filter. This value exceeds the
+    value of totalCount of the result when totalMatches > limit.
+    """
+    totalMatches: Int!
 }
 
-type SymbolLocation {
-    repo: String!
-    commit: String!
-    path: String!
-    line: Int!
-    character: Int!
-    length: Int!
+"""
+A list of code intelligence configuration policies.
+"""
+type CodeIntelligenceConfigurationPolicyConnection {
+    """
+    A list of code intelligence configuration policies.
+    """
+    nodes: [CodeIntelligenceConfigurationPolicy!]!
+
+    """
+    The total number of policies in this result set.
+    """
+    totalCount: Int
+
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
 }
 
 """
@@ -6572,6 +7100,48 @@ type CodeIntelligenceConfigurationPolicy implements Node {
     indexIntermediateCommits: Boolean!
 }
 
+"""
+A retention policy match candidate.
+"""
+type CodeIntelligenceRetentionPolicyMatch {
+    """
+    The actual retention policy.
+    """
+    configurationPolicy: CodeIntelligenceConfigurationPolicy
+
+    """
+    Whether the retention policy matches the upload or not. False values may be returned
+    if non-matching policies are requested for inclusion.
+    """
+    matches: Boolean!
+
+    """
+    A list of commits that are visible to this upload for which this retention policy applies.
+    It is empty if the policy applies directly to the commit associated with the upload.
+    """
+    protectingCommits: [String!]
+}
+
+"""
+A list of code intelligence retention policy match candidates.
+"""
+type CodeIntelligenceRetentionPolicyMatchesConnection {
+    """
+    A list of code intelligence retention policies matches.
+    """
+    nodes: [CodeIntelligenceRetentionPolicyMatch!]!
+
+    """
+    The total number of policies in this result set.
+    """
+    totalCount: Int
+
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
+}
+
 extend type Repository {
     """
     Gets the indexing configuration associated with the repository.
@@ -6611,7 +7181,7 @@ extend type Repository {
         """
         When specified, indicates that this request should be paginated and
         the first N results (relative to the cursor) should be returned. i.e.
-        how many results to return per page. It must be in the range of 0-5000.
+        how many results to return per page.
         """
         first: Int
 
@@ -6642,7 +7212,7 @@ extend type Repository {
         """
         When specified, indicates that this request should be paginated and
         the first N results (relative to the cursor) should be returned. i.e.
-        how many results to return per page. It must be in the range of 0-5000.
+        how many results to return per page.
         """
         first: Int
 
@@ -6695,6 +7265,11 @@ extend type GitTree {
         """
         toolName: String
     ): GitTreeLSIFData
+
+    """
+    Provides info on the level of code-intel support for the direct children of this git tree.
+    """
+    codeIntelInfo: GitTreeCodeIntelInfo
 }
 
 extend type GitBlob {
@@ -6710,7 +7285,14 @@ extend type GitBlob {
     ): GitBlobLSIFData
 
     """
+    Provides info on the level of code-intel support for this git blob.
+    """
+    codeIntelSupport: CodeIntelSupport!
+
+    """
     Provides code intelligence within the file.
+
+    Experimental: This API is likely to change in the future.
     """
     localCodeIntel: JSONValue
 }
@@ -6740,6 +7322,11 @@ interface TreeEntryLSIFData {
     Code diagnostics provided through LSIF.
     """
     diagnostics(first: Int): DiagnosticConnection!
+
+    """
+    The list of LSIF uploads that may be used to service code-intel requests for this TreeEntry.
+    """
+    lsifUploads: [LSIFUpload!]!
 
     """
     Returns the documentation page corresponding to the given path ID, where the empty string "/"
@@ -6830,6 +7417,11 @@ type GitTreeLSIFData implements TreeEntryLSIFData {
     Code diagnostics provided through LSIF.
     """
     diagnostics(first: Int): DiagnosticConnection!
+
+    """
+    The list of LSIF uploads that may be used to service code-intel requests for this TreeEntry.
+    """
+    lsifUploads: [LSIFUpload!]!
 
     """
     Returns the documentation page corresponding to the given path ID, where the empty string "/"
@@ -6944,6 +7536,11 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
         The character (not byte) of the start line on which the symbol occurs (zero-based, inclusive).
         """
         character: Int!
+
+        """
+        When specified, it filters references by filename.
+        """
+        filter: String
     ): LocationConnection!
 
     """
@@ -6974,6 +7571,11 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
         how many results to return per page.
         """
         first: Int
+
+        """
+        When specified, it filters references by filename.
+        """
+        filter: String
     ): LocationConnection!
 
     """
@@ -7004,6 +7606,11 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
         how many results to return per page.
         """
         first: Int
+
+        """
+        When specified, it filters immplementations by filename.
+        """
+        filter: String
     ): LocationConnection!
 
     """
@@ -7040,6 +7647,11 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
     Code diagnostics provided through LSIF.
     """
     diagnostics(first: Int): DiagnosticConnection!
+
+    """
+    The list of LSIF uploads that may be used to service code-intel requests for this GitBlob.
+    """
+    lsifUploads: [LSIFUpload!]!
 
     """
     Returns the documentation page corresponding to the given path ID, where the path ID "/"
@@ -7297,6 +7909,34 @@ type LSIFUpload implements Node {
     The LSIF indexing job that created this upload record.
     """
     associatedIndex: LSIFIndex
+
+    """
+    The list of retention policies, optionally filtered by only ones that match/apply to this upload and/or
+    by name substring match.
+    """
+    retentionPolicyOverview(
+        matchesOnly: Boolean!
+
+        """
+        An (optional) search query that searches over the name property.
+        """
+        query: String
+
+        """
+        When specified, indicates that this request should be paginated and
+        to fetch results starting at this cursor.
+        A future request can be made for more results by passing in the
+        'CodeIntelligenceRetentionPolicyMatchesConnection.pageInfo.endCursor' that is returned.
+        """
+        after: String
+
+        """
+        When specified, indicates that this request should be paginated and
+        the first N results (relative to the cursor) should be returned. i.e.
+        how many results to return per page.
+        """
+        first: Int
+    ): CodeIntelligenceRetentionPolicyMatchesConnection!
 }
 
 """
@@ -7520,7 +8160,174 @@ type IndexConfiguration {
     configuration: String
 
     """
-    The raw JSON-encoded index configuration as inferred by the auto-indexer.
+    The raw JSON-encoded index configuration as infered by the auto-indexer.
     """
     inferredConfiguration: String
+}
+
+"""
+Details code-intel support for a group of files rooted at a tree.
+"""
+type GitTreeCodeIntelInfo {
+    """
+    Search-based coverage grouped by language.
+    """
+    searchBasedSupport: [GitTreeSearchBasedCoverage!]
+    """
+    Precise coverage based on inference derived from the directory
+    structure and its files.
+    """
+    preciseSupport: [GitTreePreciseCoverage!]
+}
+
+"""
+Search-based code-intel support coverage grouped by related files.
+"""
+type GitTreeSearchBasedCoverage {
+    """
+    The files comprising this grouping of search-based support.
+    Each grouping consists of all the files of the same langauge e.g.
+    all .go files in one group, all .kt and .kts files in another.
+    """
+    coveredPaths: [String!]!
+    """
+    Overview of the level of support for this group of files.
+    """
+    support: SearchBasedCodeIntelSupport!
+}
+
+"""
+Precise code-intel support coverage grouped by LSIF indexer language
+support for a group of files.
+"""
+type GitTreePreciseCoverage {
+    """
+    Overview of the level of support for this group of files.
+    """
+    support: PreciseCodeIntelSupport!
+    """
+    Level of confidence in the inference of an indexing target suggestion.
+    """
+    confidence: InferedPreciseSupportLevel!
+}
+
+"""
+Denotes the confidence in the correctness of the proposed index target.
+"""
+enum InferedPreciseSupportLevel {
+    """
+    The language is known to have an LSIF indexer associated with it
+    but this may not be the directory from which it should be invoked.
+    Relevant build tool configuration may be available at a parent directory.
+    """
+    LANGUAGE_SUPPORTED
+    """
+    Relevant build tool configuration files were located that indicate
+    a good possibility of this directory being where an LSIF indexer
+    could be invoked, however we have or can not infer a potentially complete
+    auto indexing job configuration.
+    """
+    PROJECT_STRUCTURE_SUPPORTED
+    """
+    An auto-indexing job configuration was able to be infered for this
+    directory that has a high likelyhood of being complete enough to result
+    in an LSIF index.
+    """
+    INDEX_JOB_INFERED
+}
+
+"""
+Details the types, tools and levels of code-intel support.
+"""
+type CodeIntelSupport {
+    """
+    Search-based code-intel support overview.
+    """
+    searchBasedSupport: SearchBasedCodeIntelSupport!
+
+    """
+    Precise code-intel support overview.
+    """
+    preciseSupport: PreciseCodeIntelSupport!
+}
+
+"""
+Details precise code-intel support overview.
+"""
+type PreciseCodeIntelSupport {
+    """
+    Level of support/ownership for the most complete/accurate precise code-intel indexer.
+    This may be THIRD_PARTY even where a by us indexer exists, where the third-party indexer is
+    more maintained/accurate/complete etc such as with the Dart indexer, where the Workiva one
+    should be used over our own.
+    """
+    supportLevel: PreciseSupportLevel!
+    """
+    List of indexers in subjective order of recommendation, from most to least recommended
+    (not an indication of absolute quality, rather relative).
+    """
+    indexers: [CodeIntelIndexer!]
+}
+
+"""
+Describes a precise code-intel indexer.
+"""
+type CodeIntelIndexer {
+    """
+    Name of the precise code-intel indexer.
+    """
+    name: String!
+    """
+    URL to the source of the indexer e.g. https://github.com/sourcegraph/lsif-go
+    """
+    url: String!
+}
+
+"""
+Ownership level of the recommended precise code-intel indexer.
+"""
+enum PreciseSupportLevel {
+    """
+    When there is no known indexer.
+    """
+    UNKNOWN
+    """
+    When the recommended indexer is maintained by us.
+    """
+    NATIVE
+    """
+    When the recommended indexer is maintained by a third-party
+    but is recommended over a native indexer, where one exists.
+    """
+    THIRD_PARTY
+}
+
+"""
+Details search-based code-intel support overview.
+"""
+type SearchBasedCodeIntelSupport {
+    """
+    Level of support.
+    """
+    supportLevel: SearchBasedSupportLevel!
+    """
+    The infered language the underlying tool infered when building an index for
+    search-based code-intel.
+    """
+    language: String
+}
+
+"""
+Tiered list of types of search-based support for a language. This may be expanded as different
+indexing methods are introduced.
+"""
+enum SearchBasedSupportLevel {
+    """
+    The language has no configured search-based code-intel support.
+    """
+    UNSUPPORTED
+    """
+    Universal-ctags is used for indexing this language.
+    """
+    BASIC
 }
