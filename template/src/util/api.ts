@@ -187,7 +187,7 @@ export class API {
         )
     })
 
-    public fetchPayload = cache(
+    public fetchLocalCodeIntelPayload = cache(
         async ({ repo, commit, path }: RepoCommitPath): Promise<LocalCodeIntelPayload | undefined> => {
             const vars = { repository: repo, commit, path }
             const response = await queryGraphQL<LocalCodeIntelResponse>(localCodeIntelQuery, vars)
@@ -212,7 +212,7 @@ export class API {
 
         const { repo, commit, path } = parseGitURI(new URL(document.uri))
 
-        const payload = await this.fetchPayload({ repo, commit, path })
+        const payload = await this.fetchLocalCodeIntelPayload({ repo, commit, path })
         if (!payload) {
             return
         }
