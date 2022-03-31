@@ -458,13 +458,14 @@ describe('createHoverProvider', () => {
 describe('createDocumentHighlightProvider', () => {
     it('uses precise document highlights', async () => {
         const result = createDocumentHighlightProvider(
-            () => asyncGeneratorFromValues([[{ range: range1 }, { range: range2 }]]),
+            () => asyncGeneratorFromValues([[{ range: range1 }]]),
+            () => asyncGeneratorFromValues([[{ range: range2 }]]),
             undefined,
             undefined,
             makeStubAPI()
         ).provideDocumentHighlights(textDocument, position) as Observable<sourcegraph.DocumentHighlight[]>
 
-        assert.deepStrictEqual(await gatherValues(result), [[{ range: range1 }, { range: range2 }]])
+        assert.deepStrictEqual(await gatherValues(result), [[{ range: range1 }]])
     })
 })
 

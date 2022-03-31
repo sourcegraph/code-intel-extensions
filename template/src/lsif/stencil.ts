@@ -1,10 +1,10 @@
 import sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 
+import { cache } from '../util'
 import { QueryGraphQLFn, queryGraphQL as sgQueryGraphQL } from '../util/graphql'
 
 import { GenericLSIFResponse, queryLSIF } from './api'
-import { cache } from './util'
 
 export const stencil = async (
     uri: string,

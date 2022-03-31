@@ -1,8 +1,12 @@
+import { once } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 import gql from 'tagged-template-noop'
 
+import { cache } from '../util'
+
 import { graphqlIdToRepoId, queryGraphQL } from './graphql'
 import { isDefined, sortUnique } from './helpers'
+import { parseGitURI } from './uri'
 
 /**
  * A search result. Each result is for a particular repository and commit, but
@@ -155,6 +159,77 @@ export class API {
         return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
             field => field.name === 'implementations'
         )
+    }
+
+    /**
+     * Determines via introspection if the GraphQL API has local code intelligence available
+     *
+     * TODO(chrismwendt) - Remove this when we no longer need to support versions without local code
+     * intelligence
+     */
+    public hasLocalCodeIntelField = once(async () => {
+        const introspectionQuery = gql`
+            query LocalCodeIntelIntrospectionQuery {
+                __type(name: "GitBlob") {
+                    fields {
+                        name
+                    }
+                }
+            }
+        `
+
+        interface IntrospectionResponse {
+            __type: { fields: { name: string }[] }
+        }
+
+        return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
+            field => field.name === 'localCodeIntel'
+        )
+    })
+
+    public fetchLocalCodeIntelPayload = cache(
+        async ({ repo, commit, path }: RepoCommitPath): Promise<LocalCodeIntelPayload | undefined> => {
+            const vars = { repository: repo, commit, path }
+            const response = await queryGraphQL<LocalCodeIntelResponse>(localCodeIntelQuery, vars)
+
+            const payloadString = response?.repository?.commit?.blob?.localCodeIntel
+            if (!payloadString) {
+                return undefined
+            }
+
+            return JSON.parse(payloadString) as LocalCodeIntelPayload
+        },
+        { max: 10 }
+    )
+
+    public findSymbol = async (
+        document: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<LocalSymbol | undefined> => {
+        if (!(await this.hasLocalCodeIntelField())) {
+            return
+        }
+
+        const { repo, commit, path } = parseGitURI(new URL(document.uri))
+
+        const payload = await this.fetchLocalCodeIntelPayload({ repo, commit, path })
+        if (!payload) {
+            return
+        }
+
+        for (const symbol of payload.symbols) {
+            if (isInRange(position, symbol.def)) {
+                return symbol
+            }
+
+            for (const reference of symbol.refs ?? []) {
+                if (isInRange(position, reference)) {
+                    return symbol
+                }
+            }
+        }
+
+        return undefined
     }
 
     /**
@@ -503,3 +578,57 @@ function buildSearchQuery(fileLocal: boolean): string {
         ${searchResultsFragment}
     `
 }
+
+export interface RepoCommitPath {
+    repo: string
+    commit: string
+    path: string
+}
+
+export interface LocalCodeIntelPayload {
+    symbols: LocalSymbol[]
+}
+
+export interface LocalSymbol {
+    hover?: string
+    def: Range
+    refs?: Range[]
+}
+
+export interface Range {
+    row: number
+    column: number
+    length: number
+}
+
+const isInRange = (position: sourcegraph.Position, range: Range): boolean => {
+    if (position.line !== range.row) {
+        return false
+    }
+    if (position.character < range.column) {
+        return false
+    }
+    if (position.character > range.column + range.length) {
+        return false
+    }
+    return true
+}
+
+/** The response envelope for all blob queries. */
+export interface GenericBlobResponse<R> {
+    repository: { commit: { blob: R | null } | null } | null
+}
+
+type LocalCodeIntelResponse = GenericBlobResponse<{ localCodeIntel: string }>
+
+const localCodeIntelQuery = gql`
+    query LocalCodeIntel($repository: String!, $commit: String!, $path: String!) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    localCodeIntel
+                }
+            }
+        }
+    }
+`

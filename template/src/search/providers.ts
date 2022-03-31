@@ -4,8 +4,8 @@ import { take } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 
 import { FilterDefinitions, LanguageSpec } from '../language-specs/spec'
-import { cache } from '../lsif/util'
 import { Providers } from '../providers'
+import { cache } from '../util'
 import { API } from '../util/api'
 import { asArray, isDefined } from '../util/helpers'
 import { asyncGeneratorFromPromise } from '../util/ix'
@@ -17,9 +17,8 @@ import { Result, resultToLocation, searchResultToResults } from './conversion'
 import { findDocstring } from './docstrings'
 import { wrapIndentationInCodeBlocks } from './markdown'
 import { definitionQuery, referencesQuery } from './queries'
+import { mkSquirrel } from './squirrel'
 import { findSearchToken } from './tokens'
-
-const documentHighlights = (): Promise<sourcegraph.DocumentHighlight[] | null> => Promise.resolve(null)
 
 /** The number of files whose content can be cached at once. */
 const FILE_CONTENT_CACHE_CAPACITY = 20
@@ -97,6 +96,8 @@ export function createProviders(
         return { text, searchToken: tokenResult.searchToken }
     }
 
+    const squirrel = mkSquirrel(api)
+
     /**
      * Retrieve a definition for the current hover position.
      *
@@ -107,6 +108,11 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Definition> => {
+        const squirrelDefinition = await squirrel.definition(textDocument, position)
+        if (squirrelDefinition) {
+            return squirrelDefinition
+        }
+
         const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
             return null
@@ -158,6 +164,8 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Location[]> => {
+        const squirrelReferences = (await squirrel.references(textDocument, position)) ?? []
+
         const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
             return []
@@ -179,18 +187,23 @@ export function createProviders(
         const doSearch = (negateRepoFilter: boolean): Promise<sourcegraph.Location[]> =>
             searchWithFallback(args => searchReferences(api, args), queryArguments, negateRepoFilter)
 
-        // Perform a search in the current git tree
-        const sameRepoReferences = doSearch(false)
+        // Perform a search in the current git tree, suppressing references within the current file when
+        // we have squirrel results
+        const sameRepoReferences = doSearch(false).then(results =>
+            results.filter(location => !squirrelReferences || location.uri.href !== textDocument.uri)
+        )
 
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
-        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
+        const remoteRepoReferences = isSourcegraphDotCom()
+            ? Promise.resolve<sourcegraph.Location[]>([])
+            : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
         const referenceChunk = [sameRepoReferences, remoteRepoReferences]
-        const mergedReferences = flatten(await Promise.all(referenceChunk))
+        const mergedReferences = flatten([squirrelReferences, ...(await Promise.all(referenceChunk))])
         return sortByProximity(mergedReferences, new URL(textDocument.uri))
     }
 
@@ -204,6 +217,11 @@ export function createProviders(
         textDocument: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<sourcegraph.Hover | null> => {
+        const squirrelHover = await squirrel.hover(textDocument, position)
+        if (squirrelHover) {
+            return squirrelHover
+        }
+
         if (!wrappedProviders.definition) {
             return null
         }
@@ -265,6 +283,17 @@ export function createProviders(
                 value: [codeLineMarkdown, docstringMarkdown].filter(isDefined).join('\n\n---\n\n'),
             },
         }
+    }
+
+    const documentHighlights = async (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<sourcegraph.DocumentHighlight[] | null> => {
+        const squirrelDocumentHighlights = await squirrel.documentHighlights(textDocument, position)
+        if (squirrelDocumentHighlights) {
+            return squirrelDocumentHighlights
+        }
+        return null
     }
 
     return {

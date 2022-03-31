@@ -34,6 +34,26 @@ export interface SourcegraphProviders {
     documentHighlights: sourcegraph.DocumentHighlightProvider
 }
 
+export interface PromiseProviders {
+    definition: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.Definition>
+    references: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.Location[] | null>
+    implementations: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.Location[] | null>
+    hover: (textDocument: sourcegraph.TextDocument, position: sourcegraph.Position) => Promise<sourcegraph.Hover | null>
+    documentHighlights: (
+        textDocument: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ) => Promise<sourcegraph.DocumentHighlight[] | null>
+}
+
 export interface DefinitionAndHover {
     definition: sourcegraph.Definition | null
     hover: sourcegraph.Hover | null
@@ -148,6 +168,7 @@ export function createProviders(
 
         documentHighlights: createDocumentHighlightProvider(
             lsifProviders.documentHighlights,
+            searchProviders.documentHighlights,
             logger,
             languageSpec.languageID,
             api
@@ -575,6 +596,7 @@ function badgeHoverResult(
  */
 export function createDocumentHighlightProvider(
     lsifProvider: DocumentHighlightProvider,
+    searchProvider: DocumentHighlightProvider,
     logger?: Logger,
     languageID: string = '',
     api = new API()
@@ -588,10 +610,22 @@ export function createDocumentHighlightProvider(
             const repoId = (await api.resolveRepo(repo)).id
             const emitter = new TelemetryEmitter(languageID, repoId)
 
+            let hasLsifResults = false
+
             for await (const lsifResult of lsifProvider(textDocument, position)) {
                 if (lsifResult) {
                     emitter.emitOnce('lsifDocumentHighlight')
                     yield lsifResult
+                    hasLsifResults = true
+                }
+            }
+
+            if (!hasLsifResults) {
+                emitter.emitOnce('searchDocumentHighlight')
+                for await (const searchResult of searchProvider(textDocument, position)) {
+                    if (searchResult) {
+                        yield searchResult
+                    }
                 }
             }
         }),
