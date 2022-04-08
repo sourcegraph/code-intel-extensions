@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
+import { sortBy } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 
 import { PromiseProviders } from '../providers'
@@ -20,6 +21,8 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
         if (!symbol?.refs) {
             return null
         }
+
+        symbol.refs = sortBy(symbol.refs, reference => reference.row)
 
         return symbol.refs.map(reference =>
             mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...reference })
