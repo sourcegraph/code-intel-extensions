@@ -165,6 +165,9 @@ export function createProviders(
         position: sourcegraph.Position
     ): Promise<sourcegraph.Location[]> => {
         const squirrelReferences = (await squirrel.references(textDocument, position)) ?? []
+        if (squirrelReferences.length > 0) {
+            return squirrelReferences
+        }
 
         const contentAndToken = await getContentAndToken(textDocument, position)
         if (!contentAndToken) {
@@ -189,21 +192,17 @@ export function createProviders(
 
         // Perform a search in the current git tree, suppressing references within the current file when
         // we have squirrel results
-        const sameRepoReferences = doSearch(false).then(results =>
-            results.filter(location => !squirrelReferences || location.uri.href !== textDocument.uri)
-        )
+        const sameRepoReferences = doSearch(false)
 
         // Perform an indexed search over all _other_ repositories. This
         // query is ineffective on DotCom as we do not keep repositories
         // in the index permanently.
-        const remoteRepoReferences = isSourcegraphDotCom()
-            ? Promise.resolve<sourcegraph.Location[]>([])
-            : doSearch(true)
+        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
         const referenceChunk = [sameRepoReferences, remoteRepoReferences]
-        const mergedReferences = flatten([squirrelReferences, ...(await Promise.all(referenceChunk))])
+        const mergedReferences = flatten(await Promise.all(referenceChunk))
         return sortByProximity(mergedReferences, new URL(textDocument.uri))
     }
 
