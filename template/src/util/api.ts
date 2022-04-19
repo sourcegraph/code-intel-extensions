@@ -585,9 +585,9 @@ export interface RepoCommitPath {
     path: string
 }
 
-export interface LocalCodeIntelPayload {
+export type LocalCodeIntelPayload = {
     symbols: LocalSymbol[]
-}
+} | null
 
 export interface LocalSymbol {
     hover?: string
