@@ -141,8 +141,11 @@ describe('search providers', () => {
         const stubHasLocalCodeIntelField = sinon.stub(api, 'hasLocalCodeIntelField')
         stubHasLocalCodeIntelField.callsFake(() => Promise.resolve(true))
 
-        const stubFindSymbol = sinon.stub(api, 'findSymbol')
+        const stubFindSymbol = sinon.stub(api, 'findLocalSymbol')
         stubFindSymbol.callsFake(() => Promise.resolve(undefined))
+
+        const stubFetchSymbolInfo = sinon.stub(api, 'fetchSymbolInfo')
+        stubFetchSymbolInfo.callsFake(() => Promise.resolve(undefined))
 
         return api
     }

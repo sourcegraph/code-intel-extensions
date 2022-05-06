@@ -9,15 +9,29 @@ import { parseGitURI } from '../util/uri'
 
 export const mkSquirrel = (api: API): PromiseProviders => ({
     async definition(document, position) {
-        const symbol = await api.findSymbol(document, position)
-        if (!symbol?.def) {
+        const local = await api.findLocalSymbol(document, position)
+
+        if (local?.def) {
+            return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...local.def })
+        }
+
+        const symbolInfo = await api.fetchSymbolInfo(document, position)
+        if (!symbolInfo) {
             return null
         }
 
-        return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...symbol.def })
+        const location = {
+            repo: symbolInfo.definition.repo,
+            commit: symbolInfo.definition.commit,
+            path: symbolInfo.definition.path,
+            row: symbolInfo.definition.line,
+            column: symbolInfo.definition.character,
+            length: symbolInfo.definition.length,
+        }
+        return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...location })
     },
     async references(document, position) {
-        const symbol = await api.findSymbol(document, position)
+        const symbol = await api.findLocalSymbol(document, position)
         if (!symbol?.refs) {
             return null
         }
@@ -29,7 +43,24 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
         )
     },
     async hover(document, position) {
-        const symbol = await api.findSymbol(document, position)
+        const symbol = await api.findLocalSymbol(document, position)
+        if (!symbol) {
+            return null
+        }
+
+        if (!symbol.def) {
+            const symbolInfo = await api.fetchSymbolInfo(document, position)
+            if (!symbolInfo) {
+                return null
+            }
+
+            if (!symbolInfo.hover) {
+                return null
+            }
+
+            return { contents: { value: symbolInfo.hover ?? undefined, kind: sourcegraph.MarkupKind.Markdown } }
+        }
+
         if (!symbol?.hover) {
             return null
         }
@@ -37,7 +68,7 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
         return { contents: { value: symbol.hover, kind: sourcegraph.MarkupKind.Markdown } }
     },
     async documentHighlights(document, position) {
-        const symbol = await api.findSymbol(document, position)
+        const symbol = await api.findLocalSymbol(document, position)
         if (!symbol?.refs) {
             return null
         }
