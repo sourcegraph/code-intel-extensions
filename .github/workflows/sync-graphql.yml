@@ -2,7 +2,7 @@ name: sync-graphql
 on:
   schedule:
     # Every 15 minutes for testing, replace with '0 8 * * *' afterwards.
-    - cron '*/15 * * * *'
+    - cron: '*/15 * * * *'
 
 jobs:
   sync-graphql:
@@ -15,7 +15,7 @@ jobs:
         run: wget -o schema/schema.graphql https://github.com/sourcegraph/sourcegraph/blob/main/cmd/frontend/graphqlbackend/schema.graphql
       - name: Create PR if applicable
         run: |
-          if [ git diff --quiet -eq 1 ]; then
+          if ! git diff --quiet; then
             git checkout -b bot/sync-graphql
             git add schema/schema.graphql
             git commit -m "schema: Sync GraphQL schema from sourcegraph/sourcegraph."
