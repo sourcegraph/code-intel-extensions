@@ -1,0 +1,24 @@
+name: sync-graphql
+on:
+  schedule:
+    - cron: '0 8 * * *'
+
+jobs:
+  sync-graphql:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        env:
+          GITHUB_TOKEN: ${{secrets.BOT_GITHUB_TOKEN}}
+      - name: Clone GraphQL file
+        run: wget -o schema/schema.graphql https://github.com/sourcegraph/sourcegraph/blob/main/cmd/frontend/graphqlbackend/schema.graphql 
+      - name: Create PR if applicable
+        run: |
+          if [ git diff --quiet -eq 1 ]; then
+            git checkout -b bot/sync-graphql
+            git add schema/schema.graphql
+            git commit -m "schema: Sync GraphQL schema from sourcegraph/sourcegraph."
+            git push --force -u origin bot/sync-graphql
+            gh pr create --base master \
+                         --body "### Test Plan\n\nCI should pass."
+          fi
