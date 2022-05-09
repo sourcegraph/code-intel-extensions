@@ -1,7 +1,8 @@
 name: sync-graphql
 on:
   schedule:
-    - cron: '0 8 * * *'
+    # Every 15 minutes for testing, replace with '0 8 * * *' afterwards.
+    - cron '*/15 * * * *'
 
 jobs:
   sync-graphql:
