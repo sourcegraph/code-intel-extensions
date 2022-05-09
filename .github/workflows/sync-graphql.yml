@@ -12,7 +12,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.BOT_GITHUB_TOKEN}}
       - name: Clone GraphQL file
-        run: wget -o schema/schema.graphql https://github.com/sourcegraph/sourcegraph/blob/main/cmd/frontend/graphqlbackend/schema.graphql 
+        run: wget -o schema/schema.graphql https://github.com/sourcegraph/sourcegraph/blob/main/cmd/frontend/graphqlbackend/schema.graphql
       - name: Create PR if applicable
         run: |
           if [ git diff --quiet -eq 1 ]; then
