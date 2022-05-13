@@ -187,6 +187,31 @@ export class API {
         )
     })
 
+    /**
+     * Determines via introspection if the GraphQL API has symbol info available
+     *
+     * TODO(chrismwendt) - Remove this when we no longer need to support versions without symbol info
+     */
+    public hasSymbolInfo = once(async () => {
+        const introspectionQuery = gql`
+            query SymbolInfoIntrospectionQuery {
+                __type(name: "GitBlob") {
+                    fields {
+                        name
+                    }
+                }
+            }
+        `
+
+        interface IntrospectionResponse {
+            __type: { fields: { name: string }[] }
+        }
+
+        return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
+            field => field.name === 'symbolInfo'
+        )
+    })
+
     public fetchLocalCodeIntelPayload = cache(
         async ({ repo, commit, path }: RepoCommitPath): Promise<LocalCodeIntelPayload | undefined> => {
             const vars = { repository: repo, commit, path }
@@ -202,7 +227,7 @@ export class API {
         { max: 10 }
     )
 
-    public findSymbol = async (
+    public findLocalSymbol = async (
         document: sourcegraph.TextDocument,
         position: sourcegraph.Position
     ): Promise<LocalSymbol | undefined> => {
@@ -230,6 +255,22 @@ export class API {
         }
 
         return undefined
+    }
+
+    public fetchSymbolInfo = async (
+        document: sourcegraph.TextDocument,
+        position: sourcegraph.Position
+    ): Promise<SymbolInfo | undefined> => {
+        if (!(await this.hasSymbolInfo())) {
+            return
+        }
+
+        const { repo, commit, path } = parseGitURI(new URL(document.uri))
+
+        const vars = { repository: repo, commit, path, line: position.line, character: position.character }
+        const response = await queryGraphQL<SymbolInfoResponse>(symbolInfoDefinitionQuery, vars)
+
+        return response?.repository?.commit?.blob?.symbolInfo ?? undefined
     }
 
     /**
@@ -627,6 +668,37 @@ const localCodeIntelQuery = gql`
             commit(rev: $commit) {
                 blob(path: $path) {
                     localCodeIntel
+                }
+            }
+        }
+    }
+`
+
+type SymbolInfoResponse = GenericBlobResponse<{
+    symbolInfo: SymbolInfo | null
+}>
+
+interface SymbolInfo {
+    definition: RepoCommitPath & { line: number; character: number; length: number }
+    hover: string | null
+}
+
+const symbolInfoDefinitionQuery = gql`
+    query SymbolInfo($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    symbolInfo(line: $line, character: $character) {
+                        definition {
+                            repo
+                            commit
+                            path
+                            line
+                            character
+                            length
+                        }
+                        hover
+                    }
                 }
             }
         }
