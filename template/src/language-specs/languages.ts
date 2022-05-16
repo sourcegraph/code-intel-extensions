@@ -136,6 +136,7 @@ const kotlinSpec: LanguageSpec = {
     languageID: 'kotlin',
     stylized: 'Kotlin',
     fileExts: ['kt', 'ktm', 'kts'],
+    textDocumentImplemenationSupport: true,
     commentStyles: [cStyleComment],
 }
 
@@ -295,6 +296,7 @@ const scalaSpec: LanguageSpec = {
     languageID: 'scala',
     stylized: 'Scala',
     fileExts: ['sbt', 'sc', 'scala'],
+    textDocumentImplemenationSupport: true,
     commentStyles: [javaStyleComment],
 }
 

@@ -33,6 +33,7 @@ export const javaSpec: LanguageSpec = {
     stylized: 'Java',
     fileExts: ['java'],
     commentStyles: [javaStyleComment],
+    textDocumentImplemenationSupport: true,
     filterDefinitions,
     lsifSupport: LSIFSupport.Experimental,
 }
