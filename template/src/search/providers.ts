@@ -292,7 +292,38 @@ export function createProviders(
         if (squirrelDocumentHighlights) {
             return squirrelDocumentHighlights
         }
-        return null
+        const contentAndToken = await getContentAndToken(textDocument, position)
+        if (!contentAndToken) {
+            return null
+        }
+        const { text, searchToken } = contentAndToken
+        const result: sourcegraph.DocumentHighlight[] = []
+        let line = 0
+        let lastLineIndex = 0
+        const tokenPattern = new RegExp('\\b' + searchToken + '\\b', 'g')
+        const matches = [...text.matchAll(tokenPattern)]
+        // TODO: why is matches empty?
+        // console.log({ searchToken, tokenPattern, text, matches })
+        for (const match of matches) {
+            // console.log({ match })
+            if (!match.index) {
+                continue
+            }
+            while (lastLineIndex < match.index) {
+                lastLineIndex++
+                if (text[lastLineIndex] === '\n') {
+                    line++
+                }
+            }
+            const character = match.index - lastLineIndex
+            result.push({
+                range: new sourcegraph.Range(
+                    new sourcegraph.Position(line, character),
+                    new sourcegraph.Position(line, character + searchToken.length)
+                ),
+            })
+        }
+        return result
     }
 
     return {
