@@ -39,4 +39,5 @@ export const typescriptSpec: LanguageSpec = {
     commentStyles: [cStyleComment],
     filterDefinitions,
     lsifSupport: LSIFSupport.Robust,
+    textDocumentImplemenationSupport: true,
 }
