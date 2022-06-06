@@ -42,7 +42,6 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
 
         symbol.refs = sortBy(symbol.refs, reference => reference.row)
 
-        const TODO = need to update GraphQL schema
         return symbol.refs.map(reference =>
             mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...reference })
         )
