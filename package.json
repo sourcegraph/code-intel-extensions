@@ -23,7 +23,7 @@
     "publish": "yarn run ts-node -P tsconfig.json ./scripts/publish.ts",
     "config-types": "./node_modules/.bin/dot-json template/package.json contributes.configuration | ./node_modules/.bin/json2ts --unreachableDefinitions --style.singleQuote --no-style.semi -o ./template/src/search/settings.ts && yarn prettier",
     "update-graphql-schema": "curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/5be5ab7d752c715fef5f87162cfca80df77de5ed/cmd/frontend/graphqlbackend/schema.graphql > ./schema/schema.graphql && curl -s https://raw.githubusercontent.com/sourcegraph/sourcegraph/5be5ab7d752c715fef5f87162cfca80df77de5ed/cmd/frontend/graphqlbackend/codeintel.graphql >> ./schema/schema.graphql",
-    "validate-graphql": "yarn run tsgql validate -p ./template/tsconfig.json"
+    "validate-graphql": "yarn run tsgql validate -p ./template/tsconfig.json --exitOnWarn"
   },
   "dependencies": {
     "dot-json": "^1.2.2",
