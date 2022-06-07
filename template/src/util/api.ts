@@ -212,6 +212,31 @@ export class API {
         )
     })
 
+    /**
+     * Determines via introspection if the GraphQL API has symbolInfo.range available
+     *
+     * TODO(chrismwendt) - Remove this when we no longer need to support versions without symbolInfo.range
+     */
+    public hasSymbolLocationRange = once(async () => {
+        const introspectionQuery = gql`
+            query SymbolLocationRangeIntrospectionQuery {
+                __type(name: "SymbolLocation") {
+                    fields {
+                        name
+                    }
+                }
+            }
+        `
+
+        interface IntrospectionResponse {
+            __type: { fields: { name: string }[] }
+        }
+
+        return (await queryGraphQL<IntrospectionResponse>(introspectionQuery)).__type.fields.some(
+            field => field.name === 'range'
+        )
+    })
+
     public fetchLocalCodeIntelPayload = cache(
         async ({ repo, commit, path }: RepoCommitPath): Promise<LocalCodeIntelPayload | undefined> => {
             const vars = { repository: repo, commit, path }
@@ -260,17 +285,25 @@ export class API {
     public fetchSymbolInfo = async (
         document: sourcegraph.TextDocument,
         position: sourcegraph.Position
-    ): Promise<SymbolInfo | undefined> => {
+    ): Promise<SymbolInfoCanonical | undefined> => {
         if (!(await this.hasSymbolInfo())) {
             return
         }
 
+        const query = (await this.hasSymbolLocationRange())
+            ? symbolInfoDefinitionQueryWithRange
+            : symbolInfoDefinitionQueryWithoutRange
+
         const { repo, commit, path } = parseGitURI(new URL(document.uri))
 
         const vars = { repository: repo, commit, path, line: position.line, character: position.character }
-        const response = await queryGraphQL<SymbolInfoResponse>(symbolInfoDefinitionQuery, vars)
+        const response = await queryGraphQL<SymbolInfoResponse>(query, vars)
 
-        return response?.repository?.commit?.blob?.symbolInfo ?? undefined
+        const symbolInfoFlexible = response?.repository?.commit?.blob?.symbolInfo ?? undefined
+        if (!symbolInfoFlexible) {
+            return undefined
+        }
+        return symbolInfoFlexibleToCanonical(symbolInfoFlexible)
     }
 
     /**
@@ -675,15 +708,41 @@ const localCodeIntelQuery = gql`
 `
 
 type SymbolInfoResponse = GenericBlobResponse<{
-    symbolInfo: SymbolInfo | null
+    symbolInfo: SymbolInfoFlexible | null
 }>
 
-interface SymbolInfo {
-    definition: RepoCommitPath & { line: number; character: number; length: number }
+interface LineCharLength {
+    line: number
+    character: number
+    length: number
+}
+
+interface SymbolInfoFlexible {
+    definition: RepoCommitPath & (LineCharLength | { range?: LineCharLength })
     hover: string | null
 }
 
-const symbolInfoDefinitionQuery = gql`
+interface SymbolInfoCanonical {
+    definition: RepoCommitPath & { range?: LineCharLength }
+    hover: string | null
+}
+
+const symbolInfoFlexibleToCanonical = (flexible: SymbolInfoFlexible): SymbolInfoCanonical => ({
+    definition: {
+        ...flexible.definition,
+        range:
+            'line' in flexible.definition
+                ? {
+                      line: flexible.definition.line,
+                      character: flexible.definition.character,
+                      length: flexible.definition.length,
+                  }
+                : flexible.definition.range,
+    },
+    hover: flexible.hover,
+})
+
+const symbolInfoDefinitionQueryWithoutRange = gql`
     query SymbolInfo($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
         repository(name: $repository) {
             commit(rev: $commit) {
@@ -696,6 +755,30 @@ const symbolInfoDefinitionQuery = gql`
                             line
                             character
                             length
+                        }
+                        hover
+                    }
+                }
+            }
+        }
+    }
+`
+
+const symbolInfoDefinitionQueryWithRange = gql`
+    query SymbolInfo($repository: String!, $commit: String!, $path: String!, $line: Int!, $character: Int!) {
+        repository(name: $repository) {
+            commit(rev: $commit) {
+                blob(path: $path) {
+                    symbolInfo(line: $line, character: $character) {
+                        definition {
+                            repo
+                            commit
+                            path
+                            range {
+                                line
+                                character
+                                length
+                            }
                         }
                         hover
                     }

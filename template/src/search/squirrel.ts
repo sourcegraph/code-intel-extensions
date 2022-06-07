@@ -20,13 +20,17 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
             return null
         }
 
-        const location = {
+        const location: RepoCommitPathRange = {
             repo: symbolInfo.definition.repo,
             commit: symbolInfo.definition.commit,
             path: symbolInfo.definition.path,
-            row: symbolInfo.definition.line,
-            column: symbolInfo.definition.character,
-            length: symbolInfo.definition.length,
+            range: symbolInfo.definition.range
+                ? {
+                      row: symbolInfo.definition.range.line,
+                      column: symbolInfo.definition.range.character,
+                      length: symbolInfo.definition.range.length,
+                  }
+                : undefined,
         }
         return mkSourcegraphLocation({ ...parseGitURI(new URL(document.uri)), ...location })
     },
@@ -72,18 +76,11 @@ export const mkSquirrel = (api: API): PromiseProviders => ({
     },
 })
 
-type RepoCommitPathRange = RepoCommitPath & Range
+type RepoCommitPathRange = RepoCommitPath & { range?: Range }
 
-const mkSourcegraphLocation = ({
-    repo,
-    commit,
-    path,
-    row,
-    column,
-    length,
-}: RepoCommitPathRange): sourcegraph.Location => ({
+const mkSourcegraphLocation = ({ repo, commit, path, range }: RepoCommitPathRange): sourcegraph.Location => ({
     uri: new URL(`git://${repo}?${commit}#${path}`),
-    range: rangeToSourcegraphRange({ row, column, length }),
+    range: range ? rangeToSourcegraphRange({ row: range.row, column: range.column, length: range.length }) : undefined,
 })
 
 // We can't use `new sourcegraph.Range()` directly because it only sets internal fields like `_start` and
