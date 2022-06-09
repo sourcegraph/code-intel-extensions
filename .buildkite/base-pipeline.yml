@@ -8,8 +8,6 @@ steps:
     label: ':lipstick: :eslint:'
   - command: ./.buildkite/test.sh
     label: ':jest: :codecov:'
-  - command: echo "Update the Sourcegraph.com global settings to disable global searches first"; false
-    label: 'fail'
 
   # This runs the Checkov Terraform Code scanner
   # https://www.checkov.io/
