@@ -149,7 +149,7 @@ export function createProviders(
 
         // Fallback to definitions found in any other repository. This performs
         // an indexed search over all repositories.
-        return getConfig('basicCodeIntel.globalSearchesEnabled', true) ? Promise.resolve([]) : doSearch(true)
+        return !getConfig('basicCodeIntel.globalSearchesEnabled', true) ? Promise.resolve([]) : doSearch(true)
     }
 
     /**
@@ -193,7 +193,7 @@ export function createProviders(
         const sameRepoReferences = doSearch(false)
 
         // Perform an indexed search over all _other_ repositories.
-        const remoteRepoReferences = getConfig('basicCodeIntel.globalSearchesEnabled', true)
+        const remoteRepoReferences = !getConfig('basicCodeIntel.globalSearchesEnabled', true)
             ? Promise.resolve([])
             : doSearch(true)
 
