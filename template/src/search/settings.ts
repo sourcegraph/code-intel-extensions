@@ -31,7 +31,7 @@ export interface SearchBasedCodeIntelligenceSettings {
      */
     'basicCodeIntel.includeArchives'?: boolean
     /**
-     * Whether to search through all repositories.
+     * Whether to run global searches over all repositories.
      */
     'basicCodeIntel.globalSearchesEnabled'?: boolean
     /**

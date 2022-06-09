@@ -62,7 +62,7 @@ For organizations that organize code in a monorepo, it may never be useful to pe
 
 ### Many repositories
 
-On instances with many repositories, this can lead to issues such as: low quality results, slow response times, or significant load on the Sourcegraph instance. Global searches are enabled by default, but can disabled by adding the following to your Sourcegraph global settings:
+On instances with many repositories, global searches over all repositories can lead to issues such as: low quality results, slow response times, or significant load on the Sourcegraph instance. Global searches are enabled by default, but can disabled by adding the following to your Sourcegraph global settings:
 
 ```json
   "basicCodeIntel.globalSearchesEnabled": false
