@@ -117,6 +117,10 @@
           "description": "Whether to include archived repositories in search results.",
           "type": "boolean"
         },
+        "basicCodeIntel.globalSearchesEnabled": {
+          "description": "Whether to run global searches over all repositories. On instances with many repositories, this can lead to issues such as: low quality results, slow response times, or significant load on the Sourcegraph instance. Defaults to true.",
+          "type": "boolean"
+        },
         "basicCodeIntel.indexOnly": {
           "description": "Whether to use only indexed requests to the search API.",
           "type": "boolean"

@@ -31,6 +31,10 @@ export interface SearchBasedCodeIntelligenceSettings {
      */
     'basicCodeIntel.includeArchives'?: boolean
     /**
+     * Whether to run global searches over all repositories.
+     */
+    'basicCodeIntel.globalSearchesEnabled'?: boolean
+    /**
      * Whether to use only indexed requests to the search API.
      */
     'basicCodeIntel.indexOnly'?: boolean
@@ -38,5 +42,8 @@ export interface SearchBasedCodeIntelligenceSettings {
      * The timeout (in milliseconds) for un-indexed search requests.
      */
     'basicCodeIntel.unindexedSearchTimeout'?: number
-    [k: string]: unknown
+    /**
+     * Whether to request the `fileLocal` field in GraphQL. It's unavailable in older versions of Sourcegraph. Defaults to false.
+     */
+    fileLocal?: boolean
 }
