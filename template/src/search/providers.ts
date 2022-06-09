@@ -148,10 +148,8 @@ export function createProviders(
         }
 
         // Fallback to definitions found in any other repository. This performs
-        // an indexed search over all repositories. Do not do this on the DotCom
-        // instance as we are unlikely to have indexed the relevant definition
-        // and we'd end up jumping to what would seem like a random line of code.
-        return isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
+        // an indexed search over all repositories.
+        return getConfig('basicCodeIntel.globalSearchesEnabled', true) ? Promise.resolve([]) : doSearch(true)
     }
 
     /**
@@ -194,10 +192,8 @@ export function createProviders(
         // we have squirrel results
         const sameRepoReferences = doSearch(false)
 
-        // Perform an indexed search over all _other_ repositories. This
-        // query is ineffective on DotCom as we do not keep repositories
-        // in the index permanently.
-        const remoteRepoReferences = isSourcegraphDotCom() ? Promise.resolve([]) : doSearch(true)
+        // Perform an indexed search over all _other_ repositories.
+        const remoteRepoReferences = getConfig('basicCodeIntel.globalSearchesEnabled', true) ? Promise.resolve([]) : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
@@ -411,7 +407,7 @@ export function searchWithFallback<
     return raceWithDelayOffset(
         searchUnindexed(search, args, negateRepoFilter),
         () => searchIndexed(search, args, negateRepoFilter),
-        getConfig<number>('basicCodeIntel.unindexedSearchTimeout', DEFAULT_UNINDEXED_SEARCH_TIMEOUT_MS)
+        getConfig('basicCodeIntel.unindexedSearchTimeout', DEFAULT_UNINDEXED_SEARCH_TIMEOUT_MS)
     )
 }
 
@@ -559,13 +555,6 @@ function jaccardIndex<T>(a: Set<T>, b: Set<T>): number {
         // Get the size of the union
         new Set(aArray.concat(bArray)).size
     )
-}
-
-/**
- * Return true if the current Sourcegraph instance is DotCom.
- */
-function isSourcegraphDotCom(): boolean {
-    return sourcegraph.internal.sourcegraphURL.href === 'https://sourcegraph.com/'
 }
 
 /**
