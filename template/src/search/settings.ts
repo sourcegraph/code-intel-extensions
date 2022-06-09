@@ -45,5 +45,5 @@ export interface SearchBasedCodeIntelligenceSettings {
     /**
      * Whether to request the `fileLocal` field in GraphQL. It's unavailable in older versions of Sourcegraph. Defaults to false.
      */
-    'fileLocal'?: boolean
+    fileLocal?: boolean
 }

@@ -193,7 +193,9 @@ export function createProviders(
         const sameRepoReferences = doSearch(false)
 
         // Perform an indexed search over all _other_ repositories.
-        const remoteRepoReferences = getConfig('basicCodeIntel.globalSearchesEnabled', true) ? Promise.resolve([]) : doSearch(true)
+        const remoteRepoReferences = getConfig('basicCodeIntel.globalSearchesEnabled', true)
+            ? Promise.resolve([])
+            : doSearch(true)
 
         // Resolve then merge all references and sort them by proximity
         // to the current text document path.
