@@ -31,6 +31,11 @@ export interface LanguageSpec {
     fileExts: string[]
 
     /**
+     * Non-glob filenames that match this language. For example, ["Dockerfile"].
+     */
+    verbatimFilenames?: string[]
+
+    /**
      * Regex that matches individual characters in an identifier.
      */
     identCharPattern?: RegExp
