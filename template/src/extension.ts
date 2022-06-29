@@ -65,7 +65,11 @@ export const activate = async (context: sourcegraph.ExtensionContext = DUMMY_CTX
         throw new Error(`Unknown language ${languageID}`)
     }
 
-    const selector = languageSpec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }])
+    const selector: sourcegraph.DocumentSelector = [
+        { language: languageSpec.languageID },
+        ...(languageSpec.verbatimFilenames || []).flatMap(filename => [{ pattern: filename }]),
+        ...languageSpec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }]),
+    ]
 
     const hasImplementationsFieldConst = await hasImplementationsField()
 

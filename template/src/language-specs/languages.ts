@@ -27,6 +27,14 @@ const apexSpec: LanguageSpec = {
     commentStyles: [javaStyleComment],
 }
 
+const starlarkSpec: LanguageSpec = {
+    languageID: 'starlark',
+    stylized: 'Starlark',
+    fileExts: ['bzl', 'bazel'],
+    verbatimFilenames: ['BUILD', 'WORKSPACE'],
+    commentStyles: pythonSpec.commentStyles,
+}
+
 const clojureSpec: LanguageSpec = {
     languageID: 'clojure',
     stylized: 'Clojure',
@@ -380,6 +388,7 @@ export const languageSpecs: LanguageSpec[] = [
     rubySpec,
     rustSpec,
     scalaSpec,
+    starlarkSpec,
     stratoSpec,
     shellSpec,
     swiftSpec,
