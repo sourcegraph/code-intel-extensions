@@ -682,7 +682,7 @@ const isInRange = (position: sourcegraph.Position, range: Range): boolean => {
     if (position.character < range.column) {
         return false
     }
-    if (position.character > range.column + range.length) {
+    if (position.character >= range.column + range.length) {
         return false
     }
     return true
