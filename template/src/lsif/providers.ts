@@ -2,7 +2,7 @@ import { once } from 'lodash'
 import * as sourcegraph from 'sourcegraph'
 
 import { Logger } from '../logging'
-import { noopProviders, CombinedProviders, DefinitionAndHover } from '../providers'
+import { CombinedProviders, DefinitionAndHover } from '../providers'
 import { cache } from '../util'
 import { API } from '../util/api'
 import { queryGraphQL as sgQueryGraphQL, QueryGraphQLFn } from '../util/graphql'
@@ -23,12 +23,6 @@ import { makeStencilFn, StencilFn } from './stencil'
  * @param logger The logger instance.
  */
 export function createProviders(hasImplementationsField: boolean, logger: Logger): CombinedProviders {
-    const enabled = sourcegraph.configuration.get().get('codeIntel.lsif') ?? true
-    if (!enabled) {
-        logger.log('LSIF is not enabled in global settings')
-        return noopProviders
-    }
-
     const providers = createGraphQLProviders(
         sgQueryGraphQL,
         makeStencilFn(

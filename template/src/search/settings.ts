@@ -7,10 +7,6 @@
 
 export interface SearchBasedCodeIntelligenceSettings {
     /**
-     * Whether to use pre-computed LSIF data for code intelligence (such as hovers, definitions, and references). See https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence.
-     */
-    'codeIntel.lsif'?: boolean
-    /**
      * Whether to enable trace logging on the extension.
      */
     'codeIntel.traceExtension'?: boolean

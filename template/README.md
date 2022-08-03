@@ -67,11 +67,3 @@ On instances with many repositories, global searches over all repositories can l
 ```json
   "basicCodeIntel.globalSearchesEnabled": false
 ```
-
-## LSIF
-
-To enable [LSIF support](https://docs.sourcegraph.com/code_intelligence/explanations/precise_code_intelligence), add these to your Sourcegraph global settings:
-
-```json
-  "codeIntel.lsif": true
-```
