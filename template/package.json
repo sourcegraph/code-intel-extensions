@@ -72,8 +72,7 @@
         ],
         "actionItem": {
           "label": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results\" || \"Mix precise and search-based results\"}",
-          "description": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"\"}",
-          "iconURL": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%E2%84%B9%EF%B8%8F%3C%2Ftext%3E%3C%2Fsvg%3E"
+          "description": "${!!config.codeIntel.mixPreciseAndSearchBasedReferences && \"Hide search-based results when precise results are available\" || \"\"}"
         }
       },
       {
