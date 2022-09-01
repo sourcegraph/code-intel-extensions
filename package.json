@@ -50,7 +50,7 @@
     "@types/mocha": "9.1.1",
     "@types/mock-require": "2.0.1",
     "@types/mz": "2.7.4",
-    "@types/node": "14.18.23",
+    "@types/node": "14.18.26",
     "@types/node-fetch": "3.0.2",
     "@types/recursive-readdir": "2.2.1",
     "@types/uuid": "8.3.4",
