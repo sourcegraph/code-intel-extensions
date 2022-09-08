@@ -64,7 +64,7 @@
     "mkdirp": "^1.0.4",
     "mocha": "^10.0.0",
     "mock-require": "^3.0.3",
-    "node-fetch": "^3.2.4",
+    "node-fetch": "^3.2.10",
     "nyc": "^15.1.0",
     "parcel": "2.x",
     "parcel-bundler": "^1.12.5",
