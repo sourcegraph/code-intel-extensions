@@ -1548,17 +1548,17 @@
   dependencies:
     "@sourcegraph/extension-api-types" "^2.1.0"
 
-"@sourcegraph/extension-api-stubs@^1.6.1":
-  version "1.6.1"
-  resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-stubs/-/extension-api-stubs-1.6.1.tgz#69ffa5cbc785b03436ae0fc1b2e2bc2c97ced38c"
-  integrity sha512-ItiKTCU87MrEkQAphd6gDT1Geyhg8tXvWMBrkQuYGhH7ggOLWKWHbD+rR1S3vBco1EZeeaXXVxk4d97h85qqHA==
+"@sourcegraph/extension-api-stubs@^1.6.2":
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/@sourcegraph/extension-api-stubs/-/extension-api-stubs-1.6.2.tgz#b70cbb0a179367927bef85e0cadf688c57f6dc58"
+  integrity sha512-7uy03qVTDWAH0D663DY3FIRxjG5JV2tSRxJljMeUzRb/ZBZrKB9Htw6naYcWqwk0t4ye8MiPOm74avCpqNvcmw==
   dependencies:
     "@sourcegraph/extension-api-classes" "^1.1.0"
     "@types/sinon" "10.0.4"
     graphql "^15.4.0"
     rxjs "^6.5.1"
     sinon "^10.0.0"
-    sourcegraph "^25.5.0"
+    sourcegraph "^25.7.0"
 
 "@sourcegraph/extension-api-types@^2.1.0":
   version "2.1.0"
@@ -8623,7 +8623,7 @@ source-map@~0.7.2:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.7.3.tgz#5302f8169031735226544092e64981f751750383"
   integrity sha512-CkCj6giN3S+n9qrYiBTX5gystlENnRW5jZeNLHpe6aue+SrHcG5VYwujhW9s4dY31mEGsxBDrHR6oI69fTXsaQ==
 
-sourcegraph@25.7.0, sourcegraph@^25.5.0:
+sourcegraph@25.7.0, sourcegraph@^25.7.0:
   version "25.7.0"
   resolved "https://registry.yarnpkg.com/sourcegraph/-/sourcegraph-25.7.0.tgz#fb1e7a0b7d0547447f524a1d0dcf18407e70cdbf"
   integrity sha512-3Xdr480Ojkl9fZfaOH7xDy4N8YeQOyccNKVlObOJcj4SR7oFLOra1EFYoMrJPZ9axuD1hSi+34YCx5vocGlRzQ==
