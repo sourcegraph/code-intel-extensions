@@ -67,3 +67,4 @@ On instances with many repositories, global searches over all repositories can l
 ```json
   "basicCodeIntel.globalSearchesEnabled": false
 ```
+Hello World
