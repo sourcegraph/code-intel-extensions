@@ -23,7 +23,7 @@ const DUMMY_CTX = {
 const hasImplementationsField = once(() => new API().hasImplementationsField())
 
 /**
- * Create the panel for implementations.
+ * Create the panel for implementations (if supported by the Sourcegraph instance).
  *
  * Makes sure to only create the panel once per session.
  */
@@ -32,6 +32,11 @@ const createImplementationPanel = (
     selector: sourcegraph.DocumentSelector,
     providers: SourcegraphProviders
 ): void => {
+    // `createPanelView` was removed in https://github.com/sourcegraph/sourcegraph/pull/50451
+    if (!sourcegraph.app.createPanelView) {
+        return
+    }
+
     const implementationsPanelID = 'implementations_LANGID'
     const implementationsPanel = sourcegraph.app.createPanelView(implementationsPanelID)
 
