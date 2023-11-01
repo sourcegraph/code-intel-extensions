@@ -48,7 +48,7 @@
     "@types/lodash": "4.14.200",
     "@types/lru-cache": "5.1.1",
     "@types/mocha": "10.0.0",
-    "@types/mock-require": "2.0.1",
+    "@types/mock-require": "2.0.2",
     "@types/mz": "2.7.5",
     "@types/node": "14.18.28",
     "@types/node-fetch": "3.0.2",
