@@ -1749,10 +1749,10 @@
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
   integrity sha512-ce5d3q03Ex0sy4R14722Rmt6MT07Ua+k4FwDfdcToYJcMKNtRVQvJ6JCAPdAmAnbRb6CsX6aYb9m96NGod9uTw==
 
-"@types/recursive-readdir@2.2.1":
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/@types/recursive-readdir/-/recursive-readdir-2.2.1.tgz#330f5ec0b73e8aeaf267a6e056884e393f3543a3"
-  integrity sha512-Xd+Ptc4/F2ueInqy5yK2FI5FxtwwbX2+VZpcg+9oYsFJVen8qQKGapCr+Bi5wQtHU1cTXT8s+07lo/nKPgu8Gg==
+"@types/recursive-readdir@2.2.4":
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/@types/recursive-readdir/-/recursive-readdir-2.2.4.tgz#815786465159dc8250b9b6a2985fd93be0452e73"
+  integrity sha512-84REEGT3lcgopvpkmGApzmU5UEG0valme5rQS/KGiguTkJ70/Au8UYZTyrzoZnY9svuX9351+1uvrRPzWDD/uw==
   dependencies:
     "@types/node" "*"
 
@@ -6211,19 +6211,19 @@ minimalistic-crypto-utils@^1.0.1:
   resolved "https://registry.yarnpkg.com/minimalistic-crypto-utils/-/minimalistic-crypto-utils-1.0.1.tgz#f6c00c1c0b082246e5c4d99dfb8c7c083b2b582a"
   integrity sha1-9sAMHAsIIkblxNmd+4x8CDsrWCo=
 
-minimatch@3.0.4, minimatch@^3.0.4:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.4.tgz#5166e286457f03306064be5497e8dbb0c3d32083"
-  integrity sha512-yJHVQEhyqPLUTgt9B83PXu6W3rx4MvvHvSUvToogpwoGDOUQ+yDrR0HRot+yOCdCO7u4hX3pWft6kWBBcqh0UA==
-  dependencies:
-    brace-expansion "^1.1.7"
-
 minimatch@5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-5.0.1.tgz#fb9022f7528125187c92bd9e9b6366be1cf3415b"
   integrity sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==
   dependencies:
     brace-expansion "^2.0.1"
+
+minimatch@^3.0.4, minimatch@^3.0.5:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.1.2.tgz#19cd194bfd3e428f049a70817c038d89ab4be35b"
+  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
+  dependencies:
+    brace-expansion "^1.1.7"
 
 minimist@^1.1.3, minimist@^1.2.0, minimist@^1.2.5:
   version "1.2.5"
@@ -8016,12 +8016,12 @@ readdirp@~3.6.0:
   dependencies:
     picomatch "^2.2.1"
 
-recursive-readdir@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/recursive-readdir/-/recursive-readdir-2.2.2.tgz#9946fb3274e1628de6e36b2f6714953b4845094f"
-  integrity sha512-nRCcW9Sj7NuZwa2XvH9co8NPeXUBhZP7CRKJtU+cS6PW9FpCIFoI5ib0NT1ZrbNuPoRy0ylyCaUL8Gih4LSyFg==
+recursive-readdir@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/recursive-readdir/-/recursive-readdir-2.2.3.tgz#e726f328c0d69153bcabd5c322d3195252379372"
+  integrity sha512-8HrF5ZsXk5FAH9dgsx3BlUer73nIhuj+9OrQwEbLTPOBzGkL1lsFCR01am+v+0m2Cmbs1nP12hLDl5FA7EszKA==
   dependencies:
-    minimatch "3.0.4"
+    minimatch "^3.0.5"
 
 redent@^1.0.0:
   version "1.0.0"
