@@ -59,7 +59,7 @@
     "eslint": "^7.32.0",
     "fs-extra": "^10.1.0",
     "graphql": "^15.5.3",
-    "json-schema-to-typescript": "^10.1.4",
+    "json-schema-to-typescript": "^13.1.2",
     "lnfs-cli": "^2.1.0",
     "mkdirp": "^1.0.4",
     "mocha": "^10.0.0",
