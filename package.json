@@ -36,7 +36,7 @@
     "rxjs": "^6.6.7",
     "sourcegraph": "25.7.0",
     "tagged-template-noop": "^2.1.1",
-    "uuid": "^8.3.2"
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@sourcegraph/eslint-config": "^0.29.0",
@@ -53,7 +53,7 @@
     "@types/node": "14.18.28",
     "@types/node-fetch": "3.0.2",
     "@types/recursive-readdir": "2.2.1",
-    "@types/uuid": "8.3.4",
+    "@types/uuid": "9.0.8",
     "@types/yargs": "17.0.10",
     "codecov": "^3.8.3",
     "eslint": "^7.32.0",
