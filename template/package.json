@@ -23,7 +23,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=v14.20.0"
+    "node": ">=20.11.1"
   },
   "browserslist": [
     "last 1 Chrome versions",
